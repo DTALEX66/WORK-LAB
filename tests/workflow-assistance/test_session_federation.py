@@ -15,6 +15,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SERVICES = ROOT / "services" / "session-federation"
+# Appended, not prepended: this file spec-loads the modules it exercises out of
+# services/session-federation, and `capsule.py` also exists in the core scripts directory, so
+# putting that directory first could resolve a name to the wrong module.
+sys.path.append(str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+
+import project_temp  # noqa: E402
 
 
 def _load(name: str, module_name: str):
@@ -548,10 +554,12 @@ class RecommenderTests(unittest.TestCase):
         sys.modules[spec.name] = idx_mod
         spec.loader.exec_module(idx_mod)
 
-        # Use a plain temp dir (not TemporaryDirectory) to avoid Windows
-        # file-lock issues with SQLite at context-manager exit.
-        td = tempfile.mkdtemp()
+        # A plain fixture dir (not TemporaryDirectory): the index has to outlive a context-manager
+        # exit that would delete the database underneath it. idx.close() is registered so the
+        # SQLite handle is dropped before project_temp's sweeper removes the directory.
+        td = project_temp.fixture_dir(prefix="sf-index-")
         idx = idx_mod.SessionIndex(Path(td) / "index.sqlite")
+        self.addCleanup(idx.close)
 
         spec2 = importlib.util.spec_from_file_location("test_session_federation.canonical2", SERVICES / "canonical.py")
         canonical = importlib.util.module_from_spec(spec2)
@@ -857,7 +865,7 @@ class HandoffAuditTests(unittest.TestCase):
 
     def _ledger_with_records(self):
         a = self._load_audit()
-        td = tempfile.mkdtemp()
+        td = project_temp.fixture_dir(prefix="sf-audit-")
         ledger = a.HandoffAuditLedger(Path(td) / "handoff-audit.jsonl")
         # Build a two-hop chain: us-a → us-b → us-c
         r1 = ledger.record_handoff(
@@ -1040,22 +1048,25 @@ class RegistryTests(unittest.TestCase):
         )
 
     def test_register_requires_lease(self):
-        import tempfile
         reg = self._load("registry.py")
-        td = tempfile.mkdtemp()
+        td = project_temp.fixture_dir(prefix="sf-registry-")
         r = reg.Registry(Path(td) / "r.sqlite", writer_id="C")
+        # Registry.close() is thread-local-safe and idempotent; without it the SQLite handle keeps
+        # the fixture directory undeletable on Windows (WinError 32) and the sweep can only report.
+        self.addCleanup(r.close)
         canonical = self._load("canonical.py")
         with self.assertRaises(reg.LeaseHeldError):
             r.register(self._session(canonical))
 
     def test_single_writer_and_idempotent(self):
-        import tempfile
         reg = self._load("registry.py")
         canonical = self._load("canonical.py")
-        td = tempfile.mkdtemp()
+        td = project_temp.fixture_dir(prefix="sf-registry-")
         db = Path(td) / "reg.sqlite"
         a = reg.Registry(db, writer_id="A", lease_ttl_seconds=60)
         b = reg.Registry(db, writer_id="B", lease_ttl_seconds=60)
+        self.addCleanup(a.close)
+        self.addCleanup(b.close)
         a.acquire_lease()
         # B is refused while A holds a live lease
         with self.assertRaises(reg.LeaseHeldError):
@@ -1068,14 +1079,16 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual(a.get("hermes:s1")["source_agent"], "hermes")
 
     def test_expired_lease_takes_over(self):
-        import tempfile, time
+        import time
         reg = self._load("registry.py")
-        td = tempfile.mkdtemp()
+        td = project_temp.fixture_dir(prefix="sf-registry-")
         db = Path(td) / "e.sqlite"
         e = reg.Registry(db, writer_id="E", lease_ttl_seconds=0.05)
+        self.addCleanup(e.close)
         e.acquire_lease()
         time.sleep(0.06)  # E's lease now expired
         x = reg.Registry(db, writer_id="X", lease_ttl_seconds=60)
+        self.addCleanup(x.close)
         # a different writer can take over an expired foreign lease
         x.acquire_lease()
         self.assertEqual(x.lease_holder()["writer_id"], "X")

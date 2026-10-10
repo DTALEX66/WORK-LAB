@@ -8,6 +8,7 @@ forbidden. Token fields use a strict allowlist so legal usage counters such as
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -15,7 +16,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, Mapping
 
 SCHEMA_VERSION = 1
 WAL_TABLES = (
@@ -30,6 +31,28 @@ WAL_TABLES = (
     "action_plans",
     "growth_candidates",
     "schema_migrations",
+)
+
+# Tables a retention ceiling may touch: the append-only event ledgers. Identity/registry tables and the
+# migration history are excluded by derivation, so a table added to WAL_TABLES is retention-exempt until
+# someone states which category it belongs to -- an unlisted table cannot be pruned by accident.
+RETENTION_EXEMPT_TABLES = ("schema_migrations", "projects", "tasks")
+RETAINABLE_TABLES = tuple(table for table in WAL_TABLES if table not in RETENTION_EXEMPT_TABLES)
+
+# Preference order for the "newest timestamp" witness; the column is resolved per table from
+# PRAGMA table_info, so a table that renames or drops one is not silently left unwatched.
+_NEWEST_COLUMNS = (
+    "updated_at",
+    "occurred_at",
+    "observed_at",
+    "generated_at",
+    "last_run_at",
+    "discovered_at",
+    "approved_at",
+    "registered_at",
+    "created_at",
+    "applied_at",
+    "started_at",
 )
 
 USAGE_TOKEN_ALLOWLIST = {
@@ -93,6 +116,13 @@ def validate_record(record: dict[str, Any], *, allow_usage_tokens: bool) -> None
     forbidden = _scan_keys(record, FORBIDDEN_FRAGMENTS)
     if forbidden:
         raise ValueError(f"forbidden sensitive field(s): {sorted(forbidden)}")
+    # Names were always screened; values were not. A provider token carried under an allowed field
+    # (``provider``, ``note``, ``sourceRef``) used to be written to the canonical store, and the
+    # ingest path is exactly where a foreign file's content becomes a project fact.
+    from artifact_flow_policy import secret_value_paths  # noqa: PLC0415 - shared predicate, no cycle
+    leaked = secret_value_paths(record)
+    if leaked:
+        raise ValueError(f"sensitive value(s) at: {sorted(leaked)}")
     if allow_usage_tokens:
         return
     auth_hits = _scan_keys(record, AUTH_TOKEN_FRAGMENTS)
@@ -354,6 +384,9 @@ class CanonicalStore:
                     consecutive_failures INTEGER NOT NULL DEFAULT 0,
                     circuit_open_until REAL,
                     dropped_count INTEGER NOT NULL DEFAULT 0,
+                    refused_rows INTEGER NOT NULL DEFAULT 0,
+                    delivered_rows INTEGER NOT NULL DEFAULT 0,
+                    last_refusal_reason TEXT,
                     updated_at TEXT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS project_activity_projection (
@@ -385,6 +418,21 @@ class CanonicalStore:
                     "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (3, ?)",
                     (_now(),),
                 )
+            # Version 4: a refused ingest row gets its own named columns. `dropped_count` already means
+            # "events this collector dropped from its bounded queue", and putting ingest refusals in it
+            # would make one number answer two different questions with two different remedies.
+            health_columns = {row[1] for row in self._conn.execute("PRAGMA table_info(collector_health)")}
+            for column, declaration in (("refused_rows", "INTEGER NOT NULL DEFAULT 0"),
+                                         ("delivered_rows", "INTEGER NOT NULL DEFAULT 0"),
+                                         ("last_refusal_reason", "TEXT")):
+                if column not in health_columns:
+                    self._conn.execute(
+                        f"ALTER TABLE collector_health ADD COLUMN {column} {declaration}")
+            if 4 not in existing:
+                self._conn.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (4, ?)",
+                    (_now(),),
+                )
             if not existing:
                 self._conn.execute(
                     "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
@@ -396,6 +444,114 @@ class CanonicalStore:
         with self._lock:
             row = self._conn.execute("PRAGMA integrity_check").fetchone()
             return str(row[0]) if row else "unknown"
+
+    def newest_changes(self) -> dict[str, list[object]]:
+        """Per tracked table: row count, highest rowid and newest timestamp.
+
+        The sidecar's live gate compared counts and status tallies, so an in-place update -- a lease
+        acquired, a checkpoint advanced -- moved nothing it could see, and the Observer kept rendering
+        the previous state until some row happened to be inserted. Measured: writing a checkpoint,
+        lease holder and fencing token onto an existing task left the fingerprint byte-identical.
+
+        The timestamp column is read out of the table rather than restated here, so a schema change
+        cannot silently leave the witness blind, and the highest rowid still catches a mutation whose
+        author forgot to bump a timestamp.
+        """
+        with self._lock:
+            witness: dict[str, list[object]] = {}
+            for table in WAL_TABLES:
+                stamp = self._newest_column(table)
+                select = "COUNT(*), COALESCE(MAX(rowid), 0)"
+                select += f", MAX({stamp})" if stamp else ", NULL"
+                row = self._conn.execute(f"SELECT {select} FROM {table}").fetchone()
+                witness[table] = [row[0], row[1], row[2]]
+            # timestamps alone are not a content witness: a lease renewal can land in the same second and
+            # a fencing token can bump without any text column changing, so the mutable hot table is
+            # witnessed by what it actually holds
+            tasks = self._conn.execute(
+                "SELECT COUNT(*), COALESCE(SUM(fencing_token),0), "
+                "COALESCE(SUM(LENGTH(COALESCE(checkpoint,''))),0), "
+                "COALESCE(SUM(LENGTH(COALESCE(lease_holder,''))),0), "
+                "COALESCE(MAX(updated_at),''), COALESCE(MAX(lease_expires_at),'') FROM tasks"
+            ).fetchone()
+            witness["tasks_state"] = [tasks[0], tasks[1], tasks[2], tasks[3], tasks[4], tasks[5]]
+            return witness
+
+    def _newest_column(self, table: str) -> str | None:
+        """The timestamp column a table is ordered by, read out of the table itself.
+
+        Shared by the fingerprint witness and by retention: two lists of "which column is newest" would drift,
+        and a prune that ordered by the wrong column would delete the newest rows while reporting success.
+        """
+        columns = [row[1] for row in self._conn.execute(f"PRAGMA table_info({table})").fetchall()]
+        return next((name for name in _NEWEST_COLUMNS if name in columns), None)
+
+    def disk_footprint(self) -> dict[str, int]:
+        """Bytes the store actually occupies, read from SQLite's own page math plus the WAL sidecar files.
+
+        Reported separately from row counts because "bounded" is a statement about bytes: a ceiling in rows does
+        not tell the owner what the file costs, and a checkpoint can reclaim the WAL without changing the main
+        database at all.
+        """
+        with self._lock:
+            page_size = int(self._conn.execute("PRAGMA page_size").fetchone()[0])
+            page_count = int(self._conn.execute("PRAGMA page_count").fetchone()[0])
+        # Two different numbers, both honest and both labelled: `PRAGMA page_count` is the *logical* size and
+        # in WAL mode it counts pages the main file has not absorbed yet, while stat() is the bytes the owner's
+        # file explorer would show. Conflating them makes a reclaim look like it happened when only the WAL
+        # moved, so the report carries each and names which one totals into `totalBytes`.
+        report = {"pageSizeBytes": page_size, "pageCount": page_count,
+                  "logicalDatabaseBytes": page_size * page_count,
+                  "databaseFileBytes": self.path.stat().st_size if self.path.is_file() else 0,
+                  "walBytes": 0, "shmBytes": 0}
+        for key, suffix in (("walBytes", "-wal"), ("shmBytes", "-shm")):
+            sidecar = Path(f"{self.path}{suffix}")
+            if sidecar.is_file():
+                report[key] = sidecar.stat().st_size
+        report["totalBytes"] = (report["databaseFileBytes"] + report["walBytes"] + report["shmBytes"])
+        return report
+
+    def enforce_retention(self, limits: Mapping[str, int], *, allow_prune: bool) -> dict[str, Any]:
+        """Cap the append-only event tables; every other table is refused by name.
+
+        Without ``allow_prune`` this is a report, not an action: ``wouldDelete`` carries the numbers a prune
+        *would* produce and nothing is removed, so an operator can see the cost of a ceiling before granting it.
+        """
+        unknown = sorted(set(limits) - set(RETAINABLE_TABLES))
+        if unknown:
+            raise ValueError(f"RETENTION_TABLE_NOT_PERMITTED {unknown}; retainable set is "
+                             f"{sorted(RETAINABLE_TABLES)}")
+        bad = sorted(table for table, rows in limits.items() if not isinstance(rows, int) or rows < 1)
+        if bad:
+            raise ValueError(f"RETENTION_CEILING_INVALID {bad}: a ceiling below 1 would empty a table")
+        before = self.disk_footprint()
+        report: dict[str, Any] = {"allowPrune": allow_prune, "tables": {}, "before": before}
+        removed_total = 0
+        with self._lock:
+            for table, ceiling in sorted(limits.items()):
+                stamp = self._newest_column(table)
+                order = f"{stamp} DESC, rowid DESC" if stamp else "rowid DESC"
+                count = int(self._conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+                excess = max(0, count - ceiling)
+                kept_sql = f"SELECT rowid FROM {table} ORDER BY {order} LIMIT ?"
+                entry: dict[str, Any] = {"rowsBefore": count, "ceiling": ceiling,
+                                         "newestColumn": stamp, "orderBy": order,
+                                         "wouldDelete": excess, "deleted": 0, "rowsAfter": count}
+                if excess and allow_prune:
+                    self._conn.execute(
+                        f"DELETE FROM {table} WHERE rowid NOT IN ({kept_sql})", (ceiling,))
+                    entry["deleted"] = self._conn.execute("SELECT changes()").fetchone()[0]
+                    entry["rowsAfter"] = int(
+                        self._conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+                    removed_total += int(entry["deleted"])
+                report["tables"][table] = entry
+            if removed_total:
+                self._conn.commit()
+                self._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        report["deletedTotal"] = removed_total
+        report["after"] = self.disk_footprint()
+        report["bytesReclaimed"] = before["totalBytes"] - report["after"]["totalBytes"]
+        return report
 
     def register_project(self, project_id: str, root_path: str, display_name: str | None = None) -> None:
         with self._lock:
@@ -431,9 +587,12 @@ class CanonicalStore:
         validate_record(event, allow_usage_tokens=True)
         event_id = str(event.get("event_id") or uuid.uuid4().hex)
         with self._lock:
+            # MAX, not COUNT: a COUNT-derived sequence restarts colliding the moment retention prunes, and a
+            # cursor value that repeats is worse than one that gaps. Nothing reads this column today, which is
+            # exactly why the rule has to be stated here rather than discovered by a consumer.
             sequence = self._conn.execute(
-                "SELECT COUNT(*) FROM telemetry_events"
-            ).fetchone()[0] + 1
+                "SELECT COALESCE(MAX(sequence), 0) + 1 FROM telemetry_events"
+            ).fetchone()[0]
             self._conn.execute(
                 """
                 INSERT OR IGNORE INTO telemetry_events
@@ -640,6 +799,42 @@ class CanonicalStore:
             )
             self._conn.commit()
 
+    def insert_task_if_absent(self, task: dict[str, Any]) -> bool:
+        """Create a task, or report that the identity already exists -- without overwriting theirs.
+
+        `upsert_task` resolves a conflict by taking the incoming row wholesale, including
+        lease_holder / lease_expires_at / fencing_token. A writer that has no lease to claim (a control-plane
+        create) therefore wipes a live holder's lease and can send the fencing token backwards, which
+        destroys the exact property the fence exists to provide. Identity creation and identity conflict
+        are different outcomes; this one says which happened, in a single transaction, and touches nothing
+        that already exists.
+        """
+        validate_record(task, allow_usage_tokens=False)
+        task_id = str(task["task_id"])
+        with self._lock:
+            cursor = self._conn.execute(
+                """
+                INSERT INTO tasks
+                (task_id, project_id, status, created_at, updated_at, checkpoint,
+                 lease_holder, lease_expires_at, fencing_token)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(task_id) DO NOTHING
+                """,
+                (
+                    task_id,
+                    str(task.get("project_id", "unknown")),
+                    str(task.get("status", "PENDING")),
+                    str(task.get("created_at", _now())),
+                    str(task.get("updated_at", _now())),
+                    json.dumps(task.get("checkpoint") or {}, ensure_ascii=False, sort_keys=True),
+                    task.get("lease_holder"),
+                    task.get("lease_expires_at"),
+                    task.get("fencing_token"),
+                ),
+            )
+            self._conn.commit()
+            return cursor.rowcount == 1
+
     def acquire_lease(self, task_id: str, holder: str, ttl_seconds: int = 300) -> bool:
         """Transactional lease acquisition with fencing token bump."""
         with self._lock:
@@ -657,10 +852,10 @@ class CanonicalStore:
             expires_at = datetime.now(timezone.utc).timestamp() + ttl_seconds
             self._conn.execute(
                 """
-                UPDATE tasks SET lease_holder=?, lease_expires_at=?, fencing_token=?
+                UPDATE tasks SET lease_holder=?, lease_expires_at=?, fencing_token=?, updated_at=?
                 WHERE task_id=?
                 """,
-                (holder, _now_for_expiry(expires_at), token, task_id),
+                (holder, _now_for_expiry(expires_at), token, now, task_id),
             )
             self._conn.commit()
             return True
@@ -675,8 +870,8 @@ class CanonicalStore:
                 return False
             expires_at = datetime.now(timezone.utc).timestamp() + ttl_seconds
             self._conn.execute(
-                "UPDATE tasks SET lease_expires_at=? WHERE task_id=?",
-                (_now_for_expiry(expires_at), task_id),
+                "UPDATE tasks SET lease_expires_at=?, updated_at=? WHERE task_id=?",
+                (_now_for_expiry(expires_at), _now(), task_id),
             )
             self._conn.commit()
             return True
@@ -690,8 +885,8 @@ class CanonicalStore:
             if row is None or row["lease_holder"] != holder:
                 return False
             self._conn.execute(
-                "UPDATE tasks SET lease_holder=NULL, lease_expires_at=NULL WHERE task_id=?",
-                (task_id,),
+                "UPDATE tasks SET lease_holder=NULL, lease_expires_at=NULL, updated_at=? WHERE task_id=?",
+                (_now(), task_id),
             )
             self._conn.commit()
             return True
@@ -768,10 +963,24 @@ class CanonicalStore:
             result = []
             for row in rows:
                 item = dict(row)
-                try:
-                    item["checkpoint"] = json.loads(item.get("checkpoint") or "{}")
-                except json.JSONDecodeError:
-                    item["checkpoint"] = {}
+                raw = item.get("checkpoint")
+                # An identity over exactly what is stored, computed here where the bytes live: the read
+                # surface must be able to say "this checkpoint exists and this is which one" without the
+                # projection ever holding the text. A checkpoint that will not parse still gets a digest,
+                # because "unreadable" is a different claim from "absent".
+                item["checkpointDigest"] = (
+                    hashlib.sha256(raw.encode("utf-8")).hexdigest()
+                    if isinstance(raw, str) and raw else None)
+                if raw in (None, ""):
+                    item["checkpoint"] = None
+                    item["checkpointParseState"] = "ABSENT"
+                else:
+                    try:
+                        item["checkpoint"] = json.loads(raw)
+                        item["checkpointParseState"] = "PARSED"
+                    except (json.JSONDecodeError, TypeError):
+                        item["checkpoint"] = None
+                        item["checkpointParseState"] = "UNPARSEABLE"
                 result.append(item)
             return result
 
@@ -906,34 +1115,45 @@ class CanonicalStore:
                 ).fetchone()
                 return existing["event_id"] if existing else event_id
 
+    # A health row has more than one author: the scheduler speaks about queue drops, the worker about
+    # ingest refusals. Writing a whole row from a writer that only observed some of it used to reset the
+    # other writer's fields to `record.get(..., 0)` defaults, so an unwritten field silently became "zero"
+    # — which is the same lie as padding an unknown. Only the keys the caller actually named get written.
+    _COLLECTOR_HEALTH_COLUMNS = {
+        "totalRuns": ("total_runs", int),
+        "lastRunAt": ("last_run_at", str),
+        "lastSuccessAt": ("last_success_at", str),
+        "consecutiveFailures": ("consecutive_failures", int),
+        "circuitOpenUntil": ("circuit_open_until", float),
+        "droppedCount": ("dropped_count", int),
+        "refusedRows": ("refused_rows", int),
+        "deliveredRows": ("delivered_rows", int),
+        "lastRefusalReason": ("last_refusal_reason", str),
+    }
+
     def upsert_collector_health(self, record: dict[str, Any]) -> None:
+        """Write only the fields this caller named. An absent key is left alone; an explicit ``None``
+        clears the column, because a closed circuit has to be storable."""
         name = str(record.get("name", "unknown"))
+        columns: list[str] = ["name"]
+        values: list[Any] = [name]
+        for key, (column, caster) in self._COLLECTOR_HEALTH_COLUMNS.items():
+            if key not in record:
+                continue
+            value = record[key]
+            columns.append(column)
+            values.append(None if value is None else caster(value))
+        assignments = ", ".join(f"{column}=excluded.{column}" for column in columns[1:])
+        placeholders = ", ".join("?" for _ in columns)
         with self._lock:
             self._conn.execute(
-                """
-                INSERT INTO collector_health
-                (name, total_runs, last_run_at, last_success_at, consecutive_failures,
-                 circuit_open_until, dropped_count, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                f"""
+                INSERT INTO collector_health ({", ".join(columns)}, updated_at)
+                VALUES ({placeholders}, ?)
                 ON CONFLICT(name) DO UPDATE SET
-                    total_runs=excluded.total_runs,
-                    last_run_at=excluded.last_run_at,
-                    last_success_at=excluded.last_success_at,
-                    consecutive_failures=excluded.consecutive_failures,
-                    circuit_open_until=excluded.circuit_open_until,
-                    dropped_count=excluded.dropped_count,
-                    updated_at=excluded.updated_at
+                    {assignments}{", updated_at=excluded.updated_at" if assignments else ""}
                 """,
-                (
-                    name,
-                    int(record.get("totalRuns", 0)),
-                    record.get("lastRunAt"),
-                    record.get("lastSuccessAt"),
-                    int(record.get("consecutiveFailures", 0)),
-                    record.get("circuitOpenUntil"),
-                    int(record.get("droppedCount", 0)),
-                    _now(),
-                ),
+                (*values, _now()),
             )
             self._conn.commit()
 
@@ -1091,9 +1311,9 @@ def open_store(path: Path) -> Iterator[CanonicalStore]:
 
 
 if __name__ == "__main__":
-    import tempfile
+    import project_temp
 
-    with tempfile.TemporaryDirectory() as temporary:
+    with project_temp.fixture_root(prefix='canonical-store-selftest-') as temporary:
         store = CanonicalStore(Path(temporary) / "canonical.sqlite")
         print("CANONICAL_STORE_OK", store.integrity_check())
         store.close()

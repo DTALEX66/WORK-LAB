@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Validate all JSON schemas
-        run: python -c "import json,glob; [json.load(open(f)) for f in glob.glob('packages/contracts/schemas/**/*.json',recursive=True)]; print('ALL SCHEMAS VALID')"
+        run: python -c "import json,glob; [json.load(open(f, encoding='utf-8')) for f in sorted(glob.glob('packages/contracts/schemas/**/*.json', recursive=True))]; print('ALL SCHEMAS VALID')"
 
   observer-readonly:
     name: observer-readonly
@@ -62,7 +62,7 @@ jobs:
           python - <<'PY'
           import json, pathlib
           p = pathlib.Path(pathlib.os.environ["CAPSULE_TMP"]) / "capsule.json"
-          cap = json.loads(p.read_text())
+          cap = json.loads(p.read_text(encoding="utf-8"))
           cap["content"]["body"] += "tampered"
           (pathlib.Path(pathlib.os.environ["CAPSULE_TMP"]) / "bad-hash.json").write_text(json.dumps(cap))
           PY
@@ -72,7 +72,7 @@ jobs:
           # negative control 2: wrong schema_version must fail closed
           python - <<'PY'
           import json, pathlib, os
-          cap = json.loads((pathlib.Path(os.environ["CAPSULE_TMP"]) / "capsule.json").read_text())
+          cap = json.loads((pathlib.Path(os.environ["CAPSULE_TMP"]) / "capsule.json").read_text(encoding="utf-8"))
           cap["schema_version"] = "work-lab/context-capsule/v999"
           (pathlib.Path(os.environ["CAPSULE_TMP"]) / "bad-version.json").write_text(json.dumps(cap))
           PY
@@ -96,7 +96,7 @@ jobs:
           mkdir -p "$CC_TMP"
           # positive chain up to approval: create -> plan -> approve
           python services/policy/config_compiler.py create \
-            --client hermes --type field --target display.language \
+            --client hermes --type set-field --target display.language \
             --value '"zh"' --output "$CC_TMP/intent.json"
           python services/policy/config_compiler.py plan --intent "$CC_TMP/intent.json"
           python services/policy/config_compiler.py approve --intent "$CC_TMP/intent.json"

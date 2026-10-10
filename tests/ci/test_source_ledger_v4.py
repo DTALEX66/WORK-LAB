@@ -3,12 +3,15 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import tempfile
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "ci" / "verify_source_ledger_v4.py"
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+
+import project_temp  # noqa: E402
 
 
 def load_verifier():
@@ -47,7 +50,7 @@ class SourceLedgerV4Tests(unittest.TestCase):
     def test_missing_field_fails(self) -> None:
         module = load_verifier()
         original = module.LEDGER_REL
-        fake = Path(tempfile.mkdtemp()) / "source-ledger.json"
+        fake = project_temp.fixture_dir(prefix="source-ledger-") / "source-ledger.json"
         fake.write_text(json.dumps({"schemaVersion": "work-lab/source-ledger/v4", "entries": [{"id": "x"}]}), encoding="utf-8")
         module.LEDGER_REL = fake  # relative to cwd; absolute path works via find_root fallback
         try:

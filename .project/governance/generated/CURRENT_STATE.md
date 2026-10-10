@@ -1,8 +1,8 @@
 # WORK-LAB current state
 
-Generated at: `2026-09-27T02:35:55.395235Z`  \
-Source digest: `9abc330eb87a1d4ec902090ac174a34de5e798870d2104555bc41526359d6d1f`  \
-Content digest: `45be468aab431555f05fbcd027c034ad57c5309060b7b341530aceb3d73209c3`
+Generated at: `2026-10-10T16:44:02.816826Z`  \
+Source digest: `4e3cad13c3df2c5918305ce7b9ef83a33f6bab57c1744107e05730302cd57083`  \
+Content digest: `89a1c5d574899f9836e5a2aaa476c48d63ee254d19afd0a764a941586dfdff21`
 
 ## Git and CI attestation
 
@@ -17,7 +17,7 @@ Content digest: `45be468aab431555f05fbcd027c034ad57c5309060b7b341530aceb3d73209c
 
 ## Governance
 
-- Contracts: `37`
+- Contracts: `45`
 - Repository skills: `13`
 - Single writer: `True`
 - Cross-module writes: `explicit-cross-task-only`

@@ -105,10 +105,10 @@
 | Hermes 配置模板 | `config/config.yaml` | `config.yaml` | 新机器基线；同步脚本合并时保留 live provider/model，并管理已声明 overlay 字段（其余 Hermes 字段一律 OBSERVE，绝不全量覆盖） |
 | 环境变量模板 | `config/.env.template` | `.env.template` | 只放占位说明，不放真实密钥 |
 | MCP wrapper | `packages/client-neutral-core/bin/hermes-npx*` | `bin/hermes-npx*` | Windows live config 指向 `.cmd`；优先 bundled Node，缺失时可在用户信任且兼容的 PATH Node 环境中回退 |
-| 技能 | `packages/client-neutral-core/skills/` | `skills/` | 仓库受控 skill 集（codex、五个 GitHub workflow skills、model-switch、agent-workflow-fortress、project-data-boundary、python-testing、sleep-mode、windows-development-environment、requesting-code-review 等）；清单以 `config/skill-provenance.yaml` 为准；sleep-mode 通过项目 `.project-local/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
-| 项目数据执行器 | `packages/client-neutral-core/bin/hermes-project-data.py` | `bin/hermes-project-data.py` | fail-closed 验证 Git ignore，并把任务临时文件、缓存、日志、测试环境与产物锁到 `<project>/.project-local/runs/` |
+| 技能 | `packages/client-neutral-core/skills/` | `$HERMES_HOME/skills/` | 仓库受控 skill 集（codex、五个 GitHub workflow skills、model-switch、agent-workflow-fortress、project-data-boundary、python-testing、sleep-mode、windows-development-environment、requesting-code-review 等）；清单以 `config/skill-provenance.yaml` 为准；sleep-mode 通过项目 `.project-local/sleep-mode/` 状态账本和 Hermes cron 管理持久队列，不复制运行时或凭据 |
+| 项目数据执行器 | `packages/client-neutral-core/bin/hermes-project-data.py` | `packages/client-neutral-core/bin/hermes-project-data.py` | fail-closed 验证 Git ignore，并把任务临时文件、缓存、日志、测试环境与产物锁到 `<project>/.project-local/runs/` |
 | 同步脚本 | `integrations/executors/hermes/sync_hermes_workflow_assets.py` | 手动运行 | repo ↔ live 定向同步；每次 apply 前备份可迁移资产 |
-| 排错记录 | `docs/current/workflow-assistance-TROUBLESHOOTING.md`、`docs/current/workflow-assistance/workflow/error-fixes-2026-07-04.md`、`docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md`、`docs/current/workflow-assistance/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、GitHub skill ownership、凭据安全、PowerShell、Gateway/cron delivery、验证等已踩坑 |
+| 排错记录 | `docs/current/workflow-assistance-TROUBLESHOOTING.md`、`docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-04.md`、`docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md`、`docs/current/workflow-assistance/workflow/gateway-cron-delivery.md` | 仓库文档 | 记录 Windows MCP、路径、GitHub CLI、GitHub skill ownership、凭据安全、PowerShell、Gateway/cron delivery、验证等已踩坑 |
 
 ## 本地项目定义
 
@@ -137,7 +137,7 @@ python packages/client-neutral-core/scripts/security/scan_agent_rules.py .
 hermes mcp test context7
 ```
 
-隔离 ad-hoc 验证也必须通过 `bin/hermes-project-data.py --project . run -- ...`，使临时脚本和所有运行数据保留在当前项目的 `.project-local/runs/`，不得写入用户 Temp。
+隔离 ad-hoc 验证也必须通过 `packages/client-neutral-core/bin/hermes-project-data.py --project . run -- ...`，使临时脚本和所有运行数据保留在当前项目的 `.project-local/runs/`，不得写入用户 Temp。
 
 ## 标准闭环
 
@@ -158,3 +158,15 @@ hermes mcp test context7
 - Codex：稳定 GPT OAuth 与 coding-agent 协作路径。
 - Workflow：把可复用经验沉淀为脚本、模板、技能和排错手册。
 - Sync：让 repo、GitHub、live Hermes Home 之间形成可审计、可回滚、可复验的闭环。
+
+## 2026-10-09 产品定位补充（用户明示，与本文件上述边界并列，不替代）
+
+WORK-LAB 是软件中立、本地优先的 AI 工作观测与配置治理工作台：外部 AI 软件执行业务，本仓默认按项目观察参与软件、活动、主要阻碍与资源；能力资产沿「源评价→可迁移性→用户选目标→最小中立适配→损失解释→目标验证→获准部署读回恢复→版本维护」推进；规则意图适配原生能力，声明字段之外的 provider/model/auth 与用户编辑一律保留。它不是强制通用派工器，不另建运行时、账本或知识主库。
+
+- 责任分界：AAOS 负责完整知识、人的研究与学习、AI 学习资产、人机双向学习与长期项目记忆；DESIGN-LAB 负责专业设计、原生作品、设计内核与专业接受。三方各自独立，协作按需；Open Design 客户端与 DESIGN-LAB 项目仍是两个不同身份（见上文）。
+- Observer 与 sidecar 永久只读业务：允许搜索、筛选、复制、展开；获准的写一律复用独立的 Control 边界，由服务端实际校验授权并读回，前端不自授权。
+- 当前 UI 优先，桌面只有 main 与既有 HUD；手机端不做，不建延后或冻结任务。「五目的地」是导航建议值，旧深链必须保留对象身份与明确错误。
+- 默认最小采集；详细诊断限定项目/问题/时间/保留期。单位、精度、完整性、新鲜度各自独立表达，未知不填 0，断连不判停止，`turn_end` 不判项目完成。
+- 「软件中立工作台」说产品不绑定某一家 AI 软件，「客户端中立的工作流控制、治理、任务、交付与可观测层」说本层的合同不绑定；同一边界的两端，谁也不替代谁。
+- 架构保留 React/TS/Vite、Tauri/Rust、Python 与 JSON Schema；模块与配置权威仍分别由 module-ownership / config-ownership 定义。旧主线未完成项已合并或冻结，历史实现与保护性测试保留；新计划不证明实现，结构/受控测试/真实客户端/桌面安装/接受/发布分别核实。
+- 顶层依据：`WORK-LAB-AUTHORITY.md` 与 `.project/governance/project-authority-index.json`；唯一 CURRENT 见 `taskpack-authority-index.json`。

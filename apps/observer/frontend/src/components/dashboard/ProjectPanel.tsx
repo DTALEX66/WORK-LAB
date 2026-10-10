@@ -13,7 +13,7 @@ export function ProjectPanel({ snap }: { snap: SnapshotV3 | null }) {
   return (
     <div className="panel">
       <h3>项目</h3>
-      <div className="mb-3 text-[11px] text-muted">{snap ? projects.length + ' 个 · 真实' : '等待数据'}</div>
+      <div className="mb-3 text-[12px] text-muted">{snap ? projects.length + ' 个 · 真实' : '等待数据'}</div>
       {projects.length === 0 ? (
         <div className="empty py-10">
           <div className="icon" aria-hidden="true">◇</div>
@@ -39,7 +39,9 @@ export function ProjectPanel({ snap }: { snap: SnapshotV3 | null }) {
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   <Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge>
-                  {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
+                  {dirty == null ? <Badge variant="muted">脏 UNKNOWN</Badge>
+                    : dirty ? <Badge variant="warning">脏 {dirty}</Badge>
+                    : <Badge variant="muted">干净</Badge>}
                 </div>
               </div>
             )

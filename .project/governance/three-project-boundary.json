@@ -1,11 +1,11 @@
 {
   "schemaVersion": "work-lab/three-project-boundary/v1",
-  "title": "WORK-LAB V2 three-project ownership boundary (control plane vs knowledge vs design)",
-  "precedenceNote": "User's 2026-09-22 convergence instruction is the top directive; this file is the machine-readable expression of it. It never overrides WORK-LAB-AUTHORITY.md or the project authority index — it records the boundary split they authorize.",
+  "title": "WORK-LAB project observation / capability adaptation vs AAOS knowledge / learning vs DESIGN-LAB professional design",
+  "precedenceNote": "User explicit 2026-10-09 direction, represented by WORK-LAB-AUTHORITY.md. Existing safety/ownership splits retained; no cross-project write grant.",
   "projects": {
-    "WORK-LAB": "Control plane: who / when / with what permission / through what software / how to execute / how to verify / how to recover. Cross-project, cross-software, cross-runtime execution + governance.",
-    "ArcheAxis-Knowledge-OS": "Knowledge: long-term memory, learning, distillation, knowledge truth, classification, promotion, storage, recall.",
-    "DESIGN-LAB": "Design domain: design agents, design software execution, design assets, generation strategy, quality system, Adobe domain logic."
+    "WORK-LAB": "Project observation, reusable capability evaluation/adaptation/target verification and declared configuration governance; external software executes business. Not a mandatory total dispatcher.",
+    "ArcheAxis-Knowledge-OS": "AAOS: full knowledge lifecycle, human knowledge work/research/learning, AI learning assets, bidirectional learning and long-term project memory.",
+    "DESIGN-LAB": "Professional design of all types, native assets, design-specific execution core and professional acceptance."
   },
   "worklab_owned": [
     "config/global-agent-policy.yaml",
@@ -143,5 +143,6 @@
     "a second Usage/Cost truth engine"
   ],
   "verifier": "scripts/ci/verify_three_project_boundary.py",
-  "gate": "three-project-boundary"
+  "gate": "three-project-boundary",
+  "collaboration": "Independent products, optional bilateral/multilateral exchange; sender authorization, reception, knowledge decision, technical check, design acceptance and human learning stay separate."
 }

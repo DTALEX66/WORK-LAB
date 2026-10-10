@@ -82,9 +82,14 @@ class CodexAdapter(_acp().ExecutorAcpAdapter):
     def _capabilities(self) -> frozenset:
         acp = _acp()
         caps = {acp.Capability.CAPABILITIES, acp.Capability.PROBE}
-        # session reading works off the native store even without the CLI
+        # Session READING works off the native store even without the CLI.
+        # RESUME is deliberately NOT included: it is an execution promise
+        # (Capability.RESUME) whose ACP operation resume() is the base
+        # implementation returning NOT_IMPLEMENTED. Advertising it made
+        # `supports` a false success surface (AG-06, 2026-10-01). Add it back
+        # only together with a real native resume implementation.
         caps |= {acp.Capability.SESSION, acp.Capability.PERSIST,
-                 acp.Capability.HANDOFF, acp.Capability.RESUME}
+                 acp.Capability.HANDOFF}
         if self.is_launchable():
             caps |= {acp.Capability.LAUNCH, acp.Capability.FORK,
                      acp.Capability.CANCEL, acp.Capability.STREAM}

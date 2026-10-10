@@ -43,7 +43,7 @@ REQUIRED_VERIFIERS = (
 
 
 def _run(*args: str) -> str:
-    return subprocess.run(args, cwd=ROOT, text=True, capture_output=True, check=True).stdout.strip()
+    return subprocess.run(args, cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, check=True).stdout.strip()
 
 
 def tracked_paths() -> list[str]:

@@ -1,7 +1,7 @@
 ---
 name: project-data-boundary
 description: "将 Agent 任务的临时文件、缓存、日志与产物锁定在当前 Git 项目的忽略目录；用于执行、审查、睡眠模式和修复任务。"
-version: 1.2.0
+version: 1.3.1
 author: Hermes Agent
 license: MIT
 platforms: [windows, linux, macos]
@@ -59,7 +59,7 @@ metadata:
 
 ## 标准执行器
 
-部署包会把 `bin/hermes-project-data.py` 同步到 `$HERMES_HOME/bin/`。对会产生数据的命令，先检查再经 wrapper 启动：
+部署包会把 `packages/client-neutral-core/bin/hermes-project-data.py` 同步到 `$HERMES_HOME/bin/`。对会产生数据的命令，先检查再经 wrapper 启动：
 
 ```bash
 python "$HERMES_HOME/bin/hermes-project-data.py" --project . check

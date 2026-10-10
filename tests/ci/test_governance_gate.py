@@ -21,7 +21,7 @@ class GovernanceGateTests(unittest.TestCase):
 
     def test_aggregate_rejects_cancelled_job(self):
         payload = json.dumps({"jobs": {"workflow": "success", "observer": "cancelled", "integration": "success"}})
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/ci/aggregate_gate.py")], input=payload, text=True, capture_output=True)
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/ci/aggregate_gate.py")], input=payload, text=True, encoding="utf-8", errors="replace", capture_output=True)
         self.assertNotEqual(result.returncode, 0)
 
     def test_root_workflow_uses_real_needs_results(self):
@@ -63,7 +63,7 @@ class GovernanceGateTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, str(script)],
             cwd=ROOT,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

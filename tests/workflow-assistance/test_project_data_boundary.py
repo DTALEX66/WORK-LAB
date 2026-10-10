@@ -13,6 +13,8 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "packages" / "client-neutral-core" / "bin" / "hermes-project-data.py"
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+import project_temp  # noqa: E402
 
 
 def load_module():
@@ -60,6 +62,20 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         self.assertEqual(layout.env["CARGO_TARGET_DIR"], str(layout.paths["cache"] / "cargo-target"))
         self.assertEqual(layout.env["RUSTUP_HOME"], str(layout.paths["cache"] / "rustup"))
         self.assertEqual(layout.env["HERMES_KANBAN_HOME"], str(project_root / ".hermes"))
+
+    def test_project_local_is_preferred_when_both_runtime_roots_are_ignored(self) -> None:
+        # The `.hermes/` fallback exists so older projects keep working without a
+        # .gitignore change — it is a deliberate compatibility contract, not debt.
+        # What must never happen is the fallback winning where `.project-local/` is
+        # already ignored: this repo's evidence would silently land in `.hermes`.
+        module = load_module()
+        repo = self.make_repo(ignored=True)
+        (repo / ".gitignore").write_text(".hermes/\n.project-local/\n", encoding="utf-8")
+
+        layout = module.prepare_layout(repo)
+        tmp = layout.paths["tmp"].resolve()
+        self.assertTrue(tmp.is_relative_to(layout.project_root / ".project-local" / "runs"), tmp)
+        self.assertNotIn(".hermes", str(tmp))
 
     def test_global_skill_requires_explicit_current_request_for_e_drive_access(self) -> None:
         skill = (ROOT / "packages" / "client-neutral-core" / "skills/software-development/project-data-boundary/SKILL.md").read_text(
@@ -231,7 +247,7 @@ class ProjectDataBoundaryTests(unittest.TestCase):
         runtime_root = ROOT / ".hermes" / "task-runtime"
         (runtime_root / "tmp").mkdir(parents=True, exist_ok=True)
         tmp_path = Path(tempfile.mkdtemp(dir=runtime_root / "tmp"))
-        self.addCleanup(lambda: shutil.rmtree(tmp_path, ignore_errors=True))
+        self.addCleanup(project_temp.force_release, tmp_path)
 
         self.assertTrue(tmp_path.resolve().is_relative_to(runtime_root.resolve()))
 

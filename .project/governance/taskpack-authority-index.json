@@ -1,21 +1,21 @@
 {
   "schemaVersion": "workflow/taskpack-authority-index/v1",
-  "generatedAt": "2026-09-18",
-  "currentTaskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+  "generatedAt": "2026-10-09",
+  "currentTaskpack": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
   "authority": {
     "owner": "DTALEX66",
-    "created": "2026-09-18",
+    "created": "2026-10-09",
     "expires": "unbounded (main is sole authority; superseded only by a newer registered CURRENT)",
-    "taskpack": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+    "taskpack": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
     "topAuthority": "WORK-LAB-AUTHORITY.md",
     "topMachineAuthority": ".project/governance/project-authority-index.json",
-    "supersedes": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918 (R1, main@a55a0f3) and WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25",
-    "baseline_main": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
-    "baseline_tree": "606db598abd3724baf6a45ffcfb319f9b0a4d550"
+    "supersedes": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+    "baseline_main": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
+    "baseline_tree": "a36e97ecbcb951e53a4c877e14244aa626d70fc8"
   },
   "classification": {
     "CURRENT": [
-      "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918"
+      "WORK-LAB-UI-PRIORITY-TASKPACK-20261009"
     ],
     "SUPERSEDED": [
       "WORK-LAB-FORWARD-RECONCILIATION-2026-08-20",
@@ -39,7 +39,8 @@
       "TP-20260819-TASKPACK-WORKLAB",
       "INT-002-006-READONLY-EVIDENCE-PROJECTION",
       "AGENT-WORKFLOW-ENHANCEMENTS-20260812",
-      "WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25"
+      "WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25",
+      "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918"
     ],
     "HISTORICAL": [
       "WORK-LAB-DSH-HANDOFF-2026-08-15",
@@ -76,19 +77,7 @@
       "WORK-LAB-V2-TASK-MATRIX"
     ]
   },
-  "currentTaskCards": [
-    {
-      "id": "WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925",
-      "path": "taskpacks/current/WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925.md",
-      "role": "subordinate current task card: planning record for the Product UI / Control Surface roadmap; grants no execution authority (feature scope frozen)"
-    },
-    {
-      "id": "ORCA-PILOT-TASK-CARD-20260925",
-      "path": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
-      "registry_entry": "FUT-001",
-      "role": "subordinate current task card: Orca Pilot round-1 plan; execution individually authorized per operation"
-    }
-  ],
+  "currentTaskCards": [],
   "acceptance": {
     "indexReferencesExist": true,
     "singleCurrent": true,
@@ -215,12 +204,22 @@
     {
       "id": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
       "path": "taskpacks/current/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md",
-      "role": "CURRENT repair execution authority (single CURRENT)",
-      "status": "ADOPTED_20260918",
+      "role": "SUPERSEDED historical execution plan, no current dispatch",
+      "status": "SUPERSEDED_20261009",
       "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER.md (single live register; dated OPEN-TASK-REGISTER-20260917.md frozen to taskpacks/history/ as a pre-convergence artifact)",
       "evidence": [
         "baseline main@a55a0f3 tree 3890328 (matches pack)",
         ".project-local/runs/UPC-20260918/ledger.json"
+      ]
+    },
+    {
+      "id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+      "path": "taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md",
+      "role": "single CURRENT UI-first plan",
+      "status": "ADOPTED_PLANNING_20261009",
+      "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER.md",
+      "evidence": [
+        "docs/current/ui-priority-20261009/CONVERSATION-DECISIONS.md"
       ]
     }
   ],
@@ -253,5 +252,98 @@
       "pack_head_matches_current": true,
       "r4_source_list_gap": "R4 local source manifest (.project-local/artifacts/task-artifacts/r4/history-source-manifest.json) NOT present in this checkout - recorded as gap, NOT filled from private session stores (NF-00 step 2)"
     }
+  },
+  "frozenTaskCards": [
+    {
+      "id": "WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925",
+      "path": "taskpacks/current/WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925.md",
+      "role": "subordinate current task card: planning record for the Product UI / Control Surface roadmap; grants no execution authority (feature scope frozen)",
+      "disposition": "FROZEN_PLANNING_WITH_REQUIREMENTS_MAPPED",
+      "archivePath": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925.md"
+    },
+    {
+      "id": "ORCA-PILOT-TASK-CARD-20260925",
+      "path": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
+      "registry_entry": "FUT-001",
+      "role": "subordinate current task card: Orca Pilot round-1 plan; execution individually authorized per operation",
+      "disposition": "FROZEN_PLANNING_WITH_REQUIREMENTS_MAPPED",
+      "archivePath": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md"
+    },
+    {
+      "id": "WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001",
+      "path": "taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md",
+      "role": "subordinate current task card: verified-gap delta table + work breakdown (AG-01..AG-20) derived from the 2026-09-29 Master Atlas snapshot and re-verified against live main cd4daa8; planning record only, grants no execution authority",
+      "disposition": "FROZEN_PLANNING_WITH_REQUIREMENTS_MAPPED",
+      "archivePath": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md"
+    },
+    {
+      "id": "WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007",
+      "path": "taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md",
+      "role": "subordinate current task card: executes the owner's UI prompt pack (P1-P8) on the isolated ui-commercial-polish-20261007 branch; supersedes the 2026-09-25 card's no-UI-code limit, keeps cross-project boundaries, single-writer rule, and the no-commit/no-push/no-PR delivery limit for UI code",
+      "register_row": "UI-PRODUCT-PROMPT-20261007",
+      "sources_pinned": [
+        {
+          "file": "WORKLAB_CODEX_PROMPT.md",
+          "bytes": 6501,
+          "sha256": "31bfdba2bfc2fad9e2dee6b8ea03d0da63dfd4f4154bc5e7628d46d92dd6effd",
+          "mtime": "2026-10-07T00:58:35Z"
+        },
+        {
+          "file": "UI_KIT_AUDIT.md",
+          "bytes": 10181,
+          "sha256": "1eaf44826132b2f0e8b8cd62a67202b0982aa49fb603061347b5de569e7645de",
+          "mtime": "2026-10-07T00:58:55Z"
+        },
+        {
+          "file": "UI_COMPONENT_ADOPTION_PLAN.md",
+          "bytes": 6397,
+          "sha256": "5e6b472a0d0ca5d30baff11aa83b1b7da8e453b472d59db8775fa3bf7f4b04ae",
+          "mtime": "2026-10-07T00:59:00Z"
+        },
+        {
+          "file": "WORK-LAB_UI开发资料总包_按批次.zip",
+          "bytes": 37048117,
+          "sha256": "c94ff634dad3fa47cd843493c5f3b59c946fd987295085b8c821febba13eef48",
+          "mtime": "2026-10-07T00:54:42Z"
+        }
+      ],
+      "supersedes": "WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925 (only its 'does NOT authorize writing UI code' limit)",
+      "disposition": "FROZEN_PLANNING_WITH_REQUIREMENTS_MAPPED",
+      "archivePath": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md"
+    },
+    {
+      "id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
+      "path": "taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
+      "role": "subordinate cross-module execution task card: carries the owner's dated 2026-10-07 full-stack prompt (batches A-F, in-repo only) and the explicit-cross-task-only writes module-ownership.json requires; registers no new authority, grants no commit/push/PR/merge/release/install/global-write, keeps Observer strictly read-only",
+      "register_row": "QODER-FULLSTACK-20261007",
+      "sources_pinned": [
+        {
+          "file": ".project-local/artifacts/qoder-handoff-20261007/QODER_新规划前后端完整后续任务提示词.txt",
+          "bytes": 29230,
+          "sha256": "17e064354c0b7c2d3a1db2524b1db1b9150bd78cdd650a21ff1ca08ee50109c2",
+          "mtime": "2026-10-07T15:06:10+00:00"
+        }
+      ],
+      "disposition": "FROZEN_PLANNING_WITH_REQUIREMENTS_MAPPED",
+      "archivePath": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md"
+    }
+  ],
+  "currentSourceInputs": [
+    {
+      "path": "docs/history/owner-inputs/20261009/WORK-LAB_UI前端更新任务包_20261009.zip",
+      "sha256": "fe5afa5328c7530723f492a6188ea19dfa6fb2269b2400b77174c1a42f72fd45",
+      "role": "owner input not implementation evidence"
+    },
+    {
+      "path": "docs/history/owner-inputs/20261009/WORK-LAB_本对话最终任务包_20261009.zip",
+      "sha256": "3740f98aadfce5e13a046f09773bbad362f0d3bceb32d65a0951065dd21237f7",
+      "role": "owner input not implementation evidence"
+    }
+  ],
+  "legacyTaskFreeze": {
+    "date": "2026-10-09",
+    "archive": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json",
+    "reconciliation": "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
+    "noNewExecutionGrant": true
   }
 }

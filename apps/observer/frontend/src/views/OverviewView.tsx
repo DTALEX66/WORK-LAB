@@ -1,28 +1,25 @@
-// L10 (2026-09-27) · L10b (2026-09-27): B10 Overview / 总览 — the landing surface.
+// L10 (2026-09-27) · L10b (2026-09-27) · WUI-01 (2026-10-09): the landing surface — 项目监控.
 //
-// B10 structure 1:1:
-//   .page-head
-//   .kpi-grid          → 4 × .panel.kpi (strong + small + .trend)
-//   .two-col           → .panel 执行趋势 (.spark) | .panel 系统状态
-//                        (.metric-row 4 × .metric-box + .status-stack .tag)
-//   .split             → .panel 最近执行 (.list / .list-item)
-//                        | .panel Observer Signal Map (.graph-stage core + 6
-//                          .node-dot satellites)
+// The lane id stays `overview`: the 20261009 route table maps `overview` INTO 项目监控 and forbids a
+// second home ("不建立双首页"), so the id and its deep links survive while the content changes. What did
+// change follows that table's own instruction ("复用可用摘要，去掉无事实图表和禁用执行主按钮"):
 //
-// All values are the REAL v3 snapshot projection; B5 discipline preserved:
-// without a snapshot the three fact KPIs read UNKNOWN (never a fabricated 0),
-// the "数据源未接入" honest indicator is present, and NO trend percentage is
-// invented (the B10 demo's ↑ 18% has no real source here, so the trend row is
-// omitted until a real series exists).
+//   * the project collection is what the home answers first (components/dashboard/ProjectSummaryTable);
+//   * the trend panel that had no series behind it and the six hardcoded signal-map nodes are gone — a
+//     chart frame holding no fact is still a claim the projection cannot make;
+//   * the permanently-disabled 新建执行 / 导出状态 buttons are gone. A control that can never act is not a
+//     read-only boundary, it is a dead control; the boundary is stated in words instead.
+//
+// B5 discipline preserved: without a snapshot the three fact KPIs read UNKNOWN (never a fabricated 0),
+// the "数据源未接入" honest indicator is present, and NO trend percentage is invented.
 import * as React from 'react'
-import { Plus } from 'lucide-react'
 import { PageHeader } from '@/components/ui/page-header'
 import { KPICard } from '@/components/dashboard/KPICard'
-import { NodeGraph, type GraphNode } from '@/components/graph/node-graph'
-import { Sparkline } from '@/components/ui/sparkline'
+import { ProjectSummaryTable } from '@/components/dashboard/ProjectSummaryTable'
 import { Badge } from '@/components/ui/badge'
+import { OVERVIEW_LABEL } from '@/lib/viewRegistry'
 import {
-  fmtCostQuality, tokenTruth, executionsToRows,
+  fmtCostQuality, fmtTimestamp, tokenTruth, executionsToRows,
   type LiveSnapshotState,
 } from '@/lib/api'
 import type { SnapshotV3 } from '@/types'
@@ -66,25 +63,20 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
     return out.slice(0, 8)
   }, [snap, rows, tr])
 
-  // Observer map nodes: the 6 projection entities; "active" only when a real
-  // running execution references that entity dimension.
-  const runningAgents = new Set(rows.filter((r) => r.state === 'RUNNING' || r.state === 'STARTING').map((r) => r.platform).filter((p): p is string => !!p))
-  const graphNodes: GraphNode[] = [
-    { id: 'agent', label: 'Agent', state: runningAgents.size ? 'active' : 'idle' },
-    { id: 'workflow', label: 'Workflow', state: 'idle' },
-    { id: 'tool', label: 'Tool', state: 'idle' },
-    { id: 'mcp', label: 'MCP', state: 'idle' },
-    { id: 'memory', label: 'Memory', state: 'idle' },
-    { id: 'taskpack', label: 'Task Pack', state: 'idle' },
-  ]
-
   // B10 `.status-stack` tags — driven by REAL transport/coverage values only.
   const stack: { text: string; variant: 'success' | 'warning' | 'info' | 'muted' }[] = [
     live
       ? { text: 'Transport LIVE', variant: 'success' }
       : { text: `Transport ${tr?.transportState || 'UNKNOWN'}`, variant: tr?.transportState === 'OFFLINE' ? 'warning' : 'muted' },
     { text: tr?.freshnessState ? `Freshness ${tr.freshnessState}` : 'Freshness UNKNOWN', variant: tr?.freshnessState === 'FRESH' ? 'info' : 'muted' },
-    { text: alerts.length ? `${alerts.length} 条告警信号` : '无告警信号', variant: alerts.length ? 'warning' : 'success' },
+    // Three states, not two: with no snapshot there are no alerts *and* no way to
+    // know — the panel below already says 保持 UNKNOWN，不伪造「全部正常」, so a green
+    // "no alert signals" chip here would contradict it and read as a clean system.
+    !snap
+      ? { text: '告警状态 UNKNOWN', variant: 'muted' as const }
+      : alerts.length
+        ? { text: `${alerts.length} 条告警信号`, variant: 'warning' as const }
+        : { text: '无告警信号', variant: 'success' as const },
   ]
 
   const taskEntries = Object.entries(snap?.tasks || {}).slice(0, 6)
@@ -92,16 +84,8 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="总览"
-        description="执行态势、工作流健康、观察者与审计信号整合到同一控制平面。真值来自 v3 快照投影；缺失即 UNKNOWN，不伪造。"
-        actions={
-          <>
-            <button type="button" className="ghost-btn" disabled>导出状态</button>
-            <button type="button" className="primary-btn" disabled>
-              <Plus size={14} aria-hidden /> 新建执行
-            </button>
-          </>
-        }
+        title={OVERVIEW_LABEL}
+        description="按项目观察参与软件、活动、阻碍、资源与来源新鲜度。真值来自 v3 快照投影，缺失即 UNKNOWN，不伪造。筛选与选择只读取投影：Observer 不发起执行、不导出状态、不写任何业务状态。"
       />
 
       {/* B10 `.kpi-grid` — 4 columns; the first three are FACT KPIs (B5:
@@ -135,37 +119,66 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
         />
       </div>
 
-      {/* B10 `.two-col` — execution trend + system status */}
+      {/* WUI-01: the project collection is the home's first answer. It is full width because nine
+          readable columns do not fit a half-width panel, and `.table-wrap` is its own scroll box. */}
+      <div className="panel p-4">
+        <h3 className="mb-3">项目集合</h3>
+        <ProjectSummaryTable
+          snap={snap}
+          search={typeof window !== 'undefined' ? window.location.search : ''}
+        />
+      </div>
+
+      {/* B10 `.two-col` — source freshness + system status. The 执行趋势 panel is gone: the v3 snapshot
+          carries no trend series, so the frame plotted nothing while looking like a chart. */}
       <div className="two-col">
         <div className="panel">
-          <h3>执行趋势</h3>
-          {/* Honest: the v3 snapshot carries NO execution-trend series, so the
-              shared Sparkline renders "无趋势数据（UNKNOWN）" rather than the
-              B10 demo's fabricated sequence. */}
-          <Sparkline values={[]} height={180} />
-          <div className="mt-3 text-[11px] text-muted">
-            {rows.length ? `${rows.length} 条执行记录（趋势序列未投影）` : '执行趋势序列未由快照投影 — 保持 UNKNOWN'}
+          <h3>来源新鲜度</h3>
+          <div className="list">
+            <div className="list-item">
+              <span className="text-[12px] text-muted">快照生成</span>
+              <span className="ml-3 min-w-0 truncate text-right text-[12px] text-ink">{fmtTimestamp(snap?.generatedAt ?? null)}</span>
+            </div>
+            <div className="list-item">
+              <span className="text-[12px] text-muted">源水位 sourceWatermark</span>
+              <span className="ml-3 min-w-0 truncate text-right text-[12px] text-ink">{fmtTimestamp(snap?.sourceWatermark ?? null)}</span>
+            </div>
+            <div className="list-item">
+              <span className="text-[12px] text-muted">最后心跳 lastHeartbeatAt</span>
+              <span className="ml-3 min-w-0 truncate text-right text-[12px] text-ink">{fmtTimestamp(tr?.lastHeartbeatAt ?? null)}</span>
+            </div>
+            <div className="list-item">
+              <span className="text-[12px] text-muted">写者水位 writerWatermarkAt</span>
+              <span className="ml-3 min-w-0 truncate text-right text-[12px] text-ink">{fmtTimestamp(tr?.writerWatermarkAt ?? null)}</span>
+            </div>
+            <div className="list-item">
+              <span className="text-[12px] text-muted">本次连接自 connectedSince</span>
+              <span className="ml-3 min-w-0 truncate text-right text-[12px] text-ink">{fmtTimestamp(tr?.connectedSince ?? null)}</span>
+            </div>
+          </div>
+          <div className="mt-3 text-[12px] text-muted">
+            各时间的含义分开读：源产生 · 本地接收 · 页面可见。last-good 带时间；断连或滞后都不推出软件已停止。
           </div>
         </div>
         <div className="panel">
           <h3>系统状态</h3>
           <div className="metric-row">
             <div className="metric-box">
-              <div className="muted text-[11px]">传输</div>
+              <div className="muted text-[12px]">传输</div>
               <div className="text-[15px] font-bold tabular-nums text-ink">{tr?.transportState || 'UNKNOWN'}</div>
             </div>
             <div className="metric-box">
-              <div className="muted text-[11px]">新鲜度</div>
+              <div className="muted text-[12px]">新鲜度</div>
               <div className="text-[15px] font-bold tabular-nums text-ink">{tr?.freshnessState || 'UNKNOWN'}</div>
             </div>
             <div className="metric-box">
-              <div className="muted text-[11px]">覆盖</div>
+              <div className="muted text-[12px]">覆盖</div>
               <div className="text-[15px] font-bold tabular-nums text-ink">
                 {cov && cov.numerator != null ? `${cov.numerator}/${cov.denominator ?? '?'}` : 'UNKNOWN'}
               </div>
             </div>
             <div className="metric-box">
-              <div className="muted text-[11px]">修订</div>
+              <div className="muted text-[12px]">修订</div>
               <div className="text-[15px] font-bold tabular-nums text-ink">{snap ? String(snap.revision) : 'UNKNOWN'}</div>
             </div>
           </div>
@@ -205,16 +218,10 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
             </div>
           )}
         </div>
+        {/* WUI-01: this half of the split is where the six hardcoded map nodes used to sit. The block now
+            carries the real blocker signals, because 主要阻碍 is one of the home page's required columns. */}
         <div className="panel">
-          <h3>Observer Signal Map</h3>
-          <NodeGraph core="Observer" nodes={graphNodes} className="min-h-[330px]" />
-        </div>
-      </div>
-
-      {/* Honest signal panels: alerts (real failures only) + task-family counts */}
-      <div className="two-col">
-        <div className="panel">
-          <h3>告警（真实信号）</h3>
+          <h3>主要阻碍（真实信号）</h3>
           {alerts.length ? (
             <div className="list">
               {alerts.map((a, i) => (
@@ -235,20 +242,24 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
             </div>
           )}
         </div>
-        <div className="panel">
-          <h3>最近任务包</h3>
-          {taskEntries.length ? (
-            <div className="metric-row" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
-              {taskEntries.map(([family, count]) => (
-                <div key={family} className="metric-box">
-                  <div className="muted text-[11px]">{family}</div>
-                  <div className="big-number mt-1">{count}</div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-5 text-center text-xs text-muted">数据源未接入 — 无任务包计数（UNKNOWN）</div>
-          )}
+      </div>
+
+      <div className="panel p-4">
+        <h3 className="mb-3">最近任务包</h3>
+        {taskEntries.length ? (
+          <div className="metric-row" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+            {taskEntries.map(([family, count]) => (
+              <div key={family} className="metric-box">
+                <div className="muted text-[12px]">{family}</div>
+                <div className="big-number mt-1">{count}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-5 text-center text-xs text-muted">数据源未接入 — 无任务包计数（UNKNOWN）</div>
+        )}
+        <div className="mt-3 text-[12px] text-muted">
+          任务包计数是本仓工程诊断口径，不要求被观察的项目登记任务。
         </div>
       </div>
     </div>

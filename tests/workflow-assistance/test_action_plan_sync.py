@@ -67,7 +67,7 @@ class ActionPlanSyncTests(unittest.TestCase):
             result = subprocess.run(
                 [sys.executable, str(SCRIPT), "--repo", str(repo), "--home", str(home), "--apply"],
                 cwd=ROOT,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -81,7 +81,7 @@ class ActionPlanSyncTests(unittest.TestCase):
             result = subprocess.run(
                 [sys.executable, str(SCRIPT), "--repo", str(repo), "--home", str(home), "--apply", "--approved"],
                 cwd=ROOT,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -154,7 +154,7 @@ class ActionPlanSyncTests(unittest.TestCase):
             result = subprocess.run(
                 [sys.executable, str(SCRIPT), "--repo", str(repo), "--home", str(home), "--plan-json", str(output)],
                 cwd=ROOT,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )

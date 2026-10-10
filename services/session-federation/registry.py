@@ -291,6 +291,12 @@ class Registry:
         ).fetchall()
         return [r["project_id"] for r in rows]
 
+    def close(self) -> None:
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            conn.close()
+            self._local.conn = None
+
     def health(self) -> dict[str, Any]:
         conn = self._conn()
         version = conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()

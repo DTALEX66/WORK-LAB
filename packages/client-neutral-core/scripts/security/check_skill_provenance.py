@@ -155,6 +155,49 @@ def validate(repo_root: Path, manifest_path: Path, live_root: Path | None = None
                 raise ValueError(f"source SHA drift: {name}")
         if not entry.get("trust") or not entry.get("permission") or "enabled" not in entry:
             raise ValueError(f"provenance trust/permission/enabled missing: {name}")
+        # Offline self-consistency (added AG-08b, 2026-10-01). `live_sha256` is
+        # only checked against a real deployment root when --live-root is passed,
+        # and the canonical CI gate does NOT pass it (it prints
+        # live_checked=False). So a stale live_sha256 could sit in the manifest
+        # undetected: model-switch carried a digest that differed from its own
+        # source file for an unknown period.
+        #
+        # Where `live` equals `source` (all entries today, because the live field
+        # holds a repo-relative path rather than a deployment target), the two
+        # digests describe the SAME file and must therefore agree. source_sha256
+        # is already validated against disk above, so this comparison needs no
+        # external root and closes the silent-drift hole offline.
+        if entry.get("live") == source_rel:
+            if entry.get("live_sha256") != entry.get("source_sha256"):
+                raise ValueError(
+                    f"live/source self-inconsistency: {name} records live==source but "
+                    "live_sha256 != source_sha256 (the two digests describe the same file)"
+                )
+        # AG-06o (audit F04): content that exists only in the deployed copy is
+        # destroyed by the next single-direction publish, silently, because the
+        # repository source does not contain it. A verification that only compares
+        # digests cannot see that; it needs the divergence named. When an entry
+        # declares it, the declaration must be complete enough to act on.
+        divergence = entry.get("live_content_divergence")
+        if isinstance(divergence, dict) and divergence.get("live_ahead_of_source"):
+            if not divergence.get("live_only_lessons") and not divergence.get(
+                "live_only_references"
+            ):
+                raise ValueError(
+                    f"live divergence without content: {name} claims the deployed copy is "
+                    "ahead of the source but names no lesson or reference that only the "
+                    "deployed copy has"
+                )
+            if not divergence.get("remediation_path"):
+                raise ValueError(
+                    f"live divergence without remediation: {name} records content that a "
+                    "redeploy would destroy but names no path to land it"
+                )
+            if not divergence.get("effect_if_redeployed_without_review"):
+                raise ValueError(
+                    f"live divergence without impact: {name} does not state what a "
+                    "redeploy would lose"
+                )
         if live_root is not None:
             live_rel = entry.get("live")
             if not isinstance(live_rel, str):

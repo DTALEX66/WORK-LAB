@@ -15,7 +15,7 @@ param(
 $ErrorActionPreference = "Stop"
 $RepoRoot = $PSScriptRoot
 if ([string]::IsNullOrWhiteSpace($PlanFile)) {
-    $PlanFile = Join-Path $RepoRoot ".hermes\task-artifacts\setup-plan.json"
+    $PlanFile = Join-Path $RepoRoot ".project-local\artifacts\setup-plan.json"
 }
 
 $PythonCommandInfo = Get-Command python -ErrorAction SilentlyContinue
@@ -42,7 +42,7 @@ if (-not (Test-Path -LiteralPath $HermesHome -PathType Container)) {
     throw "Hermes home must already exist; refusing to create a live target: $HermesHome"
 }
 
-$SyncScript = Join-Path $RepoRoot "scripts\workflow\sync_hermes_workflow_assets.py"
+$SyncScript = Join-Path $RepoRoot "integrations\executors\hermes\sync_hermes_workflow_assets.py"
 $SyncArgs = @(
     $SyncScript,
     "--repo", $RepoRoot,

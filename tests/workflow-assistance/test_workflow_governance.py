@@ -92,7 +92,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             home = Path(raw) / "isolated-home"
             result = subprocess.run(
                 [sys.executable, str(script), "--repo", str(ROOT), "--home", str(home)],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -200,7 +200,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             home = Path(raw) / "isolated-home"
             result = subprocess.run(
                 [sys.executable, str(script), "--repo", str(ROOT), "--home", str(home)],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -324,7 +324,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             subprocess.run(["git", "init", "-q", str(target)], check=True)
             result = subprocess.run(
                 [sys.executable, str(script), str(target), "--dry-run"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -342,7 +342,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
             created = subprocess.run(
                 [sys.executable, str(script), str(target), "--agent-rules"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -353,7 +353,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             (target / "AGENTS.md").write_text("# existing rules\n", encoding="utf-8")
             rerun = subprocess.run(
                 [sys.executable, str(script), str(target), "--agent-rules"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -375,7 +375,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
             result = subprocess.run(
                 [sys.executable, str(script), str(target)],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -393,7 +393,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             self.require_posix_anonymous_staging(home)
             dry_run = subprocess.run(
                 [sys.executable, str(script), "--codex-home", str(home)],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -403,7 +403,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
             created = subprocess.run(
                 [sys.executable, str(script), "--codex-home", str(home), "--apply"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -413,7 +413,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
             existing = subprocess.run(
                 [sys.executable, str(script), "--codex-home", str(home), "--apply"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -423,7 +423,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             (home / "AGENTS.override.md").write_text("# user override\n", encoding="utf-8")
             override = subprocess.run(
                 [sys.executable, str(script), "--codex-home", str(home), "--apply"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -496,7 +496,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
             result = subprocess.run(
                 [sys.executable, str(script), "--codex-home", str(home), "--apply"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -508,7 +508,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             target.write_text("# user rules\n", encoding="utf-8")
             preserved = subprocess.run(
                 [sys.executable, str(script), "--codex-home", str(home), "--apply"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -529,7 +529,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             ):
                 preview = subprocess.run(
                     [sys.executable, str(script), "--codex-home", str(home)],
-                    text=True,
+                    text=True, encoding="utf-8", errors="replace",
                     capture_output=True,
                     check=False,
                 )
@@ -538,7 +538,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
                 applied = subprocess.run(
                     [sys.executable, str(script), "--codex-home", str(home), "--apply"],
-                    text=True,
+                    text=True, encoding="utf-8", errors="replace",
                     capture_output=True,
                     check=False,
                 )
@@ -1173,7 +1173,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
 
             result = subprocess.run(
                 [sys.executable, str(script), "--codex-home", str(home), "--apply"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -1198,7 +1198,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             home = linked_parent / ".codex"
             result = subprocess.run(
                 [sys.executable, str(script), "--codex-home", str(home), "--apply"],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -1214,7 +1214,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             output = Path(raw) / "provider-health.json"
             result = subprocess.run(
                 [sys.executable, str(script), "--config", str(ROOT / "config/config.yaml"), "--output", str(output)],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -1295,7 +1295,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             sample.write_text('api_key = "' + "A" * 32 + '"\n', encoding="utf-8")
             result = subprocess.run(
                 [sys.executable, str(scanner), str(sample)],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -1587,7 +1587,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             home = Path(raw) / "isolated-home"
             result = subprocess.run(
                 [sys.executable, str(script), "--repo", str(ROOT), "--home", str(home)],
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -1613,14 +1613,14 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 subprocess.run(["git", "init", "-q", str(target)], check=True)
                 boot = subprocess.run(
                     [sys.executable, str(bootstrap), str(target), "--agent-rules"],
-                    text=True,
+                    text=True, encoding="utf-8", errors="replace",
                     capture_output=True,
                     check=False,
                 )
                 self.assertEqual(boot.returncode, 0, boot.stdout + boot.stderr)
                 check = subprocess.run(
                     [sys.executable, str(wrapper), "--project", str(target), "check"],
-                    text=True,
+                    text=True, encoding="utf-8", errors="replace",
                     capture_output=True,
                     check=False,
                 )
@@ -2461,7 +2461,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                     ["git", "-C", str(project), "rev-parse", "--show-toplevel"],
                     check=True,
                     capture_output=True,
-                    text=True,
+                    text=True, encoding="utf-8", errors="replace",
                 ).stdout.strip()
             ).resolve()
             default_workspace = module.resolve_live_codex_workspace(project, None)
@@ -2682,7 +2682,19 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "core-schemas",
                 "adapter-registry",
                 "capability-matrix",
+                "model-registry-integrity",
+                "acp-adapter-honesty",
+                "observer-readonly-boundary",
+                # Added 2026-10-08: `verify` said GATE_EXIT=0 twice while the CI observer job went red,
+                # because the observer JS contract suite and vitest had no local route.
+                "observer-frontend-contracts",
+                "registry-closure-report",
+                "evidence-tiering",
+                "root-governance-suite",
                 "policy-coverage",
+                # added 2026-10-08: the blueprint projection was a CI-only rule and went stale from an
+                # honest register edit that a local run could not see.
+                "blueprint-projection",
                 "context-control-plane",
                 "external-libraries-index",
                 "protected-drives-consistency",
@@ -2696,6 +2708,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 "task-ledger-replay",
                 "portable-install",
                 "provider-inventory",
+                "plugin-inventory-honesty",
                 "mcp-audit",
                 "shell",
                 "runtime-convergence",
@@ -2784,13 +2797,15 @@ class WorkflowGovernanceTests(unittest.TestCase):
         list_result = subprocess.run(
             [sys.executable, str(runner), "list"],
             cwd=ROOT,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
             check=True,
         )
         self.assertIn(
-            "verify: Run governance, compile, skill-provenance, security, context-pack, "
-            "client-neutral-manifest, core-schemas, adapter-registry, capability-matrix, policy-coverage, context-control-plane, external-libraries-index, protected-drives-consistency, three-project-boundary, github-delivery, adapter-conformance, acp-conformance, otel-mapping, usage-ingestion, memory-contamination, task-ledger-replay, portable-install, provider-inventory, mcp-audit",
+            # Derived rather than retyped: the tuple above is what pins the order, and this asserts the
+            # runner's own `list` output agrees with it. The literal this replaces had to be edited in
+            # two places on every gate addition and stopped matching after the first new gate.
+            "verify: Run " + ", ".join(module.VERIFY_ORDER),
             list_result.stdout,
         )
         self.assertTrue({"design-contract", "production-evidence", "standard-validators"}.isdisjoint(module.GATES))
@@ -2870,7 +2885,7 @@ class WorkflowGovernanceTests(unittest.TestCase):
             result = subprocess.run(
                 [sys.executable, str(script), str(template)],
                 cwd=ROOT,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=True,
             )

@@ -12,8 +12,17 @@ configuration:
     - cli
 modules:
   workflow:
+    # P2-04 (2026-10-08): services/ and integrations/ are active supporting surfaces of the same owner
+    # (AGENTS.md scope; module-ownership keeps exactly two module ROOTS). Before this they were "unknown"
+    # to the planner, so any change under them escalated to every CI job — and an unknown surface is also
+    # the case where a classifier can silently select nothing. Naming the root makes the workflow job the
+    # precise requirement, because that job runs the whole local governance batch these surfaces are
+    # tested by. Gate ids are deliberately NOT added here: scripts/ci/aggregate_gate.py requires the
+    # profile's gate set to equal its PLAN_GATES, so a new gate id would reject every plan.
     roots:
       - packages/client-neutral-core
+      - services
+      - integrations
     depends_on: []
     active: true
   observer:
@@ -33,6 +42,10 @@ risk_zones:
 gates:
   workflow:
     command: python services/orchestration/run_quality_gate.py governance
+    # A schema change is consumed by generated types and by code that reads them, so it runs the job
+    # that owns the governance batch — not only the aggregate/catalog check.
+    paths:
+      - packages/contracts/
     tiers:
       - module
       - full
@@ -47,6 +60,8 @@ gates:
     platform: discovered
   integration:
     command: python tests/ci/test_governance_gate.py
+    paths:
+      - packages/contracts/
     tiers:
       - full
       - release

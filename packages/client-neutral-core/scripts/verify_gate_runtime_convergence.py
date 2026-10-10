@@ -28,8 +28,8 @@ def _git(root: Path, *args: str) -> str:
 def check_1_current_state_attestation() -> dict:
     """Old branch/head/CI must not pass freshness.
 
-    On CI runners the local CI-evidence file (.hermes/task-artifacts/
-    current-state-ci.json) is not checked out (it is git-ignored), so the
+    On CI runners the local CI-evidence file
+    (.project-local/artifacts/current-state-ci.json) is not checked out (it is git-ignored), so the
     tracked CI run cannot be compared. Per Master TaskPack §15 this is an
     environment limitation reported as PENDING, not a code failure; the
     attestation is fully verified on the developer workstation where the
@@ -37,13 +37,13 @@ def check_1_current_state_attestation() -> dict:
     """
     result = subprocess.run(
         [sys.executable, "scripts/ci/generate_current_state.py", "--check-current", "--root", "."],
-        cwd=ROOT, text=True, capture_output=True, check=False,
+        cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False,
     )
     ok = "CURRENT_STATE_FRESHNESS_PASS" in result.stdout
     if ok:
         return {"id": 1, "name": "current-state-attestation", "pass": True,
                 "evidence": "generate_current_state --check-current"}
-    evidence_file = ROOT / ".hermes/task-artifacts/current-state-ci.json"
+    evidence_file = ROOT / ".project-local/artifacts/current-state-ci.json"
     if not evidence_file.is_file():
         return {"id": 1, "name": "current-state-attestation", "pass": False,
                 "evidence": "PENDING: local CI-evidence file absent on runner (environment-limited, §15)"}
@@ -80,9 +80,9 @@ def check_3_sse_append_during_connection() -> dict:
 def check_4_usage_token_allowlist() -> dict:
     """Legal input_tokens must enter canonical ledger; auth tokens rejected."""
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
+    import project_temp
     from canonical_store import CanonicalStore, validate_record
-    with tempfile.TemporaryDirectory() as td:
+    with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
         store = CanonicalStore(Path(td) / "c.sqlite")
         sample_id = store.record_usage_sample(
             {"project_id": "p", "provider": "deepseek", "model": "m",
@@ -106,10 +106,10 @@ def check_5_no_fabricated_exact() -> dict:
     the v3 snapshot semantic (empty store -> OFFLINE/UNKNOWN/null tokens).
     """
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
+    import project_temp
     from canonical_store import CanonicalStore
     from composition_root import build_v3_snapshot, load_approved_index
-    with tempfile.TemporaryDirectory() as td:
+    with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
         store = CanonicalStore(Path(td) / "c.sqlite")
         index = load_approved_index(store)
         snapshot = build_v3_snapshot(
@@ -135,7 +135,6 @@ def check_6_dual_project_canary() -> dict:
     developer workstation).
     """
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
     from canonical_store import CanonicalStore
     from collectors import build_standard_collectors
     from durable_worker import DurableWorker
@@ -158,9 +157,11 @@ def check_6_dual_project_canary() -> dict:
         return {"id": 6, "name": "dual-project-canary", "pass": False,
                 "evidence": "PENDING: declared canary roots contain no eligible OS project (§15)"}
     real = os_projects[0]
-    td = tempfile.mkdtemp()
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import project_temp
+    td = project_temp.fixture_dir(prefix="gate-convergence-")
     try:
-        store = CanonicalStore(Path(td) / "c.sqlite")
+        store = CanonicalStore(td / "c.sqlite")
         try:
             worker = DurableWorker(store, project_id=real.project_id,
                                    collectors=build_standard_collectors(real.root))
@@ -171,7 +172,7 @@ def check_6_dual_project_canary() -> dict:
             store.close()
     finally:
         import shutil
-        shutil.rmtree(td, ignore_errors=True)
+        shutil.rmtree(td)
     return {"id": 6, "name": "dual-project-canary", "pass": ok, "evidence": evidence}
 
 
@@ -183,12 +184,12 @@ def _discover_os_projects(search_root):
 def check_7_worker_resume_from_ledger() -> dict:
     """Worker must resume from Task Ledger after restart."""
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
     from canonical_store import CanonicalStore
     from durable_worker import DurableWorker
-    td = tempfile.mkdtemp()
+    import project_temp
+    td = project_temp.fixture_dir(prefix="gate-convergence-")
     try:
-        store = CanonicalStore(Path(td) / "c.sqlite")
+        store = CanonicalStore(td / "c.sqlite")
         try:
             store.upsert_task({"task_id": "resume-task", "project_id": "p", "status": "PENDING"})
             worker1 = DurableWorker(store, task_handler=lambda s, task: None)
@@ -201,7 +202,7 @@ def check_7_worker_resume_from_ledger() -> dict:
             store.close()
     finally:
         import shutil
-        shutil.rmtree(td, ignore_errors=True)
+        shutil.rmtree(td)
     return {"id": 7, "name": "worker-resume-from-ledger", "pass": ok,
             "evidence": "task persisted to COMPLETED_LOCAL, readable by new worker"}
 
@@ -211,10 +212,10 @@ def check_8_ci_queued_no_job_releases_writer() -> dict:
     # The durable worker never acquires a lease for CI waiting; watcher
     # semantics are covered by ci_watcher tests. Verify bounded retry blocks.
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
+    import project_temp
     from canonical_store import CanonicalStore
     from durable_worker import DurableWorker
-    with tempfile.TemporaryDirectory() as td:
+    with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
         store = CanonicalStore(Path(td) / "c.sqlite")
         store.upsert_task({"task_id": "boom", "project_id": "p", "status": "PENDING"})
 
@@ -231,24 +232,87 @@ def check_8_ci_queued_no_job_releases_writer() -> dict:
             "evidence": "bounded retry -> BLOCKED_POLICY, lease released"}
 
 
+def _cargo_candidates() -> list[Path]:
+    """Where cargo may legitimately live, in probe order.
+
+    The declared shared-library roots in external-libraries-index.json are
+    consulted, not just the PATH and the per-user cargo home: a failed PATH
+    probe is not evidence that the toolchain is absent (windows-development
+    environment reference, 'Never turn a failed path probe into the persistent
+    claim MSVC/Tauri is unavailable').
+    """
+    candidates: list[Path] = []
+    override = os.environ.get("WORKLAB_CARGO")
+    if override:
+        candidates.append(Path(override))
+    from shutil import which
+    found = which("cargo") or which("cargo.exe")
+    if found:
+        candidates.append(Path(found))
+    candidates.append(Path(os.path.expanduser("~/.cargo/bin/cargo.exe")))
+    index = ROOT / ".project/governance/external-libraries-index.json"
+    if index.is_file():
+        try:
+            data = json.loads(index.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
+        roots = data.get("sharedRoots", {}) or {}
+        for lib in data.get("libraries", []) or []:
+            if lib.get("kind") != "toolchains":
+                continue
+            base = roots.get(lib.get("sharedRoot", ""))
+            if not base:
+                continue
+            for asset in lib.get("assets", []) or []:
+                if asset.get("tool") != "cargo":
+                    continue
+                rel = asset.get("relativePath") or ""
+                if rel:
+                    candidates.append(Path(base) / lib.get("relativePath", "") / rel)
+    out: list[Path] = []
+    for c in candidates:
+        if c not in out:
+            out.append(c)
+    return out
+
+
+def _cargo_readback(cargo: Path) -> str | None:
+    """Run the candidate and return its version line, or None if it will not run."""
+    try:
+        result = subprocess.run(
+            [str(cargo), "--version"], text=True, capture_output=True,
+            check=False, timeout=30, encoding="utf-8", errors="replace",
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    line = (result.stdout or "").strip().splitlines()
+    return line[0] if line else ""
+
+
 def check_9_tauri_real_sidecar() -> dict:
     """Tauri must connect real Sidecar, not silent fixture LIVE."""
-    import shutil
-    # Rust toolchain was installed (2026-08-14); locate cargo including the
-    # per-user .cargo/bin which is not on the git-bash PATH by default.
-    cargo = shutil.which("cargo") or Path(os.path.expanduser("~/.cargo/bin/cargo.exe")).resolve()
-    present = cargo is not None and Path(str(cargo)).is_file()
+    resolved = [(c, _cargo_readback(c)) for c in _cargo_candidates() if c.is_file()]
+    usable = [(c, v) for c, v in resolved if v is not None]
+    if usable:
+        cargo, version = usable[0]
+        return {"id": 9, "name": "tauri-real-sidecar", "pass": False,
+                "evidence": ("PENDING: desktop WebView2 E2E not executed; build toolchain "
+                             f"available: cargo={version} at {cargo} "
+                             f"({len(usable)} candidate(s) resolve)")[:400]}
+    probed = ", ".join(str(c) for c in _cargo_candidates()[:4])
     return {"id": 9, "name": "tauri-real-sidecar", "pass": False,
-            "evidence": f"PENDING: cargo={'present' if present else 'absent'} (Windows toolchain not installed)"}
+            "evidence": f"PENDING: no runnable cargo among probed candidates: {probed}"}
 
 
 def check_10_no_credentials_in_store() -> dict:
     """No credentials/prompt-response/desktop private state in DB or UI."""
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
+    import project_temp
     from canonical_store import CanonicalStore, validate_record
     rejected = False
-    with tempfile.TemporaryDirectory() as td:
+    with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
         store = CanonicalStore(Path(td) / "c.sqlite")
         try:
             store.append_telemetry({"event_id": "x", "prompt": "full body", "project_id": "p"})

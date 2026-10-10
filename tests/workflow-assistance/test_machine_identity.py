@@ -4,7 +4,6 @@ import importlib.util
 import json
 import subprocess
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -16,28 +15,23 @@ module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 
-
-def _runtime_root() -> Path:
-    """WL-010: project-local runtime root (git-ignored), auto-created."""
-    p = ROOT / ".project-local" / "runs"
-    p.mkdir(parents=True, exist_ok=True)
-    return p
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+import project_temp  # noqa: E402
 
 
 class MachineIdentityTests(unittest.TestCase):
     def setUp(self) -> None:
-        # track every temp project so tearDown removes it (mkdtemp never
-        # self-cleans; 50+ leaked dirs were found under .hermes/task-runtime)
+        # Every throwaway project is registered with project_temp, so a killed run leaves an orphan
+        # the bound gate can see and the reclaim tool can release. These used to be bare `mkdtemp`
+        # dirs dropped straight into `.project-local/runs`, where 50+ of them piled up unowned.
         self._tmp_projects: list[Path] = []
 
     def tearDown(self) -> None:
-        import shutil
         for p in self._tmp_projects:
-            shutil.rmtree(p, ignore_errors=True)
+            project_temp.force_release(p)
 
     def make_project(self) -> Path:
-        raw = tempfile.mkdtemp(dir=_runtime_root())
-        project = Path(raw)
+        project = project_temp.fixture_dir(prefix="machine-identity-")
         self._tmp_projects.append(project)
         (project / ".git").mkdir()
         (project / ".hermes" / "task-runtime").mkdir(parents=True)
@@ -101,7 +95,7 @@ class MachineIdentityTests(unittest.TestCase):
             module.status(project, Path("..") / "outside.json")
 
     def test_non_project_directory_is_rejected_before_status_or_write(self) -> None:
-        outside = Path(tempfile.mkdtemp(dir=_runtime_root()))
+        outside = project_temp.fixture_dir(prefix="machine-identity-outside-")
         self._tmp_projects.append(outside)
         with self.assertRaises(ValueError):
             module.status(outside)
@@ -172,7 +166,7 @@ class MachineIdentityTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "status"],
             cwd=ROOT,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
             check=False,
         )

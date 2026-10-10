@@ -165,6 +165,74 @@ def clear_software_discovery_cache() -> None:
 
 
 # ---------------------------------------------------------------------------
+# REQ-RANGE-20261007: artifactHandles[] wiring
+#
+# The evidence-range route could already read an exact byte interval of one artifact; what the UI was
+# missing was the list of handles it may ask about, so the record was parked at
+# UI_LANDING_BLOCKED_ON_HANDLE_PROJECTION. `artifact_handle_projection` enumerates the declared evidence
+# surfaces and projects identity-only rows (path, surface, size, mtime, kind, and a digest ONLY where a
+# project record already states one).
+#
+# Same TTL shape as software discovery, and for the same reason: the walk costs ~130 ms on this machine
+# and build_v3_snapshot runs twice per snapshot (the live-gate skeleton and the snapshot itself), so an
+# uncapped per-call enumeration would put ~260 ms of directory syscalls into every read.
+#
+# Absent-vs-empty is the contract, not a detail: no declared surface on this machine means the KEY IS NOT
+# EMITTED (an empty list would claim the project owns no evidence), while a surface that exists and holds
+# nothing emits [].
+# ---------------------------------------------------------------------------
+_ARTIFACT_HANDLES_TTL_SECONDS = 60.0
+_artifact_handles_cache: dict[str, Any] = {}
+
+
+def _build_artifact_handles_projection(*, force: bool = False) -> tuple[list[dict[str, Any]] | None,
+                                                                       dict[str, Any] | None,
+                                                                       str | None]:
+    """(handles, summary, absentReason) from this machine's declared evidence surfaces, TTL-cached."""
+    now = time.time()
+    if not force and _artifact_handles_cache and (
+            now - _artifact_handles_cache.get("at", 0.0)) < _ARTIFACT_HANDLES_TTL_SECONDS:
+        return (_artifact_handles_cache["handles"], _artifact_handles_cache["summary"],
+                _artifact_handles_cache["reason"])
+    handles: list[dict[str, Any]] | None = None
+    summary: dict[str, Any] | None = None
+    reason: str | None = None
+    try:
+        from artifact_handle_projection import load_artifact_handles
+        handles, summary, reason = load_artifact_handles(_ROOT, generated_at=_snapshot_timestamp(now))
+    except Exception as error:  # noqa: BLE001 - a listing fault is a reported gap, never a crashed read
+        handles = summary = None
+        reason = f"projection-unavailable:{type(error).__name__}"
+    _artifact_handles_cache.clear()
+    _artifact_handles_cache.update({"at": now, "handles": handles, "summary": summary, "reason": reason})
+    return handles, summary, reason
+
+
+def _snapshot_timestamp(now: float) -> str:
+    from datetime import datetime, timezone
+    return datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def clear_artifact_handles_cache() -> None:
+    """Public reset for tests / callers that need a fresh enumeration."""
+    _artifact_handles_cache.clear()
+
+
+def artifact_handles_status() -> dict[str, Any]:
+    """Why artifactHandles is or is not in the last snapshot — read from the same cache the build used.
+
+    The snapshot itself only ever says "here are the handles" or says nothing (absent must stay absent), so
+    without this accessor an absent key would be unexplainable to an operator: no surface on this machine
+    and an enumeration that threw look identical from the outside.
+    """
+    return {"enumerated": bool(_artifact_handles_cache.get("handles") is not None),
+            "absentReason": _artifact_handles_cache.get("reason"),
+            "projectedCount": len(_artifact_handles_cache.get("handles") or []),
+            "cachedAt": _artifact_handles_cache.get("at"),
+            "ttlSeconds": _ARTIFACT_HANDLES_TTL_SECONDS}
+
+
+# ---------------------------------------------------------------------------
 # End WS-2 / spec-3 software[] wiring
 # ---------------------------------------------------------------------------
 
@@ -303,19 +371,60 @@ def _agent_platform_map() -> dict[str, str]:
     return mapping
 
 
+def _collector_is_fresh(row: dict[str, Any]) -> bool:
+    """One predicate for "this collector is currently delivering", shared by coverage and the delivery rows.
+
+    Two surfaces that each decide freshness on their own drift apart the first time one of them is tightened,
+    and then the same collector reads healthy in one lane and stale in another.
+    """
+    return bool(row.get("last_success_at")) \
+        and int(row.get("consecutive_failures") or 0) == 0 \
+        and not row.get("circuit_open_until")
+
+
 def _collector_coverage(store: CanonicalStore) -> dict[str, Any]:
     """collector_health 行 → coverage；无运行记录时保持空覆盖。"""
     rows = store.list_collector_health()
     if not rows:
         return {"numerator": None, "denominator": None, "scope": None}
-    fresh = sum(
-        1
-        for row in rows
-        if row.get("last_success_at")
-        and int(row.get("consecutive_failures") or 0) == 0
-        and not row.get("circuit_open_until")
-    )
+    fresh = sum(1 for row in rows if _collector_is_fresh(row))
     return {"numerator": fresh, "denominator": len(rows), "scope": "collector_health"}
+
+
+def _collector_delivery_rows(store: CanonicalStore) -> list[dict[str, Any]] | None:
+    """Per collector: how many rows it delivered, how many it refused, and why the refusals happened.
+
+    ERR-256 made these facts durable (`collector_health.refused_rows` / `last_refusal_reason`, migration 4);
+    this makes them reachable. Coverage alone cannot carry the statement: a source that refused half its rows
+    still reads fresh under the liveness predicate, and "the collector is green" over a stream of refusals is
+    the silent-filtering lie in a new costume.
+
+    Absent, never empty, on the same rule as `adapterCapabilities`: if the health table cannot be read the key
+    is not emitted at all, because `[]` would tell the surface "every source was read and there are none".
+
+    `circuit_open_until` is deliberately NOT projected. It is a `time.monotonic()` value from another process,
+    so it means nothing to a reader and would be re-derived wrong; the boolean is the fact.
+    """
+    try:
+        rows = store.list_collector_health()
+    except Exception:  # noqa: BLE001 - unreadable source is a gap, not a claim of "no collectors"
+        return None
+    return [
+        {
+            "collector": str(row.get("name") or "unknown"),
+            "totalRuns": int(row.get("total_runs") or 0),
+            "lastRunAt": row.get("last_run_at"),
+            "lastSuccessAt": row.get("last_success_at"),
+            "consecutiveFailures": int(row.get("consecutive_failures") or 0),
+            "circuitOpen": bool(row.get("circuit_open_until")),
+            "droppedEvents": int(row.get("dropped_count") or 0),
+            "refusedRows": int(row.get("refused_rows") or 0),
+            "deliveredRows": int(row.get("delivered_rows") or 0),
+            "lastRefusalReason": row.get("last_refusal_reason"),
+            "fresh": _collector_is_fresh(row),
+        }
+        for row in rows
+    ]
 
 
 def _git_states(store: CanonicalStore) -> dict[str, dict[str, Any]]:
@@ -386,6 +495,9 @@ def build_v3_snapshot(
     except Exception:
         platform_map = {}
     git_states = _git_states(store)
+    software_rows = _build_software_projection()
+    artifact_handle_rows, artifact_handles_summary, _artifact_handles_reason = (
+        _build_artifact_handles_projection())
     return build_snapshot(
         revision=revision,
         generated_at=generated_at,
@@ -410,5 +522,75 @@ def build_v3_snapshot(
         workspace=workspace_evidence,
         platform_map=platform_map,
         agent_map=_agent_platform_map(),
-        software=_build_software_projection(),
+        software=software_rows,
+        task_records=_task_rows(store),
+        adapter_capabilities=_adapter_capability_rows(software_rows),
+        artifact_handles=artifact_handle_rows,
+        artifact_handles_summary=artifact_handles_summary,
+        collector_delivery=_collector_delivery_rows(store),
     )
+
+
+def _adapter_capability_rows(software_rows: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+    """P1-03: one capability card per managed client, seven layers each, plus the per-verb dimension.
+
+    The projection lives in ``adapter_capability_projection`` (the single place that decides a layer's
+    state) so the read side cannot promote a declared capability into an observed one. If either declared
+    source is missing the card set is simply absent from the snapshot — the Agents lane then reports the
+    source gap instead of inventing a ladder.
+
+    Absent, never empty: returning [] when the load failed told the UI "the sources were read and nothing
+    is declared", which is the opposite claim from "I could not look" and made the honest gap branch
+    unreachable in production.
+
+    The verb dimension is loaded alongside the entry probe and is additive and optional in exactly the
+    same way: a client with rows gets ``verbEvidence``, a client the probe record says nothing about keeps
+    no key at all. An absent file yields ``({}, None)`` from ``load_verb_probe``, and a record that exists
+    but cannot be read or whose verb vocabulary disagrees with the contract is degraded HERE to "no verb
+    rows for anyone" rather than being laundered into an empty list (which a renderer would read as
+    "declares nothing" instead of "I did not look") and rather than removing the seven layers that were
+    read successfully. The contract verb list is taken from the projection's own discovery helper, never
+    restated here, so the cards and the probe adjudicate verbs against the same closed vocabulary.
+    """
+    try:
+        from adapter_capability_projection import (load_inputs, load_live_probe,
+                                                  project_adapter_capabilities)
+        from snapshot_api import _now as _snapshot_now
+        registry, conformance, matrix = load_inputs(_ROOT)
+        probe_rows, probe_at = load_live_probe(_ROOT)
+    except Exception:  # noqa: BLE001 - a failed read is a source gap, not an empty capability set
+        return None
+    # Everything the seven layers need, without the additive verb dimension. Reused by both the verb-on and
+    # the degraded-to-verbless calls so the ladder is byte-identical whichever way the verb record reads.
+    layers_only = {
+        "registry": registry,
+        "conformance": conformance,
+        "matrix": matrix,
+        "software_rows": software_rows,
+        "live_probe_rows": probe_rows,
+        "live_probe_at": probe_at,
+        "observed_at": _snapshot_now(),
+    }
+    try:
+        from adapter_capability_projection import load_verb_probe, contract_verb_vocabulary
+        verb_rows, verb_at = load_verb_probe(_ROOT)
+        contract_verbs = contract_verb_vocabulary(_ROOT)
+    except Exception:  # noqa: BLE001 - an unreadable or disagreeing verb record is "did not look", no verbEvidence
+        return project_adapter_capabilities(**layers_only)
+    try:
+        return project_adapter_capabilities(
+            **layers_only, verb_rows=verb_rows, verb_probe_at=verb_at, contract_verbs=contract_verbs)
+    except Exception:  # noqa: BLE001 - a malformed verb row must not remove the honest seven-layer ladder
+        return project_adapter_capabilities(**layers_only)
+
+
+def _task_rows(store: CanonicalStore) -> list[dict[str, Any]]:
+    """Task detail records for the Work lane, projected by the unique Snapshot API.
+
+    ``list_tasks()`` is the canonical store's own read; the projection lives in
+    ``snapshot_api.project_task_record`` so there is exactly one place that decides what a task looks
+    like on the read side. The checkpoint VALUES stay in the store — a read-only projection carries the
+    key names and a digest, never the workflow text.
+    """
+    from snapshot_api import project_task_record
+    return [project_task_record(row) for row in store.list_tasks()]

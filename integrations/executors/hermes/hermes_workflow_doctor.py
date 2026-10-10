@@ -264,7 +264,7 @@ def resolve_live_codex_workspace(project_root: Path, requested: Path | None) -> 
     result = subprocess.run(
         ["git", "-C", str(supplied), "rev-parse", "--show-toplevel"],
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
         check=False,
     )
     if result.returncode:

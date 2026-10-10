@@ -3,9 +3,11 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/ui/page-header'
 import type {
-  SnapshotV3, Execution, Project,
+  SnapshotV3, Execution, Project, GitMatchState,
 } from '@/types'
-import { fmtTokens, fmtCostQuality, stateTone, activityTone } from '@/lib/api'
+import { fmtTokens, fmtCostQuality, fmtTimestamp, stateTone, activityTone } from '@/lib/api'
+import { AdapterCapabilityCards } from '@/views/AdapterCapabilityCards'
+import { StateMatrixCard } from '@/components/ui/states'
 
 type Snap = SnapshotV3 | null
 
@@ -15,8 +17,8 @@ function Row({ k, v }: { k: string; v: React.ReactNode }) {
   const empty = v === null || v === undefined || v === ''
   return (
     <div className="list-item">
-      <span className="text-[11px] text-muted">{k}</span>
-      <span className="ml-3 min-w-0 truncate text-right font-mono text-[11px] text-ink">{empty ? 'UNKNOWN' : v}</span>
+      <span className="text-[12px] text-muted">{k}</span>
+      <span className="ml-3 min-w-0 truncate text-right font-mono text-[12px] text-ink">{empty ? 'UNKNOWN' : v}</span>
     </div>
   )
 }
@@ -29,6 +31,25 @@ function toneVariant(tone: string): 'success' | 'warning' | 'error' | 'info' | '
     case 'done': return 'info'
     default: return 'muted'
   }
+}
+
+/**
+ * Keyed by the union rather than switch-cased, so a seventh producer outcome is a compile error here
+ * instead of a badge that quietly renders `muted`. The row used to read
+ * `matchState === 'DRIFT' ? 'error' : 'muted'`: `DRIFT` is not a value `_git_match_state` returns, so
+ * `MISMATCH` — the state a user actually needs to see in red — was falling through to muted.
+ */
+const GIT_MATCH_VARIANT: Record<GitMatchState, 'success' | 'warning' | 'error' | 'info' | 'muted'> = {
+  MATCH: 'success',
+  LOCAL_REMOTE_MATCH: 'warning',
+  LOCAL_CI_MATCH: 'warning',
+  MISMATCH: 'error',
+  NO_LOCAL_CLAIM: 'muted',
+  UNVERIFIED: 'muted',
+}
+
+function gitMatchVariant(state: GitMatchState | undefined) {
+  return state === undefined ? 'muted' : GIT_MATCH_VARIANT[state]
 }
 
 const STATE_TEXT: Record<string, string> = {
@@ -59,17 +80,19 @@ export function ProjectsTable({ projects }: { projects: Project[] }) {
               <tr key={p.projectId}>
                 <td>
                   <strong className="block text-[12px] font-semibold text-ink">{p.displayName || p.projectId}</strong>
-                  <small className="font-mono text-[10px] text-muted">{p.identityState === 'RESOLVED' ? '已解析身份' : '身份未解析'}</small>
+                  <small className="font-mono text-[12px] text-muted">{p.identityState === 'RESOLVED' ? '已解析身份' : '身份未解析'}</small>
                 </td>
                 <td className="text-muted">{p.agentPlatform || 'UNKNOWN'}</td>
                 <td><Badge variant={tone === 'active' ? 'success' : 'muted'}>{p.activityState || 'UNKNOWN'}</Badge></td>
                 <td className="tabular-nums text-ink">{p.activeExecutionCount}</td>
                 <td className="tabular-nums text-ink" title="costQuality（后端权威）">
-                  {fmtTokens(p.token.totalTokens)} <span className="text-[10px] text-muted">{fmtCostQuality(p.token.costQuality)}</span>
+                  {fmtTokens(p.token.totalTokens)} <span className="text-[12px] text-muted">{fmtCostQuality(p.token.costQuality)}</span>
                 </td>
                 <td>
-                  <span className="font-mono text-[11px] text-muted">{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>{' '}
-                  {dirty ? <Badge variant="warning">脏 {dirty}</Badge> : <Badge variant="muted">干净</Badge>}
+                  <span className="font-mono text-[12px] text-muted">{p.git.branch || '—'}@{p.git.localSha ? p.git.localSha.slice(0, 7) : '—'}</span>{' '}
+                  {dirty == null ? <Badge variant="muted">脏 UNKNOWN</Badge>
+                    : dirty ? <Badge variant="warning">脏 {dirty}</Badge>
+                    : <Badge variant="muted">干净</Badge>}
                 </td>
               </tr>
             )
@@ -86,7 +109,7 @@ export function ProjectsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>项目平台</span><span className="text-[11px] text-muted">{projects.length} 个项目 · 真实 registry</span></CardHeader>
+        <CardHeader><span>项目平台</span><span className="text-[12px] text-muted">{projects.length} 个项目 · 真实 registry</span></CardHeader>
         <CardContent>
           {projects.length === 0 ? (
             <div className="empty py-10">
@@ -115,8 +138,12 @@ export function AgentsView({ snap }: { snap: Snap }) {
   }
   return (
     <div className="flex flex-col gap-4">
+      {/* P1-03: declared / detected / available / invoked / natively verified are five different facts.
+          The execution table below only ever showed the fourth-ish; the cards show all seven layers with
+          the reason any layer is still unprobed. */}
+      <AdapterCapabilityCards snap={snap} />
       <Card>
-        <CardHeader><span>Agent 实例</span><span className="text-[11px] text-muted">{byAgent.size} 个 agent · {exs.length} 条执行 · 真实投影</span></CardHeader>
+        <CardHeader><span>Agent 实例</span><span className="text-[12px] text-muted">{byAgent.size} 个 agent · {exs.length} 条执行 · 真实投影</span></CardHeader>
         <CardContent>
           {exs.length === 0 ? (
             <div className="empty py-10">
@@ -139,8 +166,8 @@ export function AgentsView({ snap }: { snap: Snap }) {
                     <tr key={e.executionId}>
                       <td className="font-mono text-ink">{e.agent || 'UNKNOWN'}</td>
                       <td><Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge></td>
-                      <td className="font-mono text-[10px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
-                      <td className="font-mono text-[10px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[12px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[12px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -162,7 +189,7 @@ export function ExecutionsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>执行详情</span><span className="text-[11px] text-muted">{exs.length} 个执行 · 真实</span></CardHeader>
+        <CardHeader><span>执行详情</span><span className="text-[12px] text-muted">{exs.length} 个执行 · 真实</span></CardHeader>
         <CardContent>
           {exs.length === 0 ? (
             <div className="empty py-10">
@@ -189,8 +216,8 @@ export function ExecutionsView({ snap }: { snap: Snap }) {
                       <td>{e.agent || 'UNKNOWN'}</td>
                       <td><Badge variant={toneVariant(stateTone(e.state))}>{STATE_TEXT[e.state] || e.state}</Badge></td>
                       <td className="text-ink">{e.anchorProjectId || 'UNKNOWN'}</td>
-                      <td className="font-mono text-[10px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
-                      <td className="font-mono text-[10px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[12px] text-muted">{e.sessionId || 'UNKNOWN'}</td>
+                      <td className="font-mono text-[12px] text-muted">{e.workingArea || 'UNKNOWN'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -205,8 +232,8 @@ export function ExecutionsView({ snap }: { snap: Snap }) {
             <Row k="传输状态" v={transport?.transportState} />
             <Row k="新鲜度" v={transport?.freshnessState} />
             <Row k="事件流" v={transport?.eventStreamConnected ? '已连接' : '未连接'} />
-            <Row k="最后心跳" v={transport?.lastHeartbeatAt ? new Date(transport.lastHeartbeatAt).toLocaleTimeString() : 'UNKNOWN'} />
-            <Row k="写入水位" v={transport?.writerWatermarkAt ? new Date(transport.writerWatermarkAt).toLocaleTimeString() : 'UNKNOWN'} />
+            <Row k="最后心跳" v={fmtTimestamp(transport?.lastHeartbeatAt, 'time')} />
+            <Row k="写入水位" v={fmtTimestamp(transport?.writerWatermarkAt, 'time')} />
           </div>
         </CardContent></Card>
         <Card><CardHeader><span>任务状态桶 + 快照</span></CardHeader><CardContent>
@@ -238,7 +265,7 @@ export function ModelsView({ snap }: { snap: Snap }) {
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <CardHeader><span>Token 汇总</span><span className="text-[11px] text-muted">质量 {fmtCostQuality(ts?.costQuality)} · 后端权威 · 前端不估算金额</span></CardHeader>
+        <CardHeader><span>Token 汇总</span><span className="text-[12px] text-muted">质量 {fmtCostQuality(ts?.costQuality)} · 后端权威 · 前端不估算金额</span></CardHeader>
         <CardContent className="flex flex-col gap-4">
           {dist.map((d) => (
             <div key={d.name}>
@@ -315,8 +342,8 @@ export function MemoryView({ snap }: { snap: Snap }) {
             <Row k="总错误数" v={(hist.totalErrors != null ? String(hist.totalErrors) : 'UNKNOWN')} />
             {(hist.recentErrors || []).slice(0, 6).map((e: any, i: number) => (
               <div key={i} className="list-item">
-                <span className="font-mono text-[11px] text-muted">{e.errorId || 'UNKNOWN'}</span>
-                <span className="ml-3 min-w-0 truncate text-[11px] text-ink">{e.title || e.classification || ''}</span>
+                <span className="font-mono text-[12px] text-muted">{e.errorId || 'UNKNOWN'}</span>
+                <span className="ml-3 min-w-0 truncate text-[12px] text-ink">{e.title || e.classification || ''}</span>
               </div>
             ))}
           </div>
@@ -361,9 +388,15 @@ export function MonitoringView({ snap }: { snap: Snap }) {
         <div className="list">
           <Row k="传输状态" v={<Badge variant={transport?.transportState === 'LIVE' ? 'success' : transport?.transportState === 'OFFLINE' ? 'error' : 'muted'}>{transport?.transportState || 'UNKNOWN'}</Badge>} />
           <Row k="新鲜度" v={transport?.freshnessState || 'UNKNOWN'} />
-          <Row k="连接起点" v={transport?.connectedSince ? new Date(transport.connectedSince).toLocaleTimeString() : 'UNKNOWN'} />
+          <Row k="连接起点" v={fmtTimestamp(transport?.connectedSince, 'time')} />
           <Row k="覆盖度" v={cov && cov.numerator != null ? cov.numerator + '/' + (cov.denominator ?? '?') + ' · ' + (cov.scope || 'UNKNOWN') : 'UNKNOWN'} />
         </div>
+      </CardContent></Card>
+      <Card><CardHeader><span>产品状态矩阵（八态，含投影能否回答）</span></CardHeader><CardContent>
+        {/* Reachability, not decoration: this card shipped with WUI-11 and was imported only by its own
+            test, so no user could ever see which of the eight states the projection can answer. The
+            diagnostics lane is where that reference belongs. */}
+        <StateMatrixCard />
       </CardContent></Card>
       <Card><CardHeader><span>说明</span></CardHeader><CardContent className="text-xs text-muted">
         服务健康 = 传输真值，不是伪造的 healthy。LIVE 仅当 live-gate verdict 为 LIVE；canonical readback 失败回退 DELAYED/OFFLINE。Observer 严格只读。
@@ -384,7 +417,7 @@ export function DeliveryView({ snap }: { snap: Snap }) {
             <Row k="本地" v={git?.localSha ? git.localSha.slice(0, 7) : 'UNKNOWN'} />
             <Row k="远程" v={git?.remoteSha ? git.remoteSha.slice(0, 7) : 'UNKNOWN'} />
             <Row k="CI HEAD" v={git?.ciSha ? git.ciSha.slice(0, 7) : 'UNKNOWN'} />
-            <Row k="匹配状态" v={<Badge variant={git?.matchState === 'MATCH' ? 'success' : git?.matchState === 'DRIFT' ? 'error' : 'muted'}>{git?.matchState || 'UNKNOWN'}</Badge>} />
+            <Row k="匹配状态" v={<Badge variant={gitMatchVariant(git?.matchState)}>{git?.matchState || 'UNKNOWN'}</Badge>} />
           </div>
         </CardContent></Card>
         <Card><CardHeader><span>CI 运行</span></CardHeader><CardContent>
@@ -420,7 +453,7 @@ export function TrustView({ snap }: { snap: Snap }) {
           <Row k="新鲜度" v={transport?.freshnessState || 'UNKNOWN'} />
           <Row k="覆盖度" v={cov && cov.numerator != null ? cov.numerator + '/' + (cov.denominator ?? '?') + ' · ' + (cov.scope || 'UNKNOWN') : 'UNKNOWN'} />
           <Row k="证据引用数" v={refs.length ? String(refs.length) : '0'} />
-          <Row k="快照生成" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
+          <Row k="快照生成" v={fmtTimestamp(snap?.generatedAt)} />
         </div>
       </CardContent></Card>
       <Card><CardHeader><span>原则</span></CardHeader><CardContent className="text-xs text-muted">
@@ -453,7 +486,7 @@ export function SettingsView({ snap }: { snap: Snap }) {
             <div className="list">
               <Row k="修订号" v={snap ? String(snap.revision) : 'UNKNOWN'} />
               <Row k="Schema" v={snap?.schemaVersion || 'UNKNOWN'} />
-              <Row k="生成时间" v={snap?.generatedAt ? new Date(snap.generatedAt).toLocaleString() : 'UNKNOWN'} />
+              <Row k="生成时间" v={fmtTimestamp(snap?.generatedAt)} />
               <Row k="数据水位" v={snap?.sourceWatermark || 'UNKNOWN'} />
             </div>
           </CardContent></Card>

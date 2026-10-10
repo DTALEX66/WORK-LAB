@@ -78,7 +78,7 @@ def tracked_tree_stats() -> dict[str, Any]:
 
 def git_baseline() -> dict[str, str | None]:
     def rev(ref: str) -> str | None:
-        result = subprocess.run(["git", "rev-parse", ref], cwd=ROOT, text=True, capture_output=True)
+        result = subprocess.run(["git", "rev-parse", ref], cwd=ROOT, text=True, encoding="utf-8", errors="replace", capture_output=True)
         return result.stdout.strip() if result.returncode == 0 else None
     return {"previousCommit": rev("HEAD~1"), "currentCommit": rev("HEAD"),
             "baselineStatus": "COMPARABLE_TO_PARENT_COMMIT" if rev("HEAD~1") else "NOT_AVAILABLE"}

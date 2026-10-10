@@ -55,7 +55,7 @@ class SidecarLockTests(unittest.TestCase):
    )
    process=subprocess.Popen(
     [sys.executable, '-c', script, str(path)],
-    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
    )
    try:
     self.assertEqual(process.stdout.readline().strip(), 'READY')

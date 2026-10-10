@@ -59,7 +59,7 @@ const base: SnapshotV3 = {
   ],
   tasks: { rules: 3, memory: 1 },
   tokenSummary: { inputTokens: null, outputTokens: null, totalTokens: null, costQuality: 'UNKNOWN' },
-  git: { localSha: null, remoteSha: null, ciSha: null, matchState: 'UNKNOWN' },
+  git: { localSha: null, remoteSha: null, ciSha: null, matchState: 'NO_LOCAL_CLAIM' },
   ci: [
     {
       runId: '35545037452',

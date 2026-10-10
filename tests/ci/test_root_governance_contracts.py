@@ -20,7 +20,7 @@ class RootGovernanceContractTests(unittest.TestCase):
         return subprocess.run(
             [sys.executable, str(ROOT / relative_path)],
             cwd=ROOT,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
         )
 

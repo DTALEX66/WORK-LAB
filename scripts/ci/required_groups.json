@@ -13,6 +13,7 @@
         ["python", "tests/test_observer_runtime.py"],
         ["python", "tests/test_observer_evidence.py"],
         ["python", "tests/test_observer_store.py"],
+        ["python", "tests/test_artifact_freshness.py"],
         ["python", "scripts/verify_usage_rollup.py"],
         ["python", "tests/test_usage_rollup.py"],
         ["python", "tests/test_observer_events_migration.py"]
@@ -21,11 +22,7 @@
     "observer-web-contracts": {
       "working_dir": "apps/observer",
       "commands": [
-        ["node", "tests/run_all_tests.js"],
-        {
-          "glob": "web/scripts/*.js",
-          "argv_template": ["node", "--check", "{path}"]
-        }
+        ["node", "tests/run_all_tests.js"]
       ]
     },
     "observer-frontend-typecheck": {

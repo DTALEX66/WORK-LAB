@@ -1,0 +1,64 @@
+{
+  "schemaVersion": "work-lab/root-document-dispositions/v1",
+  "authority": false,
+  "purpose": "Classifies every tracked Markdown file at the repository root so a session that opens a file by name before the authority chain cannot mistake a closed execution record for live work. Grants no decision; the authority order stays in project-authority-index.json.",
+  "machineVerifier": "scripts/ci/verify_root_document_dispositions.py",
+  "provenance": "measured 2026-10-10 by `git ls-files -z` filtered to root-level .md (11 files, 135,586 B total, 105.9 KB of it outside the authority chain), recorded in docs/current/DOCUMENT-CENSUS.md section 4",
+  "documents": [
+    {
+      "path": "WORK-LAB-AUTHORITY.md",
+      "disposition": "authority",
+      "reason": "topHumanAuthority in .project/governance/project-authority-index.json"
+    },
+    {
+      "path": "AGENTS.md",
+      "disposition": "authority",
+      "reason": "step 4 of auditBootstrap and an entry of sourcePrecedence in the machine authority index"
+    },
+    {
+      "path": "README.md",
+      "disposition": "convention-current",
+      "reason": "repository entry point; routes readers to docs/history/owner-inputs/INDEX.md and the authority chain, owns no task"
+    },
+    {
+      "path": "NOTICE.md",
+      "disposition": "convention-current",
+      "reason": "migration/provenance notice required by the three-project boundary; states ownership, not work"
+    },
+    {
+      "path": "SECURITY.md",
+      "disposition": "convention-current",
+      "reason": "current safety policy restatement (no credentials in tracked content, LFS routing, release-SHA SBOM); normative but not a task"
+    },
+    {
+      "path": "HANDOFF-UI-L10B.md",
+      "disposition": "historical-non-normative",
+      "reason": "B10 1:1 replication handoff, self-marked CLOSED - DO NOT RE-EXECUTE on 2026-10-01; superseded by the 2026-10-09 UI priority taskpack"
+    },
+    {
+      "path": "ASSET_REPLACEMENT_MANIFEST.md",
+      "disposition": "historical-non-normative",
+      "reason": "L10/L10b reference-asset adjudication dated 2026-09-27; its verdicts are already implemented in src/skins/b10.css, so re-running it would duplicate settled work"
+    },
+    {
+      "path": "UI_DECISIONS.md",
+      "disposition": "historical-non-normative",
+      "reason": "L10 conflict rulings dated 2026-09-27 that quote a retired authority ordering (batch files under the forbidden 00-governance root); the live rulings now live in docs/current/ui-priority-20261009/CONVERSATION-DECISIONS.md"
+    },
+    {
+      "path": "UI_IMPLEMENTATION_REPORT.md",
+      "disposition": "historical-non-normative",
+      "reason": "L10/L10b implementation report dated 2026-10-08; retained in place because its uppercase filename is the falsifier in tests/workflow-assistance/test_path_text_is_one_predicate.py and tests/workflow-assistance/test_control_service.py, and taskpacks/current/error-ledger.json names it in a fix record"
+    },
+    {
+      "path": "UI_REFERENCE_MANIFEST.md",
+      "disposition": "historical-non-normative",
+      "reason": "2026-09-27 execution reference manifest whose own text commands future agents to lock to it; that claim is exactly why a banner is required, since the current visual authority is the taskpack plus apps/observer/frontend/DESIGN.md"
+    },
+    {
+      "path": "VISUAL_QA_REPORT.md",
+      "disposition": "historical-non-normative",
+      "reason": "L10/L10b visual QA report against branch p1/ui-l10-full-replica; a dated record of VERIFIED/UNVERIFIED layers, not an open checklist"
+    }
+  ]
+}

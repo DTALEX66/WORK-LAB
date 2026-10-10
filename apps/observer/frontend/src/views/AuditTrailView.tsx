@@ -120,7 +120,7 @@ export function AuditTrailView({ snap }: { snap: any }) {
             </button>
           ))}
         </div>
-        <span className="ml-auto self-center text-[11px] text-muted">{visible.length} 条记录</span>
+        <span className="ml-auto self-center text-[12px] text-muted">{visible.length} 条记录</span>
       </div>
 
       <Card>
@@ -176,7 +176,7 @@ export function AuditTrailView({ snap }: { snap: any }) {
           {sourceRefs.length === 0 ? (
             <div className="py-4 text-center text-xs text-muted">无来源引用</div>
           ) : (
-            <div className="mono text-[11px] text-muted">
+            <div className="mono text-[12px] text-muted">
               <ul className="m-0 flex list-none flex-col gap-1 p-0">
                 {sourceRefs.map((s, i) => (
                   <li key={i} className="truncate">{s}</li>

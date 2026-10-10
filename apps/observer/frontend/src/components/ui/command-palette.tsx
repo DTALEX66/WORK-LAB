@@ -1,5 +1,8 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+// WUI-14: the same composition guard the shell shortcut uses, so one rule cannot be honoured in one
+// handler and forgotten in the other.
+import { isImeComposing } from '@/lib/keyGuards'
 
 /**
  * UI_COMPONENTS (20260921) · L10b (2026-09-27): CommandPalette — L6 keyboard
@@ -37,7 +40,9 @@ export interface CommandPaletteProps {
   title?: string
 }
 
-function filterItems(items: PaletteItem[], query: string): PaletteItem[] {
+/** Exported so a contract test can drive the filter the overlay actually uses. A copy of this predicate
+ *  in a test file would pass while the real search went blind. */
+export function filterItems(items: PaletteItem[], query: string): PaletteItem[] {
   const q = query.trim().toLowerCase()
   if (!q) return items
   return items.filter(
@@ -55,15 +60,24 @@ export function CommandPalette({
   const [query, setQuery] = React.useState('')
   const [active, setActive] = React.useState(0)
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const dialogRef = React.useRef<HTMLDivElement>(null)
+  const openerRef = React.useRef<HTMLElement | null>(null)
 
   const visible = React.useMemo(() => filterItems(items, query), [items, query])
 
-  // reset + focus on open
+  // reset + focus on open, and hand focus BACK on close. Opening from the top
+  // bar's search field or from Ctrl/Cmd+K left focus inside a dialog that no
+  // longer exists, so the next Tab restarted at the top of the document.
   React.useEffect(() => {
     if (open) {
+      openerRef.current = document.activeElement as HTMLElement | null
       setQuery('')
       setActive(0)
       inputRef.current?.focus()
+    } else {
+      const returnTo = openerRef.current
+      openerRef.current = null
+      if (returnTo && document.contains(returnTo)) returnTo.focus()
     }
   }, [open])
 
@@ -75,6 +89,8 @@ export function CommandPalette({
   }
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // WUI-14: a candidate-confirming Enter from an input method must not run the highlighted command.
+    if (isImeComposing(e)) return
     if (e.key === 'Escape') {
       e.preventDefault()
       onClose()
@@ -101,6 +117,7 @@ export function CommandPalette({
         />
       )}
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title ?? '命令面板'}
@@ -141,7 +158,7 @@ export function CommandPalette({
                       aria-current={activeNow ? 'true' : undefined}
                     >
                       <span className="truncate">{it.label}</span>
-                      {it.group ? <small className="shrink-0 text-[10px] uppercase tracking-wide text-muted">{it.group}</small> : null}
+                      {it.group ? <small className="shrink-0 text-[12px] uppercase tracking-wide text-muted">{it.group}</small> : null}
                     </button>
                   )
                 })

@@ -20,28 +20,33 @@ def _hash_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def scan_skills(root: Path) -> list[dict]:
+def scan_skills(root: Path, repo: Path = REPO) -> list[dict]:
     out = []
     if not root.exists():
         return out
     for sk in sorted(root.rglob("SKILL.md")):
         name = sk.parent.name
-        out.append({"name": name, "path": str(sk.relative_to(REPO)), "sha256": _hash_file(sk)})
+        out.append({"name": name, "path": str(sk.relative_to(repo)), "sha256": _hash_file(sk)})
     return out
 
 
-def main() -> int:
+def discover_skills(repo: Path = REPO) -> tuple[list[dict], list[str]]:
     skills: list[dict] = []
     sources = []
-    for root in (REPO / "integrations").glob("executors/*/skills"):
-        found = scan_skills(root)
+    roots = list((repo / "integrations").glob("executors/*/skills"))
+    roots.extend([repo / "packages/client-neutral-core/skills", repo / "projections/agents/source", repo / "skills"])
+    for root in roots:
+        if not root.exists():
+            continue
+        found = scan_skills(root, repo)
         skills.extend(found)
-        sources.append(str(root.relative_to(REPO)))
-    managed = REPO / "skills"
-    if managed.exists():
-        skills.extend(scan_skills(managed))
-        sources.append("skills")
+        sources.append(str(root.relative_to(repo)))
     skills.sort(key=lambda s: s["name"])
+    return skills, sources
+
+
+def main() -> int:
+    skills, sources = discover_skills()
     digest = hashlib.sha256(json.dumps(skills, sort_keys=True).encode()).hexdigest()
     inventory = {
         "schema_version": "workflow/skills-inventory/v1",

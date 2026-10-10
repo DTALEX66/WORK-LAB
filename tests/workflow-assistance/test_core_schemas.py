@@ -16,6 +16,14 @@ EXPECTED = {
     "task-card.schema.json",
     "domain-pack.schema.json",
     "action-plan.schema.json",
+    # OD05 (2026-10-08): Quick Entry's field+permission contract. This set is an exact inventory of
+    # the directory, so adding a legitimate schema moves it -- the pin defends "nothing appears in the
+    # contract directory without being reviewed here", not a fixed number.
+    "quick-entry-request.schema.json",
+    # WUI-15 (2026-10-10): the read-only Observer snapshot joined the SSOT. This set is an exact inventory
+    # of the directory, so the addition is the review record — the snapshot was the one cross-language
+    # payload with no schema, which is what let ERR-225's producer/type drift pass unnoticed.
+    "snapshot-v3.schema.json",
     "run-event.schema.json",
     "evidence-envelope.schema.json",
     "error.schema.json",
@@ -50,6 +58,21 @@ EXPECTED = {
     "software-update-preflight.schema.json",
     "execution-parallel-dispatch.schema.json",
     "software-update-postflight.schema.json",
+    # P1-06 (2026-10-08): the Control Surface request/result pair. Registered here as well as in
+    # .project/governance/contracts/contract-catalog.json — this set is the review gate that makes a new
+    # cross-language contract an explicit decision instead of a file that appeared.
+    "control-operation.schema.json",
+    "control-operation-result.schema.json",
+    # WUI-21 read models (2026-10-10). Added here as well as in
+    # .project/governance/contracts/contract-catalog.json, because this set is the review gate that makes a
+    # new cross-language contract an explicit decision rather than a file that appeared.
+    "operation-progress.schema.json",
+    "isolated-trial.schema.json",
+}
+
+# Schemas whose wire field is camelCase by producer fact, mapped to that field's name.
+CAMEL_CASE_WIRE_SCHEMAS = {
+    "snapshot-v3.schema.json": "schemaVersion",
 }
 
 
@@ -60,7 +83,16 @@ class CoreSchemaTests(unittest.TestCase):
             data = json.loads((SCHEMA_DIR / name).read_text(encoding="utf-8"))
             self.assertEqual(data["type"], "object", name)
             self.assertIn("$id", data, name)
-            self.assertIn("schema_version", data["required"], name)
+            # The rule is "the payload must carry a version field", not "the field must be spelled in
+            # snake_case". workflow/snapshot/v3 is camelCase on the wire (`schemaVersion`, written by
+            # snapshot_api.py and declared in apps/observer/frontend/src/types.ts), and renaming it to satisfy
+            # a doc guard would change the contract instead of describing it. The exception is a named list,
+            # so a schema cannot join it silently and a snake-named one still has to prove its field.
+            if name in CAMEL_CASE_WIRE_SCHEMAS:
+                self.assertIn(CAMEL_CASE_WIRE_SCHEMAS[name], data["required"], name)
+                self.assertNotIn("schema_version", data["required"], name)
+            else:
+                self.assertIn("schema_version", data["required"], name)
             serialized = json.dumps(data, ensure_ascii=False)
             for forbidden in ("gpt-5.5", "gpt-5.6", "deepseek-chat", "kimi-k2"):
                 self.assertNotIn(forbidden, serialized, name)
@@ -77,7 +109,7 @@ class CoreSchemaTests(unittest.TestCase):
             [sys.executable, str(VERIFY), "--schema-dir", str(SCHEMA_DIR)],
             cwd=ROOT,
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -97,7 +129,7 @@ class CoreSchemaTests(unittest.TestCase):
                 [sys.executable, str(VERIFY), "--schema-dir", str(temp)],
                 cwd=ROOT,
                 capture_output=True,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 check=False,
             )
             self.assertNotEqual(result.returncode, 0)

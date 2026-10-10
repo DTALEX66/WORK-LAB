@@ -369,7 +369,7 @@ class GitRepository:
             ["git", *args],
             cwd=self.root,
             check=False,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
         )
         if result.returncode:
@@ -459,7 +459,7 @@ class GitRepository:
             ["gh", "run", "view", str(run_id), "--repo", repository, "--json", "headSha,jobs"],
             cwd=self.root,
             check=False,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
             env=self.env,
         )
@@ -504,7 +504,7 @@ class GitRepository:
                 ],
                 cwd=self.root,
                 check=False,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 env=self.env,
             )
@@ -625,7 +625,7 @@ class HermesAgentBackend:
             command,
             cwd=self.root,
             check=False,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
             env=self.env,
         )
@@ -695,7 +695,7 @@ def discover_codex_exec_flags(codex: str, *, env: dict[str, str]) -> set[str]:
         [codex, "exec", "--help"],
         cwd=env.get("HERMES_PROJECT_ROOT"),
         check=False,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
         capture_output=True,
         timeout=60,
         env=env,
@@ -713,7 +713,7 @@ def discover_codex_version(codex: str, *, env: dict[str, str]) -> str:
         [codex, "--version"],
         cwd=env.get("HERMES_PROJECT_ROOT"),
         check=False,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
         capture_output=True,
         timeout=60,
         env=env,
@@ -783,7 +783,7 @@ class CodexReviewBackend:
                 ],
                 cwd=self.root,
                 check=False,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 timeout=600,
                 env=self.env,

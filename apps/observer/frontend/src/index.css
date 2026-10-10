@@ -32,12 +32,19 @@ Default (:root) = the Dark design language. html.light inverts all of it
   /* accents (channel form for Tailwind alpha modifiers) */
   --primary-rgb: 42 145 255;
   --secondary-rgb: 32 205 225;
+  /* The text role of the secondary accent. In dark the fill is already bright
+   * enough to read, so the two share a value; the pair exists so light can differ
+   * without touching every gradient that uses the fill. */
+  --secondary-ink-rgb: 32 205 225;
   --success-rgb: 34 197 94;
   --warning-rgb: 245 158 11;
   --error-rgb: 239 68 68;
   --info-rgb: 56 130 246;
-  /* shape / depth / motion / density (L4 + L6) */
-  --radius-sm: 4px;
+  /* shape / depth / motion / density (L4 + L6)
+     --radius-sm mirrors skins/b10.css, which declares the same name 12px and loads second, so 12px is what
+     renders; a value here that differs would be a rule the browser never applies. Enforced by
+     scripts/ci/verify_css_token_mirror.py. */
+  --radius-sm: 12px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-xl: 22px;
@@ -82,14 +89,76 @@ html.light {
   --color-panel2: #EAF0F6;
   --color-border: #D5E2EC;
   --color-ink: #0B1420;
-  --color-muted: #5A7184;
+  /* One "muted" per role, not two. The B10 skin already carried #4A6172 for --muted while this
+   * vocabulary held #5A7184, and the difference is measurable: 4.43:1 on --color-panel2 against
+   * 5.64:1. 4.43 is under AA, so every muted label on a panel2 surface failed in light only because
+   * two tokens named the same thing differently (DESIGN.md Known Gap 7). */
+  --color-muted: #4A6172;
   /* accents (deepened for light-surface contrast) */
   --primary-rgb: 27 127 230;
   --secondary-rgb: 14 147 165;
+  /* rgb(14 147 165) as *text* measured 3.49:1 on a light panel; this teal is
+   * 6.4-7.3:1 on the light surfaces and leaves the fill untouched. */
+  --secondary-ink-rgb: 11 95 107;
   --success-rgb: 21 128 61;
-  --warning-rgb: 180 83 9;
+  /* Amber as *text* on a light surface measured 4.48:1 — a hundredth short of AA, in the one place
+   * the UI says a value was not provided. The contract separates a fill accent from a text accent
+   * (DESIGN.md, text-accent rule), and here the same channel feeds both, so the light value is the
+   * readable one; the filled pills already carry their own literals in the skin layer. */
+  --warning-rgb: 154 74 5;
   --error-rgb: 185 28 28;
   --info-rgb: 29 78 216;
+}
+
+/*
+WUI-03 (20261009) · 母版配色主题 — OPT-IN, never the default.
+
+The 2026-10-09 UI pack ships its own palette (docs/history/owner-inputs/20261009/ui-readable/contracts/
+design_tokens.json). The owner's instruction is explicit: 配色不覆盖现行值. So the pack's numbers are
+added as a selectable palette that sits BESIDE the shipped one, chosen by `?palette=master` on the same
+URL mechanism that carries theme and layout, and the blocks above stay what a fresh session renders.
+
+Two honesty notes about the values themselves:
+* every hex/rgb below is copied from the pack, including its light `sidebar` and `panel` both being
+  #FFFFFF (that sheet separates them with `line`, not with a second surface tone);
+* the pack names no `secondary` (cyan) or `info` channel, and this UI paints gradients, edge bars and
+  status dots from those. They are deliberately NOT invented here — they keep the shipped value, which
+  is why this palette is a partial overlay rather than a full re-skin.
+
+`scripts/ci/verify_css_token_mirror.py` classifies this selector as a local scope, so it does not
+participate in the one-name-one-value rule for `:root` / `html.light`; the palette's own parity with
+`theme/tokens.ts` is asserted by src/theme/paletteMirror.contract.test.ts.
+*/
+html[data-palette="master"] {
+  --color-bg: #0B1018;
+  --color-sidebar: #0E1520;
+  --color-panel: #111C2B;
+  --color-panel2: #17263A;
+  --color-border: #2C3B50;
+  --color-ink: #ECF2FA;
+  --color-muted: #A4B2C6;
+  --primary-rgb: 98 168 255;
+  --success-rgb: 105 213 181;
+  --warning-rgb: 255 200 120;
+  --error-rgb: 255 154 171;
+  /* the glow tokens above are literals; they have to follow this palette's blue or the ambient light
+     and the selected-edge highlight would glow a colour nobody chose for it */
+  --glow-primary: color-mix(in srgb, rgb(var(--primary-rgb)) 40%, transparent);
+  --glow-secondary: color-mix(in srgb, rgb(var(--secondary-rgb)) 40%, transparent);
+}
+
+html[data-palette="master"].light {
+  --color-bg: #F3F6FA;
+  --color-sidebar: #FFFFFF;
+  --color-panel: #FFFFFF;
+  --color-panel2: #EAF0F7;
+  --color-border: #CBD5E1;
+  --color-ink: #172B46;
+  --color-muted: #4F627A;
+  --primary-rgb: 23 91 185;
+  --success-rgb: 20 107 83;
+  --warning-rgb: 135 83 9;
+  --error-rgb: 172 48 76;
 }
 
 @layer base {

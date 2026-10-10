@@ -22,9 +22,9 @@ model ID。三条 Provider 路线只是可选入口；用户必须通过官方 H
 `switch_model.py --model` 或当前进程的 `HERMES_*_MODEL` 环境变量显式选择。
 
 ```bash
-python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
-python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
-python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+python integrations/executors/hermes/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python integrations/executors/hermes/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python integrations/executors/hermes/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 ```
 
 这些命令只在用户明确决定切换时执行；不会自动更改当前会话，切换后必须
@@ -33,13 +33,13 @@ python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 
 ## 验证层级
 
-1. **结构**：`python scripts/workflow/hermes_workflow_doctor.py`
-2. **真实推理**：`python scripts/workflow/hermes_workflow_doctor.py --live`
+1. **结构**：`python integrations/executors/hermes/hermes_workflow_doctor.py`
+2. **真实推理**：`python integrations/executors/hermes/hermes_workflow_doctor.py --live`
 3. **切换后单线 marker**：
    ```bash
-   python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL" --live
-   python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL" --live
-   python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL" --live
+   python integrations/executors/hermes/switch_model.py gpt --model "$HERMES_GPT_MODEL" --live
+   python integrations/executors/hermes/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL" --live
+   python integrations/executors/hermes/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL" --live
    ```
 
 配置写入、端口监听和 HTTP 200/401 只证明部分链路，不能替代 marker。

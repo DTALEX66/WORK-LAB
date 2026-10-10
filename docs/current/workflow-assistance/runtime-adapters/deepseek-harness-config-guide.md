@@ -33,15 +33,16 @@ DSH（DeepSeek Harness）是一个 **Agent 运行时（agent runtime）**，不�
 
 DSH 会话会自动加载项目根与模块的 AGENTS.md。WORK-LAB 根 AGENTS.md 目前包含：
 
-- **Scope**：单根 monorepo，活跃模块仅 `10-workflow/workflow-assistance` 与
-  `30-observer/work-lab-observer`；Observer 严格只读。
+- **Scope**：单根 monorepo，规范模块根仅 `packages/client-neutral-core`（Workflow）与
+  `apps/observer`（Observer，严格只读）；`10-workflow/workflow-assistance` 与
+  `30-observer/work-lab-observer` 是 2026-09 目录收敛前的历史路径，已不再被跟踪。
 - **Ownership**：单写者；只读审查者不得编辑；跨模块变更需显式任务卡。
 - **Safety（2026-08-16 强化）**：
   - 凭据/`.env`/auth store/私钥/浏览器数据/token/prompt/response 正文禁读禁传；
   - **`E:\` 读或写一律禁止**，除非逐路径逐操作显式授权；
   - **本项目产生的构建/缓存/临时文件/证据/下载全部锁定在项目 Git 根内**
     （TMP、npm/uv/pip 缓存、node_modules → `.project-local/runs/`；证据 →
-    `.project-local/artifacts/` 或 `80-evidence/`），不外溢到用户目录/其他项目/共用库；
+    `.project-local/artifacts/` 或 `reports/`），不外溢到用户目录/其他项目/共用库；
   - 任何外溢必须可追溯、可定位、可清理、可迁移（project-data-boundary.json）；
   - 禁止破坏性 reset/clean/force-push。
 - **Managed global configuration (Hermes)**：WORK-LAB 管理的 Hermes overlay 字段、
@@ -55,7 +56,7 @@ DSH 会话会自动加载项目根与模块的 AGENTS.md。WORK-LAB 根 AGENTS.m
 - **项目级规则**：写在 DSH 会打开的项目根 `AGENTS.md`（如 WORK-LAB 根）。DSH
   自动注入，无需在 DSH 里额外注册。
 - **模块级规则**：`<模块>/AGENTS.md`，DSH 在对应模块工作区自动注入。
-- **不要做**：不要试图把 Hermes 的 `config.yaml` / `SOUL.md` / `bin/` 复制成
+- **不要做**：不要试图把 Hermes 的 `config.yaml` / `SOUL.md` / `$HERMES_HOME/bin/` 复制成
   DSH 的配置——DSH 不消费它们。Hermes 的 SOUL.md 是 Hermes 专属机制。
 - **DSH 自身**：`~/.dsh/settings.yaml` 只应含 DSH 自己的用户设置（当前：
   `ui-onboarding` + `locale.preference: zh`）。其他软件不得改写它。
@@ -87,11 +88,11 @@ DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesy
 | 技能 | 数量 | 来源 | DSH rank |
 |---|---|---|---|
 | `work-lab-workflow` | 1 | `D:\All projects\WORK-LAB\.agents\skills\` | 200 (project-agents) |
-| `workflow-assistance-*`（14 个：evidence-verification / github-delivery / observer-delivery / open-design-integration / openhuman-integration / project-data-boundary / python-testing / safe-project-execution / self-improvement / single-writer-delivery / systematic-debugging / update-safety / verification-hardening / windows-development） | 14 | `C:\Users\ALEX\.agents\skills\` | 500 (user-agents) |
+| `workflow-assistance-*`（5 个：github-delivery / project-data-boundary / safe-project-execution / update-safety / windows-development） | 5 | `C:\Users\ALEX\.agents\skills\` | 500 (user-agents) |
 
-这两处已就位，DSH 会话技能目录（15 个）即来自它们。**部署源是仓库**
-`integrations/executors/codex/skills/`（14 个）与根
-`.agents/skills/`（1 个）；哈希已与 live 核对一致。
+2026-10-05 来源收敛为上述 6 个入口；本次只验证 Codex 侧文件，不宣称 DSH 新会话已发现。**部署源是仓库**
+`integrations/executors/codex/skills/`（5 个）与根
+`.agents/skills/`（1 个）；实际加载以各客户端新会话 readback 为准。
 
 ### 3.3 其他软件如何维护 DSH 技能
 
@@ -136,7 +137,7 @@ DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesy
 
 `integrations/executors/codex/sync_codex_global_assets.py`：
 - `plan` → 审查 plan_digest → `apply --approved --approved-plan-digest <digest>` → `verify`。
-- 管理 14 个 `workflow-assistance-*` 技能（→ `~/.agents/skills`）、
+- 管理 5 个 `workflow-assistance-*` 技能（→ `~/.agents/skills`）、
   `rules/workflow-assistance.rules`、`AGENTS.md` managed block、
   `config.toml` 的 3 个字段（approval_policy / sandbox_mode / project_doc_max_bytes）。
 - fail-closed：managed block 被外部改写时 BLOCKED；恢复 = 注入期望块 → 重新 plan。
@@ -169,3 +170,5 @@ workspace 注册**。其他软件接入 DSH 的要点：**规则写进项目 AGE
 `.agents/skills`（项目级）或 `~/.agents`（用户级），模型下载走直连绕过 VPN，
 内容与凭据边界遵守项目规则**。WORK-LAB 已就位：根 AGENTS.md 规则强化、
 15 个 DSH 技能、Ollama 直连下载、locale zh。
+
+> 2026-10-05 技能收敛：本机全局个性化规则使用 personal-guidance.md 的单一文件；只更新技能时运行同步器 --skills-only，保留 config/AGENTS/rules。普通全量 overlay 不应重建已由用户替换的旧 managed block。项目专属说明见 docs/current/workflow-assistance/skill-references/。历史运行记录不代表本次部署。

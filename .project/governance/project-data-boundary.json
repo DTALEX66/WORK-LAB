@@ -52,7 +52,25 @@
     "trace": "every spill records source, timestamp, and exact target path",
     "locate": "the exact spilled path is machine-resolvable for cleanup or migration",
     "clean": "spilled artifacts are removable or revertible without touching project source",
-    "migrate": "spilled artifacts are relocatable back inside the project boundary"
+    "migrate": "spilled artifacts are relocatable back inside the project boundary",
+    "ledger": {
+      "path": ".project-local/artifacts/spill-ledger.jsonl",
+      "schema": "work-lab/spill-ledger/v1",
+      "requiredFields": [
+        "at",
+        "actor",
+        "action",
+        "outOfRoot",
+        "target",
+        "source",
+        "trace",
+        "locate",
+        "clean",
+        "migrate"
+      ],
+      "rule": "One JSONL line per write performed by this project. outOfRoot=false lines record in-root artifact moves and cleanup manifests, so a cleanup is reconstructible from the ledger alone; outOfRoot=true lines additionally require target to be an absolute path outside the Git root plus a reversibility statement. A spill with no ledger line is an unrecorded side effect, not a spill.",
+      "note": "The ledger lives under .project-local because it contains machine-local absolute paths; the DECLARATION is tracked so CI can enforce that a spill must be written down, without shipping this machine's paths."
+    }
   },
   "artifactFlowSemantics": {
     "ref": "packages/client-neutral-core/scripts/artifact_flow_policy.py",
@@ -75,5 +93,28 @@
     "unknownFailClosed": true,
     "nestedSecretsIsolated": true,
     "projectPrefScoping": "project/task-scoped preferences do not leak to other projects; global is a separate explicit authorization"
-  }
+  },
+  "readOnlyInboundRoots": [
+    {
+      "id": "owner-material-record",
+      "path": "D:/All projects/Record",
+      "mode": "READ_ONLY",
+      "neverWrite": true,
+      "declaredBy": "owner handover 2026-10-06/07 plus the 2026-10-07 full-scope authorization",
+      "rule": "Inbound owner material, not a project directory: read only, never written, never deleted, never copied wholesale. ~15 GB of multi-project material, so reads go through the central directory and a size filter rather than a recursive walk. Recovery INTO the repository requires the explicit opt-in flag, an artifact-flow ALLOW decision, a secret scan, and a stated digest pin when the source is an archive member.",
+      "forbiddenOperations": [
+        "write",
+        "delete",
+        "move",
+        "chmod",
+        "bulk-copy"
+      ],
+      "allowedOperations": [
+        "stat",
+        "read",
+        "enumerate-archive-members",
+        "extract-one-member-to-staging"
+      ]
+    }
+  ]
 }

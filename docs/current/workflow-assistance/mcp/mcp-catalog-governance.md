@@ -5,13 +5,13 @@ Workflow-assistance 默认 MCP 保持少量、稳定、可验证。新增 MCP �
 ## Canonical audit command
 
 ```bash
-python scripts/workflow/mcp_candidate_audit.py candidate.yaml
+python packages/client-neutral-core/scripts/mcp_candidate_audit.py candidate.yaml
 ```
 
 生成候选模板：
 
 ```bash
-python scripts/workflow/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml
+python packages/client-neutral-core/scripts/mcp_candidate_audit.py --write-template .project-local/artifacts/mcp-candidate.yaml
 ```
 
 候选文件建议放在项目内 Git-ignored 的 `.project-local/artifacts/` 或 PR 讨论附件中；不要把含真实 token、私有服务名、客户数据或内部 URL 的候选文件提交到仓库。

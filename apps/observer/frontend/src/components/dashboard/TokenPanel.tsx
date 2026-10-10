@@ -26,7 +26,7 @@ export function TokenPanel({ snap }: { snap: SnapshotV3 | null }) {
   return (
     <div className="panel">
       <h3>Token</h3>
-      <div className="mb-3 text-[11px] text-muted">质量 {fmtCostQuality(tt?.costQuality)}</div>
+      <div className="mb-3 text-[12px] text-muted">质量 {fmtCostQuality(tt?.costQuality)}</div>
       <div className="list">
         {rows.map((d) => (
           <div key={d.label} className="list-item flex-col items-stretch gap-2">
@@ -43,11 +43,11 @@ export function TokenPanel({ snap }: { snap: SnapshotV3 | null }) {
         </div>
       </div>
       {!hasToken && (
-        <p className="mt-3 text-[11px] text-muted">
+        <p className="mt-3 text-[12px] text-muted">
           无 token 数据{snap ? ' · 快照已接入但 token 未知' : ' · 数据源未接入'}（不估算、不伪造 0%）
         </p>
       )}
-      <p className="mt-2 text-[10px] text-muted">成本质量（EXACT/ESTIMATED/UNKNOWN）由后端投影，前端不估算金额、汇率或配额。</p>
+      <p className="mt-2 text-[12px] text-muted">成本质量（EXACT/ESTIMATED/UNKNOWN）由后端投影，前端不估算金额、汇率或配额。</p>
     </div>
   )
 }

@@ -14,17 +14,44 @@ import argparse, json, sys, hashlib, uuid
 from pathlib import Path
 from datetime import datetime
 
-SCHEMA_VERSION = "work-lab/canonical-config-intent/v1"
+CONTRACT_PATH = (Path(__file__).resolve().parents[2] / "packages" / "contracts"
+                 / "schemas" / "workflow" / "canonical-config-intent.schema.json")
 APPROVAL_DIR = Path(__file__).parent.parent.parent / "config" / "pending-approvals"
+
+
+def contract():
+    return json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+
+
+def off_contract_reasons(doc, client, intent_type, target):
+    """The registered schema is the authority, so its enums are read from it, never restated here."""
+    props = doc["properties"]
+    clients = sorted(set(props["client"]["enum"]))
+    types = sorted(set(props["intent"]["properties"]["type"]["enum"]))
+    reasons = []
+    if client not in clients:
+        reasons.append(f"--client {client!r} is not one of the contract clients {clients}")
+    if intent_type not in types:
+        reasons.append(f"--type {intent_type!r} is not one of the contract types {types}")
+    if not target:
+        reasons.append("--target is empty; the contract requires a non-empty target")
+    return reasons
+
 
 def new_intent_id():
     return f"intent-{uuid.uuid4().hex[:12]}"
 
 def create_intent(args):
     """Create a new canonical config intent."""
+    doc = contract()
+    reasons = off_contract_reasons(doc, args.client, args.type, args.target)
+    if reasons:
+        for reason in reasons:
+            print(f"REFUSED_BY_CONTRACT: {reason}")
+        sys.exit(2)
     value = json.loads(args.value) if args.value else None
     intent = {
-        "schemaVersion": SCHEMA_VERSION,
+        "schema_version": doc["properties"]["schema_version"]["const"],
         "intentId": new_intent_id(),
         "client": args.client,
         "intent": {"type": args.type, "target": args.target, "value": value, "reason": args.reason or ""},
@@ -50,7 +77,7 @@ def plan_intent(args):
     cap["plan"]["diff"] = [diff_entry]
     cap["status"] = "pending_approval"
     Path(args.intent).write_text(json.dumps(cap, indent=2), encoding="utf-8")
-    print(f"OK: plan generated ({len(diff_entry)} diff entries), status=pending_approval")
+    print(f"OK: plan generated ({len(cap['plan']['diff'])} diff entries), status=pending_approval")
 
 def approve_intent(args):
     """Approve a pending intent."""

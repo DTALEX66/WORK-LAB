@@ -15,12 +15,14 @@ import importlib.util
 import json
 import os
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CLEAN = ROOT / "services" / "cleanup"
+sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+
+import project_temp  # noqa: E402
 
 
 def _load(name: str, module_name: str):
@@ -36,7 +38,9 @@ class RepoSlimmingTests(unittest.TestCase):
     """WL-400: the four ch 34 reports, produced read-only."""
 
     def _synthetic_tree(self) -> str:
-        d = tempfile.mkdtemp(prefix="wlsim-")
+        # The auditor classifies by paths relative to the root it is handed (`_classify`,
+        # `spill_report`), so an in-boundary fixture reports exactly what the system-temp root did.
+        d = str(project_temp.fixture_dir(prefix="wlsim-"))
         Path(d, "node_modules/pkg/a.js").parent.mkdir(parents=True)
         Path(d, "node_modules/pkg/a.js").write_text("x" * 100)
         Path(d, "models").mkdir()

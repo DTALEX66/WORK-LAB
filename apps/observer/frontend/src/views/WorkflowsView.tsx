@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { UnknownState } from '@/components/ui/states'
 import { Tooltip } from '@/components/ui/tooltip'
 import type { SnapshotV3 } from '@/types'
+import { fmtTimestamp } from '@/lib/api'
 
 export interface WorkflowRow {
   id: string
@@ -111,7 +112,7 @@ export function WorkflowsView({ snap }: { snap: SnapshotV3 | null }) {
             </option>
           ))}
         </select>
-        <span className="ml-auto self-center text-[11px] text-muted tabular-nums">
+        <span className="ml-auto self-center text-[12px] text-muted tabular-nums">
           {workflows.length ? `${filtered.length} / ${workflows.length} 条` : '契约未投影'}
         </span>
       </div>
@@ -150,7 +151,7 @@ export function WorkflowsView({ snap }: { snap: SnapshotV3 | null }) {
                   <tr key={w.id}>
                     <td>
                       <strong className="block text-[13px] font-semibold text-ink">{w.name}</strong>
-                      <small className="font-mono text-[10px] text-muted">{w.id}</small>
+                      <small className="font-mono text-[12px] text-muted">{w.id}</small>
                     </td>
                     <td>
                       <Badge variant={stateVariant(w.state)}>{w.state ?? 'UNKNOWN'}</Badge>
@@ -158,7 +159,7 @@ export function WorkflowsView({ snap }: { snap: SnapshotV3 | null }) {
                     <td className="text-muted">{w.owner || 'UNKNOWN'}</td>
                     <td className="font-mono text-muted">{w.version ?? 'UNKNOWN'}</td>
                     <td className="text-muted">
-                      {w.lastRunAt ? new Date(w.lastRunAt).toLocaleString() : 'UNKNOWN'}
+                      {fmtTimestamp(w.lastRunAt)}
                     </td>
                   </tr>
                 ))

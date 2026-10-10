@@ -111,10 +111,10 @@ git diff --check：通过
 Release 构建产物路径：
 
 ```text
-apps/token-monitor-desktop/src-tauri/target/release/hermes-token-monitor.exe
+apps/token-monitor/src-tauri/target/release/hermes-token-monitor.exe
 ```
 
-构建产物位于被忽略的 `target/` 下，不属于已发布安装包证据。
+构建产物位于未跟踪的 Cargo 目录 `apps/token-monitor/src-tauri/target/<profile>/`（该目录由 `apps/token-monitor/src-tauri/.gitignore` 忽略，2026-10-08 起），不属于已发布安装包证据。
 
 远端 exact-SHA CI（绑定 `d944ad2566fc37c4ae53a8becdd522580c5022bc`）：
 

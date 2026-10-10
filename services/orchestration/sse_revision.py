@@ -89,9 +89,6 @@ class SseRevisionHub:
                         self._sequence,
                     )
                 ]
-            if not self._history:
-                client.last_event_id = str(self._sequence)
-                return []
             available = {seq for seq, _, _ in self._history}
             if last_seq > self._sequence:
                 # Future cursor (client clock ahead / service restarted with gap).
@@ -100,6 +97,22 @@ class SseRevisionHub:
                     self._frame(
                         "resync_required",
                         {"reason": "cursor_ahead_of_watermark", "revision": self._sequence},
+                        self._sequence,
+                    )
+                ]
+            if not available:
+                # An empty ring beside a real cursor is NOT "nothing to send". A restarted sidecar seeds the
+                # revision from the store but never the replay history, so the events between that cursor and
+                # the watermark existed and are gone. The first draft of this branch answered with silence,
+                # which left a reconnecting client holding a stale projection with neither a replay nor a
+                # reason — the exact shape of claim the read-only iron law refuses.
+                client.last_event_id = str(self._sequence)
+                if last_seq == self._sequence:
+                    return []  # nothing was missed: the cursor already is the watermark
+                return [
+                    self._frame(
+                        "resync_required",
+                        {"reason": "history_unavailable_after_restart", "revision": self._sequence},
                         self._sequence,
                     )
                 ]

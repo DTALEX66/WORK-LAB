@@ -73,14 +73,15 @@
     "dsh": {
       "client": "dsh",
       "evidence_level": "E2",
-      "install_method": "community-desktop (Electron)",
-      "version": "2.0.13",
-      "install_path": "D:\\All projects\\DSH\\DSH Desktop.exe",
-      "config_path": "D:\\All projects\\DSH\\.dsh\\",
-      "sessions_migrated": 94,
-      "verified_at": "2026-09-23T19:30:00Z",
-      "health": "desktop-live-verified (2026-09-23: main window 'DeepSeek Harness Desktop', 43120 LISTENING, D:.dsh mtime advanced, 5 sessions read back; 2026-09-24 ERR-088 relaunch on D root re-verified: 7 instances, 43120 LISTENING, D:.dsh mtime advanced 9/24)",
-      "note": "Community desktop (anywhere-labs/deepseek-harness-desktop v2.0.13; 2026-09-20 in-place official upgrade 2.0.11 -> 2.0.13, 2.0.2/2.0.4 superseded; see skill dsh-administration + ERR-087); D-drive single entry; config root D:\\All projects\\DSH\\.dsh pinned via DSH_HOME (HKCU\\Environment); desktop .lnk must carry the --user-data-dir argument or launch falls back to the C: default and shows the onboarding wizard (2026-09-23 regression lesson). SECOND LAYER (ERR-088, 2026-09-24): DSH_HOME is a HKCU user env var frozen out of live login sessions — after setx/new logon the live Explorer block lacks it and desktop launch falls back to the C:.dsh empty skeleton ('sessions/config lost' perception; data stays intact on D:). C skeleton archived to D:\\All projects\\DSH\\.migration\\20260924\\c-dsh-skeleton-backup-20260924; machine-level HKLM escalation awaits UAC; no reboot scheduled by automation."
+      "install_method": "official-nsis-per-user",
+      "version": "0.2.0-rc.2",
+      "install_path": "%LOCALAPPDATA%\\Programs\\DeepSeek Harness\\DeepSeek Harness.exe",
+      "install_path_policy": "RESOLVE_AT_RUNTIME_NOT_HARDCODED",
+      "install_root_resolution": "Uninstall registry entry \"DeepSeek Harness 0.2.0-rc.2\" (InstallLocation) or the desktop/Start Menu shortcut TargetPath; both currently agree on the vendor default per-user path. No drive letter is pinned.",
+      "config_path": "UNKNOWN (official build's data root not established this round)",
+      "verified_at": "2026-10-01",
+      "health": "installed-and-shortcut-resolved (2026-10-01: uninstall entry \"DeepSeek Harness 0.2.0-rc.2\" with matching InstallLocation; desktop + Start Menu shortcut target <root>\\DeepSeek Harness.exe, no arguments; bundled edge-runtime version file reports 44.0.0). NOT re-verified: a real GUI launch, session readback, or which data root the official build actually uses.",
+      "note": "AG-07 correction (2026-10-01): the user reinstalled OFFICIAL DSH at the vendor default path, so this record is re-anchored off the D: drive. History retained: the community desktop (anywhere-labs/deepseek-harness-desktop v2.0.13) was SUPERSEDED here; its distribution directory D:\\All projects\\DSH now contains only the .dsh data directory, its uninstall entry (\"DSH Desktop 2.0.13\") has a blank InstallLocation, its Desktop shortcut DSH Desktop.lnk still points at the deleted D:\\All projects\\DSH\\DSH Desktop.exe, and the DSH_HOME HKCU user environment variable still resolves to D:\\All projects\\DSH\\.dsh. The two historical launch-traps remain recorded but now apply to the SUPERSEDED build, not the official one: ERR-087 (.lnk TargetPath/IconLocation reset by NSIS silent installs - recheck after any upgrade) and ERR-088 (DSH_HOME is a HKCU user env var frozen out of live login sessions, so a launch can silently fall back to an empty C: skeleton while the data stays intact on D:). Whether the official build honours DSH_HOME was NOT tested. Nothing was modified on the machine: not the env var, not the legacy data root, not the stale uninstall entry, not the broken shortcut - the D: data root holds the user's existing sessions and needs its own decision."
     },
     "github": {
       "client": "github",

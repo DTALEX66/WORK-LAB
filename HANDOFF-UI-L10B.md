@@ -1,4 +1,41 @@
 # HANDOFF · UI L10b — B10 1:1 full style replication
+<!-- ROOT-DISPOSITION:BEGIN NON-NORMATIVE-HISTORICAL -->
+> **NON-NORMATIVE-HISTORICAL / 历史记录，不派工**（2026-10-10 登记，WUI-17）：本文件不在权威链里，正文逐字保留未改（门会把它与提交字节逐字节比对）。现行权威顺序：`WORK-LAB-AUTHORITY.md` → `.project/governance/project-authority-index.json` → `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md` → `taskpacks/current/OPEN-TASK-REGISTER.md`；根目录逐份处置见 `docs/current/DOCUMENT-CENSUS.md` §4 与 `.project/governance/root-document-dispositions.json`。
+<!-- ROOT-DISPOSITION:END -->
+
+> ## ⛔ CLOSED — DO NOT RE-EXECUTE THIS HANDOFF (status correction 2026-10-01)
+>
+> The task described below **is finished and merged**. This file is retained as
+> frozen execution evidence only; the "NEW session picks up the live task" line
+> in §0 was true on 2026-09-27 and is **no longer true**.
+>
+> Delivered on `main` by:
+> - **PR #143** — `612d5aa` "ui-l10b: B10 1:1 DOM replication across shell + all 12 lanes"
+> - **PR #144** — `9ffb0c5` "docs(ui): record the L10b B10-replication arbitration decisions"
+>
+> State verified on 2026-10-01 against `main@cd4daa83`:
+> - `apps/observer/frontend/src/skins/b10.css` (21,002 B) present and imported by `main.tsx`
+> - `apps/observer/frontend/src/skins/l10b-shell.css` (2,907 B) also present and imported
+> - B10 DOM classes adopted across the views (`page-head` 3, `panel` 42, `kpi` 8,
+>   `table-wrap` 12, `list-item` 26, `graph-stage` 2, `canvas` 8, `flow-svg` 1,
+>   `metric-row` 8, `status-stack` 5, `drawer` 5; `nav-dot` / `brand-mark` /
+>   `palette` in `Sidebar.tsx` / `TopStatusBar.tsx`)
+> - All four required reports updated in the same PR: `UI_IMPLEMENTATION_REPORT.md`,
+>   `UI_REFERENCE_MANIFEST.md`, `ASSET_REPLACEMENT_MANIFEST.md`, `VISUAL_QA_REPORT.md`
+> - `VISUAL_QA_REPORT.md` records the pixel layer as **VERIFIED** (L10b closed the
+>   L10 screenshot-channel gap) with honest per-layer tiering
+> - The §3 test-anchor contract is still enforced and green (see the current run
+>   in the register row `AG-14`)
+>
+> The branch `p1/ui-l10-full-replica` and its pre-squash commit `2255ddd` are gone;
+> the work landed as the squashed commits above, so `2255ddd` is **not** an ancestor
+> of `main` — search by PR number, not by that SHA.
+>
+> Remaining genuine UI gap is **not** in this handoff: see
+> `reports/FRONTEND-AUDIT-20260926.md` §0 — three backend projection gaps
+> (`approvals[]`, `software[]`, `workspace.plan.tasks`) that are sidecar contract
+> extensions, plus the thin Control Surface card. The WORK-LAB thin entry must
+> never absorb the DESIGN-LAB design workbench (`AG-18`).
 
 > Dated handoff (2026-09-27). Frozen evidence, not a taskpack. The NEW session
 > picks up the live task from the user directive quoted below.

@@ -40,6 +40,17 @@ def _load(mod_name: str, module_name: str):
     spec.loader.exec_module(module)
     return module
 
+
+def _load_from(directory: Path, mod_name: str, module_name: str):
+    spec = _ilu.spec_from_file_location(module_name, directory / f"{mod_name}.py")
+    module = _ilu.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_CORE_SCRIPTS = _HERE.parent.parent / "packages" / "client-neutral-core" / "scripts"
+
 canonical = _load("canonical", "gate_canonical")
 provider = _load("provider", "gate_provider")
 hermes_provider = _load("hermes_provider", "gate_hermes_provider")
@@ -51,6 +62,9 @@ continues = _load("continues", "gate_continues")
 agui = _load("agui_projection", "gate_agui")
 otel = _load("otel_correlation", "gate_otel")
 registry = _load("registry", "gate_registry")
+
+
+project_temp = _load_from(_CORE_SCRIPTS, "project_temp", "gate_project_temp")
 
 
 class GateResult:
@@ -179,8 +193,7 @@ def run_gate() -> GateResult:
 
     # 7. Audit ledger is append-only
     def c7():
-        import tempfile
-        td = tempfile.mkdtemp()
+        td = project_temp.fixture_dir(prefix="sf-gate-")
         ledger = audit.HandoffAuditLedger(Path(td) / "audit.jsonl")
         r1 = ledger.record_handoff(
             universal_session_id="us-a", source_agent="codex", target_agent="hermes",
@@ -199,8 +212,7 @@ def run_gate() -> GateResult:
 
     # 8. SessionIndex FTS search works
     def c8():
-        import tempfile
-        td = tempfile.mkdtemp()
+        td = project_temp.fixture_dir(prefix="sf-gate-")
         idx = index.SessionIndex(Path(td) / "index.sqlite")
         s = canonical.CanonicalSession(
             universal_session_id="us-g8", workspace_id="w", project_id="work-lab",
@@ -210,14 +222,14 @@ def run_gate() -> GateResult:
         )
         idx.index_session(s)
         rows = idx.search("unique_gate_token_xyz")
+        idx.close()
         assert len(rows) == 1, f"expected 1 FTS hit, got {len(rows)}"
         assert rows[0]["universal_session_id"] == "us-g8"
     g.check("SessionIndex FTS search finds indexed session", c8)
 
     # 9. Recommender scores decrease monotonically
     def c9():
-        import tempfile
-        td = tempfile.mkdtemp()
+        td = project_temp.fixture_dir(prefix="sf-gate-")
         idx = index.SessionIndex(Path(td) / "index.sqlite")
         for i in range(3):
             s = canonical.CanonicalSession(
@@ -230,6 +242,7 @@ def run_gate() -> GateResult:
             idx.index_session(s)
         rec = recommender.SessionRecommender(idx, target_agent="codex", min_score=0.0)
         cands = rec.recommend("recommender test", limit=5)
+        idx.close()
         scores = [c.score for c in cands]
         assert scores == sorted(scores, reverse=True), f"non-monotonic scores: {scores}"
     g.check("Recommender scores decrease monotonically", c9)
@@ -300,8 +313,7 @@ def run_gate() -> GateResult:
 
     # 13. Session Registry (WL-050): single-writer lease + idempotent registration
     def c13():
-        import tempfile
-        td = tempfile.mkdtemp()
+        td = project_temp.fixture_dir(prefix="sf-gate-")
         db = Path(td) / "gate-reg.sqlite"
         ra = registry.Registry(db, writer_id="gate-A", lease_ttl_seconds=60)
         rb = registry.Registry(db, writer_id="gate-B", lease_ttl_seconds=60)
@@ -331,6 +343,8 @@ def run_gate() -> GateResult:
         assert ra.count() == 1
         assert ra.get("us-g13")["source_agent"] == "codex"
         assert "work-lab" in ra.known_projects()
+        for handle in (ra, rb, fresh):
+            handle.close()
     g.check("Session Registry single-writer lease + idempotent registration", c13)
 
     return g

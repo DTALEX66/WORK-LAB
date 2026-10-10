@@ -13,18 +13,18 @@
 ## 接入步骤
 
 1. 用户先在其受控 Hermes 环境完成 Kimi 凭据配置；Agent 不读取或写入该秘密。
-2. 运行 `python scripts/workflow/switch_model.py status`，只确认 Kimi prerequisite 是否存在、相关监听是否正常。
-3. 运行 `python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL" --live`，以独立 marker 验证用户选定的 Kimi 路由。
+2. 运行 `python integrations/executors/hermes/switch_model.py status`，只确认 Kimi prerequisite 是否存在、相关监听是否正常。
+3. 运行 `python integrations/executors/hermes/switch_model.py kimi --model "$HERMES_KIMI_MODEL" --live`，以独立 marker 验证用户选定的 Kimi 路由。
 4. `/reset` 或新会话后生效；当前已启动的会话模型/provider 已冻结。
 
 ## 用户选定的 Provider 线与 Kimi 速度线
 
 ```bash
-python scripts/workflow/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
-python scripts/workflow/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
-python scripts/workflow/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
-python scripts/workflow/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
-python scripts/workflow/switch_model.py gpt --model "$HERMES_GPT_MODEL"
+python integrations/executors/hermes/switch_model.py kimi --model "$HERMES_KIMI_MODEL"
+python integrations/executors/hermes/switch_model.py kimi-fast --model "$HERMES_KIMI_FAST_MODEL"
+python integrations/executors/hermes/switch_model.py kimi-turbo --model "$HERMES_KIMI_TURBO_MODEL"
+python integrations/executors/hermes/switch_model.py deepseek --model "$HERMES_DEEPSEEK_MODEL"
+python integrations/executors/hermes/switch_model.py gpt --model "$HERMES_GPT_MODEL"
 ```
 
 `kimi-fast` 与 `kimi-turbo` 只是用户可以自行命名的 Kimi 速度入口，不绑定

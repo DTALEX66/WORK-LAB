@@ -533,7 +533,13 @@ def build_context_pack(
         )
 
     content = "\n".join(sections).rstrip() + "\n"
-    digest = sha256_text(content.replace("filled-after-render", ""))[:16]
+    # The digest is the pack's *content* identity, so it must not cover the generation stamp: hashing the stamp
+    # in made every render produce a new digest, which turned "quote the pack by its content SHA" into a claim
+    # that only held while two renders happened inside the same second. A slower pack (more sections to read)
+    # crossed that boundary and the drift gate went red on two consecutive renders in one batch.
+    stable = "\n".join(line for line in content.splitlines()
+                       if not line.startswith("- Generated UTC:"))
+    digest = sha256_text(stable.replace("filled-after-render", ""))[:16]
     content = content.replace("filled-after-render", digest)
     if len(content) > max_chars:
         marker = f"\n\n[context pack truncated at {max_chars} characters]\n"

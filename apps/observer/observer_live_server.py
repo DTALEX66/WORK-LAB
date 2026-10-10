@@ -15,11 +15,11 @@ Retirement record (NF-09, 2026-09-13):
      (A06: private-DB default dependency).
   4. Zero consumers: no test, no web asset, no Tauri path, and no CI job
      references this file; the production chain is the Workflow-owned
-     loopback sidecar + the read-only static frontend (apps/observer/web,
+     loopback sidecar + the read-only React frontend (apps/observer/frontend,
      schema workflow/snapshot/v3) per apps/observer/README.md.
 - New location of the capability: services/orchestration/sidecar.py
   (canonical /api/v1/snapshot + /api/v1/events SSE) with the frontend in
-  apps/observer/web; read-only dashboard entry documented in the README.
+  apps/observer/frontend; read-only dashboard entry documented in the README.
 - Data impact: none — this server never owned durable state.
 - Recovery: `git revert` this file's retirement commit restores the old
   implementation verbatim.
@@ -34,7 +34,7 @@ REASON = (
     "stack is: python services/orchestration/sidecar.py --project-root . "
     "--runtime-root .project-local/runs/workflow (serves "
     "http://127.0.0.1:61867/api/v1/snapshot + /api/v1/events) with the "
-    "static frontend in apps/observer/web. See apps/observer/README.md."
+    "static frontend in apps/observer/frontend. See apps/observer/README.md."
 )
 
 

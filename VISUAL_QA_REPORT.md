@@ -1,4 +1,7 @@
 # WORK-LAB 前端 UI · Visual QA 报告（L10 / L10b）
+<!-- ROOT-DISPOSITION:BEGIN NON-NORMATIVE-HISTORICAL -->
+> **NON-NORMATIVE-HISTORICAL / 历史记录，不派工**（2026-10-10 登记，WUI-17）：本文件不在权威链里，正文逐字保留未改（门会把它与提交字节逐字节比对）。现行权威顺序：`WORK-LAB-AUTHORITY.md` → `.project/governance/project-authority-index.json` → `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md` → `taskpacks/current/OPEN-TASK-REGISTER.md`；根目录逐份处置见 `docs/current/DOCUMENT-CENSUS.md` §4 与 `.project/governance/root-document-dispositions.json`。
+<!-- ROOT-DISPOSITION:END -->
 
 - L10b 分支：`p1/ui-l10-full-replica`（base `main` @ `f95baef`）
 - 依据：9/27 任务书的 Visual QA 优先级 **结构 > 比例 > 布局 > 颜色 > 组件 > 字体 > 细节 > 光效 > 动效**

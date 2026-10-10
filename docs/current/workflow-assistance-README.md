@@ -53,10 +53,10 @@ Workflow-assistance
 `repository-controlled` portable source，经过 provenance、repo → live atomic sync、隔离
 portable install、Linux/Windows CI 和 live runtime 回归。
 
-本轮复审修正了 GitHub skill 的 source ownership 缺口、未认证 curl/凭据持久化误导、PR
-changed-files 分页缺失、SSH 私钥无授权写入、PowerShell/POSIX 命令不兼容和文档定位不一致。
-完整的错误、根因、修复和证据记录见
-[`docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md`](docs/current/workflow-assistance/workflow/error-fixes-2026-07-28.md)。
+下面这段是 2026-07-28 那一轮的复审记录，仅作归档参考，不是当前规范：该轮修正了 GitHub skill 的 source
+ownership 缺口、未认证 curl/凭据持久化误导、PR changed-files 分页缺失、SSH 私钥无授权写入、
+PowerShell/POSIX 命令不兼容和文档定位不一致，完整的错误、根因、修复和证据记录见
+[`docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md`](docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md)。
 
 Token Monitor 本轮的交接、验证证据、错误根因、剩余事项和恢复顺序见
 [`docs/current/workflow-assistance/workflow/token-monitor-handoff.md`](docs/current/workflow-assistance/workflow/token-monitor-handoff.md)。
@@ -80,7 +80,7 @@ GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它�
 || Gateway/Cron 投递 | 区分 Gateway 运行、消息平台配置、TUI 本地输出和 sleep-mode 项目账本 | `docs/current/workflow-assistance/workflow/gateway-cron-delivery.md` |
 | 项目数据边界 | fail-closed Git-ignore 检查，将任务临时文件、缓存、日志、测试环境和产物锁进本地项目 | `packages/client-neutral-core/bin/hermes-project-data.py`、`packages/client-neutral-core/skills/software-development/project-data-boundary/` |
 | 执行预检 | 只读分离当前分支/upstream/main、解释器与可选依赖、Markdown 相对链接；输出无密 JSON，不读取 auth/session/memory | `packages/client-neutral-core/scripts/execution_preflight.py`、`docs/current/workflow-assistance/workflow/codex-execution-reliability.md`、`docs/current/workflow-assistance/workflow/codex-performance-diagnosis.md` |
-| Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor-desktop/`、`packages/client-neutral-core/scripts/token_monitor.py`、`docs/current/workflow-assistance/workflow/token-monitor.md` |
+| Token 监视器 | Windows Tauri 2 Dashboard，实时扫描本地 JSON/JSONL usage，按 GPT/Codex、DeepSeek 和模型显示输入/输出/缓存/reasoning/总 token；无 usage 时不估算 | `apps/token-monitor/`、`packages/client-neutral-core/scripts/token_monitor.py`、`docs/current/workflow-assistance/workflow/token-monitor.md` |
 | MCP | 默认固定 Context7 包版本；候选 MCP 另行执行 pinned provenance 审计 | `docs/current/workflow-assistance/mcp/workflow-mcp-stack.md`、`docs/current/workflow-assistance/mcp/mcp-catalog-governance.md`、`packages/client-neutral-core/scripts/mcp_candidate_audit.py` |
 | Agent 治理 | TDD、单写者、Task Ticket、结构化状态、fail-closed 契约、exact-tree 复审、CI 闭环 | `agent-workflow-fortress` |
 | Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.project-local/artifacts/`，用于新会话与 Codex handoff | `packages/client-neutral-core/scripts/build_context_pack.py`、`docs/current/workflow-assistance/workflow/context-pack.md` |
@@ -109,14 +109,14 @@ git clone git@github.com:DTALEX66/WORK-LAB.git
 cd WORK-LAB
 
 # Linux / macOS / Git Bash
-./setup.sh
+bash scripts/setup-workflow.sh
 
 # Windows PowerShell
-.\setup.ps1
+.\scripts\setup-workflow.ps1
 ```
 
 两个 setup 入口默认只生成 ActionPlan，不写 live Home。显式传入
-`setup.sh --apply` 或 `setup.ps1 -Apply` 后才会调用：
+`scripts/setup-workflow.sh --apply` 或 `setup-workflow.ps1 -Apply` 后才会调用：
 
 ```bash
 python integrations/executors/hermes/sync_hermes_workflow_assets.py --apply --approved
@@ -137,8 +137,8 @@ python integrations/executors/hermes/sync_hermes_workflow_assets.py --apply --ap
 实际行为：
 
 - 在 Hermes Home 下创建时间戳备份；
-- 从 `config/managed-config-schema.yaml` 读取精确的 13 个 managed skill 根并逐根事务替换，删除这些子树中已不在权威源里的旧附件；不提升整个 `skills/` 根，因此 staging 后新增的 Hermes bundled 或用户 skill 也会保留；
-- 逐文件部署 schema 声明的 6 个 managed launcher/guard，保留 live `bin/` 中其它 Hermes 官方或用户入口；同时部署无密钥 `.env.template`；
+- 从 `config/managed-config-schema.yaml` 读取精确的 13 个 managed skill 根并逐根事务替换，删除这些子树中已不在权威源里的旧附件；不提升整个 `$HERMES_HOME/skills/` 根，因此 staging 后新增的 Hermes bundled 或用户 skill 也会保留；
+- 逐文件部署 schema 声明的 6 个 managed launcher/guard，保留 live `$HERMES_HOME/bin/` 中其它 Hermes 官方或用户入口；同时部署无密钥 `.env.template`；
 - **绝不 promotion live `config.yaml`**：它同时包含用户的 provider/model、认证、MCP、plugin、hook、会话与未来字段，无法对外部写入实现可移植的原子 compare-and-replace。同步器只输出“skip mixed-ownership live config.yaml”；用户若要调整这些设置，必须明确使用官方 Hermes 配置入口并自行复核；
 - `config/config.yaml` 只作为无密钥 portable baseline，由空的 isolated Home verifier 构造并验证，不能据此声称已部署到真实 profile；
 - `mcp_servers.owned_names` 仅定义 baseline 的结构所有权与 isolated 验证范围，不授权同步器替换或删除真实 Home 中的 MCP；历史或用户 MCP（例如 `public-apis`、`sequential-thinking`）不受同步器影响；
@@ -201,7 +201,8 @@ backup → staging → atomic promotion 流程；`config/.env.template` 只列�
 受管 apply/rollback → verify 与幂等 plan 回读”的顺序恢复本项目明确拥有的 Rules、Skills、
 字段级配置和已声明的 Hermes 受管文件映射。恢复绝不替代官方安装/更新，也不接管
 Provider、模型、认证、Token、会话、私有记忆、Desktop 内部状态、CC Switch 路由或 Open
-Design 的设计能力配置。今日基线结论、已处理事项和恢复流程见
+Design 的设计能力配置。上面那条恢复顺序就是当前的流程；下面这份是 2026-08-13 那一轮的
+基线结论与已处理事项记录，仅作归档参考，不是当前规范：
 [`docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`](docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md)。
 
 ## 模型切换与路由诊断
@@ -277,7 +278,7 @@ python packages/client-neutral-core/scripts/provider_health.py \
 
 ## Codex 编码执行器
 
-Codex 会在新任务启动时读取用户目录 `.codex/AGENTS.md`，再由项目内更具体的
+Codex 会在新任务启动时读取用户目录 `$CODEX_HOME/AGENTS.md`，再由项目内更具体的
 `AGENTS.md` 继续约束；Codex 原生用户 skill 目录是 `$HOME/.agents/skills`，项目 skill
 目录是 `<project>/.agents/skills`，命令规则位于 `$CODEX_HOME/rules/*.rules`。不要把
 `.codex/skills` 当成当前官方 skill 发现根。
@@ -307,7 +308,7 @@ python integrations/executors/codex/sync_codex_global_assets.py rollback \
 
 同步器只拥有：
 
-- `.codex/AGENTS.md` 中带开始/结束标记的 Workflow Assistance block；
+- `$CODEX_HOME/AGENTS.md` 中带开始/结束标记的 Workflow Assistance block；
 - `.codex/config.toml` 中带标记的三个默认字段：`approval_policy=on-request`、
   `sandbox_mode=workspace-write`、`project_doc_max_bytes=65536`；
 - `.codex/rules/workflow-assistance.rules`；
@@ -598,11 +599,11 @@ python packages/client-neutral-core/scripts/security/scan_agent_rules.py templat
 - `docs/current/workflow-assistance/workflow/codex-performance-diagnosis.md`：Codex 性能分层诊断（项目/全局/客户端配置）、审计状态与解决方案；
 - `docs/current/workflow-assistance/workflow/managed-software-and-assets.md`：受管软件与内容总清单（Hermes/Codex/CC Switch/GitHub/OpenHuman/Open Design 及未来客户端的管理面总账）；
 - `docs/current/workflow-assistance/workflow/gpt-deepseek-ccswitch-codex-upgrade.md`：全链路工作流和路由矩阵；
-- `docs/current/workflow-assistance/workflow/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录；
-- `docs/current/workflow-assistance/workflow/error-fixes-2026-08-13-wlg.md`：WLG 治理 TaskPack 执行错误总结（CRLF provenance、force-push CI 陷阱、gh 卸载、多分支串扰等）；
-- `docs/current/workflow-assistance/workflow/memory-compaction-2026-08-13.md`：Hermes 记忆压缩与优化归档（合并策略、精简记录、记忆治理规则）；
-- `docs/current/workflow-assistance/workflow/error-fixes-2026-08-14-guard.md`：pre_tool_call 终端守卫正则防护三缺陷（路径穿越绕过、含空格路径误拦、scheme:// URL 误判）修复归档；
-- `docs/current/workflow-assistance/workflow/error-fixes-2026-08-14-r2.md`：R2 重审计修复批次错误归档（Guard 前缀两连坑、zizmor Docker action、schema 四方同步、SQL 表名、fail-closed 契约、验证脚本 bug、graphql 瞬断、cargo 检测）；
+- `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-04.md`：Windows/Git/Python/GitHub CLI 实际故障记录（已归档：那一轮的记录，不是现行规范）；
+- `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-08-13-wlg.md`：WLG 治理 TaskPack 执行错误总结（CRLF provenance、force-push CI 陷阱、gh 卸载、多分支串扰等）（已归档：那一轮的记录，不是现行规范）；
+- `docs/history/archive/workflow-assistance/error-fixes/memory-compaction-2026-08-13.md`：Hermes 记忆压缩与优化归档（合并策略、精简记录、记忆治理规则）（已归档：那一轮的记录，不是现行规范）；
+- `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-08-14-guard.md`：pre_tool_call 终端守卫正则防护三缺陷（路径穿越绕过、含空格路径误拦、scheme:// URL 误判）修复归档（已归档：那一轮的记录，不是现行规范）；
+- `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-08-14-r2.md`：R2 重审计修复批次错误归档（Guard 前缀两连坑、zizmor Docker action、schema 四方同步、SQL 表名、fail-closed 契约、验证脚本 bug、graphql 瞬断、cargo 检测）（已归档：那一轮的记录，不是现行规范）；
 - `docs/history/archive/workflow-assistance/handoffs/audit-r2-fixes-handoff-2026-08-14.md`：R2 修复批次交接（PR #97~#101、验证证据、剩余事项与恢复顺序）；
 - `docs/current/workflow-assistance/workflow/wloss-reference-decisions.md`：WLOSS-100/300/510 开源能力处理决定（OPA/Conftest=REFERENCE、in-toto=DERIVE、Cosign/Promptfoo=REFERENCE、Superpowers=方法吸收）；
 - `docs/current/workflow-assistance/mcp/workflow-mcp-stack.md`：MCP 默认策略；
@@ -669,15 +670,20 @@ WORK-LAB 根目录的 `../../.github/workflows/work-lab-gate.yml` 在每次 push
 
 ```text
 .github/workflows/   Linux/Windows 治理 CI
-bin/                 Hermes Node 与 Codex 定位 wrapper
-config/              无密钥 Hermes 基线、环境变量模板、SOUL
-scripts/workflow/    安全同步、模型切换、全链路 doctor
-scripts/security/    Agent 规则与秘密扫描
-skills/              Portable Hermes Skills 单一仓库源
-packages/client-neutral-core/templates/           Agent 规则和 Task Ticket 模板
-docs/                工作流、MCP、吸收记录和审计证据
-tests/               仓库治理回归测试
-setup.sh / setup.ps1 跨平台部署入口
+apps/                Observer 只读投影、Token 监视器、桌面入口
+config/              无密钥 Hermes 基线、环境变量模板、SOUL、字段级所有权
+integrations/        受管客户端执行器（Hermes/Codex 同步与切换）
+packages/            client-neutral-core：账本、sidecar、适配器、合同、技能与 launcher 源
+projections/         对外只读投影产物
+reports/             审计与证据归档
+scripts/             audit（读回与证伪）、ci（治理门禁）、maintenance、security、setup-workflow.sh/.ps1
+services/            编排、策略、回执与控制面
+taskpacks/           当前任务包、错误台账、开放任务登记
+tests/               仓库治理与模块回归测试
+docs/                当前规范、历史归档与审计记录
+
+scripts/setup-workflow.sh                       plan-first 安装入口（bash / Git Bash）
+scripts/setup-workflow.ps1                      plan-first 安装入口（Windows PowerShell）
 docs/current/workflow-assistance-TROUBLESHOOTING.md   故障排查
 ```
 

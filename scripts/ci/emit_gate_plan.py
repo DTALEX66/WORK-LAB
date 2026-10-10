@@ -16,7 +16,7 @@ from impact_planner import build_plan, load_profile  # noqa: E402
 
 
 def git(root: Path, *args: str) -> str:
-    result = subprocess.run(["git", *args], cwd=root, text=True, capture_output=True, check=False)
+    result = subprocess.run(["git", *args], cwd=root, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False)
     if result.returncode:
         raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
     return result.stdout.strip()

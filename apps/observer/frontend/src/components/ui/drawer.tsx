@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { useFocusTrap } from '@/lib/useFocusTrap'
 
 /**
  * UI_COMPONENTS (20260921) · L10b (2026-09-27): Drawer — L6 authority: 280ms
@@ -21,6 +22,8 @@ export interface DrawerProps {
 }
 
 export function Drawer({ open, onClose, title, children, side = 'right', className }: DrawerProps) {
+  const panelRef = React.useRef<HTMLElement>(null)
+
   React.useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -29,6 +32,10 @@ export function Drawer({ open, onClose, title, children, side = 'right', classNa
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
+
+  // M-3: `aria-modal` without a trap is a false promise — keyboard users tabbed
+  // straight out of the drawer into the surface behind it.
+  useFocusTrap(open, panelRef)
 
   // L10b: B10 slides the `.drawer` in/out with `.open`. The repo contract is
   // "closed drawer renders nothing" (so its content never duplicates page
@@ -44,6 +51,7 @@ export function Drawer({ open, onClose, title, children, side = 'right', classNa
         onClick={onClose}
       />
       <aside
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}

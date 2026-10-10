@@ -3,9 +3,17 @@
 > 状态：IMPLEMENTED · Command Center 融合布局（SigNoz/Homepage/Langfuse/OneUptime/Beszel/Grafana）
 > 数据原则：只渲染 canonical 事实，不伪造 UNKNOWN/0；UI 冻结已解除
 
+> **2026-10-07 修订（规范）**：§1.1 描述的 `apps/observer/web/` 静态面**已退役删除**，
+> 本节保留为历史设计记录，不再描述生产事实。当前前端源码是
+> `apps/observer/frontend/`（React + Vite：`src/lib/api.ts` 投影与格式化、
+> `src/views/*` 车道、`src/components/*` 面板与 HUD、`src/skins/*` B10 皮肤），
+> 由 Tauri 打包 `frontend/dist`，也可由 sidecar `--frontend-root` 只读服务同一份 dist。
+> 逐文件哈希与恢复点在 `docs/audits/OBSERVER_WEB_RETIREMENT_MANIFEST_2026-10-07.json`，
+> 每条旧断言的归属在 `apps/observer/parity-matrix-u03.md`。
+
 ## 1. 源码位置
 
-### 1.1 前端（apps/observer/web/）
+### 1.1 前端（apps/observer/web/，2026-10-07 已退役，仅作历史记录）
 
 | 文件 | 职责 |
 |---|---|
@@ -77,15 +85,21 @@ fusion-v3.js render() → Command Center
 ## 5. 运行
 
 ```bash
-# sidecar（数据源）
-python services/orchestration/sidecar.py --project-root . --runtime-root .hermes/task-runtime/workflow
+# sidecar（数据源，并可用 --frontend-root 只读服务同一份 Vite dist）
+python services/orchestration/sidecar.py --project-root . \
+  --runtime-root .project-local/runs/workflow \
+  --frontend-root apps/observer/frontend/dist
 
-# 静态服务器（前端）
-python -m http.server 8089 --directory apps/observer/web
+# 浏览器入口（api 参数指向 sidecar projectionUrl）
+http://127.0.0.1:61867/?view=full&theme=dark&api=<sidecar投影URL>
 
-# 浏览器（api 参数指向 sidecar projectionUrl）
-http://127.0.0.1:8089/index.html?view=full&theme=dark&api=<sidecar投影URL>
+# 桌面入口（生产形态）
+cd apps/observer/src-tauri && cargo tauri dev   # 或 CI 产出 release 二进制
 ```
+
+（2026-10-07 前这里写的是 `python -m http.server 8089 --directory apps/observer/web`；
+该静态面已退役，浏览器只读入口改为 sidecar 的 `--frontend-root`，
+由 `tests/workflow-assistance/test_sidecar_ui_browser_entry.py` 8 例钉住。）
 
 ## 6. 测试
 

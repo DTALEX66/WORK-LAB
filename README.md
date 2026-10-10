@@ -1,24 +1,42 @@
 # WORK-LAB
 
-`DTALEX66/WORK-LAB` is the canonical monorepo control plane for the user's
-**client-neutral AI workflow global-configuration layer**. It manages the
-highest user-level capability layer — Rules, Skills, plugins/MCP declarations,
-portable Memory, Capabilities and workflow policy — as one canonical source,
-then adapts it into native projections for each current client. It is not an
-agent runtime, a product platform, or a fourth product.
+**找资料先看：[历史资料与原件总入口](docs/history/owner-inputs/INDEX.md)**（文件名/别名/压缩包成员检索、归档登记、去重与历史摘要）。
 
-> **Current positioning (V2 converged):** the two canonical modules are
-> `packages/client-neutral-core` (task/telemetry ledger, sidecar, adapters,
-> delivery gates) and `apps/observer` (strictly read-only projection). The
-> supporting source surfaces `services/`, `integrations/`, `config/` and
-> `apps/token-monitor/` serve those modules and are not separate module roots.
-> Managed clients:
-> **Hermes · Codex · DSH · GitHub · Open Design · OpenHuman**, plus any future
-> AI software through the same Adapter contract; CC Switch is LEGACY_OBSERVE
-> (observe-only, no active writes). Frozen history lives under `docs/history/`
-> (single retrieval anchor; see `WL_INHERITANCE_MATRIX.json`, MiniGame =
-> `FOREIGN_HISTORICAL`). See
-> [`docs/decisions/PROJECT_POSITIONING.md`](docs/decisions/PROJECT_POSITIONING.md).
+`DTALEX66/WORK-LAB` 是软件中立、本地优先的 **AI工作观测与配置治理工作台**。外部AI软件执行业务，
+本方默认按项目观察参与软件、活动、阻碍、资源与新鲜度，并评价能力、适配用户选定目标、验证目标及维护受管版本。
+规则统一意图，保护用户原生配置与编辑；AAOS和DESIGN-LAB独立负责知识学习及专业设计。
+
+**2026-10-09当前任务：UI优先，仅桌面；手机端不做，也没有手机延后/冻结任务。**
+完整后续交接：[docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md](docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md)。
+唯一CURRENT：`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`；旧任务有用要求并账，无用冻结归档，不再独立派工。
+本轮完成任务整理和归档，产品代码未开始实现。实现状态与本机/CI/发布证据分别读回。
+
+> **规范 Authority 与唯一入口（必读顺序）**：`WORK-LAB-AUTHORITY.md`（顶层人类权威）→
+> `.project/governance/project-authority-index.json`（顶层机器权威）→ `AGENTS.md` →
+> `.project/governance/taskpack-authority-index.json` 指向的 current TaskPack →
+> `taskpacks/current/OPEN-TASK-REGISTER.md`（唯一在册开放任务账本，不建第二个）→ 范围内机器合同。
+> **找不到任务或文档时先读**：`docs/current/DOCUMENT-CENSUS.md`（文档与任务总索引：每个文档面的位置、
+> 数量、最后触碰时间、是否规范、由哪条门禁守着，以及从 `D:/All projects/Record` 收回来的唯一副本）。
+> 优先级：最新明确用户决定 ＞ Authority ＞ 机器索引 ＞ current TaskPack 与账本 ＞
+> `AGENTS.md` 与范围内合同 ＞ 当前精确提交代码与 CI/运行时读回 ＞ 历史记录（冻结、非规范）。
+> 审计入口：`python scripts/ci/verify_project_authority_reference.py`、
+> `python scripts/ci/verify_blueprint_coverage.py`、
+> 快照 `docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md`。
+>
+> **当前定位（V2 converged）**：两个规范模块是 `packages/client-neutral-core`（任务/遥测账本、
+> sidecar、adapter、交付门）与 `apps/observer`（严格只读投影）。支撑面 `services/`、
+> `integrations/`、`config/`、`apps/token-monitor/` 服务这两个模块，不是独立模块根。
+> 受管客户端：**Hermes · Codex · DSH · GitHub · Open Design · OpenHuman**，未来任何 AI 软件经同一
+> Adapter 合同接入；CC Switch 为 LEGACY_OBSERVE（只观测、不主动写）。冻结历史在
+> `docs/history/`（唯一检索锚点；见 `.project/governance/generated/WL_INHERITANCE_MATRIX.json`，MiniGame = `FOREIGN_HISTORICAL`）。
+> 参见 [`docs/decisions/PROJECT_POSITIONING.md`](docs/decisions/PROJECT_POSITIONING.md)。
+
+## 当前任务与历史范围
+
+当前WUI任务状态见`taskpacks/current/OPEN-TASK-REGISTER.md`，当前执行输入见唯一CURRENT。
+原件与历史归档：`docs/history/owner-inputs/20261009/SOURCE-INTEGRITY.json`、`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`。
+旧蓝图、Atlas、UI/Qoder/ORCA等计划已冻结为历史或逐条继承，不作为当前首版义务；有效实现与安全门保留。
+历史coverage投影仍可用于追溯，不产生当前派工；候选名录保留证据，不授安装/部署权限。
 
 ## Neutrality (unbound, unlocked)
 

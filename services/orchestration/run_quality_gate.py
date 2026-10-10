@@ -1,16 +1,31 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import os
+import platform
 import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
-from typing import Callable, NamedTuple
+from typing import Any, Callable, NamedTuple
 
 ROOT = Path(__file__).resolve().parents[2]
+
+# The runner hands its children `PYTHONIOENCODING=utf-8` (see _run below) but its OWN stdout was left at the
+# Windows console default. Measured 2026-10-10: a mandatory test whose output contains `↔` reached
+# `_report_governance_failure`, the `print` raised UnicodeEncodeError ('gbk' codec), and the failure report —
+# the one artifact that says WHICH of ~230 modules went red — was destroyed mid-line. A verdict that cannot be
+# printed is not a verdict, so the parent speaks UTF-8 and replaces anything a console still cannot render.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
 RETIRED_ORDINARY_TESTS = {
     "test_design_token_compliance.py",
     "test_figma_sync.py",
@@ -166,14 +181,22 @@ def run_python(args: list[str], *, env_updates: dict[str, str] | None = None) ->
 
 
 def tracked_python_files() -> list[str]:
-    roots = [
-        ROOT / "packages" / "client-neutral-core" / "bin",
-        ROOT / "packages" / "client-neutral-core" / "scripts",
-        ROOT / "services" / "orchestration",
-        ROOT / "scripts" / "security",
-        ROOT / "tests" / "workflow-assistance",
-    ]
-    return [path.relative_to(ROOT).as_posix() for root in roots for path in sorted(root.glob("*.py"))]
+    """Every tracked Python file.
+
+    This used to enumerate five roots (`packages/client-neutral-core/{bin,scripts}`,
+    `services/orchestration`, `scripts/security`, `tests/workflow-assistance`) and call the result the
+    repository's compile check. A mechanical edit that put `keyword argument repeated` into
+    `apps/observer/scripts/write_artifact_receipt.py` -- which no local suite imports -- shipped as a green
+    local gate and a red CI, because that path was simply not in the list. Syntax is a property of every
+    tracked file, so the input set is now exactly `git ls-files *.py`.
+    """
+    raw = subprocess.run(
+        ["git", "-c", "core.quotePath=false", "ls-files", "-z", "*.py"],
+        cwd=ROOT,
+        capture_output=True,
+        check=True,
+    ).stdout
+    return sorted(name.decode("utf-8", "replace") for name in raw.split(b"\0") if name)
 
 
 MANDATORY_TEST_GLOBS = ("test_*.py", "nf*.py")
@@ -232,8 +255,14 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
     existing = os.environ.get("PYTHONPATH")
     if existing:
         pythonpath += os.pathsep + existing
-    env = os.environ.copy()
+    env = project_runtime_environment(ROOT)
     env["PYTHONPATH"] = pythonpath
+    # Both ends pinned: mandatory modules print Chinese in failure text, and a `text=True` pipe with no
+    # encoding decodes with the host locale. On this machine that is cp936, so a UTF-8 byte sequence
+    # killed subprocess's own reader thread, `communicate()` returned None for that stream, and the
+    # concatenation below raised TypeError -- which destroyed the whole gate receipt while CI (UTF-8
+    # locale) could never show it. See ERR-211.
+    env["PYTHONIOENCODING"] = "utf-8"
     unittest_modules = [member for member in members if not (ROOT / member).is_file()]
     script_files = [member for member in members if (ROOT / member).is_file()]
     combined: list[str] = []
@@ -244,6 +273,8 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
             cwd=ROOT,
             env=env,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             capture_output=True,
         )
         overall = result.returncode
@@ -254,6 +285,8 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
             cwd=ROOT,
             env=env,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             capture_output=True,
         )
         if result.returncode != 0 and overall == 0:
@@ -267,7 +300,8 @@ def _git_head_identity() -> tuple[str, str]:
     def _git(*args: str) -> str:
         try:
             return subprocess.run(
-                ["git", *args], cwd=ROOT, capture_output=True, text=True
+                ["git", *args], cwd=ROOT, capture_output=True, text=True,
+                encoding="utf-8", errors="replace"
             ).stdout.strip()
         except Exception:
             return ""
@@ -339,6 +373,34 @@ def _report_governance_failure(members: list[str], exit_code: int, output: str) 
         print(f"    | {line}")
 
 
+GOVERNANCE_SKIP_LINE = re.compile(r"^(?P<case>.*?) \.\.\. skipped (?P<reason>.+)$", re.MULTILINE)
+
+
+def governance_skip_identities(output: str) -> list[tuple[str, str]]:
+    """Every skip the batch reported, as (case, reason) pairs.
+
+    Until now a PASS discarded the captured batch output and printed only ``skipped=N``, which reads
+    identically whether the N are environment boundaries or checks that quietly stopped being
+    collected. The reason is the actionable half, and it was thrown away.
+    """
+    found = []
+    for match in GOVERNANCE_SKIP_LINE.finditer(output):
+        case = match.group("case").strip().split("\n")[-1].strip()
+        found.append((case or "<unnamed-case>", match.group("reason").strip()))
+    return found
+
+
+def _governance_skip_truth(execution: str, identities: list[tuple[str, str]]) -> tuple[int, bool]:
+    """(reported, agrees): does the number of named skips equal the banner's count?
+
+    Disagreement is a failure, not a notice: a skip nobody can name is indistinguishable from a check
+    that stopped running, and the whole point of the count was to tell those two apart.
+    """
+    m = re.search(r"skipped=(\d+)", execution)
+    reported = int(m.group(1)) if m else 0
+    return reported, reported == len(identities)
+
+
 def _governance_execution_truth(output: str, has_unittest: bool) -> tuple[bool, str]:
     """C4: required tests ACTUALLY ran, per the tool's real semantics.
 
@@ -385,12 +447,37 @@ def gate_governance() -> int:
     if exit_code != 0:
         _report_governance_failure(members, exit_code, output)
         return exit_code
+    identities = governance_skip_identities(output)
+    reported, agrees = _governance_skip_truth(execution, identities)
+    if not agrees:
+        print(f"QUALITY_GATE_GOVERNANCE_FAIL skip_identity_unproven reported={reported} "
+              f"named={len(identities)} — a skip that cannot be named is indistinguishable from a "
+              f"check that stopped being collected")
+        return 1
     print(f"QUALITY_GATE_GOVERNANCE_PASS modules={len(members)} {execution}")
+    if reported:
+        by_reason: dict[str, int] = {}
+        for _, reason in identities:
+            by_reason[reason] = by_reason.get(reason, 0) + 1
+        print(f"GOVERNANCE_SKIPS named={len(identities)} reasons={len(by_reason)}")
+        for reason, count in sorted(by_reason.items(), key=lambda kv: (-kv[1], kv[0])):
+            cases = ", ".join(sorted(c for c, r in identities if r == reason)[:4])
+            print(f"  SKIPPED x{count} {reason} :: {cases}")
     return 0
 
 
 def gate_compile() -> int:
-    return run_python(["-m", "py_compile", *tracked_python_files()])
+    # Chunked, not one argv: the tracked set is 644 files, which is ~29 KB of command line against the
+    # 32,767-character CreateProcess ceiling. A repository that grows 10% would otherwise fail to start the
+    # compiler at all -- and a gate that cannot launch reports nothing, which reads as no defects.
+    files = tracked_python_files()
+    worst = 0
+    batches = 0
+    for start in range(0, len(files), 80):
+        batches += 1
+        worst = max(worst, run_python(["-m", "py_compile", *files[start:start + 80]]))
+    print(f"COMPILE_SCOPE files={len(files)} batches={batches} exit={worst}")
+    return worst
 
 
 def gate_security() -> int:
@@ -452,6 +539,110 @@ def gate_capability_matrix() -> int:
     return run_python(["packages/client-neutral-core/scripts/verify_capability_matrix.py"])
 
 
+def gate_model_registry_integrity() -> int:
+    """AG-05: model/provider/runtime registries stay internally consistent.
+
+    Fail-closed checks that a provider's `binds_to_model` resolves to a model id
+    (or a declared external asset), that `binds_to_runtime` resolves to an HTTP
+    runtime or an explicitly declared in-process library, that `binding_status`
+    cannot contradict the model lifecycle, that a runtime-scoped operationalStatus
+    does not use serving vocabulary for an unserved binding, and that a digest is
+    either COMPLETE with a 64-hex sha256 or TRUNCATED with a stated reason. Reads
+    JSON only: never downloads, installs, or touches runtime or global config.
+    """
+    return run_python(["scripts/ci/verify_model_registry_integrity.py"])
+
+
+def gate_acp_adapter_honesty() -> int:
+    """AG-06: the ACP surface reports declared/implemented/executable/native_verified.
+
+    Fail-closed: an execution capability may not be advertised when its operation
+    produces no real effect, an operation may not be reported executable unless the
+    probe avoided a degraded status, and native_verified requires a native receipt.
+    Probing is read-only and never launches an executor process.
+    """
+    return run_python(["scripts/ci/verify_acp_adapter_honesty.py"])
+
+
+def gate_observer_readonly_boundary() -> int:
+    """AG-15 prerequisite: the Observer read-only split is machine-enforced repo-wide.
+
+    Three fail-closed rules: the serving surface denies every non-GET method, the
+    Observer frontend never issues a write verb, and no authoritative write control
+    is rendered without an explicit disabled guard. Complements the per-view
+    runtime assertions in l10-views.test.tsx, which only cover one rendered lane.
+    """
+    return run_python(["scripts/ci/verify_observer_readonly_boundary.py"])
+
+
+def gate_observer_frontend_contracts() -> int:
+    """Run the two front-end suites CI runs and this gate did not.
+
+    Measured twice in one day: `run_quality_gate.py verify` printed GATE_EXIT=0 while the CI `observer`
+    job went red — first on the legibility micro-role rule in
+    `apps/observer/tests/run_all_tests.js`, then on a vitest failure in `src/App.behavior.test.tsx`.
+    Both suites are authoritative about the shipped surface, and neither had a local route, which is
+    the ERR-151 class in a new costume: a check that only exists in CI cannot protect the commit you
+    are about to push.
+
+    The route resolves Node from `.project/governance/toolchain-declarations.json` rather than from
+    PATH, and a host where that resolution fails prints `OBSERVER_FRONTEND_CONTRACTS_NOT_RUN` and
+    returns non-zero — a skipped required check is a failure, not a pass with a shrug.
+    """
+    return run_python(["apps/observer/scripts/frontend_toolchain.py", "contracts"])
+
+
+def gate_registry_closure_report() -> int:
+    """AG-05: produce the field-level closure report for the three registries.
+
+    The Atlas closed gap G05 as "close it field by field"; this is the aggregate
+    answer an auditor actually asks (which fields are CLOSED / EXPLICITLY_OPEN /
+    UNCLOSED). It reports rather than fails, because an unclosed field is a hole
+    to surface, not a reason to hide one — but the report must be produced, and
+    the accompanying negative controls (`nf26`) prove it can detect each hole.
+    """
+    return run_python(["scripts/ci/report_registry_closure.py"])
+
+
+EVIDENCE_TIER_BUNDLES = (
+    "reports/audit-evidence/assets-20260930/MANIFEST.json",
+    "reports/audit-evidence/assets-20260930/CLEANUP-CANDIDATES.json",
+    "reports/audit-evidence/assets-20260930/global-workflow-coverage.json",
+    "reports/audit-evidence/assets-20260930/inventory-verification.json",
+    "reports/audit-evidence/assets-20260930/asset-inventory.json",
+    "reports/audit-archive/20260930/ARCHIVE-INDEX.json",
+    "reports/audit-archive/20260930",
+)
+
+
+def gate_root_governance_suite() -> int:
+    """AG-06t: run the root `tests/ci/` governance suite (the push-time blind spot).
+
+    The canonical gate ran 43 `tests/workflow-assistance/` modules and ZERO of the 22
+    `tests/ci/` ones, so editing the shared error ledger could go green locally and
+    still fail CI — which is exactly what happened (an invalid `phase` enum and a
+    zero original-failure `exit_code` were found only by CI). The module globs the
+    suite so a new check is covered automatically; the single post-merge-state module
+    is excluded with its reason asserted in the script.
+    """
+    return run_python(["scripts/ci/run_root_governance_suite.py"])
+
+
+def gate_evidence_tiering() -> int:
+    """AG-06i (audit F15/F16): a bundle may not read as proof it cannot be.
+
+    The motivating defect was a package whose every digest matched while it still
+    invited a conclusion it could not support (`external_roots_touched: []` cannot
+    show a root was never read; a secret scan whose scanner source was not
+    retained cannot be re-derived). The gate refuses a behavioural claim that
+    carries no tier, and refuses a sub-VERIFIED tier that names nothing it cannot
+    establish.
+    """
+    return run_python(
+        ["scripts/ci/verify_evidence_tiering.py", *EVIDENCE_TIER_BUNDLES]
+    )
+
+
 def gate_policy_coverage() -> int:
     """U17.7/27: Global Agent Policy coverage + freshness.
 
@@ -463,14 +654,35 @@ def gate_policy_coverage() -> int:
     return run_python(["scripts/ci/verify_policy_coverage.py"])
 
 
+def gate_blueprint_projection() -> int:
+    """The blueprint coverage projection must equal what its mutable sources say now.
+
+    Measured cause: the CI integration job went red at d76deef0 and again at cdfd27d4 with
+    BLUEPRINT_COVERAGE_FAIL, while the canonical local gate printed PASS on the same tree. The
+    projection restates register cells verbatim, so rewriting 12 dangling register pins made it
+    stale -- and only CI could see it, because this check ran nowhere but the integration job. A
+    freshness rule a writer cannot run before pushing is a rule that will be broken by honest
+    edits to its source.
+    """
+    return run_python(["scripts/ci/verify_blueprint_coverage.py"])
+
+
 def gate_context_control_plane() -> int:
     """Context Control Plane: stable prefix, cache truth, drift guard tests."""
     return run_python(["tests/workflow-assistance/test_context_control_plane.py"])
 
 
 def gate_external_libraries_index() -> int:
-    """External libraries index: JSON valid + sharedRoots resolve + assets present."""
-    return run_python(["packages/client-neutral-core/scripts/verify_external_libraries_index.py"])
+    """External libraries index: structure is fatal, root discovery is reported.
+
+    The docstring promised "sharedRoots resolve + assets present" while the call never
+    passed --authorized-discovery, so every run reported NOT_SEARCHED for all four roots
+    and the promise was never actually checked. Discovery states stay non-fatal by the
+    verifier's own design (a volume that is offline is not evidence of missing
+    software); what changes is that this machine's roots are now really searched.
+    """
+    return run_python(["packages/client-neutral-core/scripts/verify_external_libraries_index.py",
+                       "--authorized-discovery"])
 
 
 def gate_protected_drives_consistency() -> int:
@@ -551,6 +763,20 @@ def gate_portable_install_runtime() -> int:
         print("\n=== FAIL portable-install-runtime: hermes CLI not found; runtime compatibility is required ===")
         return 1
     return run_python(["packages/client-neutral-core/scripts/verify_portable_install.py", "--runtime"])
+
+
+def gate_plugin_inventory_honesty() -> int:
+    """AG-06l (audit F07): a plugin record may not outrun its evidence.
+
+    F07's visible half was `commit: null` beside a declared revision. Its
+    important half is the caveat: a revision string cannot prove the installed
+    bytes match that commit — verified live, where chrome-profiles' declared
+    revision is correct while its working tree is locally modified. The gate also
+    refuses presence without observation and an observation that hides a delta.
+    """
+    return run_python(
+        ["scripts/ci/verify_plugin_inventory.py", "config/plugin-inventory.json"]
+    )
 
 
 def gate_provider_inventory() -> int:
@@ -903,7 +1129,8 @@ def _git_origin_repo_identity() -> str:
     """
     try:
         out = subprocess.run(["git", "config", "--get", "remote.origin.url"],
-                             cwd=ROOT, capture_output=True, text=True, timeout=30).stdout.strip()
+                             cwd=ROOT, capture_output=True, text=True, timeout=30,
+                             encoding="utf-8", errors="replace").stdout.strip()
     except Exception:
         out = ""
     if not out:
@@ -992,10 +1219,59 @@ GATES: dict[str, Gate] = {
         "WL3-100: verify capability-matrix.json stays consistent with the adapter registry.",
         gate_capability_matrix,
     ),
+    "model-registry-integrity": Gate(
+        "model-registry-integrity",
+        "AG-05: provider/model/runtime registries have no dangling foreign key, "
+        "contradictory binding status, or unverifiable digest.",
+        gate_model_registry_integrity,
+    ),
+    "acp-adapter-honesty": Gate(
+        "acp-adapter-honesty",
+        "AG-06: ACP operations report declared/implemented/executable/native_verified "
+        "separately; no execution capability is advertised without a real effect.",
+        gate_acp_adapter_honesty,
+    ),
+    "observer-readonly-boundary": Gate(
+        "observer-readonly-boundary",
+        "AG-15: the Observer read-only split is enforced repo-wide (no non-GET "
+        "handler, no write verb, no unguarded authoritative write control).",
+        gate_observer_readonly_boundary,
+    ),
+    "observer-frontend-contracts": Gate(
+        "observer-frontend-contracts",
+        "Run the observer JS static contract suite and vitest locally, so a green verify "
+        "cannot disagree with the CI observer job (ERR-151 class, front-end edition).",
+        gate_observer_frontend_contracts,
+    ),
+    "registry-closure-report": Gate(
+        "registry-closure-report",
+        "AG-05: field-level closure report for provider/model/runtime registries "
+        "(CLOSED / EXPLICITLY_OPEN / UNCLOSED).",
+        gate_registry_closure_report,
+    ),
+    "evidence-tiering": Gate(
+        "evidence-tiering",
+        "AG-06i (audit F15/F16): an evidence bundle that makes a behavioural "
+        "claim must tier it, and a claim below VERIFIED must name what it cannot "
+        "establish, so a declared claim cannot be read as proof.",
+        gate_evidence_tiering,
+    ),
+    "root-governance-suite": Gate(
+        "root-governance-suite",
+        "AG-06t: run the root tests/ci/ governance suite, which the canonical gate "
+        "previously skipped entirely, so a green local run can no longer hide a CI "
+        "failure in the shared ledgers and contracts.",
+        gate_root_governance_suite,
+    ),
     "policy-coverage": Gate(
         "policy-coverage",
         "U17.7/27: verify Global Agent Policy coverage + freshness (loss reports, matrix block, golden projections).",
         gate_policy_coverage,
+    ),
+    "blueprint-projection": Gate(
+        "blueprint-projection",
+        "The blueprint coverage projection must match its mutable sources right now, not on CI only.",
+        gate_blueprint_projection,
     ),
     "context-control-plane": Gate(
         "context-control-plane",
@@ -1060,14 +1336,21 @@ GATES: dict[str, Gate] = {
         gate_portable_install_runtime,
     ),
     "provider-inventory": Gate("provider-inventory", "Generate the secret-free configured provider/model inventory.", gate_provider_inventory),
+    "plugin-inventory-honesty": Gate(
+        "plugin-inventory-honesty",
+        "AG-06l (audit F07): a plugin record may not claim presence without an "
+        "observation, and an observation may not hide a local delta; a revision "
+        "string alone never proves the installed bytes match that commit.",
+        gate_plugin_inventory_honesty,
+    ),
     "mcp-audit": Gate("mcp-audit", "Smoke the MCP candidate audit template generator.", gate_mcp_audit),
-    "shell": Gate("shell", "Parse setup.sh with bash -n when bash is available.", gate_shell),
+    "shell": Gate("shell", "Parse scripts/setup-workflow.sh with bash -n when bash is available.", gate_shell),
     "runtime-convergence": Gate(
         "runtime-convergence",
         "WL3 Wave 1: canonical store, durable worker, registry, collectors, SSE.",
         gate_runtime_convergence,
     ),
-    "powershell": Gate("powershell", "Parse setup.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
+    "powershell": Gate("powershell", "Parse scripts/setup-workflow.ps1 with PowerShell AST when pwsh/powershell.exe is available.", gate_powershell),
     # WLGM §7 named gates.
     "project-identity-contract": Gate("project-identity-contract", "WLGM §7: product project identity + resolver contracts.", gate_project_identity_contract),
     "agent-adapter-readonly-contract": Gate("agent-adapter-readonly-contract", "WLGM §7: adapters read-only, capabilities explicit.", gate_agent_adapter_readonly_contract),
@@ -1095,7 +1378,15 @@ VERIFY_ORDER = (
     "core-schemas",
     "adapter-registry",
     "capability-matrix",
+    "model-registry-integrity",
+    "acp-adapter-honesty",
+    "observer-readonly-boundary",
+    "observer-frontend-contracts",
+    "registry-closure-report",
+    "evidence-tiering",
+    "root-governance-suite",
     "policy-coverage",
+    "blueprint-projection",
     "context-control-plane",
     "external-libraries-index",
     "protected-drives-consistency",
@@ -1109,6 +1400,7 @@ VERIFY_ORDER = (
     "task-ledger-replay",
     "portable-install",
     "provider-inventory",
+    "plugin-inventory-honesty",
     "mcp-audit",
     "shell",
     "runtime-convergence",
@@ -1131,23 +1423,105 @@ VERIFY_ORDER = (
 )
 
 
-def run_gate_sequence(names: tuple[str, ...]) -> int:
-    for name in names:
+def _source_binding() -> tuple[str, str, str, int]:
+    """(head commit, head tree, digest of the worktree state, count of changed-or-untracked paths).
+
+    The receipt has to name the bytes it judged. A head hash alone is not enough: the gates read the working
+    tree, so a verification run against a dirty checkout certifies bytes that no commit will ever carry, and
+    a run whose tree changed halfway certifies nothing at all. `git status --porcelain -uall` is 35ms here
+    because `.project-local/` -- where the receipts themselves are written -- is ignored, so the act of
+    recording cannot move the digest it records.
+    """
+    def _git(*args: str) -> str:
+        try:
+            return subprocess.run(
+                ["git", *args], cwd=ROOT, capture_output=True, text=True,
+                encoding="utf-8", errors="replace"
+            ).stdout
+        except Exception:
+            return ""
+    commit, tree = _git_head_identity()
+    status = _git("status", "--porcelain=v1", "-uall")
+    paths = [line for line in status.splitlines() if line.strip()]
+    return commit, tree, hashlib.sha256("\n".join(paths).encode("utf-8")).hexdigest()[:16], len(paths)
+
+
+def _tool_versions() -> str:
+    """Which interpreters ran. Node is resolved per gate here, so say so rather than print a misleading absent."""
+    node = os.environ.get("NODE") or shutil.which("node")
+    version = "not-on-PATH(observer-frontend-contracts resolves its own managed runtime)"
+    if node:
+        try:
+            version = subprocess.run([node, "--version"], capture_output=True, text=True,
+                                     encoding="utf-8", errors="replace").stdout.strip()
+        except Exception:
+            version = "unresolvable"
+    return (f"GATE_TOOLS python={platform.python_version()}({sys.executable}) "
+            f"node={node or 'unset'}@{version}")
+
+
+def run_gate_sequence(names: tuple[str, ...], command: str = "") -> int:
+    # Stamp the head FIRST, before any gate runs. A receipt that never says which commit it describes
+    # cannot distinguish "verified and red" from "never verified", and the second one is not evidence
+    # about the first. `scripts/ci/push_permit.py` reads this line; the verdict comes from GATE_EXIT.
+    start_commit, start_tree, start_dirty, start_paths = _source_binding()
+    # GATE_FULL is the property a push decision actually turns on: a receipt from one cheap gate must
+    # not be readable as "the head was verified". Derived, never passed in, so a new call site cannot
+    # forget to set it.
+    full = "yes" if set(names) == set(VERIFY_ORDER) else "no"
+    print(f"GATE_HEAD={start_commit} GATE_TREE={start_tree} GATE_FULL={full} gates={len(names)}")
+    print(f"GATE_DIRTY={start_dirty} dirty_paths={start_paths}")
+    print(_tool_versions())
+    if command:
+        print(f"GATE_COMMAND={command}")
+
+    def finish(code: int, ran: int, failed_gate: str = "") -> int:
+        """Close the receipt: the end binding, whether the source moved, then the verdict line.
+
+        Every path lands here, including the red one. The completion line is written by this process and
+        nowhere else -- a receipt a wrapper has to complete by hand is a receipt that eventually is not,
+        and a token printed only on the pass path makes 'ran and failed' indistinguishable from 'never ran'.
+        """
+        end_commit, end_tree, end_dirty, end_paths = _source_binding()
+        drift = (end_commit, end_tree, end_dirty) != (start_commit, start_tree, start_dirty)
+        print(f"GATE_HEAD_END={end_commit} GATE_TREE_END={end_tree} "
+              f"GATE_DIRTY_END={end_dirty} dirty_paths_end={end_paths}")
+        print(f"GATE_STAGES ran={ran} planned={len(names)} full={full}"
+              + (f" failed_gate={failed_gate}" if failed_gate else ""))
+        print(f"GATE_SOURCE_DRIFT={'yes' if drift else 'no'}")
+        if drift and code == 0:
+            # A pass over bytes that are gone is not a pass over these bytes. Refuse rather than let the
+            # oldest still-valid-looking line carry the verdict.
+            print("QUALITY_GATE_SOURCE_CHANGED head/tree/worktree moved during the run; "
+                  "the stages above did not all see the same source")
+            code = 70
+        if failed_gate:
+            print(f"QUALITY_GATE_FAIL gate={failed_gate} exit_code={code}")
+        print(f"GATE_EXIT={code}")
+        return code
+
+    for index, name in enumerate(names):
         gate = GATES[name]
         print(f"\n### gate: {gate.name} — {gate.description}")
+        started = time.monotonic()
         exit_code = gate.runner()
+        # Per-stage seconds and exit code: the tier split below is only defensible if the receipt says what
+        # each stage cost, and a red receipt that names no failing stage cannot be triaged without a rerun.
+        print(f"GATE_STAGE gate={gate.name} exit={exit_code} seconds={time.monotonic() - started:.1f}")
         if exit_code != 0:
-            print(f"\nQUALITY_GATE_FAIL gate={gate.name} exit_code={exit_code}")
-            return exit_code
+            print("")
+            return finish(exit_code, ran=index + 1, failed_gate=gate.name)
     print("\nQUALITY_GATE_PASS gates=" + ",".join(names))
+    # The GATE_HEAD/GATE_FULL stamp is emitted at the top of this function, before any gate runs, so a
+    # red receipt identifies its head too.
     # P1-3: never present an environment-limited local pass as full completion.
     print(
         "GATE_SEMANTICS STRUCTURAL_LOCAL_PASS=yes "
         "RUNTIME_CANARY_PENDING=yes(without WORKLAB_CANARY_PROJECT_ROOTS) "
-        "TAURI_WINDOWS_PENDING=yes(without Rust toolchain) "
+        "TAURI_WINDOWS_PENDING=yes(real desktop WebView2 E2E not executed in this run) "
         "EXACT_SHA_CI_UNVERIFIED=yes(local only, no exact-SHA Actions run)"
     )
-    return 0
+    return finish(0, ran=len(names))
 
 
 # WLOSS-700: changed-files -> relevant gates.
@@ -1170,6 +1544,12 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "core-schemas": ("packages/contracts/schemas/", "config/"),
     "adapter-registry": ("config/adapter-registry.json", "packages/client-neutral-core/scripts/verify_adapter_registry.py"),
     "capability-matrix": ("config/capability-matrix.json", "packages/client-neutral-core/scripts/verify_capability_matrix.py"),
+    "model-registry-integrity": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/verify_model_registry_integrity.py"),
+    "acp-adapter-honesty": ("services/execution-federation/", "scripts/ci/verify_acp_adapter_honesty.py"),
+    "observer-readonly-boundary": ("apps/observer/frontend/src/", "services/orchestration/sidecar.py", "scripts/ci/verify_observer_readonly_boundary.py"),
+    "registry-closure-report": (".project/governance/provider-registry.json", ".project/governance/model-registry.json", ".project/governance/runtime-registry.json", "scripts/ci/report_registry_closure.py"),
+    "evidence-tiering": ("reports/audit-evidence/", "reports/audit-archive/", "scripts/ci/verify_evidence_tiering.py"),
+    "root-governance-suite": ("tests/ci/", "scripts/ci/run_root_governance_suite.py", "taskpacks/current/error-ledger.json"),
     "policy-coverage": ("config/global-agent-policy.yaml", "config/loss-reports/", "config/capability-matrix.json", "config/adapter-registry.json", "services/policy/policy_projection.py", "integrations/executors/codex/codex_policy_renderer.py", "integrations/executors/hermes/hermes_policy_renderer.py", "integrations/executors/codex/codex-policy-extension.yaml", "integrations/executors/hermes/hermes-policy-extension.yaml", "integrations/executors/codex/global-guidance.md", "config/SOUL.md", "scripts/ci/verify_policy_coverage.py", "tests/workflow-assistance/test_policy_projection.py"),
     "context-control-plane": ("packages/client-neutral-core/scripts/context_control_plane.py", "packages/client-neutral-core/scripts/context_bundle.py", "packages/client-neutral-core/scripts/context_drift_guard.py"),
     "external-libraries-index": (".project/governance/external-libraries-index.json", "packages/client-neutral-core/scripts/verify_external_libraries_index.py"),
@@ -1182,6 +1562,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "task-ledger-replay": ("packages/client-neutral-core/scripts/task_ledger_replay.py",),
     "portable-install": ("packages/client-neutral-core/scripts/verify_portable_install.py",),
     "provider-inventory": ("config/config.yaml",),
+    "plugin-inventory-honesty": ("config/plugin-inventory.json", "scripts/ci/verify_plugin_inventory.py"),
     "mcp-audit": ("packages/client-neutral-core/scripts/mcp_candidate_audit.py",),
     "shell": ("scripts/setup-workflow.sh",),
     "runtime-convergence": ("packages/client-neutral-core/scripts/canonical_store.py", "services/orchestration/durable_worker.py", "packages/client-neutral-core/scripts/collectors.py", "services/orchestration/sse_hub.py", "tests/workflow-assistance/"),
@@ -1191,7 +1572,7 @@ GATE_PATH_SCOPES: dict[str, tuple[str, ...]] = {
     "execution-state-machine": ("services/receipts/evidence_aggregator.py",),
     "collector-noninterference": ("services/orchestration/collector_scheduler.py", "packages/client-neutral-core/scripts/process_collector.py", "packages/client-neutral-core/scripts/git_collector.py"),
     "canonical-single-writer": ("packages/client-neutral-core/scripts/canonical_store.py", "tests/workflow-assistance/test_canonical_store_v2.py"),
-    "observer-no-business-write": ("services/receipts/execution_evidence.py", "apps/observer/web/", "tests/workflow-assistance/test_wlgm_privacy.py"),
+    "observer-no-business-write": ("services/receipts/execution_evidence.py", "apps/observer/frontend/src", "tests/workflow-assistance/test_wlgm_privacy.py"),
     "snapshot-schema-v3": ("packages/client-neutral-core/scripts/snapshot_api.py", "packages/client-neutral-core/scripts/snapshot_validator.py", "tests/workflow-assistance/test_snapshot_validator.py", "tests/workflow-assistance/test_snapshot_sse_live.py"),
     "sse-browser-reconnect": ("services/orchestration/sse_revision.py", "services/orchestration/live_gate.py", "tests/workflow-assistance/test_snapshot_sse_live.py"),
     "field-quality-no-fabrication": ("services/orchestration/live_gate.py", "services/receipts/evidence_aggregator.py", "tests/workflow-assistance/test_evidence_aggregator.py"),
@@ -1281,6 +1662,62 @@ def select_gates_for_changed(changed_paths: list[str]) -> tuple[str, ...]:
     return tuple(order)
 
 
+PROJECT_PROFILE = ROOT / ".project/governance/work-lab.project-profile.yaml"
+
+
+def canonical_impact_plan(changed_paths: list[str]) -> tuple[dict[str, Any] | None, str]:
+    """Ask the ONE canonical impact planner (the one CI consumes) about these paths.
+
+    Two vocabularies exist and are not merged here: the profile names CI *jobs* (workflow, observer,
+    token-monitor, supply-chain-security, integration) while this runner names *local gates*. Merging
+    them is a delivery-structure decision, so the planner is consulted for the two things the local table
+    cannot honestly decide on its own — whether a change is classified at all, and whether it is
+    critical — and for reporting the CI jobs the same change would require.
+
+    Returns (plan, note). A missing or unreadable plan is a NOTE plus None: the caller treats that as
+    "not classified" and runs the full suite. A convenience lookup that fails must never widen scope
+    reduction.
+    """
+    sys.path.insert(0, str(ROOT / "packages" / "client-neutral-core" / "scripts"))
+    try:
+        from impact_planner import build_plan, load_profile  # noqa: PLC0415
+    except Exception as error:  # noqa: BLE001 - reported, then the caller escalates
+        return None, f"planner unavailable ({type(error).__name__}: {error})"
+    try:
+        profile = load_profile(PROJECT_PROFILE)
+    except Exception as error:  # noqa: BLE001
+        return None, f"profile unreadable ({type(error).__name__}: {error})"
+    try:
+        plan = build_plan(
+            profile,
+            repository="DTALEX66/WORK-LAB",
+            commit=_head_commit(),
+            tree=_head_tree(),
+            changed_paths=changed_paths,
+            plan_id="local-changed",
+        )
+    except Exception as error:  # noqa: BLE001
+        return None, f"plan rejected ({type(error).__name__}: {error})"
+    return plan, "ok"
+
+
+def _head_commit() -> str:
+    result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True,
+                            capture_output=True, check=False, encoding="utf-8", errors="replace")
+    return result.stdout.strip() if result.returncode == 0 else "unresolved"
+
+
+def _head_tree() -> str:
+    result = subprocess.run(["git", "rev-parse", "HEAD^{tree}"], cwd=ROOT, text=True,
+                            capture_output=True, check=False, encoding="utf-8", errors="replace")
+    return result.stdout.strip() if result.returncode == 0 else "unresolved"
+
+
+def cli_command(argv: list[str] | None = None) -> str:
+    """The command line as typed, for the receipt. A verdict with no command cannot be reproduced."""
+    args = list(sys.argv[1:] if argv is None else argv)
+    return "python services/orchestration/run_quality_gate.py" + (" " + " ".join(args) if args else "")
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Workflow-assistance local quality gate runner.")
     parser.add_argument(
@@ -1313,13 +1750,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.changed:
         changed = [p.strip() for p in args.changed.split(",") if p.strip()]
         selected = select_gates_for_changed(changed)
-        print(f"WLOSS_700 changed={len(changed)} files -> gates={','.join(selected) or 'none'}")
+        # P2-04: the canonical planner is the authority on whether a change is classified at all and
+        # whether it is critical. Anything it cannot answer is treated as unclassified — this wiring can
+        # only ever widen the run, never narrow it below what the local table chose.
+        plan, note = canonical_impact_plan(changed)
+        if plan is None:
+            selected, why = tuple(VERIFY_ORDER), f"planner said nothing ({note})"
+        elif plan["risk"] == "critical" or not plan["required_gates"]:
+            selected, why = tuple(VERIFY_ORDER), f"canonical risk={plan['risk']} required={len(plan['required_gates'])}"
+        else:
+            why = f"canonical risk={plan['risk']} required_jobs={','.join(plan['required_gates'])}"
+        print(f"WLOSS_700 changed={len(changed)} files -> {why}; "
+              f"gates={','.join(selected) or 'none'} executed={len(selected)}")
         if not selected:
             return 0
-        return run_gate_sequence(selected)
+        return run_gate_sequence(selected, command=cli_command())
     if args.gate == "verify":
-        return run_gate_sequence(VERIFY_ORDER)
-    return run_gate_sequence((args.gate,))
+        return run_gate_sequence(VERIFY_ORDER, command=cli_command())
+    return run_gate_sequence((args.gate,), command=cli_command())
 
 
 if __name__ == "__main__":

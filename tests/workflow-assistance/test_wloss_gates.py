@@ -76,7 +76,7 @@ class CanaryExitCodeContractTests(unittest.TestCase):
         if env_extra:
             env.update(env_extra)
         return subprocess.run(
-            [sys.executable, str(script), *args], cwd=str(self.root), capture_output=True, text=True, timeout=180, env=env
+            [sys.executable, str(script), *args], cwd=str(self.root), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180, env=env
         )
 
     def test_canary_exit_code_matches_all_pass(self) -> None:

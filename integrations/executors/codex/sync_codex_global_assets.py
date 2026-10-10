@@ -313,7 +313,7 @@ def _load_state(codex_home: Path) -> dict[str, Any]:
 def _skill_sources(source_root: Path) -> list[Path]:
     skill_root = source_root / "skills"
     skills = sorted(path.parent for path in skill_root.glob("workflow-assistance-*/SKILL.md"))
-    if len(skills) < 6:
+    if not skills:
         raise ManagedConflict(f"Codex skill pack incomplete: found {len(skills)}")
     return skills
 
@@ -381,7 +381,7 @@ def _validate_existing_ownership(
     return current
 
 
-def _preflight(codex_home: Path, agent_home: Path, source_root: Path) -> dict[str, Any]:
+def _preflight(codex_home: Path, agent_home: Path, source_root: Path, *, skills_only: bool = False) -> dict[str, Any]:
     guidance_source = source_root / "global-guidance.md"
     rules_source = source_root / RULE_RELATIVE
     if not guidance_source.is_file() or not rules_source.is_file():
@@ -389,18 +389,20 @@ def _preflight(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
     guidance_overlay = guidance_source.read_text(encoding="utf-8")
     _assert_safe_managed_path(codex_home, codex_home / STATE_FILE)
     state = _load_state(codex_home)
+    if skills_only and (state.get("version") != VERSION or state.get("phase") != "applied"):
+        raise ManagedConflict("skills-only sync requires an applied current ownership state")
     previous = state.get("target_hashes", {}) if isinstance(state.get("target_hashes", {}), dict) else {}
 
     config_path = codex_home / "config.toml"
     _assert_safe_managed_path(codex_home, config_path)
-    config_original_bytes = _read_optional_bytes(config_path)
+    config_original_bytes = None if skills_only else _read_optional_bytes(config_path)
     config_text = config_original_bytes.decode("utf-8") if config_original_bytes is not None else ""
     guidance_path = codex_home / "AGENTS.md"
     _assert_safe_managed_path(codex_home, guidance_path)
-    guidance_original_bytes = _read_optional_bytes(guidance_path)
+    guidance_original_bytes = None if skills_only else _read_optional_bytes(guidance_path)
     guidance_text = guidance_original_bytes.decode("utf-8") if guidance_original_bytes is not None else ""
     previous_block_hashes: dict[str, str] = {}
-    if state:
+    if state and not skills_only:
         previous_block_hashes = _validate_existing_ownership(
             state,
             config_text,
@@ -417,8 +419,8 @@ def _preflight(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
 
     rules_target = codex_home / RULE_RELATIVE
     _assert_safe_managed_path(codex_home, rules_target)
-    rules_current_bytes = _read_optional_bytes(rules_target)
-    if rules_target.exists():
+    rules_current_bytes = None if skills_only else _read_optional_bytes(rules_target)
+    if rules_target.exists() and not skills_only:
         if not state:
             raise ManagedConflict(f"unowned rule target already exists: {rules_target}")
         current = _sha256_bytes(rules_current_bytes or b"")
@@ -467,6 +469,11 @@ def _preflight(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
 
     rendered_config, appended_fields, preserved_fields = _render_config(config_text)
     rendered_guidance = _render_guidance(guidance_text, guidance_overlay)
+    if skills_only:
+        rendered_config = config_text
+        rendered_guidance = guidance_text
+        appended_fields = state.get("managed_config_fields", [])
+        preserved_fields = state.get("preserved_user_config_fields", [])
     return {
         "state": state,
         "rules_source": rules_source,
@@ -489,8 +496,8 @@ def _preflight(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
     }
 
 
-def build_plan(codex_home: Path, agent_home: Path, source_root: Path) -> dict[str, Any]:
-    data = _preflight(codex_home, agent_home, source_root)
+def build_plan(codex_home: Path, agent_home: Path, source_root: Path, *, skills_only: bool = False) -> dict[str, Any]:
+    data = _preflight(codex_home, agent_home, source_root, skills_only=skills_only)
     actions: list[dict[str, str]] = []
     if data["state"] and data["state"].get("version") != VERSION:
         actions.append({"action": "MIGRATE_OWNERSHIP_STATE", "target": f"CODEX_HOME/{STATE_FILE}"})
@@ -500,7 +507,7 @@ def build_plan(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
         actions.append({"action": "MERGE_MANAGED_BLOCK", "target": "CODEX_HOME/AGENTS.md"})
     rules_source: Path = data["rules_source"]
     rules_target: Path = data["rules_target"]
-    if not rules_target.exists() or rules_target.read_bytes() != rules_source.read_bytes():
+    if not skills_only and (not rules_target.exists() or rules_target.read_bytes() != rules_source.read_bytes()):
         actions.append({"action": "REPLACE_OWNED_FILE", "target": RULE_RELATIVE.as_posix()})
     for skill in data["skills"]:
         target: Path = skill["target"]
@@ -511,8 +518,8 @@ def build_plan(codex_home: Path, agent_home: Path, source_root: Path) -> dict[st
             actions.append({"action": "REMOVE_RETIRED_OWNED_SKILL", "target": f"skills/{skill['name']}"})
     plan = {
         "status": "DRY_RUN",
-        "target_scope_digest": _target_scope_digest(codex_home, agent_home, source_root),
-        "managed_config_fields": sorted(MANAGED_CONFIG),
+        "target_scope_digest": _target_scope_digest(codex_home, agent_home, source_root) + (":skills-only" if skills_only else ""),
+        "managed_config_fields": [] if skills_only else sorted(MANAGED_CONFIG),
         "preserved_user_config_fields": sorted(data["preserved_fields"]),
         "actions": actions,
         "write_set_count": len(actions),
@@ -527,35 +534,37 @@ def apply_overlay(
     source_root: Path,
     *,
     approved_plan_digest: str | None,
+    skills_only: bool = False,
 ) -> dict[str, Any]:
     """Apply only an explicitly reviewed, current, target-bound ActionPlan."""
 
     if not approved_plan_digest:
         raise ManagedConflict("ACTION_PLAN_DIGEST_REQUIRED build and explicitly approve a current plan first")
     with _operation_lock(codex_home):
-        current_plan = build_plan(codex_home, agent_home, source_root)
+        current_plan = build_plan(codex_home, agent_home, source_root, skills_only=skills_only)
         if approved_plan_digest != current_plan["plan_digest"]:
             raise ManagedConflict("ACTION_PLAN_DIGEST_MISMATCH rerun plan and review the current target write set")
-        data = _preflight(codex_home, agent_home, source_root)
+        data = _preflight(codex_home, agent_home, source_root, skills_only=skills_only)
         config_path: Path = data["config_path"]
         guidance_path: Path = data["guidance_path"]
         rules_source: Path = data["rules_source"]
         rules_target: Path = data["rules_target"]
         state_path = codex_home / STATE_FILE
 
-        config_bytes = data["config_rendered"].encode("utf-8")
-        guidance_bytes = data["guidance_rendered"].encode("utf-8")
-        rules_bytes = rules_source.read_bytes()
+        config_bytes = None if skills_only else data["config_rendered"].encode("utf-8")
+        guidance_bytes = None if skills_only else data["guidance_rendered"].encode("utf-8")
+        rules_bytes = None if skills_only else rules_source.read_bytes()
         target_hashes: dict[str, str] = {
-            RULE_RELATIVE.as_posix(): _sha256_bytes(rules_bytes),
+            **{key: value for key, value in data["state"].get("target_hashes", {}).items() if skills_only and not key.startswith("skills/")},
+            **({RULE_RELATIVE.as_posix(): _sha256_bytes(rules_bytes)} if rules_bytes is not None else {}),
             **{f"skills/{skill['name']}": skill["hash"] for skill in data["skills"]},
         }
         config_block = _managed_block(data["config_rendered"], CONFIG_BEGIN, CONFIG_END)
         guidance_block = _managed_block(data["guidance_rendered"], GUIDANCE_BEGIN, GUIDANCE_END)
-        if guidance_block is None:
+        if guidance_block is None and not skills_only:
             raise ManagedConflict("rendered guidance is missing its managed block")
-        managed_block_hashes = {"AGENTS.md": _block_hash(guidance_block)}
-        if data["appended_fields"]:
+        managed_block_hashes = dict(data["state"].get("managed_block_hashes", {})) if skills_only else {"AGENTS.md": _block_hash(guidance_block)}
+        if data["appended_fields"] and not skills_only:
             if config_block is None:
                 raise ManagedConflict("rendered config is missing its managed block")
             managed_block_hashes["config.toml"] = _block_hash(config_block)
@@ -584,12 +593,12 @@ def apply_overlay(
             )
         )
         if not changed:
-            verification = verify_overlay(codex_home, agent_home, source_root)
+            verification = verify_overlay(codex_home, agent_home, source_root, skills_only=skills_only)
             if verification["status"] != "PASS":
                 raise ManagedConflict(f"post-apply verification failed: {verification['issues']}")
             return {
                 "status": "NO_CHANGE",
-                "managed_config_fields": sorted(MANAGED_CONFIG),
+                "managed_config_fields": [] if skills_only else sorted(MANAGED_CONFIG),
                 "installed_skills": len(data["skills"]),
                 "preserved_user_config_fields": sorted(data["preserved_fields"]),
             }
@@ -672,18 +681,22 @@ def apply_overlay(
             final_state_bytes,
             expected_current=pending_state_bytes,
         )
-        verification = verify_overlay(codex_home, agent_home, source_root)
+        verification = verify_overlay(codex_home, agent_home, source_root, skills_only=skills_only)
         if verification["status"] != "PASS":
             raise ManagedConflict(f"post-apply verification failed: {verification['issues']}")
         return {
             "status": "APPLIED",
-            "managed_config_fields": sorted(MANAGED_CONFIG),
+            "managed_config_fields": [] if skills_only else sorted(MANAGED_CONFIG),
             "installed_skills": len(data["skills"]),
             "preserved_user_config_fields": sorted(data["preserved_fields"]),
         }
 
 
-def verify_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dict[str, Any]:
+def verify_overlay(codex_home: Path, agent_home: Path, source_root: Path, *, skills_only: bool = False) -> dict[str, Any]:
+    if skills_only:
+        _assert_safe_managed_path(codex_home, codex_home / STATE_FILE)
+        state = _load_state(codex_home)
+        return _verify_skill_assets(state, agent_home, source_root, [])
     issues: list[str] = []
     config_path = codex_home / "config.toml"
     _assert_safe_managed_path(codex_home, codex_home / STATE_FILE)
@@ -753,6 +766,14 @@ def verify_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dic
     if not rules_target.exists() or _sha256_bytes(rules_target.read_bytes()) != rule_hash:
         issues.append("rules_drift")
 
+    return _verify_skill_assets(state, agent_home, source_root, issues, config_fields=sorted(MANAGED_CONFIG))
+
+
+def _verify_skill_assets(state: dict[str, Any], agent_home: Path, source_root: Path, issues: list[str], *, config_fields: list[str] | None = None) -> dict[str, Any]:
+    if not state:
+        issues.append("state_missing")
+    elif state.get("phase") != "applied":
+        issues.append(f"state_incomplete:{state.get('phase')}")
     skills = _skill_sources(source_root)
     source_names = {source.name for source in skills}
     state_names = set(state.get("managed_skill_names", [])) if state else set()
@@ -769,7 +790,7 @@ def verify_overlay(codex_home: Path, agent_home: Path, source_root: Path) -> dic
     return {
         "status": "PASS" if not issues else "FAIL",
         "issues": issues,
-        "managed_config_fields": sorted(MANAGED_CONFIG),
+        "managed_config_fields": config_fields or [],
         "installed_skills": len(skills),
     }
 
@@ -962,24 +983,87 @@ def _default_source_root() -> Path:
     return Path(__file__).resolve().parents[3] / "integrations" / "executors" / "codex"
 
 
+def build_personal_guidance_plan(codex_home: Path, source: Path, backup: Path) -> dict[str, Any]:
+    """Explicit user-rule replacement, separate from owned overlay deployment."""
+    repo = Path(__file__).resolve().parents[3]
+    if source.suffix.lower() != ".md":
+        raise ManagedConflict("personal guidance source must be a Markdown rule file")
+    _assert_safe_managed_path(repo, source)
+    _assert_safe_managed_path(repo / ".project-local", backup)
+    target = codex_home / "AGENTS.md"
+    _assert_safe_managed_path(codex_home, target)
+    desired = source.read_bytes()
+    if not desired.strip():
+        raise ManagedConflict("empty personal guidance source")
+    current = _read_optional_bytes(target)
+    plan = {
+        "status": "DRY_RUN",
+        "scope": "personal-guidance-only",
+        "target": str(target),
+        "source": str(source.resolve()),
+        "backup": str(backup.resolve()),
+        "current_sha256": _sha256_bytes(current) if current is not None else None,
+        "source_sha256": _sha256_bytes(desired),
+        "write_set_count": 0 if current == desired else 1,
+    }
+    plan["plan_digest"] = _sha256_bytes(json.dumps(plan, sort_keys=True).encode())
+    return plan
+
+
+def apply_personal_guidance(codex_home: Path, source: Path, backup: Path, approved_plan_digest: str | None) -> dict[str, Any]:
+    if not approved_plan_digest:
+        raise ManagedConflict("ACTION_PLAN_DIGEST_REQUIRED")
+    with _operation_lock(codex_home):
+        plan = build_personal_guidance_plan(codex_home, source, backup)
+        if plan["plan_digest"] != approved_plan_digest:
+            raise ManagedConflict("ACTION_PLAN_DIGEST_MISMATCH")
+        if not plan["write_set_count"]:
+            return {"status": "NO_CHANGE", "scope": plan["scope"]}
+        target = codex_home / "AGENTS.md"
+        current = _read_optional_bytes(target)
+        desired = source.read_bytes()
+        if (_sha256_bytes(current) if current is not None else None) != plan["current_sha256"] or _sha256_bytes(desired) != plan["source_sha256"]:
+            raise ManagedConflict("concurrent guidance modification detected")
+        if current is not None:
+            if backup.exists():
+                raise ManagedConflict("guidance backup already exists; preserve it")
+            _atomic_write(backup, current, expected_current=None)
+        _atomic_write(target, desired, expected_current=current)
+        if target.read_bytes() != desired:
+            raise ManagedConflict("guidance readback failed; restore reviewed backup")
+        return {"status": "APPLIED", "scope": plan["scope"], "sha256": plan["source_sha256"], "backup": str(backup)}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Synchronize the Workflow Assistance Codex user overlay")
-    parser.add_argument("operation", choices=("plan", "apply", "verify", "rollback"))
+    parser.add_argument("operation", choices=("plan", "apply", "verify", "rollback", "plan-personal-guidance", "apply-personal-guidance"))
     parser.add_argument("--codex-home", type=Path, default=Path.home() / ".codex")
     parser.add_argument("--agent-home", type=Path, default=Path.home() / ".agents")
     parser.add_argument("--source-root", type=Path, default=_default_source_root())
     parser.add_argument("--approved", action="store_true", help="explicitly approve the reviewed dry-run plan")
     parser.add_argument("--approved-plan-digest", help="SHA-256 digest printed by the reviewed plan")
+    parser.add_argument("--skills-only", action="store_true", help="sync owned skills only; preserve guidance, config and rules")
+    parser.add_argument("--personal-source", type=Path)
+    parser.add_argument("--guidance-backup", type=Path)
     args = parser.parse_args()
-    if args.operation == "apply" and not args.approved:
+    if args.skills_only and args.operation == "rollback":
+        parser.error("skills-only rollback is not supported; restore the reviewed skill backup")
+    if args.operation in {"apply", "apply-personal-guidance"} and not args.approved:
         print(json.dumps({
             "status": "BLOCKED",
             "reason": "ACTION_PLAN_BLOCKED approval_required=true run plan, review the target and write set, then use --approved",
         }, ensure_ascii=False))
         return 2
     try:
-        if args.operation == "plan":
-            result = build_plan(args.codex_home, args.agent_home, args.source_root)
+        if args.operation in {"plan-personal-guidance", "apply-personal-guidance"}:
+            if not args.personal_source or not args.guidance_backup or args.skills_only:
+                parser.error("personal guidance requires --personal-source and --guidance-backup without --skills-only")
+            if args.operation == "plan-personal-guidance":
+                result = build_personal_guidance_plan(args.codex_home, args.personal_source, args.guidance_backup)
+            else:
+                result = apply_personal_guidance(args.codex_home, args.personal_source, args.guidance_backup, args.approved_plan_digest)
+        elif args.operation == "plan":
+            result = build_plan(args.codex_home, args.agent_home, args.source_root, skills_only=args.skills_only)
         elif args.operation == "apply":
             if not args.approved_plan_digest:
                 print(json.dumps({
@@ -987,7 +1071,7 @@ def main() -> int:
                     "reason": "ACTION_PLAN_DIGEST_REQUIRED run plan, review its plan_digest, then provide --approved-plan-digest",
                 }, ensure_ascii=False))
                 return 2
-            current_plan = build_plan(args.codex_home, args.agent_home, args.source_root)
+            current_plan = build_plan(args.codex_home, args.agent_home, args.source_root, skills_only=args.skills_only)
             if args.approved_plan_digest != current_plan["plan_digest"]:
                 print(json.dumps({
                     "status": "BLOCKED",
@@ -999,9 +1083,10 @@ def main() -> int:
                 args.agent_home,
                 args.source_root,
                 approved_plan_digest=args.approved_plan_digest,
+                skills_only=args.skills_only,
             )
         elif args.operation == "verify":
-            result = verify_overlay(args.codex_home, args.agent_home, args.source_root)
+            result = verify_overlay(args.codex_home, args.agent_home, args.source_root, skills_only=args.skills_only)
         else:
             result = rollback_overlay(args.codex_home, args.agent_home, args.source_root)
     except (ManagedConflict, FileNotFoundError, OSError, tomllib.TOMLDecodeError) as exc:

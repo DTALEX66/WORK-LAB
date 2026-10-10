@@ -68,7 +68,21 @@
         "downloaded_at": "2026-09-28",
         "mirror_throughput_observed": "28-29 MB/s"
       },
-      "status": "active"
+      "status": "active",
+      "runtime_id": "lmstudio",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "localVerification": {
+        "presence": "VERIFIED_FILE",
+        "digestState": "RECOMPUTED_MATCH",
+        "bytesObserved": 2740937888,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the file this entry resolves to, on the machine that owns the weight root; the CI runner has no weight root, so this is recorded local evidence rather than a CI-time check",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "sha256Recomputed": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4"
+      }
     },
     {
       "id": "qwen3.8-27b-ud-iq4_xs",
@@ -120,7 +134,21 @@
         "upstream_origin": "https://huggingface.co/unsloth/Qwen3.8-27B-GGUF",
         "domesticMirrorPreferred": true
       },
-      "status": "active"
+      "status": "active",
+      "runtime_id": "lmstudio",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "localVerification": {
+        "presence": "VERIFIED_FILE",
+        "digestState": "RECOMPUTED_MATCH",
+        "bytesObserved": 14252845984,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the file this entry resolves to, on the machine that owns the weight root; the CI runner has no weight root, so this is recorded local evidence rather than a CI-time check",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "sha256Recomputed": "40fac4050e940397dbf13087afd50f4734a11805bf9d65ef8ddd7483470e6199"
+      }
     },
     {
       "id": "qwen3-embedding-0.6b",
@@ -162,7 +190,21 @@
       "ownership_note": "Weights+runtime = WORK-LAB. Embedding vectors, indexes and their semantics = ArcheAxis-Knowledge-OS. Never conflate.",
       "status": "active",
       "dimensions": 1024,
-      "migration_note": "Moved out of the Ollama blob store into <publisher>/<repo> by same-volume move after sha256 verification; the old blob path no longer exists. It is now indexed by LM Studio."
+      "migration_note": "Moved out of the Ollama blob store into <publisher>/<repo> by same-volume move after sha256 verification; the old blob path no longer exists. It is now indexed by LM Studio.",
+      "runtime_id": "lmstudio",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "localVerification": {
+        "presence": "VERIFIED_FILE",
+        "digestState": "RECOMPUTED_MATCH",
+        "bytesObserved": 639150592,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the file this entry resolves to, on the machine that owns the weight root; the CI runner has no weight root, so this is recorded local evidence rather than a CI-time check",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "sha256Recomputed": "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439"
+      }
     },
     {
       "id": "qwen3-reranker-0.6b",
@@ -212,6 +254,19 @@
         ],
         "measured_on": "llama.cpp b11221 /v1/rerank --rerank --pooling rank",
         "status": "NOT REPRODUCIBLE ON LM STUDIO — kept only as the llama.cpp reference record"
+      },
+      "runtime_id": "lmstudio",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "localVerification": {
+        "presence": "VERIFIED_FILE",
+        "digestState": "RECOMPUTED_MATCH",
+        "bytesObserved": 494879360,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the file this entry resolves to, on the machine that owns the weight root; the CI runner has no weight root, so this is recorded local evidence rather than a CI-time check",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "sha256Recomputed": "eae89db7f8d56fcead26125f6e3ddabf6ad1702d9d4c23d3d69a7059c4c4d64d"
       }
     },
     {
@@ -283,6 +338,20 @@
         "id": "qwen2.5vl-7b",
         "status": "SUPERSEDED",
         "reason": "The Ollama blob contains no vision projector (hasVision=false, no clip.* keys, single image.model layer, no mmproj anywhere in the library), so it cannot do OCR under any runtime. Its weights remain in place and were NOT deleted."
+      },
+      "runtime_id": "lmstudio",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "localVerification": {
+        "presence": "VERIFIED_FILE",
+        "digestState": "RECOMPUTED_MATCH",
+        "bytesObserved": 4683072032,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the file this entry resolves to, on the machine that owns the weight root; the CI runner has no weight root, so this is recorded local evidence rather than a CI-time check",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "sha256Recomputed": "9258bf05b12686d097ff3b6b18d968ab393649780aa2b3cd67fec43d50554392"
       }
     },
     {
@@ -292,10 +361,17 @@
       "revision": "large-v3-turbo (CTranslate2)",
       "quantization": "float16 CT2",
       "file": {
-        "relative_path": "whisper/faster-whisper-large-v3-turbo",
-        "bytes": 1618000000
+        "relative_path": "whisper/faster-whisper-large-v3-turbo/model.bin",
+        "bytes": 1617884929
       },
-      "sha256": "e76620f83d5f5b69 (model.bin, 1.507 GB)",
+      "sha256": "e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da",
+      "assetDigest": {
+        "state": "COMPLETE",
+        "artifact": "model.bin",
+        "completedAt": "2026-10-07",
+        "how": "Re-hashed whisper/faster-whisper-large-v3-turbo/model.bin on 2026-10-07 under the owner's 2026-10-07 authorization; the computed digest starts with the 16-hex prefix the 2026-09-29 migration round recorded, which is what identifies this file as the same artifact rather than a replacement. The prior state was TRUNCATED with sha256=null.",
+        "sha256": "e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da"
+      },
       "license": "MIT",
       "runtime": "faster-whisper (CTranslate2)",
       "capabilities": [
@@ -322,7 +398,21 @@
         "verdict": "real Chinese audio transcribed exactly (CPU int8, no GPU needed); the default ASR provider"
       },
       "last_verified": "2026-09-28",
-      "status": "active"
+      "status": "active",
+      "runtime_id": "faster-whisper",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "localVerification": {
+        "presence": "VERIFIED_FILE",
+        "digestState": "RECOMPUTED_MATCH",
+        "bytesObserved": 1617884929,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the file this entry resolves to, on the machine that owns the weight root; the CI runner has no weight root, so this is recorded local evidence rather than a CI-time check",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "sha256Recomputed": "e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da"
+      }
     },
     {
       "id": "sherpa-onnx-sense-voice",
@@ -331,9 +421,17 @@
       "revision": "2024-07-17",
       "quantization": "int8 + fp32 variants",
       "file": {
-        "relative_path": "sherpa-onnx/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17"
+        "relative_path": "sherpa-onnx/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx",
+        "bytes": 239233841
       },
-      "sha256": "c71f0ce00bec95b0 (model.int8.onnx, 0.223 GB)",
+      "sha256": "c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51",
+      "assetDigest": {
+        "state": "COMPLETE",
+        "artifact": "model.int8.onnx",
+        "completedAt": "2026-10-07",
+        "how": "Re-hashed sherpa-onnx/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/model.int8.onnx on 2026-10-07 under the owner's 2026-10-07 authorization; the computed digest starts with the 16-hex prefix the 2026-09-29 migration round recorded, which is what identifies this file as the same artifact rather than a replacement. The prior state was TRUNCATED with sha256=null.",
+        "sha256": "c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51"
+      },
       "license": "apache-2.0",
       "runtime": "sherpa-onnx",
       "capabilities": [
@@ -351,7 +449,22 @@
       "health": "PRESENT",
       "benchmark": null,
       "last_verified": null,
-      "status": "standby"
+      "status": "standby",
+      "runtime_id": "sherpa-onnx",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "last_verified_note": "last_verified is deliberately null: no verification DATE was ever recorded for this weight. health='PRESENT' attests existence on disk only (the 2026-09-29 round checked that the ASR weights were present) and is NOT a quality or behaviour verification. A date is not invented to fill this field; a future run that actually executes the model should set it.",
+      "localVerification": {
+        "presence": "VERIFIED_FILE",
+        "digestState": "RECOMPUTED_MATCH",
+        "bytesObserved": 239233841,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the file this entry resolves to, on the machine that owns the weight root; the CI runner has no weight root, so this is recorded local evidence rather than a CI-time check",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "sha256Recomputed": "c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51"
+      }
     },
     {
       "id": "sherpa-onnx-streaming-zipformer-zh-14m",
@@ -362,7 +475,38 @@
       "file": {
         "relative_path": "sherpa-onnx/sherpa-onnx-streaming-zipformer-zh-14M-2023-02-23"
       },
-      "sha256": "84c6a8f372686faa (encoder fp32, 0.038 GB)",
+      "sha256": null,
+      "assetDigest": {
+        "state": "TRUNCATED",
+        "artifact": "encoder-epoch-99-avg-1.onnx",
+        "reason": "The record named an artifact called `encoder` that does not exist; this streaming model is a triple (encoder/decoder/joiner), each in fp32 and int8. Measured on 2026-10-07 the six .onnx files and their byte counts are listed in `directoryContents`. No 64-hex digest is claimed because no earlier record carries a prefix to identify these files against — asserting one would be a digest with no provenance.",
+        "directoryContents": [
+          {
+            "name": "decoder-epoch-99-avg-1.int8.onnx",
+            "bytes": 1888682
+          },
+          {
+            "name": "decoder-epoch-99-avg-1.onnx",
+            "bytes": 7509745
+          },
+          {
+            "name": "encoder-epoch-99-avg-1.int8.onnx",
+            "bytes": 21621684
+          },
+          {
+            "name": "encoder-epoch-99-avg-1.onnx",
+            "bytes": 40948171
+          },
+          {
+            "name": "joiner-epoch-99-avg-1.int8.onnx",
+            "bytes": 1795562
+          },
+          {
+            "name": "joiner-epoch-99-avg-1.onnx",
+            "bytes": 7109975
+          }
+        ]
+      },
       "license": "apache-2.0",
       "runtime": "sherpa-onnx",
       "capabilities": [
@@ -379,7 +523,86 @@
       "health": "PRESENT",
       "benchmark": null,
       "last_verified": null,
-      "status": "standby"
+      "status": "standby",
+      "runtime_id": "sherpa-onnx",
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "last_verified_note": "last_verified is deliberately null: no verification DATE was ever recorded for this weight. health='PRESENT' attests existence on disk only (the 2026-09-29 round checked that the ASR weights were present) and is NOT a quality or behaviour verification. A date is not invented to fill this field; a future run that actually executes the model should set it.",
+      "localVerification": {
+        "presence": "VERIFIED_DIR",
+        "digestState": "NOT_RECOMPUTED",
+        "bytesObserved": 81340658,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the file this entry resolves to, on the machine that owns the weight root; the CI runner has no weight root, so this is recorded local evidence rather than a CI-time check",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "fileCount": 12,
+        "directoryBytesObserved": 81340658,
+        "directoryManifest": [
+          {
+            "relative_path": "decoder-epoch-99-avg-1.int8.onnx",
+            "bytes": 1888682,
+            "sha256": "22f123bb8cba9b38974b3df18a3f45e7081f4985ebb2e075d9f21f618c468bbf"
+          },
+          {
+            "relative_path": "decoder-epoch-99-avg-1.onnx",
+            "bytes": 7509745,
+            "sha256": "5ee0f03a2768ff1d5c83ef3a493243c7935d316cd41280037b14783a3467cc78"
+          },
+          {
+            "relative_path": "encoder-epoch-99-avg-1.int8.onnx",
+            "bytes": 21621684,
+            "sha256": "1c556ea57cec304e55ec4b72e52c1cc098bb01476ed7d90f3de939fe126487b1"
+          },
+          {
+            "relative_path": "encoder-epoch-99-avg-1.onnx",
+            "bytes": 40948171,
+            "sha256": "84c6a8f372686faa5b8f45f2d79f0816f76dcd9f547acb9a90eba2772d7eda8b"
+          },
+          {
+            "relative_path": "export-onnx-zh-14M.sh",
+            "bytes": 860,
+            "sha256": "5eb56cb09ff90ba69dab1032d6be6c96cad99032ec4bb91cfd03b10749055190"
+          },
+          {
+            "relative_path": "joiner-epoch-99-avg-1.int8.onnx",
+            "bytes": 1795562,
+            "sha256": "a7cf9d82757bdcf786059454495a9ca95e4bd7347f72473fc08d794475c36169"
+          },
+          {
+            "relative_path": "joiner-epoch-99-avg-1.onnx",
+            "bytes": 7109975,
+            "sha256": "030212efaea9a8b6a4fa98faf6ac6055529c4408cf4865e898220ddd02780f34"
+          },
+          {
+            "relative_path": "README.md",
+            "bytes": 226,
+            "sha256": "515751f07faad368f0863ae41773ff09635eba5920122d549abb8e45d5c88282"
+          },
+          {
+            "relative_path": "test_wavs/0.wav",
+            "bytes": 179646,
+            "sha256": "668bf8df51a10027b84d5d8816a1ce11ae93545538dc05cfe2aa6811d399c250"
+          },
+          {
+            "relative_path": "test_wavs/1.wav",
+            "bytes": 164976,
+            "sha256": "30edbabea84ca4c076f5b43bb44495f436f6711319c32a200d3fc5c67c1fee1d"
+          },
+          {
+            "relative_path": "test_wavs/8k.wav",
+            "bytes": 72434,
+            "sha256": "0ed3bddacf0a23477d2b3c07ff9c24ad9c1fc3b31cdd47cb0773441e8e045cde"
+          },
+          {
+            "relative_path": "tokens.txt",
+            "bytes": 48697,
+            "sha256": "8b294db9045d6e5f94647f4c1eec1af4da143a75053c399611444b378ff966ac"
+          }
+        ],
+        "bytesRetained": 81340658
+      }
     },
     {
       "id": "qwen3-8b",
@@ -390,9 +613,10 @@
       "file": {
         "logical_ref": "ollama://qwen3:8b",
         "physical_dir": "D:\\All projects\\Model library\\ollama",
-        "blob_digest": "sha256:a3de86cd1c13"
+        "blob_digest": "sha256:a3de86cd1c132c822487ededd47a324c50491393e6565cd14bafa40d0b8e686f"
       },
-      "sha256": "sha256:a3de86cd1c13 (manifest-confirmed, ollama-managed)",
+      "sha256": "a3de86cd1c132c822487ededd47a324c50491393e6565cd14bafa40d0b8e686f",
+      "sha256_basis": "Ollama content-addressed blob name (sha256-<digest>), extended from the 12-hex prefix recorded on 2026-09-29 to the full 64-hex digest on 2026-10-01 (AG-05). The full digest is recoverable verbatim from provider-registry.json local.fast.legacy.weight_location, so it is a COMPLETE digest, not a reconstruction or a guess.",
       "license": "apache-2.0",
       "runtime": "none (was ollama)",
       "capabilities": [
@@ -414,7 +638,26 @@
       "last_verified": "2026-09-29",
       "status": "RETIRED_PENDING_DECISION",
       "not_deleted_reason": "brief forbids deleting an existing model without confirmed duplication + a rollback plan; it still covers WORK-LAB-side general use",
-      "retirement_note": "Ollama runtime removed; weight retained in place, NOT served, NOT deleted. It is outside the WL-MODEL-02 target of exactly two general LLMs and is reported as a candidate for removal, not removed."
+      "retirement_note": "Ollama runtime removed; weight retained in place, NOT served, NOT deleted. It is outside the WL-MODEL-02 target of exactly two general LLMs and is reported as a candidate for removal, not removed.",
+      "runtime_id": null,
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "localVerification": {
+        "presence": "VERIFIED_BLOB_CONTENT_ADDRESS",
+        "digestState": "RECOMPUTED_MATCH",
+        "bytesObserved": 5225374496,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the ollama content-addressed blob whose file name is that digest; recomputing proves both presence and integrity",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "sha256Recomputed": "a3de86cd1c132c822487ededd47a324c50491393e6565cd14bafa40d0b8e686f",
+        "blobPath": "ollama/blobs/sha256-a3de86cd1c132c822487ededd47a324c50491393e6565cd14bafa40d0b8e686f",
+        "manifestTags": [
+          "registry.ollama.ai/library/qwen3/8b"
+        ],
+        "bytesRetained": 5225374496
+      }
     },
     {
       "id": "qwen3-coder-30b-a3b",
@@ -425,9 +668,10 @@
       "file": {
         "logical_ref": "ollama://qwen3-coder:30b-a3b-q4_K_M",
         "physical_dir": "D:\\All projects\\Model library\\ollama",
-        "blob_digest": "sha256:1194192cf2a1"
+        "blob_digest": "sha256:1194192cf2a187eb02722edcc3f77b11d21f537048ce04b67ccf8ba78863006a"
       },
-      "sha256": "sha256:1194192cf2a1 (manifest-confirmed, ollama-managed)",
+      "sha256": "1194192cf2a187eb02722edcc3f77b11d21f537048ce04b67ccf8ba78863006a",
+      "sha256_basis": "Ollama content-addressed blob name (sha256-<digest>), extended from the 12-hex prefix recorded on 2026-09-29 to the full 64-hex digest on 2026-10-01 (AG-05). The full digest is recoverable verbatim from provider-registry.json local.code.default.weight_location, so it is a COMPLETE digest, not a reconstruction or a guess.",
       "license": "apache-2.0",
       "runtime": "none (was ollama)",
       "capabilities": [
@@ -448,7 +692,26 @@
       "benchmark": null,
       "last_verified": "2026-09-29",
       "status": "RETIRED_PENDING_DECISION",
-      "retirement_note": "Ollama runtime removed; weight retained in place, NOT served, NOT deleted. It is outside the WL-MODEL-02 target of exactly two general LLMs and is reported as a candidate for removal, not removed."
+      "retirement_note": "Ollama runtime removed; weight retained in place, NOT served, NOT deleted. It is outside the WL-MODEL-02 target of exactly two general LLMs and is reported as a candidate for removal, not removed.",
+      "runtime_id": null,
+      "runtime_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]); the sibling `runtime` field is human-readable description only and must never be read as an id. null means the weight is not bound to any runtime (retired/standby).",
+      "runtime_id_note": "runtime_id is the resolvable foreign key into runtime-registry.json (runtimes[] or processLibraries[]). The sibling `runtime` field is human-readable description only and must never be read as an id. null = not bound to any runtime (retired/standby).",
+      "localVerification": {
+        "presence": "VERIFIED_BLOB_CONTENT_ADDRESS",
+        "digestState": "RECOMPUTED_MATCH",
+        "bytesObserved": 18556688736,
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "libraryRoot": "D:\\All projects\\Model library",
+        "basis": "sha256 over the full bytes of the ollama content-addressed blob whose file name is that digest; recomputing proves both presence and integrity",
+        "tool": "python scripts/audit/model_library_readback.py",
+        "receipt": ".project-local/artifacts/model-library-readback.json (machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)",
+        "sha256Recomputed": "1194192cf2a187eb02722edcc3f77b11d21f537048ce04b67ccf8ba78863006a",
+        "blobPath": "ollama/blobs/sha256-1194192cf2a187eb02722edcc3f77b11d21f537048ce04b67ccf8ba78863006a",
+        "manifestTags": [
+          "registry.ollama.ai/library/qwen3-coder/30b-a3b-q4_K_M"
+        ],
+        "bytesRetained": 18556688736
+      }
     }
   ],
   "designLabOwnedModels": {
@@ -509,17 +772,66 @@
     {
       "path": "runtimes-tmp/reranker-dl.gguf",
       "bytes": 494879360,
-      "sha256": "a18ae2a5f553fe02",
+      "sha256": null,
       "reason": "reranker GGUF download leftover; qwen3-reranker is already served by Ollama",
-      "action": "REGISTERED_NOT_DELETED — deletion requires user confirmation (brief forbids removing existing models without confirmed duplication + rollback)",
-      "recoverable_gb": 0.46
+      "action": "REGISTERED_NOT_DELETED — deletion is not justified: the file is not a byte duplicate of any registered model (measured 2026-10-07)",
+      "recoverable_gb": 0.46,
+      "assetDigest": {
+        "state": "TRUNCATED",
+        "prefix": "a18ae2a5f553fe02",
+        "reason": "only a 16-hex prefix was captured for this residue and the full digest is not recorded anywhere, so it is NOT verifiable; completing it would require re-hashing the file under a separate path-scoped read authorization. Recorded as residue, not as a model asset."
+      },
+      "recheck": {
+        "state": "PRESENT",
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "bytesObserved": 494879360,
+        "sha256Recomputed": "a18ae2a5f553fe02f18865befba6a4813fdaef12312d4c0db875a6a0acd9a1d2",
+        "prefixOneMiBSha256": "2d1867fa8a91ac68a43aa6a2f5dcd856581b1153a1c0b087d8a7148990a7fdfc",
+        "prefixClaimMatches": true,
+        "duplicateTested": true,
+        "byteDuplicateOf": null,
+        "note": "Same byte length as the registered qwen3-reranker weight but a different full digest, so duplication is NOT proven and the owner rule (confirmed duplication plus rollback) does not authorize deleting it."
+      }
     },
     {
       "path": "ollama/blobs/sha256-81fb60c7…-partial (+16 zero-length part files)",
       "bytes": 3389971840,
       "reason": "abandoned `ollama pull qwen3.5:4b-q4_K_M`: the Ollama CDN measured 136 KB/s and stalled at 3.157 GB, so the mirror route was used instead. These are partial-download fragments, NOT a model — no Ollama model of qwen3.5 exists and /api/tags confirms only the five original models.",
       "action": "REGISTERED_NOT_DELETED — pure partial-download residue, safe to reclaim once the user confirms",
-      "recoverable_gb": 3.157
+      "recoverable_gb": 3.157,
+      "assetDigest": {
+        "state": "TRUNCATED",
+        "prefix": "a18ae2a5f553fe02",
+        "reason": "only a 16-hex prefix of this residue was ever captured and the full digest is recorded nowhere, so it is NOT verifiable. Completing it would require re-hashing the file under a separate path-scoped read authorization. This is download residue, not a model asset."
+      },
+      "sha256": null,
+      "recheck": {
+        "state": "UNRESOLVABLE_AS_WRITTEN",
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "note": "The path field was written with an ellipsis and a file count, so it names nothing a tool can open. No blob beginning sha256-81fb60c7 exists in ollama/blobs on 2026-10-07 and no deletion of it is recorded in this session, so the retained-bytes figure is unverifiable as written rather than proven absent.",
+        "claimedBytesUnverifiable": true
+      }
+    },
+    {
+      "path": "ollama/blobs/sha256-a99b7f834d754b88f122d865f32758ba9f0994a83f8363df2c1e71c17605a025",
+      "bytes": 5969233408,
+      "sha256": "a99b7f834d754b88f122d865f32758ba9f0994a83f8363df2c1e71c17605a025",
+      "reason": "Ollama weight layer for the qwen2.5vl/7b family (registry.ollama.ai/library/qwen2.5vl/7b). The registered OCR model is a separate ggml-org GGUF file of 4,683,072,032 B, so this is a second copy in a different store, not the same bytes.",
+      "action": "REGISTERED_NOT_DELETED — this is another runtime's content-addressed store; WORK-LAB registers what it finds and does not delete outside the project root without an owner decision",
+      "recoverable_gb": 5.56,
+      "assetDigest": {
+        "state": "COMPLETE",
+        "sha256": "a99b7f834d754b88f122d865f32758ba9f0994a83f8363df2c1e71c17605a025"
+      },
+      "recheck": {
+        "state": "PRESENT",
+        "checkedAt": "2026-10-06T20:30:56Z",
+        "bytesObserved": 5969233408,
+        "sha256Recomputed": "a99b7f834d754b88f122d865f32758ba9f0994a83f8363df2c1e71c17605a025",
+        "duplicateTested": true,
+        "byteDuplicateOf": null,
+        "note": "The blob hashes to its own file name, which is ollama's content address; verified 2026-10-07 by recomputation."
+      }
     }
   ],
   "finalStructureTarget": {
@@ -549,6 +861,7 @@
       "sherpa-onnx-streaming-zipformer-zh-14m"
     ]
   },
-  "lastVerified": "2026-09-29",
-  "verifier": "PENDING (see model-governance closeout)"
+  "lastVerified": "2026-10-06T20:30:56Z",
+  "verifier": "PENDING (see model-governance closeout)",
+  "localVerificationPolicy": "A model's sha256 is a claim about bytes on the machine that owns the weight root. Each entry records presence, digestState, bytesObserved, checkedAt, basis, tool and receipt. RECOMPUTED_MATCH means the full file (or content-addressed blob) was hashed again and matched. Nothing here is verified on the CI runner: it has no weights, and a required job that can only skip there would fail the aggregate gate by AGENTS.md own rule."
 }

@@ -9,6 +9,8 @@ Workflow-owned module. The snapshot:
 - separates projects, tasks and executions;
 - splits token columns with exact/estimated/unknown cost marking;
 - separates git local/remote/CI SHAs with match state;
+- carries ``artifactHandles`` (identity-only evidence rows for the byte-range route) only when the caller
+  supplies them, alongside the ``artifactHandlesSummary`` that states that list's enumeration scope;
 - every core field is traceable to sourceRef where applicable.
 
 Null vs zero: unknown values are null; counters that were observed are 0 or
@@ -16,6 +18,9 @@ positive integers. Nothing is padded to zero.
 """
 from __future__ import annotations
 
+import hashlib
+import json
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -44,6 +49,11 @@ def build_snapshot(
     git_map: dict[str, dict[str, Any]] | None = None,
     agent_map: dict[str, str] | None = None,
     software: list[dict[str, Any]] | None = None,
+    task_records: list[dict[str, Any]] | None = None,
+    adapter_capabilities: list[dict[str, Any]] | None = None,
+    artifact_handles: list[dict[str, Any]] | None = None,
+    artifact_handles_summary: dict[str, Any] | None = None,
+    collector_delivery: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the v3 snapshot from canonical facts (all fields optional for tests)."""
     generated_at = generated_at or _now()
@@ -95,6 +105,71 @@ def build_snapshot(
         ],
         "sourceRefs": [e.get("sourceRef") for e in executions if e.get("sourceRef")],
         **({"software": software} if software is not None else {}),
+        **({"taskRecords": task_records} if task_records is not None else {}),
+        **({"adapterCapabilities": adapter_capabilities} if adapter_capabilities is not None else {}),
+        # REQ-RANGE-20261007: the evidence artifact list the range route reads from. Absent stays absent for
+        # the same reason taskRecords does — an empty list tells a reader "this project owns no evidence",
+        # which is a different lie from saying nothing. The summary travels with the list or with neither:
+        # it is the enumeration scope (cap, truncation, refusals) of that exact list, and a scope report for
+        # an unprojected list would be a claim about a snapshot the reader is not looking at.
+        **({"artifactHandles": artifact_handles,
+            **({"artifactHandlesSummary": artifact_handles_summary}
+               if artifact_handles_summary is not None else {})}
+           if artifact_handles is not None else {}),
+        # Per-collector delivery and refusal counts (ERR-256 made them durable). Same absent-never-empty rule
+        # as the sections above: the presence of the key is the statement that health was read at all.
+        **({"collectors": collector_delivery} if collector_delivery is not None else {}),
+    }
+
+
+_CHECKPOINT_KEY_NAME = re.compile(r"[A-Za-z0-9_.:/@+#=-]{1,64}")
+
+
+_CHECKPOINT_KEY_NAME = re.compile(r"[A-Za-z0-9_.:/@+#=-]{1,64}")
+
+
+def project_task_record(row: dict[str, Any]) -> dict[str, Any]:
+    """Project one canonical-store task row into the Observer snapshot.
+
+    The checkpoint column is workflow state that can quote a user's own text, so its VALUES never enter
+    a read-only projection (AGENTS.md: no prompt bodies). What a reader needs to locate and trust a task
+    is projected instead: the identifier, its owning project, the real status, the lease and fencing
+    identity, whether a checkpoint exists at all, its key names, and a digest that changes when the
+    checkpoint changes. A digest is an identity, not content.
+
+    Absent means absent: no field is padded to a zero or an empty string.
+    """
+    checkpoint = row.get("checkpoint")
+    parse_state = str(row.get("checkpointParseState") or "").upper()
+    # Present is present, even when it will not parse: an unreadable checkpoint used to become `{}` in the
+    # store and then `checkpointPresent: false` here, which asserts "this task has no checkpoint" about a
+    # checkpoint that exists (ERR follow-up to the read-surface review).
+    has_checkpoint = checkpoint is not None or parse_state == "UNPARSEABLE"
+    keys: list[str] = []
+    digest = row.get("checkpointDigest") if has_checkpoint else None
+    if isinstance(checkpoint, dict):
+        # Only a mapping's KEY NAMES are workflow field names. A checkpoint stored as a list would iterate
+        # values and one stored as a bare string would iterate single characters -- both put user text into
+        # a read-only projection while looking like a key list, so a non-mapping payload yields no keys.
+        keys = sorted(name for name in (str(key) for key in checkpoint)
+                      if _CHECKPOINT_KEY_NAME.fullmatch(name))
+        if digest is None:
+            canonical = json.dumps(checkpoint, ensure_ascii=False, sort_keys=True,
+                                   separators=(",", ":")).encode("utf-8")
+            digest = hashlib.sha256(canonical).hexdigest()
+    fencing = row.get("fencing_token")
+    return {
+        "taskId": row.get("task_id"),
+        "projectId": row.get("project_id"),
+        "status": row.get("status"),
+        "createdAt": row.get("created_at"),
+        "updatedAt": row.get("updated_at"),
+        "leaseHolder": row.get("lease_holder"),
+        "leaseExpiresAt": row.get("lease_expires_at"),
+        "fencingToken": fencing if isinstance(fencing, int) and not isinstance(fencing, bool) else None,
+        "checkpointPresent": has_checkpoint,
+        "checkpointKeys": keys,
+        "checkpointDigest": digest,
     }
 
 
@@ -210,7 +285,11 @@ def _project_projection(
             "costQuality": usage.get("costQuality") or "UNKNOWN",
         },
         "ci": project_ci,
-        "executionIds": [e.get("executionId") for e in project_executions],
+        # The line below this one filtered; this one did not, so a row built from an execution with no id
+        # emitted null inside a list the front model declares string[] — the join announced an identifier
+        # it did not have. An id-less execution is still visible in `executions[]`, where executionId is
+        # required, so dropping it here hides no fact.
+        "executionIds": [eid for eid in (e.get("executionId") for e in project_executions) if eid],
         "sourceRefs": [e.get("sourceRef") for e in project_executions if e.get("sourceRef")],
     }
 

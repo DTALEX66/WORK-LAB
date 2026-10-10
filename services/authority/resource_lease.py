@@ -69,7 +69,7 @@ def _process_start_time(pid: int) -> str | None:
             result = subprocess.run(
                 ["powershell", "-NoProfile", "-Command",
                  f"(Get-Process -Id {pid} -ErrorAction SilentlyContinue).StartTime.ToString('o')"],
-                text=True, capture_output=True, timeout=8, check=False,
+                text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=8, check=False,
             )
             out = result.stdout.strip()
             return out or None
@@ -245,8 +245,8 @@ class RuntimeSupervisor:
 
 
 if __name__ == "__main__":
-    import tempfile
-    with tempfile.TemporaryDirectory() as tmp:
+    import project_temp
+    with project_temp.fixture_root(prefix='resource-lease-selftest-') as tmp:
         lease = ResourceLease(Path(tmp), "gpu.heavy")
         first = lease.acquire()
         print("first:", first)

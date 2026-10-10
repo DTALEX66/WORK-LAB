@@ -21,6 +21,7 @@ from sidecar import WorkflowSidecar, create_server
 from sse_hub import HEARTBEAT_SECONDS, STALE
 from snapshot_validator import validate_snapshot
 from workspace_evidence import load_workspace_evidence
+import project_temp
 import socket
 import urllib.request
 
@@ -199,7 +200,7 @@ class CompositionRootTests(unittest.TestCase):
 
 class SidecarV3SnapshotTests(unittest.TestCase):
     def _start(self) -> tuple[WorkflowSidecar, object, Path]:
-        runtime = Path(tempfile.mkdtemp())
+        runtime = project_temp.fixture_dir(prefix="sidecar-v3-")
         sidecar = make_sidecar(runtime)
         server = create_server(sidecar, port=0, live_updates=True)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -210,6 +211,18 @@ class SidecarV3SnapshotTests(unittest.TestCase):
             server.server_close()
             thread.join(timeout=2)
 
+        def release_sidecar() -> None:
+            # None of the three _start() tests ever closed the sidecar, so the CanonicalStore kept
+            # a WAL handle on runtime/canonical.sqlite: on Windows the fixture directory then
+            # cannot be removed (WinError 32). A watcher that will not stop is announced with the
+            # token project_temp's sweeper uses, never hidden by an ignored teardown.
+            try:
+                sidecar.close()
+            except RuntimeError as error:
+                print(f"TEMP_RESIDUE_NOT_REMOVED {runtime} {type(error).__name__}: {error}")
+
+        # addCleanup runs LIFO: the server stops touching the store, then the store is released.
+        self.addCleanup(release_sidecar)
         self.addCleanup(stop_server)
         return sidecar, server, runtime
 
@@ -429,7 +442,18 @@ class SidecarV3SnapshotTests(unittest.TestCase):
                 sidecar._last_heartbeat_at = now
                 sidecar._last_write_at = now
                 sidecar.mark_sse_connected()
+                # `entered` only proves the SECOND collector has started; the
+                # first collector's health record is written asynchronously by
+                # the worker thread, so reading the snapshot immediately raced
+                # and intermittently observed numerator=0 (order-dependent flake
+                # seen in the full governance batch on 2026-10-01, never in
+                # isolation). Poll to the deadline the way the sibling test above
+                # does, instead of asserting on an unsynchronized read.
+                deadline = time.time() + 5
                 snapshot = sidecar.v3_snapshot()
+                while snapshot["coverage"]["numerator"] < 1 and time.time() < deadline:
+                    time.sleep(0.02)
+                    snapshot = sidecar.v3_snapshot()
                 self.assertEqual(snapshot["coverage"]["numerator"], 1)
                 self.assertEqual(snapshot["coverage"]["denominator"], 3)
                 self.assertNotEqual(snapshot["transport"]["transportState"], "LIVE")
@@ -458,11 +482,20 @@ class SidecarV3SnapshotTests(unittest.TestCase):
                 return CollectorResult(kind="quality", ok=True, records=[])
             try:
                 sidecar.start_worker(tick_seconds=0.05, collectors=[healthy_collector])
-                deadline = time.time() + 2.0
-                while not sidecar.store.list_collector_health() and time.time() < deadline:
+                # run_forever writes the collector rows inside run_once() and only stamps `worker_loop`
+                # after that tick returns, so a health table with "something in it" is a legal intermediate
+                # state, not a finished one. Wait for the set the sidecar itself declares as expected.
+                deadline = time.time() + 5.0
+                while time.time() < deadline:
+                    names = {row["name"] for row in sidecar.store.list_collector_health()}
+                    if names >= sidecar._expected_collector_names:
+                        break
                     time.sleep(0.02)
                 self.assertTrue(sidecar.worker_running())
                 health_names = {row["name"] for row in sidecar.store.list_collector_health()}
+                missing = sidecar._expected_collector_names - health_names
+                self.assertFalse(missing,
+                                 f"these collectors never reported health within 5s: {sorted(missing)}")
                 self.assertIn("healthy_collector", health_names)
                 self.assertIn("worker_loop", health_names)
                 self.assertEqual(sidecar.store.list_projects()[0]["project_id"], "work-lab")

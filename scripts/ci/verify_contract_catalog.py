@@ -17,10 +17,25 @@ EXPECTED = {
 
     "domain-pack": "external-design-lab",
     "evidence-envelope": "root-governance",
+    "workflow-evidence-envelope": "workflow",
     "release-manifest": "root-governance",
     "adapter-capability": "workflow",
     "action-plan": "workflow",
     "task-ledger-event": "workflow",
+    # P1-06 (2026-10-08): the Control Surface pair. Registering a contract here is the review gate that
+    # makes a new cross-language write boundary an explicit decision instead of a file that appeared.
+    "control-operation": "workflow",
+    "control-operation-result": "workflow",
+    # OD05 (2026-10-08): Quick Entry finally gets a field and permission spec. Blueprint coverage recorded
+    # the mode as having "no field or permission spec anywhere in the source ... must not be presented as
+    # implemented"; registering the contract here is the review gate, and the consumer is
+    # packages/client-neutral-core/scripts/quick_entry.py.
+    "quick-entry-request": "workflow",
+    # ERR-173 precedent: the packages/.../workflow copy of an observer-event name is a DIFFERENT
+    # document from apps/observer/schemas/observer-event.schema.json (snake_case projection-event shape,
+    # $id work-lab/observer-event/v1, validated by verify_core_schemas.py). Registered additively under
+    # its own id so one filename no longer hides two contracts in the SSOT.
+    "workflow-observer-event": "workflow",
     "rule-asset": "workflow",
     "skill-package": "workflow",
     "growth-candidate": "workflow",
@@ -48,6 +63,18 @@ EXPECTED = {
     "software-update-preflight": "workflow",
     "execution-parallel-dispatch": "workflow",
     "software-update-postflight": "workflow",
+    # WUI-15 (2026-10-10): the read-only Observer snapshot finally joins the SSOT. It was the one
+    # cross-language payload the front and the producer both depend on and that lived only as Python
+    # validation code plus a hand-maintained types.ts, which is how ERR-225 happened — the producer emitted
+    # entryProbe/versionDrift the front model never declared, so those facts could not render and nothing
+    # went red. Registering it here is the review gate this file exists for.
+    "workflow-snapshot-v3": "workflow",
+    # WUI-21 read models. Registered here rather than left as loose schema files because the whole
+    # point of this registry is that a field the producer cannot answer has to be visible as a gap:
+    # both contracts carry a producer_gaps list, and the state enum refuses SUBMITTING, which no
+    # module in this repository produces.
+    "workflow-operation-progress-v1": "workflow",
+    "workflow-isolated-trial-v1": "workflow",
 }
 CANONICAL_SCHEMA_PREFIXES = {
     "module-profile": (".project/governance/",),
@@ -58,10 +85,15 @@ CANONICAL_SCHEMA_PREFIXES = {
 
     "domain-pack": ("packages/contracts/",),
     "evidence-envelope": (".project/governance/",),
+    "workflow-evidence-envelope": ("packages/contracts/",),
     "release-manifest": (".project/governance/",),
     "adapter-capability": ("packages/contracts/",),
     "action-plan": ("packages/contracts/",),
     "task-ledger-event": ("packages/contracts/",),
+    "control-operation": ("packages/contracts/",),
+    "control-operation-result": ("packages/contracts/",),
+    "quick-entry-request": ("packages/contracts/",),
+    "workflow-observer-event": ("packages/contracts/",),
     "rule-asset": ("packages/contracts/",),
     "skill-package": ("packages/contracts/",),
     "growth-candidate": ("packages/contracts/",),
@@ -89,6 +121,9 @@ CANONICAL_SCHEMA_PREFIXES = {
     "software-update-preflight": ("packages/contracts/",),
     "execution-parallel-dispatch": ("packages/contracts/",),
     "software-update-postflight": ("packages/contracts/",),
+    "workflow-snapshot-v3": ("packages/contracts/",),
+    "workflow-operation-progress-v1": ("packages/contracts/",),
+    "workflow-isolated-trial-v1": ("packages/contracts/",),
 }
 
 
@@ -135,7 +170,14 @@ def verify_catalog(root: Path) -> list[str]:
         if normalized in seen_paths:
             errors.append(f"duplicate schemaPath: {normalized}")
         seen_paths.add(normalized)
-        if not normalized.startswith(CANONICAL_SCHEMA_PREFIXES[contract_id]):
+        canonical_prefixes = CANONICAL_SCHEMA_PREFIXES.get(contract_id)
+        if canonical_prefixes is None:
+            # A new id added to EXPECTED without a canonical boundary used to raise KeyError here, which
+            # destroys the whole verdict the same way a crashed gate always does. Name the missing entry
+            # instead: this gate has to be able to report its own bookkeeping gap.
+            errors.append(f"{contract_id}: declared in EXPECTED but has no entry in "
+                          "CANONICAL_SCHEMA_PREFIXES -- state which module boundary its schema lives behind")
+        elif not normalized.startswith(canonical_prefixes):
             errors.append(f"{contract_id}: schemaPath is outside its canonical module boundary: {schema_path}")
         path = root / Path(normalized)
         if not path.is_file():

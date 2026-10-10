@@ -45,7 +45,18 @@ export function Toaster({ toasts, onDismiss }: ToasterProps) {
   return (
     <div className="toast-stack">
       {toasts.map((t) => (
-        <div key={t.id} className="toast show" role="status" onClick={() => onDismiss(t.id)}>
+        <div
+          key={t.id}
+          className="toast show"
+          // M-4: an error is not a status update. `role="status` is a polite
+          // live region that assistive tech may not announce urgently, and a
+          // failure that disappears on its own leaves the user with no record
+          // of what went wrong. Errors announce assertively and stay until
+          // dismissed.
+          role={t.variant === 'error' ? 'alert' : 'status'}
+          aria-live={t.variant === 'error' ? 'assertive' : 'polite'}
+          onClick={() => onDismiss(t.id)}
+        >
           <div className="flex items-start gap-3">
             <span className={cn(VARIANT_TAG[t.variant ?? 'info'], 'shrink-0')}>
               {t.variant === 'success' ? 'OK' : t.variant === 'error' ? 'ERR' : 'INFO'}
@@ -74,7 +85,8 @@ export function useToaster(defaultMs = 1800) {
     (input: { title: string; description?: string; variant?: ToastVariant; ms?: number }) => {
       const id = ++seq
       setToasts((prev) => [...prev.slice(-2), { id, ...input }])
-      const ttl = input.ms ?? defaultMs
+      // An error survives the timer unless the caller sets an explicit ms.
+      const ttl = input.ms ?? (input.variant === 'error' ? 0 : defaultMs)
       if (ttl > 0) {
         window.setTimeout(() => dismiss(id), ttl)
       }

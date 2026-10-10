@@ -79,6 +79,12 @@ jobs:
           python services/orchestration/run_quality_gate.py context-pack
           python services/orchestration/run_quality_gate.py client-neutral-manifest
           python services/orchestration/run_quality_gate.py core-schemas
+          # ERR-261/263/264 recorded the same blind spot three times: this stage runs the root tests/ci
+          # governance suite (44 modules -- the register's table shape and commit pins, the authority-index
+          # reference checks, the tool inventory) and no workflow invoked it, so a red there was invisible on
+          # push while every CI check stayed green. The chain above stops at its first failure, which is why
+          # a stage list has to be named in full rather than assumed covered.
+          python services/orchestration/run_quality_gate.py root-governance-suite
           python tests/workflow-assistance/test_platform_identity.py
           python tests/workflow-assistance/test_instance_reconciler.py
           python tests/workflow-assistance/test_config_ownership.py
@@ -207,9 +213,23 @@ jobs:
       - name: Build the real Tauri desktop binary (MSVC, for U19 E2E)
         working-directory: apps/observer/src-tauri
         run: cargo build --release --locked
+      - name: Record the artifact input receipt
+        # ERR-105: the receipt must be written by the build side, immediately
+        # after the compiler, so it attests to a build that was observed. The
+        # gate only reads it. Without it the gate falls back to content
+        # evidence and says so in its own report.
+        working-directory: .
+        run: python apps/observer/scripts/write_artifact_receipt.py
       - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
         working-directory: apps/observer
         run: python scripts/u19_webview_e2e.py
+      # G3: required now that the instrument has produced a real GEOMETRY_GATE_PASS readback (ERR-146 states
+      # the condition). It measures the bundle this job just built, at each window's declared shape: the main
+      # shell at 1280x820 and the floating panel at 440x780. A refusal exits 3 and names why, which is a red
+      # on purpose — the gate cannot report green without a measurement.
+      - name: Desktop geometry gate (CDP measurement of the built shell)
+        working-directory: .
+        run: python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json
 
   supply-chain-security:
     name: supply-chain-security
@@ -272,6 +292,18 @@ jobs:
         run: python scripts/ci/verify_project_data_boundary.py
       - name: Verify authority-reference integrity (A03)
         run: python scripts/ci/verify_project_authority_reference.py
+      - name: Verify blueprint coverage matrix and its projection
+        # The matrix under .project/governance is the single mutable source; the
+        # docs/future projection must match it, AG and U rows are re-extracted
+        # from the live files so no row can be dropped or invented, anchors must
+        # resolve, and no artifact may carry its own digest.
+        run: python scripts/ci/verify_blueprint_coverage.py
+      - name: Verify the future-candidate pool has row-level coverage
+        # The §16 table is landed with row keys 16.NN, so registry coverage is a
+        # name-level check instead of the count arithmetic (19 - 14 = 5) that hid
+        # six unregistered rows. A row with no candidate, or a candidate naming a
+        # row that does not exist, fails the gate.
+        run: python scripts/ci/verify_future_candidate_registry.py
       - name: Run authority-reference negative controls
         run: python tests/ci/test_project_authority_reference.py
       - name: Verify supply-chain pins

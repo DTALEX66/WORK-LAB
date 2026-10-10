@@ -22,13 +22,13 @@
 默认命令只生成 plan，不写文件：
 
 ```bash
-python scripts/workflow/user_profile_export.py
+python packages/client-neutral-core/scripts/user_profile_export.py
 ```
 
 只有在审阅计划后才可显式写入项目画像：
 
 ```bash
-python scripts/workflow/user_profile_export.py --write
+python packages/client-neutral-core/scripts/user_profile_export.py --write
 ```
 
 画像不直接应用到 Codex/Hermes/CC Switch。任何 live apply 都必须另行授权，并

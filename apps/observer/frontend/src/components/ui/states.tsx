@@ -1,6 +1,9 @@
 import * as React from 'react'
-import { Loader2, CloudOff, Inbox, TriangleAlert } from 'lucide-react'
+import { Ban, CircleSlash, CloudOff, EyeOff, HelpCircle, Inbox, Lock, Timer, TriangleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
+// WUI-11: the eight-state vocabulary. The cards below print it rather than restating it, so a page and
+// the matrix cannot drift into two different meanings for the same word.
+import { STATE_BY_ID, STATE_DEFINITIONS, type ProductState } from '@/lib/stateVocabulary'
 
 /**
  * UI_COMPONENTS (20260921) · L10b (2026-09-27): the five L7 view-state
@@ -61,27 +64,12 @@ export function EmptyState({ title, description, action, className }: EmptyState
   )
 }
 
-export interface LoadingSkeletonProps {
-  rows?: number
-  className?: string
-}
-
-export function LoadingSkeleton({ rows = 4, className }: LoadingSkeletonProps) {
-  return (
-    <div className={cn('panel', className)} role="status" aria-label="加载中">
-      <span className="sr-only">加载中…</span>
-      <div className="flex flex-col gap-3">
-        {Array.from({ length: rows }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className="h-4 w-4 rounded bg-panel2 animate-pulse" />
-            <div className="h-3 flex-1 rounded bg-panel2 animate-pulse" />
-            <div className="h-3 w-16 rounded bg-panel2 animate-pulse" />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+// M-2 (UI-CHECK-20261006): LoadingSkeleton is gone. It had zero callers, and the
+// shell settled on a load strip instead (App.tsx `loadingStrip`) because the B5
+// rule pins every KPI to UNKNOWN with no snapshot — a skeleton that *replaces*
+// content hides exactly the state that rule defends. Keeping an unused skeleton
+// in the design system invited the other implementation: it is the one loading
+// affordance whose presence would make a real UNKNOWN invisible.
 
 export interface ErrorStateProps {
   message: string
@@ -106,13 +94,31 @@ export function ErrorState({ message, className }: ErrorStateProps) {
   )
 }
 
-export function OfflineState({ className }: { className?: string }) {
+export interface OfflineStateProps {
+  className?: string
+  /**
+   * WHAT is offline, in the user's own vocabulary — usually the active view's label.
+   *
+   * Without it the shell renders one identical card for all 22 views, and a user who clicks through
+   * the rail sees nothing change and concludes the navigation is dead. That is the shape this prop
+   * exists to break: the failure is global (the transport is down), but the report has to say which
+   * surface is being read, so the click has a visible consequence and the reader knows the rail works.
+   */
+  subject?: string
+}
+
+export function OfflineState({ className, subject }: OfflineStateProps) {
+  // No action slot and no spinner here, deliberately: StateShell renders `action` as a left-aligned
+  // block, so an icon-only "still working" glyph in it reads as a stray mark rather than a status
+  // (it did — visible in the 2026-10-08 desktop screenshot), and SCREEN_SPEC assigns the
+  // "still fetching?" signal to the first-frame strip, which the shell already renders.
   return (
     <StateShell
       icon={<CloudOff size={26} strokeWidth={1.8} />}
-      title="连接中断"
-      description="后端快照不可达，正在等待重连…"
-      action={<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+      title={subject ? `「${subject}」读不到快照` : '连接中断'}
+      description={subject
+        ? `后端快照不可达，此视图的数值全部保持 UNKNOWN（不伪造）。其他视图同样读不到：切换后看到的是各自的名称，不是界面卡住。`
+        : '后端快照不可达，正在等待重连…'}
       className={className}
       role="status"
     />
@@ -138,5 +144,129 @@ export function UnknownState({
       className={className}
       role="status"
     />
+  )
+}
+
+export interface PermissionStateProps {
+  /** what the user cannot do here, in one line */
+  blocked: string
+  /** WHY it is blocked: the contract or permission that owns the write */
+  reason: string
+  /** what this surface still does, so the reader is not left with a dead end */
+  stillAvailable?: string
+  title?: string
+  className?: string
+}
+
+/**
+ * PERMISSION / READ-ONLY state (UI prompt pack G1).
+ *
+ * Distinct from UnknownState on purpose: UNKNOWN says "the projection has no
+ * value", this says "the value may be known and this surface still cannot act".
+ * The prompt pack forbids a write action that merely looks available, so a
+ * read-only lane has to name the owner of the write rather than go quiet.
+ */
+export function PermissionState({
+  blocked,
+  reason,
+  stillAvailable,
+  title = '此界面只读',
+  className,
+}: PermissionStateProps) {
+  return (
+    <StateShell
+      icon={<Lock size={26} strokeWidth={1.8} />}
+      title={title}
+      description={
+        [blocked, reason, stillAvailable].filter(Boolean).join(' — ')
+      }
+      className={className}
+      role="status"
+    />
+  )
+}
+
+/* ---------------------------------------------------------------------------
+ * WUI-11 · the eight states, told apart.
+ *
+ * The five shells above cover empty / error / offline / unknown / permission. The taskpack asks for
+ * eight separately explained states, and a lane that renders 无数据 where the truth is 延迟 (or, worse,
+ * 权限不足) is not a shorter path — it is a different statement. So each of the remaining states gets its
+ * own affordance, and every one of them prints the field it is based on and the next action, taken from
+ * `lib/stateVocabulary` rather than restated here. That is what keeps the matrix and the pages from
+ * drifting into two vocabularies.
+ * ------------------------------------------------------------------------ */
+
+const STATE_ICONS: Record<string, React.ReactNode> = {
+  unsupported: <Ban size={26} strokeWidth={1.8} />,
+  delayed: <Timer size={26} strokeWidth={1.8} />,
+  'hidden-by-policy': <EyeOff size={26} strokeWidth={1.8} />,
+  'partial-failure': <CircleSlash size={26} strokeWidth={1.8} />,
+  'not-existing': <HelpCircle size={26} strokeWidth={1.8} />,
+  'insufficient-permission': <Lock size={26} strokeWidth={1.8} />,
+  'no-data': <Inbox size={26} strokeWidth={1.8} />,
+  'not-connected': <CloudOff size={26} strokeWidth={1.8} />,
+}
+
+export interface ProductStateCardProps {
+  state: ProductState
+  /** the concrete subject — a lane name, an id, a field — so the card is about something */
+  subject?: string
+  /** what this page actually observed, in one line */
+  detail?: string
+  className?: string
+}
+
+/** One of the eight states, rendered with its evidence rule and its way out. */
+export function ProductStateCard({ state, subject, detail, className }: ProductStateCardProps) {
+  const definition = STATE_BY_ID[state]
+  return (
+    <div className={cn('empty', className)} role="status" data-state={state}>
+      <div className="icon" aria-hidden="true">{STATE_ICONS[state]}</div>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-ink">
+          {definition.label}{subject ? ` · ${subject}` : ''}
+        </p>
+        <p className="mx-auto mt-1 max-w-xl text-xs">{detail ? detail : definition.meaning}</p>
+        <p className="mx-auto mt-2 max-w-xl text-[12px] text-muted">
+          依据：{definition.signal}
+        </p>
+        <p className="mx-auto mt-1 max-w-xl text-[12px] text-muted">
+          下一步：{definition.nextAction}
+        </p>
+        {definition.projectable === false && (
+          <p className="mx-auto mt-2 max-w-xl text-[12px] text-warning" data-testid={`state-not-projectable-${state}`}>
+            当前 v3 快照不携带可判定该状态的项目；本卡只在调用方明确告知时出现，不由空值推断。
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The state matrix itself (master page 14_states): all eight rows, each with whether the shipped
+ * projection can answer it. A developer reads this to know which affordance is legitimate where; the
+ * two rows that say 快照不携带 are the ones a view must never reach for by default.
+ */
+export function StateMatrixCard({ className }: { className?: string }) {
+  return (
+    <div className={cn('list', className)} data-testid="state-matrix">
+      {STATE_DEFINITIONS.map((definition) => (
+        <div key={definition.id} className="list-item flex-col items-stretch gap-1" data-state={definition.id}>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[12px] font-semibold text-ink">{definition.label}</span>
+            <span className={cn('text-[12px]',
+              definition.projectable === false ? 'text-warning' : 'text-muted')}>
+              {definition.projectable === false ? '快照不携带'
+                : definition.projectable === 'partly' ? '部分可判定' : '可由投影判定'}
+            </span>
+          </div>
+          <span className="text-[12px] text-muted">{definition.meaning}</span>
+          <span className="text-[12px] text-muted">依据：{definition.signal}</span>
+          <span className="text-[12px] text-muted">下一步：{definition.nextAction}</span>
+        </div>
+      ))}
+    </div>
   )
 }

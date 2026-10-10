@@ -33,10 +33,10 @@ def process_queue(root: Path) -> dict:
     q = json.loads(f.read_text(encoding="utf-8"))
     merged = []
     for branch in list(q.get("queue", [])):
-        r = subprocess.run(["git", "-C", str(root), "merge", "--no-ff", branch], capture_output=True, text=True)
+        r = subprocess.run(["git", "-C", str(root), "merge", "--no-ff", branch], capture_output=True, text=True, encoding="utf-8", errors="replace")
         if r.returncode == 0:
             merged.append(branch)
-            subprocess.run(["git", "-C", str(root), "branch", "-d", branch], capture_output=True, text=True)
+            subprocess.run(["git", "-C", str(root), "branch", "-d", branch], capture_output=True, text=True, encoding="utf-8", errors="replace")
         else:
             break  # stop on first conflict; leave rest queued
     q["queue"] = [b for b in q.get("queue", []) if b not in merged]

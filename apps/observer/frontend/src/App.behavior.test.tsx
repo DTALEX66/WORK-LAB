@@ -13,7 +13,7 @@
 // The live-snapshot hook is mocked per-test so none of this depends on a
 // running backend (same contract as App.smoke.test.tsx).
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup, act } from '@testing-library/react'
+import { render, screen, cleanup, act, fireEvent } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   live: { snap: null, source: 'stale', live: false, error: null },
@@ -127,5 +127,86 @@ describe('B5 · no snapshot → UNKNOWN, never a fabricated 0', () => {
     expect(kpis).not.toContain('0')
     // multiple honest "no data" indicators (KPI sub + panel empty states)
     expect(screen.getAllByText('数据源未接入').length).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('accessibility status', () => {
+  it('reports the system reduced-motion policy without claiming motion is always enabled', () => {
+    render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: '工作区' }))
+
+    expect(screen.getByText('遵循系统设置')).toBeTruthy()
+    expect(screen.queryByText('Enabled')).toBeNull()
+  })
+})
+
+// P1-02 · the record deep link is a shell concern: the address has to select the lane AND the record,
+// survive a refresh, and refuse a value that is not an identifier. The Work lane's own tests cover what
+// a resolved record renders; these cover the round trip through the URL writer.
+describe('P1-02 · record deep link through the shell', () => {
+  const taskRow = {
+    taskId: 'WL-777', projectId: 'work-lab', status: 'RUNNING',
+    createdAt: '2026-10-08T00:00:00Z', updatedAt: '2026-10-08T00:05:00Z',
+    leaseHolder: 'worker-A', leaseExpiresAt: null, fencingToken: 1,
+    checkpointPresent: false, checkpointKeys: [], checkpointDigest: null,
+  }
+
+  function snapWithTask() {
+    return {
+      schemaVersion: 'workflow/snapshot/v3', revision: 3,
+      generatedAt: new Date().toISOString(), sourceWatermark: null,
+      transport: { transportState: 'LIVE', freshnessState: 'FRESH', connectedSince: null, eventsUrl: null },
+      coverage: { numerator: 1, denominator: 1, scope: 'workflow' },
+      governance: { state: 'OK', families: {} },
+      workspace: {},
+      projects: [], executions: [], ci: [], tasks: {}, sourceRefs: [],
+      tokenSummary: { inputTokens: null, outputTokens: null, totalTokens: null, costQuality: 'UNKNOWN' },
+      git: { localSha: null, remoteSha: null, ciSha: null, matchState: 'NO_LOCAL_CLAIM' },
+      taskRecords: [taskRow],
+    } as any
+  }
+
+  it('?view=work&taskId= selects the lane and focuses that record on first render', () => {
+    mocks.live = { snap: snapWithTask(), source: 'live', live: true, error: null }
+    setUrl('?view=work&taskId=WL-777')
+    render(<App />)
+    expect(screen.getByText(/任务详情/)).toBeTruthy()
+    expect(screen.getByText('worker-A · fence 1 · 到期 UNKNOWN')).toBeTruthy()
+  })
+
+  it('choosing a record writes the address, so a refresh lands on the same record', () => {
+    mocks.live = { snap: snapWithTask(), source: 'live', live: true, error: null }
+    setUrl('?view=work')
+    render(<App />)
+    const link = Array.from(document.querySelectorAll('a'))
+      .find((anchor) => (anchor.getAttribute('href') || '').includes('taskId=WL-777'))
+    expect(link, 'the task row must expose its own address').toBeTruthy()
+    fireEvent.click(link!)
+    expect(window.location.search).toContain('view=work')
+    expect(window.location.search).toContain('taskId=WL-777')
+
+    cleanup()
+    render(<App />)
+    expect(screen.getByText(/任务详情/)).toBeTruthy()
+  })
+
+  it('an identifier the validator refuses is reported, not looked up', () => {
+    mocks.live = { snap: snapWithTask(), source: 'live', live: true, error: null }
+    setUrl('?view=work&taskId=' + encodeURIComponent('a"b'))
+    render(<App />)
+    expect(screen.getByText('定位被拒绝')).toBeTruthy()
+    expect(screen.queryByText(/任务详情/)).toBeNull()
+  })
+
+  it('clearing the focus takes the parameter out of the address', () => {
+    mocks.live = { snap: snapWithTask(), source: 'live', live: true, error: null }
+    setUrl('?view=work&taskId=WL-777')
+    render(<App />)
+    const clear = Array.from(document.querySelectorAll('a'))
+      .find((anchor) => anchor.textContent === '取消定位')
+    expect(clear).toBeTruthy()
+    fireEvent.click(clear!)
+    expect(window.location.search).not.toContain('taskId')
+    expect(window.location.search).toContain('view=work')
   })
 })

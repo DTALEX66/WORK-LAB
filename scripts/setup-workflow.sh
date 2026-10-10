@@ -12,7 +12,7 @@ fi
 export HERMES_HOME
 
 APPLY=0
-PLAN_FILE="$REPO_ROOT/.hermes/task-artifacts/setup-plan.json"
+PLAN_FILE="$REPO_ROOT/.project-local/artifacts/setup-plan.json"
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --apply) APPLY=1 ;;
@@ -56,7 +56,7 @@ fi
 [ -d "$HERMES_HOME" ] || { echo "Hermes home must already exist; refusing to create a live target: $HERMES_HOME" >&2; exit 1; }
 
 SYNC_ARGS=(
-    "$PY_REPO_ROOT/scripts/workflow/sync_hermes_workflow_assets.py"
+    "$PY_REPO_ROOT/integrations/executors/hermes/sync_hermes_workflow_assets.py"
     --repo "$PY_REPO_ROOT"
     --home "$PY_HERMES_HOME"
     --plan-json "$PY_PLAN_FILE"

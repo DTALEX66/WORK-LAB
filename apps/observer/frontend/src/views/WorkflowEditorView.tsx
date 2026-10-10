@@ -80,11 +80,10 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
         description="交互式节点画布：拖动 / 缩放 / 平移 / 选择 / 连线 / 删除。本地编辑模型（localStorage 持久化）；发布与运行在真实 workflow-schema 契约接入前保持禁用。"
         actions={
           <Tooltip text="本地编辑已自动持久化">
-            <span>
-              <Button variant="secondary" iconLeft={Save} size="sm">
-                已保存
-              </Button>
-            </span>
+            {/* This had no onClick: a button that looks pressable and does
+                nothing is exactly the fake affordance the read-only rule is
+                about, so it is a status label instead. */}
+            <span className="tag info" role="status">已自动保存</span>
           </Tooltip>
         }
       />
@@ -113,16 +112,16 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
         <Card>
           <CardHeader>
             <span>属性面板</span>
-            <span className="text-[11px] text-muted">{selected ? selected.kind : '未选中'}</span>
+            <span className="text-[12px] text-muted">{selected ? selected.kind : '未选中'}</span>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             {selected ? (
               <>
-                <label className="flex flex-col gap-1 text-[11px] text-muted">
+                <label className="flex flex-col gap-1 text-[12px] text-muted">
                   节点名称
                   <Input value={selected.label} onChange={(e) => updateSelected({ label: e.target.value })} />
                 </label>
-                <label className="flex flex-col gap-1 text-[11px] text-muted">
+                <label className="flex flex-col gap-1 text-[12px] text-muted">
                   说明
                   <Input value={selected.meta ?? ''} onChange={(e) => updateSelected({ meta: e.target.value })} placeholder="节点说明" />
                 </label>
@@ -136,7 +135,7 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
                     <span className="font-mono text-xs text-ink">{edgeCount}</span>
                   </div>
                 </div>
-                <p className="text-[11px] leading-relaxed text-muted">
+                <p className="text-[12px] leading-relaxed text-muted">
                   选中节点后在画布内拖动以移动；点节点右上 + 手柄向目标节点拖出即可连线；工具栏删除所选。
                 </p>
               </>

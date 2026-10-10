@@ -105,7 +105,7 @@ guard 的每种 BLOCKED 报错自带修复指令；对号入座，不要换工�
 |---|---|---|
 | `shell chaining/redirection is forbidden` | 子命令带管道/重定向（`cmd 2>&1 | head`） | 单命令直传；截断由 terminal 工具自动处理 |
 | `invoke hermes-project-data.py with the wrapper` | 绕过 wrapper 直调子命令 | 子命令包进 `run -- <child>` |
-| `canonical deployed Hermes wrapper, not a fake` | 用了项目内同名 `bin/hermes-project-data.py` 副本 | 只用 `<HERMES_HOME>/bin/hermes-project-data.py`（部署版） |
+| `canonical deployed Hermes wrapper, not a fake` | 用了项目内同名 `packages/client-neutral-core/bin/hermes-project-data.py` 副本 | 只用 `<HERMES_HOME>/bin/hermes-project-data.py`（部署版） |
 | `must use --project .` | `--project` 传绝对路径 | 字面 `--project .` + terminal workdir 参数表达项目根 |
 
 四条合并的标准形态：

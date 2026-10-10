@@ -31,10 +31,20 @@ def _stable_id(prefix: str, *parts: object) -> str:
     return f"{prefix}-{hashlib.sha256(encoded).hexdigest()[:32]}"
 
 
+def _note_refusal(counts: dict[str, int], samples: dict[str, str], reason: str, where: str) -> None:
+    """Count a row the collector could not turn into a fact, and keep the first place it happened.
+
+    A bare count is a number; a count with one location is a lead. The sample is deliberately the FIRST
+    occurrence, because a refusal that keeps overwriting its own sample reports only the newest symptom.
+    """
+    counts[reason] = counts.get(reason, 0) + 1
+    samples.setdefault(reason, where)
+
+
 def _git(root: Path, *args: str) -> str | None:
     try:
         result = subprocess.run(
-            ["git", *args], cwd=root, text=True, capture_output=True, check=False, timeout=30
+            ["git", *args], cwd=root, text=True, encoding="utf-8", errors="replace", capture_output=True, check=False, timeout=30
         )
     except (OSError, subprocess.SubprocessError):
         return None
@@ -108,6 +118,8 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
     runtime root, never by scanning user profile paths.
     """
     records: list[dict[str, Any]] = []
+    refusals: dict[str, int] = {}
+    samples: dict[str, str] = {}
     if search_root.is_dir():
         for candidate in sorted(search_root.rglob("*")):
             if not candidate.is_file():
@@ -115,13 +127,15 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
             if not TOKEN_FILE_NAME_RE.match(candidate.name):
                 continue
             try:
-                text = candidate.read_text(encoding="utf-8", errors="replace")
-            except OSError:
-                continue
-            try:
                 source_ref = candidate.relative_to(search_root).as_posix()
             except ValueError:
                 source_ref = candidate.name
+            try:
+                text = candidate.read_text(encoding="utf-8", errors="replace")
+            except OSError as exc:
+                _note_refusal(refusals, samples, "file_unreadable",
+                              f"{source_ref}: {type(exc).__name__}")
+                continue
             content_occurrences: dict[str, int] = {}
             for line_number, line in enumerate(text.splitlines(), start=1):
                 if not line.strip():
@@ -129,8 +143,11 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
                 try:
                     item = json.loads(line)
                 except json.JSONDecodeError:
+                    _note_refusal(refusals, samples, "line_unparseable_json",
+                                  f"{source_ref}:{line_number}")
                     continue
                 if not isinstance(item, dict):
+                    _note_refusal(refusals, samples, "line_not_an_object", f"{source_ref}:{line_number}")
                     continue
                 tokens = {
                     key: item[key]
@@ -142,6 +159,8 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
                     if isinstance(item.get(key), int) and item[key] >= 0
                 }
                 if not tokens:
+                    _note_refusal(refusals, samples, "line_has_no_usable_token_fields",
+                                  f"{source_ref}:{line_number}")
                     continue
                 provider = str(item.get("provider", "unknown"))
                 model = str(item.get("model", "unknown"))
@@ -172,10 +191,16 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
                         "quality": "EXACT_SOURCE",
                         "source_ref": _sanitize_path(source_ref),
                         "sample_id": _stable_id("usage", project_id, source_ref, sample_identity),
+                        # Diagnostic locator only: `record_usage_sample` inserts named columns, so this key is
+                        # never persisted. Without it a store-level refusal (a credential shape in `provider`)
+                        # could name the file but not the line, and "which line did we refuse" is the question
+                        # the surface is asked.
+                        "source_line": line_number,
                         **tokens,
                     }
                 )
-    return CollectorResult(kind="usage", ok=True, records=records)
+    return CollectorResult(kind="usage", ok=True, records=records, refusals=refusals,
+                           refusal_samples=samples)
 
 
 def collect_source_quality(store: CanonicalStore, project_id: str, project_root: Path) -> CollectorResult:
@@ -207,6 +232,8 @@ def collect_growth_watcher(store: CanonicalStore, project_id: str, search_root: 
     from growth_candidates import intake, source_digest
 
     candidates: list[dict[str, Any]] = []
+    refusals: dict[str, int] = {}
+    samples: dict[str, str] = {}
     probe_dirs = [
         search_root / ".hermes" / "growth-candidates",
         search_root / ".agents" / "skills",
@@ -217,7 +244,9 @@ def collect_growth_watcher(store: CanonicalStore, project_id: str, search_root: 
             continue
         try:
             entries = sorted(probe_dir.iterdir())
-        except OSError:
+        except OSError as exc:
+            _note_refusal(refusals, samples, "probe_dir_unreadable",
+                          f"{probe_dir.name}: {type(exc).__name__}")
             continue
         for entry in entries:
             if not entry.is_file():
@@ -244,8 +273,13 @@ def collect_growth_watcher(store: CanonicalStore, project_id: str, search_root: 
                 candidate["risk"],
                 candidate["source"],
             )
-        except ValueError:
-            continue  # un-discoverable candidate; quarantine implicitly by omission
+        except ValueError as exc:
+            # The old comment here read "quarantine implicitly by omission". Implicit omission is exactly
+            # what the truth discipline refuses: a candidate that was found and then rejected must arrive
+            # as a named, counted refusal, or the empty list reads as "nothing to grow from".
+            _note_refusal(refusals, samples, "candidate_rejected_by_intake",
+                          f"{candidate['candidate_id']}: {str(exc)[:120]}")
+            continue
         records.append(
             {
                 "event_id": _stable_id("growth", item["candidateId"], source_digest(candidate["source"])),
@@ -261,7 +295,8 @@ def collect_growth_watcher(store: CanonicalStore, project_id: str, search_root: 
                 "source_digest": source_digest(candidate["source"]),
             }
         )
-    return CollectorResult(kind="telemetry", ok=True, records=records)
+    return CollectorResult(kind="telemetry", ok=True, records=records, refusals=refusals,
+                           refusal_samples=samples)
 
 
 def build_standard_collectors(project_root: Path) -> list[Any]:
@@ -322,14 +357,15 @@ def build_standard_collectors(project_root: Path) -> list[Any]:
 
 if __name__ == "__main__":
     import argparse
-    import tempfile
 
-    parser = argparse.ArgumentParser(description="Run the four standard collectors once")
+    from project_temp import require_runtime_root
+
+    parser = argparse.ArgumentParser(description="Run the standard collectors once")
     parser.add_argument("--project-root", type=Path, required=True)
     parser.add_argument("--project-id", default="work-lab")
     parser.add_argument("--runtime-root", type=Path)
     args = parser.parse_args()
-    runtime_root = (args.runtime_root or Path(tempfile.gettempdir()) / "workflow-assistance-collectors").resolve()
+    runtime_root = require_runtime_root(args.runtime_root, "workflow-assistance-collectors")
     store = CanonicalStore(runtime_root / "canonical.sqlite")
     try:
         results = []

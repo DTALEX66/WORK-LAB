@@ -1,14 +1,15 @@
 {
   "folders": [
     { "name": "WORK-LAB Root", "path": "." },
-    { "name": "Workflow Assistance", "path": "10-workflow/workflow-assistance" },
-
-    { "name": "MINIGAME", "path": "30-products/minigame" }
+    { "name": "Client-neutral Core", "path": "packages/client-neutral-core" },
+    { "name": "Observer (read-only projection)", "path": "apps/observer" },
+    { "name": "Services (orchestration/policy/receipts)", "path": "services" },
+    { "name": "Governance", "path": ".project/governance" }
   ],
   "settings": {
-    "files.exclude": { "80-evidence": true },
+    "files.exclude": { ".project-local": true },
     "search.exclude": {
-      "80-evidence": true,
+      ".project-local": true,
       "**/node_modules": true,
       "**/dist": true,
       "**/build": true

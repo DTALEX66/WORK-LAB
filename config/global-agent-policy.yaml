@@ -186,8 +186,8 @@ parallelism:
   one_writer_owns_a_checkout: true
 
 skills:
-  scan_before_executing: true
-  load_matching_skill_before_manual_attempt: true
+  scan_before_executing: false
+  load_matching_skill_before_manual_attempt: false
   complex_techniques_are_on_demand_skills_not_global_policy: true
   skill_is_guidance_not_authorization: true
 

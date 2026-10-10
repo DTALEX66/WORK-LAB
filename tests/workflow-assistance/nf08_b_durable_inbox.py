@@ -19,7 +19,6 @@ from __future__ import annotations
 import os
 import shutil
 import sys
-import tempfile
 import unittest
 
 _PKG = os.path.abspath(os.path.join(
@@ -29,18 +28,25 @@ if _PKG not in sys.path:
     sys.path.insert(0, _PKG)
 
 import durable_inbox as di  # noqa: E402
+import project_temp  # noqa: E402
 
 
 class _NamedRootMixin(unittest.TestCase):
     def setUp(self):
-        self.dir = tempfile.mkdtemp(prefix="nf08b-")
+        self.dir = str(project_temp.fixture_dir(prefix="nf08b-"))
         self.rootA = di.Path(self.dir, "projectA")
         self.rootB = di.Path(self.dir, "projectB")
         self.boxA = di.DurableInbox("projectA", self.rootA)
         self.boxB = di.DurableInbox("projectB", self.rootB)
 
     def tearDown(self):
-        shutil.rmtree(self.dir, ignore_errors=True)
+        # `ignore_errors=True` here would hide exactly the ERR-140 failure class (a fixture that
+        # cannot be removed while still looking green), so a failed release is announced with the
+        # same token project_temp's at-exit sweeper uses; the dir stays tracked until then.
+        try:
+            shutil.rmtree(self.dir)
+        except OSError as error:
+            print(f"TEMP_RESIDUE_NOT_REMOVED {self.dir} {type(error).__name__}: {error}")
 
 
 class TestRestartNoDuplicate(_NamedRootMixin):

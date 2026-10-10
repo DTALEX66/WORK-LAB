@@ -28,7 +28,7 @@ def run_guard(payload) -> tuple[int, dict]:
     stdin = "" if payload is None else json.dumps(payload)
     proc = subprocess.run(
         [sys.executable, str(GUARD)],
-        input=stdin, capture_output=True, text=True, cwd=ROOT, timeout=60,
+        input=stdin, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=ROOT, timeout=60,
     )
     out = proc.stdout.strip()
     try:
@@ -107,7 +107,7 @@ class EDriveGuardTests(unittest.TestCase):
     def test_malformed_json_is_treated_as_empty(self):
         proc = subprocess.run([sys.executable, str(GUARD)],
                               input="{not valid json", capture_output=True,
-                              text=True, cwd=ROOT, timeout=60)
+                              text=True, encoding="utf-8", errors="replace", cwd=ROOT, timeout=60)
         parsed = json.loads(proc.stdout.strip())
         self.assertEqual(proc.returncode, 0)
         self.assertTrue(parsed.get("allow"))

@@ -17,7 +17,7 @@ def _run_local_gate(repo: str) -> dict:
     script = ROOT / "services/orchestration/run_quality_gate.py"
     try:
         r = subprocess.run([sys.executable, str(script), "verify"], cwd=ROOT,
-                           capture_output=True, text=True, timeout=600)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
         return {"applicable": True, "passed": r.returncode == 0 and
                 "QUALITY_GATE_PASS" in r.stdout, "exit_code": r.returncode}
     except (OSError, subprocess.TimeoutExpired) as exc:

@@ -31,7 +31,7 @@ def run_group(manifest: Path, group: str) -> tuple[int, str]:
     proc = subprocess.run(
         [sys.executable, str(RUNNER), "--manifest", str(manifest), "--group", group],
         capture_output=True,
-        text=True,
+        text=True, encoding="utf-8", errors="replace",
     )
     return proc.returncode, proc.stdout + proc.stderr
 
@@ -88,19 +88,46 @@ def main() -> int:
     manifest.unlink(missing_ok=True)
 
     # --- Required-group manifest completeness: the real manifest must contain the
-    #     four observer groups with their command counts (regression guard).
+    #     four observer groups with exactly these commands (regression guard).
+    # Pinned as lists rather than counts: a count stays correct when someone drops
+    # one required check and swaps in a cheaper one, which is the failure this
+    # guard exists to catch.
     real = ROOT / "scripts" / "ci" / "required_groups.json"
     data = json.loads(real.read_text(encoding="utf-8"))
     expected = {
-        "observer-python-skeleton": 8,
-        "observer-web-contracts": 2,
-        "observer-frontend-typecheck": 4,
-        "observer-desktop-crate": 2,
+        "observer-python-skeleton": [
+            ["python", "scripts/verify_observer_skeleton.py"],
+            ["python", "tests/test_observer_skeleton.py"],
+            ["python", "tests/test_observer_runtime.py"],
+            ["python", "tests/test_observer_evidence.py"],
+            ["python", "tests/test_observer_store.py"],
+            ["python", "tests/test_artifact_freshness.py"],
+            ["python", "scripts/verify_usage_rollup.py"],
+            ["python", "tests/test_usage_rollup.py"],
+            ["python", "tests/test_observer_events_migration.py"],
+        ],
+        "observer-web-contracts": [
+            ["node", "tests/run_all_tests.js"],
+        ],
+        "observer-frontend-typecheck": [
+            ["npm", "ci"],
+            ["npm", "run", "typecheck"],
+            ["npm", "run", "build"],
+            ["npm", "run", "test"],
+        ],
+        "observer-desktop-crate": [
+            ["cargo", "test", "--locked"],
+            ["cargo", "check", "--locked"],
+        ],
     }
-    for name, count in expected.items():
+    for name, commands in expected.items():
         cmds = data.get("groups", {}).get(name, {}).get("commands", [])
-        if len(cmds) != count:
-            failures.append(f"required_groups: {name} has {len(cmds)} commands, expected {count}")
+        if cmds != commands:
+            missing = [c for c in commands if c not in cmds]
+            extra = [c for c in cmds if c not in commands]
+            failures.append(
+                f"required_groups: {name} commands drifted "
+                f"(missing={json.dumps(missing)} unexpected={json.dumps(extra)})")
 
     # --- Unknown group => exit 2, not 0.
     manifest = write_manifest({"x": {"working_dir": ".", "commands": [fail_cmd(0)]}})

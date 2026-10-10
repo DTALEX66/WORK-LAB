@@ -1,4 +1,7 @@
-import { Menu, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
+import { ActionRow } from '@/components/layout/ActionOverflow'
+import { WindowControls } from '@/components/layout/WindowControls'
+import { THEMES } from '@/theme/tokens'
 import type { SnapshotV3 } from '@/types'
 import type { ThemeMode, LayoutMode, LiveSnapshotState } from '@/lib/api'
 
@@ -34,7 +37,6 @@ export function TopStatusBar({
   onOpenSearch,
   onOpenDrawer,
   onNotify,
-  onOpenMobileNav,
 }: {
   snap: SnapshotV3 | null
   source: LiveSnapshotState['source']
@@ -49,16 +51,15 @@ export function TopStatusBar({
   onOpenDrawer?: () => void
   /** B10 `.toast` notification (1800ms auto-hide) */
   onNotify?: () => void
-  /** opens the mobile sidebar drawer (<841px) */
-  onOpenMobileNav?: () => void
 }) {
   const ts = snap?.transport.transportState
   const freshness = snap?.transport.freshnessState
   const cov = snap?.coverage
+  const palette = THEMES[theme].colors
   const dotHex =
-    live || ts === 'LIVE' ? '#22C55E' :
-    ts === 'OFFLINE' ? '#EF4444' :
-    ts ? '#F59E0B' : '#8EABBC'
+    live || ts === 'LIVE' ? palette.successHex :
+    ts === 'OFFLINE' ? palette.errorHex :
+    ts ? palette.warningHex : palette.muted
   const dotStyle = { width: 8, height: 8, borderRadius: '50%', background: dotHex }
   const stateText = live ? 'LIVE' : (ts || 'UNKNOWN')
   const coverageText =
@@ -68,17 +69,15 @@ export function TopStatusBar({
 
   return (
     <header className="topbar">
-      {/* mobile nav trigger (hidden >=841px by the L10b shell layer) */}
-      {onOpenMobileNav && (
-        <button
-          type="button"
-          onClick={onOpenMobileNav}
-          aria-label="打开导航"
-          className="ghost-btn topbar-mobile shrink-0 px-2 py-1.5"
-        >
-          <Menu size={16} aria-hidden="true" />
-        </button>
-      )}
+      {/* B10 brand lockup, reduced to a chip. This is not decoration: the
+          compact HUD renders no rail, so without it the floating panel has no
+          identity at all, and the main window runs with `decorations:false` —
+          this row IS the chrome. Colors come from the skin's own --primary /
+          --secondary, never a literal here (G2). */}
+      <span className="topbar-brand" data-testid="topbar-brand">
+        <span className="topbar-brand-mark" aria-hidden="true" />
+        <span className="topbar-brand-word">WORK-LAB</span>
+      </span>
 
       {/* B10 `.search` — the primary search affordance (opens the palette) */}
       {onOpenSearch && (
@@ -97,14 +96,15 @@ export function TopStatusBar({
         >
           <Search size={15} aria-hidden="true" />
           <span className="truncate">搜索或命令…</span>
-          <kbd className="ml-auto shrink-0 rounded border border-border bg-panel2 px-1.5 py-0.5 text-[9px] text-muted">
+          <kbd className="ml-auto shrink-0 rounded border border-border bg-panel2 px-1.5 py-0.5 text-[12px] text-muted">
             Ctrl K
           </kbd>
         </div>
       )}
 
-      {/* honest transport truth strip (REAL v3 fields only) */}
-      <div className="hidden shrink-0 items-center gap-3 text-[10px] text-muted lg:flex">
+      {/* honest transport truth strip (REAL v3 fields only). Shrinks instead of
+          forcing the action buttons into one-glyph columns. */}
+      <div className="truth-strip hidden items-center gap-3 text-[12px] text-muted lg:flex">
         <span className="flex items-center gap-2">
           <span className="status-pulse shrink-0" style={dotStyle} aria-hidden="true" />
           <span className="font-medium text-ink">{stateText}</span>
@@ -122,32 +122,35 @@ export function TopStatusBar({
         )}
       </div>
 
-      <div className="top-actions">
-        <button type="button" className="ghost-btn" onClick={onNotify}>
-          通知
-        </button>
-        <button type="button" className="ghost-btn" onClick={onOpenDrawer}>
-          工作区
-        </button>
-        <button
-          type="button"
-          className="ghost-btn"
-          onClick={onCycleLayout}
-          title={layout === 'full' ? '紧凑布局' : '完整布局'}
-          aria-label={layout === 'full' ? '切换到紧凑布局' : '切换到完整布局'}
-        >
-          {layout === 'full' ? '紧凑' : '完整'}
-        </button>
-        <button
-          type="button"
-          className="ghost-btn"
-          onClick={onCycleTheme}
-          title={theme === 'dark' ? '浅色主题' : '深色主题'}
-          aria-label={theme === 'dark' ? '切换到浅色主题' : '切换到深色主题'}
-        >
-          {theme === 'dark' ? '浅色' : '深色'}
-        </button>
-      </div>
+      {/* Custom title bar: both windows set decorations:false, so this strip is
+          the only drag surface the shell has. */}
+      <div className="drag-region" data-tauri-drag-region aria-hidden="true" />
+
+      <ActionRow
+        actions={[
+          { key: 'notify', label: '通知', run: onNotify },
+          { key: 'workspace', label: '工作区', run: onOpenDrawer },
+          {
+            key: 'layout',
+            label: layout === 'full' ? '紧凑' : '完整',
+            title: layout === 'full' ? '紧凑布局' : '完整布局',
+            ariaLabel: layout === 'full' ? '切换到紧凑布局' : '切换到完整布局',
+            run: onCycleLayout,
+          },
+          {
+            key: 'theme',
+            label: theme === 'dark' ? '浅色' : '深色',
+            title: theme === 'dark' ? '浅色主题' : '深色主题',
+            ariaLabel: theme === 'dark' ? '切换到浅色主题' : '切换到深色主题',
+            run: onCycleTheme,
+            // Pinned: the theme control must never be the thing that folds away, or a user can be
+            // trapped in a palette that stopped making sense with no visible way out.
+            pinned: true,
+          },
+        ]}
+      />
+
+      <WindowControls />
     </header>
   )
 }

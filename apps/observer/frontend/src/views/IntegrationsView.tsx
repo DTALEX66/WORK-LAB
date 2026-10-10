@@ -44,7 +44,7 @@ export function IntegrationsView({ snap }: { snap: any }) {
       <Card>
         <div className="mb-3.5 flex items-center justify-between gap-3">
           <h3 className="m-0">集成 / MCP · 适配器族</h3>
-          <span className="text-[11px] text-muted">
+          <span className="text-[12px] text-muted">
             {adapters && adapters.state !== 'UNKNOWN' ? '携带真实状态' : '无适配器明细'}
           </span>
         </div>
@@ -59,7 +59,7 @@ export function IntegrationsView({ snap }: { snap: any }) {
               <div className="min-w-0">
                 <strong className="block text-[13px] font-semibold text-ink">适配器等价状态</strong>
                 <small>
-                  漂移项：<span className="font-mono text-secondary">{adapters.drift ?? '未知'}</span>
+                  漂移项：<span className="font-mono text-secondary-ink">{adapters.drift ?? '未知'}</span>
                 </small>
               </div>
               <Badge variant={stateVariant(adapters.state)}>
@@ -80,11 +80,11 @@ export function IntegrationsView({ snap }: { snap: any }) {
                   <strong className="block text-[13px] font-semibold text-ink">{c.id}</strong>
                   <small className="truncate">{c.note}</small>
                 </div>
-                <span className="shrink-0 text-[10px] text-muted">受控（无实时状态投影）</span>
+                <span className="shrink-0 text-[12px] text-muted">受控（无实时状态投影）</span>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[11px] text-muted">
+          <p className="mt-3 text-[12px] text-muted">
             以上为控制面受治理客户端的静态说明。各客户端的实时集成状态需由集成契约
             （integrations[]）投影后方可呈现，当前快照未携带，保持 UNKNOWN。
           </p>

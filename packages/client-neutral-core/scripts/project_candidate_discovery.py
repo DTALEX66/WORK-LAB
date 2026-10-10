@@ -87,7 +87,7 @@ def _fingerprint(root: str) -> str:
 def _git(root: Path, *args: str) -> str | None:
     try:
         result = subprocess.run(
-            ["git", *args], cwd=str(root), text=True, capture_output=True, check=False, timeout=20
+            ["git", *args], cwd=str(root), text=True, encoding="utf-8", errors="replace", capture_output=True, check=False, timeout=20
         )
     except (OSError, subprocess.SubprocessError):
         return None

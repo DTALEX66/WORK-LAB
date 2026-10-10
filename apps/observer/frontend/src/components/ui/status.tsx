@@ -56,7 +56,7 @@ export function StatusDot({
         className={cn('h-2 w-2 shrink-0 rounded-full', color, pulse && 'status-pulse')}
         aria-hidden="true"
       />
-      {label ? <span className="text-[11px] text-muted">{label}</span> : null}
+      {label ? <span className="text-[12px] text-muted">{label}</span> : null}
     </span>
   )
 }

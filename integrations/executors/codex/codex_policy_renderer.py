@@ -145,7 +145,7 @@ class CodexPolicyRenderer(pp.SoftwarePolicyRenderer):
         skills = policy.get("skills", {})
         if skills.get("complex_techniques_are_on_demand_skills_not_global_policy"):
             lines += [_section("Skill use", [
-                "Before executing, scan available skills (SKILL.md descriptions) and load the matching one; on a miss proceed directly — a skill is a manual, not authorization for side effects.",
+                "Use a skill when its specific workflow helps the current task; ordinary work needs no forced skill-loading ceremony. User instructions and project authority take precedence; skills do not add authorization or repeat an existing approval.",
                 "Windows/Git/PowerShell and other long-form techniques are on-demand skills, not resident global policy.",
             ]), ""]
 

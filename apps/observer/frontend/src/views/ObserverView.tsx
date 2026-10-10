@@ -12,7 +12,7 @@
 import * as React from 'react'
 import { PageHeader } from '@/components/ui/page-header'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
-import { NodeGraph, type GraphNode } from '@/components/graph/node-graph'
+import { GraphLegend, NodeGraph, type GraphNode } from '@/components/graph/node-graph'
 import { Sparkline } from '@/components/ui/sparkline'
 import { StatusPill } from '@/components/ui/status'
 import { Drawer } from '@/components/ui/drawer'
@@ -88,10 +88,17 @@ export function ObserverView({ snap }: { snap: SnapshotV3 | null }) {
         <Card>
           <CardHeader>
             <span>观测拓扑（只读）</span>
-            <span className="text-[11px] text-muted">核心 = Observer 投影 · 卫星 = 观测实体</span>
+            <span className="text-[12px] text-muted">核心 = Observer 投影 · 卫星 = 观测实体</span>
           </CardHeader>
           <CardContent>
             <NodeGraph
+              core="Observer"
+              nodes={nodes}
+              selected={selected}
+              onSelect={setSelected}
+            />
+            <GraphLegend
+              className="mt-2"
               core="Observer"
               nodes={nodes}
               selected={selected}
@@ -107,7 +114,7 @@ export function ObserverView({ snap }: { snap: SnapshotV3 | null }) {
               <div className="metric-row" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
                 {metrics.map((m) => (
                   <div key={m.label} className="metric-box">
-                    <div className="muted text-[11px]">{m.label}</div>
+                    <div className="muted text-[12px]">{m.label}</div>
                     <div className="mt-1 text-[15px] font-bold tabular-nums text-ink">{m.value}</div>
                   </div>
                 ))}

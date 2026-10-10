@@ -54,6 +54,8 @@ _SECRET_VALUE_RE = re.compile(
     r"^(Bearer\s+\S+|ghp_\S+|gho_\S+|ghs_\S+|sk-[A-Za-z0-9_-]{20,}"
     r"|AKIA[A-Z0-9]{16}|[A-Za-z0-9+/]{64,}={0,2})$"
 )
+# A value that is only hexadecimal is a digest (commit SHA, content hash, error fingerprint), not a key.
+_DIGEST_RE = re.compile(r"^[0-9a-fA-F]{32,}$")
 
 
 def _walk_keys(node: Any, path: str = "") -> list[tuple[str, Any]]:
@@ -69,8 +71,33 @@ def _walk_keys(node: Any, path: str = "") -> list[tuple[str, Any]]:
     elif isinstance(node, list):
         for idx, value in enumerate(node):
             dotted = f"{path}[{idx}]" if path else f"[{idx}]"
-            out.extend(_walk_keys(value, dotted))
+            if isinstance(value, (dict, list)):
+                out.extend(_walk_keys(value, dotted))
+            else:
+                out.append((dotted, value))
     return out
+
+
+def secret_value_paths(artifact: Any) -> list[str]:
+    """Dotted paths whose VALUE is a credential shape, regardless of which key carries it.
+
+    ``find_nested_secrets`` answers "may this artifact transfer at all" -- strict, because quarantine is
+    cheap. A canonical store needs the complementary question, "am I about to write a credential into
+    durable state", and there the same blob shape is a false positive on ordinary data: a SHA-256 error
+    fingerprint, a commit SHA and a content digest are all 32+ characters of base64-shaped text. Measured
+    2026-10-10 -- without the digest exemption the worker's own task loop was refused at
+    ``checkpoint.error_fingerprint``. So a pure-hexadecimal value of 32+ characters is treated as what it
+    is in this repository: a digest. A real key almost never is, and the provider prefixes (``sk:``,
+    ``AKIA``, ``ghp_``, ``Bearer``) stay fully enforced.
+    """
+    hits: list[str] = []
+    for path, value in _walk_keys(artifact):
+        if not isinstance(value, str) or not _SECRET_VALUE_RE.match(value):
+            continue
+        if _DIGEST_RE.match(value):
+            continue
+        hits.append(path)
+    return hits
 
 
 def find_nested_secrets(artifact: dict[str, Any]) -> list[str]:

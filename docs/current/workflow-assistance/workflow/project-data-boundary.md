@@ -14,7 +14,7 @@
 
 ## 可部署执行器与强制 gate
 
-仓库的 `bin/hermes-project-data.py` 与 `bin/hermes-project-terminal-guard.py` 会随 `sync_hermes_workflow_assets.py --apply` 部署到 `$HERMES_HOME/bin/`。
+仓库的 `packages/client-neutral-core/bin/hermes-project-data.py` 与 `packages/client-neutral-core/bin/hermes-project-terminal-guard.py` 会随 `sync_hermes_workflow_assets.py --apply` 部署到 `$HERMES_HOME/bin/`。
 
 默认 Hermes profile 配置了官方 `pre_tool_call` shell hook：对于 `terminal` 工具，它会 fail-closed 地拒绝以下情况：缺少显式 `workdir`、workdir 不是 Git 项目、未通过 wrapper 启动、wrapper 未以 `--project .` 固定到 workdir，或 shell 链式命令。新 Desktop/Gateway/CLI 会话生效；现有进程需 `/reset` 或重启。
 
@@ -31,7 +31,7 @@ python "$HERMES_HOME/bin/hermes-project-data.py" --project . run -- python -m py
 - 用 `git check-ignore --no-index` 验证 `.project-local/runs/` 被忽略，不满足则 fail-closed；
 - 拒绝解析后落在项目根外的 helper 路径及符号链接逃逸；
 - 在子进程启动前创建并注入项目内 `TMP`/`TEMP`/`TMPDIR`、Python bytecode、pip、uv、npm/yarn、Playwright、Cargo home/target、Rust target、Ruff/mypy/pre-commit cache 位置；
-- 提供受控的 `logs/`、`artifacts/` 目录供脚本显式使用；
+- 提供受控的 `.project-local/runs/logs/`、`.project-local/artifacts/` 目录供脚本显式使用；
 - 将 `HERMES_KANBAN_HOME` 固定到 `<project>/.project-local/`。
 
 ```bash
@@ -73,4 +73,4 @@ Kanban 是例外：Hermes 原生支持 `HERMES_KANBAN_HOME`，因此所有项目
 
 ## 项目模板要求
 
-新项目的 `.gitignore` 必须含 `.project-local/`；`templates/agent-rules/AGENTS.md` 与 `CODEX.md` 要求 Agent 在产生运行数据时使用上述 wrapper。
+新项目的 `.gitignore` 必须含 `.project-local/`；`packages/client-neutral-core/templates/agent-rules/AGENTS.md` 与 `CODEX.md` 要求 Agent 在产生运行数据时使用上述 wrapper。

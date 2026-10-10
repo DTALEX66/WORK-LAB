@@ -74,7 +74,7 @@ export function RulesPolicyView({ snap }: { snap: any }) {
                       <strong className="block text-[13px] font-semibold text-ink">{FAMILY_LABEL[key]}</strong>
                       <small>
                         漂移项：
-                        <span className="font-mono text-secondary">
+                        <span className="font-mono text-secondary-ink">
                           {fam.drift == null ? '未知' : fam.drift}
                         </span>
                       </small>

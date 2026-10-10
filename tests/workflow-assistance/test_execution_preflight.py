@@ -26,7 +26,7 @@ class ExecutionPreflightTests(unittest.TestCase):
             ["git", "-C", str(root), *args],
             check=True,
             capture_output=True,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
         )
         return result.stdout.strip()
 

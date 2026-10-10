@@ -61,13 +61,22 @@ def collect_platform_observations(store: Any, project_id: str):
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from canonical_store import CanonicalStore
-    import tempfile
+    import project_temp
+    import shutil
 
-    tmp = Path(tempfile.mkdtemp(prefix="platform-collector-"))
-    store = CanonicalStore(tmp / "canonical.sqlite")
-    result = collect_platform_observations(store, "work-lab")
-    print("ok:", result.ok, "records:", len(result.records), "error:", result.error)
-    rows = store.query_platform_observations()
-    print("stored:", len(rows))
-    for r in rows[:5]:
-        print("  ", r.get("project_id"), "->", r.get("platform"))
+    tmp = project_temp.fixture_dir(prefix="platform-collector-")
+    assert project_temp.inside_project(tmp), f"fixture escaped the project root: {tmp}"
+    store = None
+    try:
+        store = CanonicalStore(tmp / "canonical.sqlite")
+        result = collect_platform_observations(store, "work-lab")
+        print("ok:", result.ok, "records:", len(result.records), "error:", result.error)
+        rows = store.query_platform_observations()
+        print("stored:", len(rows))
+        for r in rows[:5]:
+            print("  ", r.get("project_id"), "->", r.get("platform"))
+    finally:
+        if store is not None:
+            store.close()
+        shutil.rmtree(tmp)
+        print(f"RESIDUE_CLEANED {tmp}")

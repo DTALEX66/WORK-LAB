@@ -82,17 +82,17 @@ entries:
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 0a02c1fc8b6520ad5e7000d80b83597a66f7a65c3a52a56ca7ebda3e84ca15b9
+  live_sha256: 37aed9558bc16be5c4da9aa2133d63e03cabbcf353d6bbf248d156aceaf4c5d9
 - name: project-data-boundary
   source: packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md
   live: packages/client-neutral-core/skills/software-development/project-data-boundary/SKILL.md
-  source_sha256: 405e16d3a8f6490ec31107b91cf3fb1f011ab02e4d37f50aaa0e0e9cded5399b
-  version: 1.3.0
+  source_sha256: cb839c49c093c62c7d8b366be92f89635e570270da26992214421e518328c672
+  version: 1.3.1
   trust: repository-controlled
   enabled: true
   permission: read-write-via-explicit-wrapper
   profile_scope: default
-  live_sha256: 405e16d3a8f6490ec31107b91cf3fb1f011ab02e4d37f50aaa0e0e9cded5399b
+  live_sha256: cb839c49c093c62c7d8b366be92f89635e570270da26992214421e518328c672
 - name: python-testing
   source: packages/client-neutral-core/skills/software-development/python-testing/SKILL.md
   live: packages/client-neutral-core/skills/software-development/python-testing/SKILL.md
@@ -126,10 +126,55 @@ entries:
 - name: windows-development-environment
   source: packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md
   live: packages/client-neutral-core/skills/software-development/windows-development-environment/SKILL.md
-  source_sha256: 2e1fc6dcdf51ee899700da4615f50e419eb4d54cfb726a5250e58809f7ca1aae
-  version: 1.3.0
+  source_sha256: c0c4ed52c4bc3584d49f66672b220f79d94d620927f8a742f4a168820476d590
+  version: 1.4.1
   trust: repository-controlled
   enabled: true
   permission: skill-guidance
   profile_scope: default
-  live_sha256: 2e1fc6dcdf51ee899700da4615f50e419eb4d54cfb726a5250e58809f7ca1aae
+  live_sha256: c0c4ed52c4bc3584d49f66672b220f79d94d620927f8a742f4a168820476d590
+  live_content_divergence:
+    recorded_at: '2026-10-01'
+    recorded_by: AG-06o (audit F04)
+    live_ahead_of_source: false
+    live_lines: 144
+    source_lines: 142
+    live_bytes: 23825
+    source_bytes: 21982
+    live_only_lessons:
+    - '30. `.cmd` binary parsing with Python subprocess.run on Windows: .cmd wrappers
+      must go through cmd.exe /d /s /c or be passed directly as the executable; running
+      `node <path>.cmd` raises SyntaxError inside the wrapper.'
+    - '31. Frontend toolchain gaps (pnpm / cargo missing) must be reported honestly
+      as BLOCKED, not fabricated PASS: when cargo is MISSING the Tauri native build
+      is BLOCKED while Vite typecheck/vitest can still be verified independently.'
+    live_only_references:
+    - rel: references/frontend-baseline-contract.md
+      bytes: 2742
+      sha256: 79c130865eedde3aa1727e0069ed5e10b7b0f65cfcf8ab2896073f5606fa9131
+    stale_citations:
+    - .project-local/runs/frontend-baseline-vitest-only.py - cited by live lesson
+      31 but ABSENT from the repository, so the citation dangles (ephemeral .project-local
+      path across sessions).
+    effect_if_redeployed_without_review: The sanctioned single-direction publish would
+      OVERWRITE the live file and lose both lessons and the live-only reference, because
+      the repository source does not contain them.
+    why_not_merged_here: AGENTS.md makes sync_hermes_workflow_assets.py the only deploy
+      path to Hermes Home, and audit F04 requires the appended content to be reviewed
+      under the existing curator policy BEFORE merging; that review is not authorized
+      in this task, and hand-editing a deployed managed skill would itself be the
+      unaudited path the provenance design exists to prevent.
+    remediation_path: Review the two lessons and the reference under the curator policy,
+      then land them in the repository source and publish through sync_hermes_workflow_assets.py,
+      which refreshes source_sha256 and live_sha256 together. Until then this record
+      preserves the content so a redeploy cannot silently destroy it.
+    evidence_level: OBSERVED (live file diffed against the repository source on 2026-10-01;
+      both sides hashed)
+    resolved_at: '2026-10-01'
+    resolution: 'RESOLVED (AG-06r). The live-only content was LANDED into the repository
+      source: lessons 30 and 31 added verbatim to SKILL.md (now 31 lessons), references/frontend-baseline-contract.md
+      copied in, and the live lesson''s dangling citation to the ephemeral .project-local/runs/frontend-baseline-vitest-only.py
+      REPLACED with the durable reference path that now exists in the repository.
+      Version bumped 1.3.0 -> 1.4.0. The deployed copy may now be replaced by the
+      repository source without losing anything; re-verify after the reinstall deploy.'
+  u02_note: '2026-10-07 content edited: the skill told agents to run integrations/executors/hermes/sync_hermes_workflow_assets.py, a path removed by the 2026-09 directory convergence; corrected to integrations/executors/hermes/. source_sha256/live_sha256/version refreshed in the same change.'

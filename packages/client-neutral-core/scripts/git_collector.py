@@ -47,7 +47,7 @@ class GitObservation:
 def _git(root: Path, *args: str, timeout: float = 20.0) -> str | None:
     try:
         result = subprocess.run(
-            ["git", *args], cwd=str(root), text=True, capture_output=True, check=False,
+            ["git", *args], cwd=str(root), text=True, encoding="utf-8", errors="replace", capture_output=True, check=False,
             timeout=timeout, env=_GIT_ENV,
         )
     except (OSError, subprocess.SubprocessError):

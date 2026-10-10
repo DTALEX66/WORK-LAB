@@ -1,7 +1,24 @@
 # WORK-LAB execution rules
 
+## 资料定位与登记
+
+用户要求Record相关资料完整归档、去重、压缩旧材料并提取关键内容。找资料先读`docs/history/owner-inputs/INDEX.md`；
+原文件名/别名/包内成员用`scripts/maintenance/owner_material_catalog.py find`查询，按资料ID用`extract`校验提取。
+新增来源先比对SHA-256，复用相同内容、登记别名；不同版本保留，再更新登记和成员表，运行`build-index`与`verify`。
+历史资料只作来源，不激活旧任务、AGENTS或Authority，不新建第二任务账本。
+
+## 当前任务范围更新（用户2026-10-09明确决定）
+
+新发总体包与UI包为准，唯一CURRENT是`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，UI优先。
+默认主线为项目观测、能力评价/迁移/目标验证与受管配置，外部软件执行业务；本仓开发流程不强制被观察项目采用。
+手机端不做，不列延后/冻结任务；既有HUD是桌面浮窗。旧任务有用要求并入WUI，无用冻结归档，不独立派工。
+本轮仅整理归档/索引/交接，产品代码NOT_EXECUTED；后续执行以具体用户Task Grant为准。
+完整交接：`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`。旧安全/隐私/所有权/单写者规则及有效测试保持。
+
+
 > 全局执行标准（跨软件跨项目）：见 `docs/decisions/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
 > 经验教训铁律（核实优先/治理最小化/官方优先）：见 `docs/decisions/LESSONS_LEARNED.md`。
+> 全局部署与升级：按需读取 docs/current/workflow-assistance/workflow/official-plus-user-configuration-standard-2026-08-11.md；软件、模型、技能数量由当前发现与机器合同确定。2026-10-05 修复归档见 docs/history/archive/workflow-convergence-20261005.md，仅作历史证据。
 
 ## Mandatory audit bootstrap (normative)
 
@@ -36,7 +53,7 @@ legacy `10-workflow/workflow-assistance` path was split out at the 2026-09
 directory convergence and is no longer tracked. The
 managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
 OpenHuman, plus any future AI software through the same Adapter contract.
-DSH (DeepSeek Harness / DSH Desktop 2.0.13 community desktop, `D:\All projects\DSH\DSH Desktop.exe`; NSIS silent installs reset desktop .lnk TargetPath+IconLocation to the temp install dir — after ANY upgrade re-pin all three .lnk fields incl. `--user-data-dir` per skill `dsh-administration` and error-ledger ERR-087) is a managed agent runtime client
+DSH (DeepSeek Harness, official build `0.2.0-rc.2`, installed at the vendor DEFAULT per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness` — resolve the install root from the uninstall registry entry or the shortcut TargetPath, never hardcode a drive letter; NSIS silent installs reset desktop .lnk TargetPath+IconLocation to the temp install dir — after ANY upgrade re-pin all .lnk fields per skill `dsh-administration` and error-ledger ERR-087) is a managed agent runtime client
 through the same Adapter contract. CC Switch is LEGACY_OBSERVE (observe-only;
 no active writes) unless evidence restores it to active status.
 Open Design is an external *client* (`nexu-io/open-design`); the separate
@@ -84,17 +101,22 @@ reset/clean/force-push operations.
 ## Managed global configuration (Hermes)
 
 WORK-LAB manages a declared Hermes user overlay on the official baseline:
-the managed **assets** — 13 skills under `skills/`, `config/SOUL.md`, and
-`bin/` launchers (`codex`, `codex.cmd`, `hermes-npx`, `hermes-npx.cmd`,
-`hermes-project-data.py`, `hermes-project-terminal-guard.py`). The managed
+the managed **assets** — 13 skills (overlay `skills/`; the tracked sources are
+`packages/client-neutral-core/skills/**/SKILL.md`, measured 13), `config/SOUL.md`, and
+`bin/` launchers (overlay `bin/`; tracked sources under
+`packages/client-neutral-core/bin/`, measured 6: `codex`, `codex.cmd`, `hermes-npx`,
+`hermes-npx.cmd`, `packages/client-neutral-core/bin/hermes-project-data.py`, `packages/client-neutral-core/bin/hermes-project-terminal-guard.py`). There is
+no repository-root `skills/` or `bin/` directory: those two names are Hermes-Home overlay
+paths, and the distinction matters because a reader who greps the repo for `skills/` finds
+nothing and concludes the assets are missing. The managed
 **config fields** are only `display.language` and `display.busy_input_mode`;
 every other Hermes field (`sessions.auto_prune`, `memory.*`,
 `hooks.pre_tool_call`, `mcp_servers.*`, `hermes.model.*`, `plugins`) is
-OBSERVE — never overwritten. `config-ownership.json` (WL3-200) is the single
+OBSERVE — never overwritten. `config/config-ownership.json` (WL3-200) is the single
 authority for field layers and modes; `preserve_unknown: true` — never
 override user provider/model/auth/desktop state. Deploy to Hermes Home only
-through `sync_hermes_workflow_assets.py` (backup-before-publish staging,
-updates `skill-provenance.yaml` live hashes in the same change); never
+through `integrations/executors/hermes/sync_hermes_workflow_assets.py` (backup-before-publish staging,
+updates `config/skill-provenance.yaml` live hashes in the same change); never
 promote the mixed-ownership live `config.yaml` wholesale.
 
 ## Verification
@@ -130,8 +152,13 @@ following baseline, owned by the enhancement module:
    OFFICIAL standard release format (whatever the vendor ships is the entry).
    Hermes: official desktop app (`apps/desktop/release/win-unpacked/Hermes.exe`,
    Electron) + `hermes` CLI; Codex: single wrapper (`bin/codex` bash +
-   `bin/codex.cmd`, identical versioned-glob resolution to the official
-   runtime); DSH: DSH Desktop 2.0.13 (community desktop, Electron, `D:\All projects\DSH\DSH Desktop.exe`; launch arg `--user-data-dir="D:\All projects\DSH\desktop-user-data"` is REQUIRED on the desktop .lnk — without it the app falls back to the C: default user-data-dir and shows the 'Set up DSH Desktop' onboarding wizard (ERR-087));
+   `packages/client-neutral-core/bin/codex.cmd`, identical versioned-glob resolution to the official
+   runtime); DSH: official DeepSeek Harness `0.2.0-rc.2` (Electron, installed at the
+   vendor default per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness\DeepSeek Harness.exe`;
+   the install root is RESOLVED from the uninstall registry entry or the shortcut
+   TargetPath, never hardcoded — the earlier community DSH Desktop 2.0.13 build and its
+   `D:\All projects\DSH` path are SUPERSEDED; if a launch ever falls back to an empty C:
+   skeleton while data sits elsewhere, check the `DSH_HOME` user env var layer first, ERR-088);
    CC Switch / OpenHuman / Open Design: single desktop shortcut to
    their installed official executables. No duplicate or conflicting launchers;
    entries are the official standard formats — WORK-LAB never invents custom
@@ -140,7 +167,7 @@ following baseline, owned by the enhancement module:
    target chains must resolve (Test-Path true end-to-end).
 3. **Official standard + user configuration.** Official baselines win; the
    enhancement module only manages declared overlay fields and never overrides
-   user provider/model/auth/desktop state (`config-ownership.json`,
+   user provider/model/auth/desktop state (`config/config-ownership.json`,
    `preserve_unknown: true`).
 4. **No blocking overhead.** Global rules/skills/guidance must stay lean
    (skills ~<10KB each, guidance+rules <20KB total) and load on demand, never

@@ -107,7 +107,7 @@ class GitProbe:
             result = subprocess.run(
                 ["git", *args],
                 cwd=cwd,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
                 timeout=20,

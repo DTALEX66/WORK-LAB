@@ -132,7 +132,7 @@ class CurrentStateTests(unittest.TestCase):
                     str(runtime_out),
                 ],
                 cwd=ROOT,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )
@@ -155,7 +155,7 @@ class CurrentStateTests(unittest.TestCase):
                     "--check-current",
                 ],
                 cwd=ROOT,
-                text=True,
+                text=True, encoding="utf-8", errors="replace",
                 capture_output=True,
                 check=False,
             )

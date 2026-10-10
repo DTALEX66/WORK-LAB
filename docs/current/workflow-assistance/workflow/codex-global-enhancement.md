@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 用户规则 | `$CODEX_HOME/AGENTS.md` | 合并带标记的 managed block | 字段级 overlay |
 | 项目规则 | `<project>/AGENTS.md` | 只读发现，不全局复制 | 项目 |
-| 用户 Skills | `$HOME/.agents/skills` | 管理十四个 `workflow-assistance-*` 根 | 精确目录 |
+| 用户 Skills | `$HOME/.agents/skills` | 管理五个 `workflow-assistance-*` 根 | 精确目录 |
 | 项目 Skills | `<project>/.agents/skills` | 只读发现 | 项目 |
 | 命令规则 | `$CODEX_HOME/rules/*.rules` | 管理 `workflow-assistance.rules` | 精确文件 |
 | 用户配置 | `$CODEX_HOME/config.toml` | 只管理三个顶层默认字段 | 字段级 overlay |
@@ -53,15 +53,15 @@ project_doc_max_bytes  = 65536
 
 这些是 Codex 原生、客户端中立的 skill，不包含 Hermes 工具调用，也不会把 WORK-LAB 的模块规则提升到普通项目。WORK-LAB 自己的项目 skill 位于仓库根 `.agents/skills/work-lab-workflow/`。
 
-`workflow-assistance-openhuman-integration` 定义与本地 OpenHuman 桌面 agent 的协作边界：`.openhuman/` 私密运行时（keychain/users/logs/memory/workspace）与 `.codex`/`.hermes` 同级不可读取；OpenHuman 的扫描输出只是候选证据，junction/重复/路径类结论必须用 `fsutil reparsepoint query`、`Get-Item` LinkType/Target 与内容对比原生核验后才可行动（2026-08-10 OpenHuman 误报两个不存在 junction 的回归案例已写入）。
+`workflow-assistance-openhuman-integration` 定义与本地 OpenHuman 桌面 agent 的协作边界：`~/.openhuman/` 私密运行时（keychain/users/logs/memory/workspace）与 `.codex`/`.hermes` 同级不可读取；OpenHuman 的扫描输出只是候选证据，junction/重复/路径类结论必须用 `fsutil reparsepoint query`、`Get-Item` LinkType/Target 与内容对比原生核验后才可行动（2026-08-10 OpenHuman 误报两个不存在 junction 的回归案例已写入）。
 
-`workflow-assistance-self-improvement` 以中立形态吸收个人 agent 的技能自动成长模式（usage sidecar + active/stale/archived + pin 豁免 + 只归档不删除 + 转变前备份 + provenance 过滤），配套 `scripts/workflow/skill_lifecycle.py`（stdlib-only，可对任意 skills 根运行）；自动生长的知识通过 PR 提升进模块 codex-assets，仓库即跨机器持久存储。
+`workflow-assistance-self-improvement` 以中立形态吸收个人 agent 的技能自动成长模式（usage sidecar + active/stale/archived + pin 豁免 + 只归档不删除 + 转变前备份 + provenance 过滤），配套 `packages/client-neutral-core/scripts/skill_lifecycle.py`（stdlib-only，可对任意 skills 根运行）；自动生长的知识通过 PR 提升进模块 codex-assets，仓库即跨机器持久存储。
 
 ## 用户环境画像（跨机器留存）
 
-`scripts/workflow/user_profile_export.py` 以只读、无密方式导出 Hermes/Codex 用户配置与技能清单到 tracked `config/user-environment-profile.json`；具体数量以当次导出和同步器读回为准，不在文档中冻结。配置键值会脱敏，凭据一律 `[REDACTED]`，发现未脱敏值即拒绝写入。恢复流程见 `docs/workflow/user-environment-profile.md`：新机器 `sync apply` 部署模块 skills 后，按画像键名重建配置、重填凭据。
+`packages/client-neutral-core/scripts/user_profile_export.py` 以只读、无密方式导出 Hermes/Codex 用户配置与技能清单到 tracked `config/user-environment-profile.json`；具体数量以当次导出和同步器读回为准，不在文档中冻结。配置键值会脱敏，凭据一律 `[REDACTED]`，发现未脱敏值即拒绝写入。恢复流程见 `docs/current/workflow-assistance/workflow/user-environment-profile.md`：新机器 `sync apply` 部署模块 skills 后，按画像键名重建配置、重填凭据。
 
-跨电脑识别不依赖用户画像或凭据：`scripts/workflow/machine_identity.py` 只在项目本地维护随机 opaque `machine_id`，并以非敏感画像摘要判断是否需要复核。它只能输出 `KNOWN_MACHINE`、`NEW_MACHINE` 或 `CONFIGURATION_REVIEW_REQUIRED` 等只读状态，不能证明账户身份，也不会因换机自动 apply、重登、清理或覆盖用户配置。完整边界和显式命令见 `docs/workflow/machine-identity-and-config-review.md`。
+跨电脑识别不依赖用户画像或凭据：`services/authority/machine_identity.py` 只在项目本地维护随机 opaque `machine_id`，并以非敏感画像摘要判断是否需要复核。它只能输出 `KNOWN_MACHINE`、`NEW_MACHINE` 或 `CONFIGURATION_REVIEW_REQUIRED` 等只读状态，不能证明账户身份，也不会因换机自动 apply、重登、清理或覆盖用户配置。完整边界和显式命令见 `docs/current/workflow-assistance/workflow/machine-identity-and-config-review.md`。
 
 ## 命令策略
 
@@ -93,19 +93,20 @@ project_doc_max_bytes  = 65536
 
 ## 同步、验证与回滚
 
-从 `10-workflow/workflow-assistance` 运行：
+从 WORK-LAB Git 根运行（`10-workflow/workflow-assistance` 已在 2026-09 目录收敛中拆分，不再是
+被跟踪路径；下面每条命令都是仓库根相对路径）：
 
 ```bash
-python scripts/workflow/sync_codex_global_assets.py plan \
+python integrations/executors/codex/sync_codex_global_assets.py plan \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
-python scripts/workflow/sync_codex_global_assets.py apply \
+python integrations/executors/codex/sync_codex_global_assets.py apply \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
-python scripts/workflow/sync_codex_global_assets.py verify \
+python integrations/executors/codex/sync_codex_global_assets.py verify \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 
-python scripts/workflow/sync_codex_global_assets.py rollback \
+python integrations/executors/codex/sync_codex_global_assets.py rollback \
   --codex-home "$HOME/.codex" --agent-home "$HOME/.agents"
 ```
 
@@ -169,9 +170,9 @@ Windows Git Bash 也可显式使用：
 
 本增强模块的责任与能力不得从本段自由扩张。冻结合同见：
 
-- 人类交接：`docs/workflow/codex-enhancement-boundary.md`
+- 人类交接：`docs/current/workflow-assistance/workflow/codex-enhancement-boundary.md`
 - 机器可读权威：`config/codex-enhancement-boundary.json`
-- 回归合同：`tests/test_codex_enhancement_boundary.py`
+- 回归合同：`tests/workflow-assistance/test_codex_enhancement_boundary.py`
 
 合同固定以下结论：该模块只提供官方 Codex 配置面上的 secret-free 用户 overlay，具备
 `detect/plan/apply/verify/rollback` 的受限能力；`apply` 必须由用户明确授权，`rollback`
@@ -179,3 +180,5 @@ Windows Git Bash 也可显式使用：
 provider/model、认证、MCP/plugin、会话、memory、Desktop 私有状态、项目 Task Ledger、
 Telemetry Ledger、Sidecar、Git 发布或外部项目写入能力。任何新增全局能力必须先修改
 机器合同、文档和测试，不能仅通过增加脚本或 Skill 实现。
+
+> 2026-10-05 技能收敛：本机全局个性化规则使用 personal-guidance.md 的单一文件；只更新技能时运行同步器 --skills-only，保留 config/AGENTS/rules。普通全量 overlay 不应重建已由用户替换的旧 managed block。项目专属说明见 docs/current/workflow-assistance/skill-references/。历史运行记录不代表本次部署。

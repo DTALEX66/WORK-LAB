@@ -32,7 +32,7 @@ export function ListView({ items, className }: { items: ListItem[]; className?: 
         <div key={i} className="list-item">
           <div className="flex min-w-0 items-center gap-3">
             {it.leading ? (
-              <span className="shrink-0 font-mono text-[11px] text-muted tabular-nums">{it.leading}</span>
+              <span className="shrink-0 font-mono text-[12px] text-muted tabular-nums">{it.leading}</span>
             ) : null}
             <div className="min-w-0">
               <strong className="block truncate text-[13px] font-semibold text-ink">{it.title}</strong>

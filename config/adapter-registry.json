@@ -30,12 +30,33 @@
       "provenance": {
         "source_kind": "repository",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=hermes]",
-        "version": "0.21.2",
+        "version": "0.21.5+6948.gedd2476",
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "0.21.5+6948.gedd2476",
+          "method": "install-stamp-readback",
+          "native_readback": "install-stamp.json displayVersion=0.21.5+6948.gedd2476 baseVersion=0.21.5 distance=6948 commit=edd24765435374be8ede7599053a1743d5f5d9a7 builtAt=2026-10-04T12:19:37.018705+00:00 dirty=False",
+          "command": "python scripts/audit/tool_version_metadata_probe.py",
+          "source": "C:\\Users\\ALEX\\AppData\\Local\\hermes\\hermes-agent\\install-stamp.json",
+          "commit": "edd24765435374be8ede7599053a1743d5f5d9a7",
+          "install_method": "git",
+          "authority_note": "Not a proxy for running the CLI: hermes_cli/version_info.py resolves runtime identity in the order install stamp, then live git, then unknown, and states the stamp is authoritative for packaged builds. So the stamp the updater writes on 2026-10-04 and the string `hermes.exe --version` would print come from the same file - and the CLI launcher itself carries no Windows version resource and times out at 25s under the live probe, which is why no launch-free source existed before this.",
+          "superseded_observation": {
+            "observed_at": "2026-10-01",
+            "verified_version": "0.21.5+3115.g10938a7",
+            "method": "official-cli-version-readback",
+            "commit": "10938a7cf93be84b9f8695699e607ab423d87db4",
+            "note": "retained verbatim rather than deleted: the 2026-10-01 CLI reading was correct for the build installed then, and Hermes self-updated on 2026-10-04 (updateMechanism=self, builtAt in the stamp). The two commits differ, so this is ageing, not a contradiction."
+          },
+          "conflict_note": "TWO VERSION STRINGS EXIST FOR THE SAME COMMIT and both are recorded rather than reconciled by guesswork. (1) The CLI self-reports v0.21.5+3115.g10938a7, which is what the 2026-09-27 maintenance record (HERMES-UPDATE-AND-MAINTENANCE-20260927.md) also states. (2) `git describe --tags --always` in the same checkout returns v0.21.4+canary.20260926T065603Z-662-g10938a7cf9: it counts 662 commits from a v0.21.4 canary tag where the CLI counts 3115 from its own baseline tag. Both resolve to commit 10938a7cf9, so the identity is not in doubt; only the human-facing label differs by tag basis. `version` carries the CLI value because that is what a user sees. NOT a resolved discrepancy - do not treat either string as a typo of the other."
+        },
         "version_historical": [
           ">=0.19,<0.21 (previously declared support range; never natively verified on this machine)",
-          "0.21.2 (only natively verified version, observed 2026-09-14: CLI version/status/doctor readback exit 0, registry-fresh PATH resolution, native discovery of all 13 managed skills, one non-tool completion; package hash still UNAVAILABLE so detection.evidence_state stays UNVERIFIED)"
+          "0.21.2 (natively verified 2026-09-14: CLI version/status/doctor readback exit 0, registry-fresh PATH resolution, native discovery of all 13 managed skills, one non-tool completion; package hash still UNAVAILABLE so detection.evidence_state stays UNVERIFIED)",
+          "0.21.3 (2026.9.14) (superseded by the 2026-09-27 official `hermes update --yes --backup` round)",
+          "0.21.5+3115.g10938a7 (2026.9.24) (superseded on 2026-10-04 by the self-update now in install-stamp.json; recorded 2026-09-27, re-read natively 2026-10-01)"
         ],
-        "note": "The schema cannot express 'declared support range' separately from 'verified version', so `version` carries ONLY the natively verified value and production admission is limited to it. A wider range is deliberately not claimed: the earlier >=0.19,<0.21 declaration is retained in version_historical as history, not as current support.",
+        "note": "The schema cannot express 'declared support range' separately from 'verified version', so `version` carries ONLY the natively verified value and production admission is limited to it. A wider range is deliberately not claimed: the earlier >=0.19,<0.21 declaration is retained in version_historical as history, not as current support. AG-07 (2026-10-01) corrected `version` from 0.21.2 to 0.21.5+3115.g10938a7: the registry had not been updated since the 2026-09-27 maintenance round, so it understated the installed engine by one round. detection.evidence_state deliberately REMAINS UNVERIFIED: the runtime package hash is still UNAVAILABLE (hash.state=UNAVAILABLE), and a version readback is not a hash verification, so it must not be promoted into one. | AG-19-adjacent 2026-10-07: `version` now carries the install stamp's displayVersion, read without launching anything. detection.evidence_state still deliberately remains UNVERIFIED - a version readback is not a package-hash check.",
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "active",
@@ -104,7 +125,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=codex]",
-        "version": "UNVERIFIED",
+        "version": "0.160.1",
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "quarantined",
@@ -114,6 +135,14 @@
           "state": "UNAVAILABLE",
           "basis": "Codex runtime package is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "0.160.1",
+          "method": "official-cli-version-readback",
+          "native_readback": "cmd.exe /d /c packages/client-neutral-core/bin/codex.cmd --version",
+          "source": "the repo's single codex wrapper resolved through the official runtime; the wrapper itself is a .cmd and has no version resource, so this number came from running it",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {
@@ -146,11 +175,22 @@
           "tool_truth": "NATIVE_GUIDANCE",
           "historical_record_policy": "NATIVE_GUIDANCE"
         },
-        "maturity": "READBACK_VERIFIED",
+        "maturity": "APPLY_SUPPORTED",
         "renderer": "integrations/executors/codex/sync_codex_global_assets.py",
         "extensions_path": "integrations/executors/codex/codex-policy-extension.yaml",
         "note": "Managed BEGIN/END block + hash fencing in CODEX_HOME/AGENTS.md + config.toml + rules + skills. Second-plan NOOP idempotency. provider/model/reasoning OBSERVE.",
-        "capability_coverage_complete": true
+        "capability_coverage_complete": true,
+        "maturity_note": "AG-06h / audit F02 (2026-10-01): maturity DOWNGRADED from READBACK_VERIFIED to APPLY_SUPPORTED. The renderer channel is real and its apply path is implemented, so the implementation maturity is APPLY_SUPPORTED. What is NOT true is the readback claim: ERR-095 (2026-09-30, contract_drift, currentApplicability=DRIFT_OPEN_20260930) recorded that live CODEX_HOME/AGENTS.md contains ZERO managed overlay markers and zero WORK-LAB occurrences, and independently re-verified on 2026-10-01 (live file and its archived copy are both 16,805 bytes / 691 lines with the renderer marker absent). ERR-095's own repeat_prevention states that registry maturity must not be raised again until the block and skill targets are re-rendered AND read back, so leaving READBACK_VERIFIED in place was itself the ledger violation. Raise this back to READBACK_VERIFIED only after the sanctioned renderer runs (integrations/executors/codex/sync_codex_global_assets.py) AND a fresh native readback confirms the managed block and the declared skill targets.",
+        "deployment_observation": {
+          "status": "UNVERIFIED",
+          "reason": "ERR-095 drift open: no managed overlay marker in the live CODEX_HOME/AGENTS.md",
+          "observed_at": "2026-10-01",
+          "checked": [
+            "%USERPROFILE%/.codex/AGENTS.md (16,805 B / 691 lines, marker absent)",
+            "reports/audit-archive/20260930/codex/AGENTS.md (16,805 B / 691 lines, marker absent)"
+          ],
+          "authority": "taskpacks/current/error-ledger.json ERR-095"
+        }
       }
     },
     {
@@ -169,7 +209,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=cc-switch]",
-        "version": "UNVERIFIED",
+        "version": "3.20.0",
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "legacy_observe",
@@ -180,6 +220,14 @@
           "state": "UNAVAILABLE",
           "basis": "CC Switch runtime package is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "3.20.0",
+          "method": "windows-file-version-resource",
+          "native_readback": "FileVersion '3.20.0' of D:\\Programs\\CC Switch\\cc-switch.exe, agreeing with the HKLM/HKCU uninstall key DisplayVersion '3.20.0'",
+          "source": "LEGACY_OBSERVE surface: recording an installed version is an observation, not a grant of active status",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {
@@ -237,7 +285,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=github]",
-        "version": "UNVERIFIED",
+        "version": "2.98.0 (2026-08-20)",
         "scope": "portable-workflow-adapter",
         "risk": "high",
         "status": "quarantined",
@@ -247,6 +295,14 @@
           "state": "UNAVAILABLE",
           "basis": "GitHub CLI/API runtime package is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "2.98.0 (2026-08-20)",
+          "method": "windows-file-version-resource",
+          "native_readback": "FileVersion '2.98.0 (2026-08-20)' / ProductVersion '2.98.0' of C:\\Program Files\\GitHub CLI\\gh.EXE",
+          "source": "official GitHub CLI install directory; no process was started for this number",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {
@@ -300,7 +356,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=openhuman]",
-        "version": "UNVERIFIED",
+        "version": "0.63.12",
         "scope": "portable-workflow-adapter",
         "risk": "medium",
         "status": "quarantined",
@@ -310,6 +366,14 @@
           "state": "UNAVAILABLE",
           "basis": "OpenHuman runtime package is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "0.63.12",
+          "method": "windows-file-version-resource",
+          "native_readback": "FileVersion '0.63.12' of C:\\Users\\ALEX\\AppData\\Local\\OpenHuman\\OpenHuman.exe, agreeing with the uninstall key DisplayVersion '0.63.12'",
+          "source": "the desktop shortcut resolver finds no .lnk for this client, which is why the live probe previously reported ENTRY_NOT_RESOLVED while the tool is in fact installed",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {
@@ -362,7 +426,7 @@
       "provenance": {
         "source_kind": "external-manifest",
         "source_ref": "workflow-manifest.yaml#adapters.entries[id=open-design]",
-        "version": "UNVERIFIED",
+        "version": "0.24.1",
         "scope": "portable-workflow-adapter",
         "risk": "medium",
         "status": "quarantined",
@@ -372,6 +436,14 @@
           "state": "UNAVAILABLE",
           "basis": "Open Design client (nexu-io/open-design) is external and not vendored",
           "files": []
+        },
+        "version_readback": {
+          "observed_at": "2026-10-07",
+          "verified_version": "0.24.1",
+          "method": "windows-file-version-resource",
+          "native_readback": "FileVersion '0.24.1' / ProductVersion '0.24.1.0' of C:\\Users\\ALEX\\AppData\\Local\\Programs\\Open Design\\Open Design.exe, agreeing with the uninstall key DisplayVersion '0.24.1'",
+          "source": "client identity only: design capability stays with DTALEX66/DESIGN-LAB per config/config-ownership.json",
+          "note": "The previous value was the placeholder 'UNVERIFIED'. `windows-file-version-resource` reads the executable's own version table and starts no process, which is the only acceptable method on a machine whose owner asked not to be disturbed by launched windows. Evidence receipt: docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json. This is a machine-scoped observation: it says what is installed here on this date, not what a different machine will find, and detection.evidence_state stays UNVERIFIED because a version is not a package hash."
         }
       },
       "policy_projection": {
@@ -425,21 +497,32 @@
       "provenance": {
         "source_kind": "repository",
         "source_ref": "https://github.com/deepseek-ai/deepseek-harness",
-        "version": "0.1.0-rc.5@47f943859bef60e4160492346772ded9b24f765a",
+        "version": "0.2.0-rc.2",
+        "version_readback": {
+          "observed_at": "2026-10-01",
+          "verified_version": "0.2.0-rc.2",
+          "method": "windows-installer-registry-and-desktop-shortcut-readback",
+          "native_readback": "Uninstall entry \"DeepSeek Harness 0.2.0-rc.2\"; exe FileVersion 0.2.0-rc.2 (ProductVersion 0.2.0.0)",
+          "source": "official DeepSeek Harness Windows build installed at the vendor DEFAULT per-user path %LOCALAPPDATA%\\Programs\\DeepSeek Harness",
+          "install_method": "official-nsis-per-user",
+          "note": "AG-07 correction (2026-10-01): the user reinstalled official DSH at the vendor default path. This entry previously pinned the COMMUNITY desktop build at a D:-drive path. The install root is no longer hardcoded to any drive: resolve it from the uninstall registry entry or the desktop shortcut, both of which carry the default path."
+        },
         "version_historical": [
           "0.1.0-rc.5 (governance pin, 2026-08-15)",
           "0.1.0-rc.7 (superseded)",
-          "0.1.1-rc.2 (detected local 2026-08-23, eligibility UNVERIFIED)"
+          "0.1.1-rc.2 (detected local 2026-08-23, eligibility UNVERIFIED)",
+          "2.0.13 (community DSH Desktop, anywhere-labs/deepseek-harness-desktop; SUPERSEDED 2026-10-01 by the official build, its distribution directory no longer present on disk)"
         ],
         "scope": "portable-agent-runtime-adapter",
         "risk": "medium",
         "status": "active",
-        "note": "DSH promoted to active per WLR-010 (2026-08-26). Community DSH Desktop 2.0.13 in place at D:\\All projects\\DSH (2026-09-20 in-place official upgrade 2.0.11 -> 2.0.13; 2.0.2/2.0.4 superseded; see skill dsh-administration + client-evidence). Local build (Tauri shell) removed. Data root D:\\All projects\\DSH\\.dsh pinned via DSH_HOME (HKCU\\Environment): user env vars freeze out of live login sessions — after any setx/new logon the live Explorer block may lack it and desktop launch silently falls back to the C:.dsh empty skeleton ('sessions/config lost' perception, data intact on D:); ERR-088 (2026-09-24) is the sibling of ERR-087 (.lnk layer vs data-root env layer).",
+        "install_path_policy": "RESOLVE_AT_RUNTIME_NOT_HARDCODED",
+        "note": "DSH promoted to active per WLR-010 (2026-08-26). AG-07 (2026-10-01): the user reinstalled OFFICIAL DSH at the vendor default per-user path, so this registry no longer pins a drive letter. Observed readback: install root %LOCALAPPDATA%\\Programs\\DeepSeek Harness (uninstall entry \"DeepSeek Harness 0.2.0-rc.2\", InstallLocation matches; desktop + Start Menu shortcuts target <root>\\DeepSeek Harness.exe with no arguments) and the edge-runtime version file under it reports 44.0.0. Resolution rule: derive the root from the uninstall registry entry or the shortcut TargetPath; never hardcode it. STALE ARTIFACTS THIS CORRECTION DOES NOT TOUCH: the old community install directory D:\\All projects\\DSH is now empty except its .dsh data directory, its %LOCALAPPDATA% uninstall entry (\"DSH Desktop 2.0.13\") has a blank InstallLocation, its Desktop shortcut DSH Desktop.lnk still points at the deleted D:\\All projects\\DSH\\DSH Desktop.exe, and the DSH_HOME user environment variable still resolves to D:\\All projects\\DSH\\.dsh (HKCU\\Environment) even though the official build was installed at the default path. Whether the official build honours DSH_HOME was NOT tested, and neither the variable, the legacy data root, the stale uninstall entry nor the broken shortcut was modified - all of that needs its own decision because the D: data root holds the user's existing sessions.",
         "hash": {
           "algorithm": "sha256",
           "value": null,
           "state": "UNAVAILABLE",
-          "basis": "DSH source is external (community build); local install verified 2026-08-26",
+          "basis": "DSH source is external (official build); local install observed 2026-10-01",
           "files": []
         }
       },
@@ -474,7 +557,7 @@
           "historical_record_policy": "UNSUPPORTED"
         },
         "maturity": "PLAN_SUPPORTED",
-        "renderer": "integrations/executors/dsh/dsh_adapter.py",
+        "renderer": "services/execution-federation/dsh_adapter.py",
         "note": "OBSERVE/PLAN only until stable official native interface + ownership def + isolated fixture + readback + rollback + negative tests all exist. native model/provider/reasoning user-owned.",
         "capability_coverage_complete": true
       }

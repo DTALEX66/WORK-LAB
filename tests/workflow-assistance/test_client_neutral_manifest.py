@@ -69,7 +69,7 @@ class ClientNeutralManifestTests(unittest.TestCase):
             [sys.executable, str(SCRIPT), "--manifest", str(ROOT / "packages/client-neutral-core/workflow-manifest.yaml")],
             cwd=ROOT,
             env=env,
-            text=True,
+            text=True, encoding="utf-8", errors="replace",
             capture_output=True,
             check=False,
         )
