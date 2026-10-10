@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 260,
+    "total": 262,
     "by_classification": {
       "entrypoint": 7,
-      "contract_drift": 80,
+      "contract_drift": 81,
       "test_behavior_alignment": 35,
       "working_directory_recovery": 2,
       "evidence_state": 50,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 4,
       "path_boundary": 15,
-      "ci_tooling": 19,
+      "ci_tooling": 20,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 2
@@ -7895,6 +7895,70 @@
         "regressionCommand": "python -m pytest tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
         "bindingBasis": "fix-commit-introduction: both rewritten controls and the corrected key list land in one commit",
         "bindingNote": "bound 2026-10-10 against b2718429 read from git; `git cat-file -e` proved both named files exist in it before this field was written"
+      }
+    },
+    {
+      "error_id": "ERR-263",
+      "date": "2026-10-10",
+      "task_id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "packages/client-neutral-core/scripts/verify_gate_runtime_convergence.py, tests/workflow-assistance/test_gate_runtime_convergence_checks_execute.py, scripts/audit/project_local_citation_audit.py, packages/client-neutral-core/scripts/security/scan_agent_rules.py",
+      "command": "python services/orchestration/run_quality_gate.py verify",
+      "exit_code": 1,
+      "observed_error": "The same CI step that had been failing in `governance` at 82a24df7 moved on once governance and the other three jobs went green, and died one stage later: `File \".../packages/client-neutral-core/scripts/verify_gate_runtime_convergence.py\", line 112, in check_5_no_fabricated_exact  with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:  NameError: name 'project_temp' is not defined`, then `QUALITY_GATE_FAIL gate=runtime-convergence exit_code=1` and `GATE_EXIT=1` (the 254 unittests before it read `Ran 254 tests in 2.289s / OK`, so nothing that ran disagreed with the crash). The stage had never been executed locally in this round: the pre-push verdict quoted was `governance` at 82a24df7, `QUALITY_GATE_GOVERNANCE_PASS modules=246 ran=2674 GATE_EXIT=0`, and a stage that never starts cannot report its own NameError. Three functions were affected, not one: check_5, check_8 and check_10 each carry `import tempfile` above a `with project_temp.fixture_root(...)` that replaced a `tempfile.TemporaryDirectory()` in d22d21eb's temp-root migration, while the three sites that were migrated completely (the imports at lines 83, 161, 189) show the resolution order itself works. The same chain run as one command (`run_quality_gate.py verify`, which prints `GATE_FULL=yes gates=50`) stopped at stage 4 of 50 on a second finding: the `security` stage's hazard scanner convicted `docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json:10372` and `scripts/audit/project_local_citation_audit.py:231`, both matching `(api[_-]?key|secret|password|passwd|token)\\s*[:=]\\s*['\\\"]?[A-Za-z0-9_\\-]{12,}` on the substring `Token: SSE_REVISION_GATE_PASS`. The match was prose I had written this round: the disposition for the SSE readback quoted the receipt in assignment shape (``verdictToken: SSE_REVISION_GATE_PASS``) beside its size and hash. No credential was involved and no bytes leaked, but the scanner is right that from the file alone that shape is indistinguishable from a planted secret, and a gate that cannot tell them apart must not be worked around.",
+      "root_cause": "A mechanical migration renamed the USE of a binding and left its IMPORT behind. Python resolves a function's free names at call time, so the file compiles, imports cleanly, is collected by every static gate, and reports nothing until the check actually runs -- which is why `tsc`-style or import-time assurance buys nothing here and why the second cause matters as much as the first: the local verdict was one stage of a chain, while the CI step chains `governance compile runtime-convergence skill-provenance security context-pack client-neutral-manifest core-schemas` (and more in the integration job) in a single run. Quoting `GATE_EXIT=0` from `governance` as 'the gate' silently claimed coverage of stages that had not been executed.",
+      "fix": "The three stale `import tempfile` lines became `import project_temp` -- no other use of `tempfile` existed in those functions, which the sweep over the file confirmed before the edit. The class gets a call-site control instead of a comment: tests/workflow-assistance/test_gate_runtime_convergence_checks_execute.py drives every `check_N` through the shipped module and requires a report-shaped dict carrying `id`/`name`/`pass` from each, requires a non-empty `evidence` for any check that does not pass (so an environment-limited PENDING stays distinguishable from a real failure), and requires `run_all()` to name all ten ids in order -- a check that raises answers no question, and a totals line built from nine claims is indistinguishable from one built from ten unless the aggregate is pinned. Measured: new control 3 passed in 0.67s; `run_quality_gate.py runtime-convergence` at 82a24df7 `GATE_EXIT=0`; the control falsified by re-planting the exact defect in place (`PLANTED_RC=1 convicted=True names_check_5=True`, `NameError ... :112`) and restoring from a byte-for-byte copy taken in the same run (`RESTORED sha256_identical=True bytes=16666`, 3 passed after), driver at `.project-local/runs/wui-20261010/falsify_runtime_convergence_control.py`. A repo-wide sweep for the same half-migrated shape (`project_temp.` used with no import statement) returned five other files; all five load it by path through `importlib` or name it only in prose, so none shares the defect. The disposition prose was then rewritten out of the assignment shape -- its verdict token now reads `SSE_REVISION_GATE_PASS` in words rather than as a `key: VALUE` pair -- the audit record was regenerated from the tool (`RESULT reviewQueue=8 unadjudicated=0`), the scanner answers `scan_agent_rules: OK` with exit 0, and both guards re-read green after the inventoried tool's grown bytes were re-hashed (24 passed: citation audit 12, tool inventory 12).",
+      "regression_test": "tests/workflow-assistance/test_gate_runtime_convergence_checks_execute.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A migration that renames what a binding is CALLED must rename its IMPORT in the same edit: grep the new name, then require a binding statement in every scope that uses it -- an attribute use without a same-scope import is a guaranteed NameError that no compile-time check will show. And a pre-push verdict must be taken over the stage list CI actually chains, not over the one stage that was convenient: if the aggregate is quoted as 'the gate', the stages behind it must have run, or the claim has to name which stage it covers.",
+      "remaining_boundary": "The masking mechanism is unchanged, only moved: the CI step still runs its stages in order and a failure in an early one prevents the later ones from being seen, so this round's green is the first readback in which the tail of the chain was reached at all. The verifier still contains three `sys.path.insert(0, <root>/packages/client-neutral-core/scripts/workflow)` lines pointing at a directory that no longer exists (measured: `ls` reports no such path); the insert is inert and the imports resolve from the script's own directory, so it is left alone rather than silently widened. Checks 1, 6 and 9 remain environment-limited PENDING by Master TaskPack declaration, so `passed` may legitimately be below `total`; the control asserts the shape and the ids, not a fabricated ten-for-ten. CI at the head carrying this record is the exact-SHA readback for the whole chained surface and is reported separately from these local numbers.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "the named control and the verifier it loads both resolve against git ls-files at the fixing commit",
+      "lifecycle": {
+        "introducedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "introducedCommitNote": "d22d21eb replaced `tempfile.TemporaryDirectory()` with `project_temp.fixture_root(...)` in check_5/8/10 while leaving their imports; the defect was unobservable until a stage after governance ran",
+        "fixedCommit": "06c9cdc38044b350a22847b16695bb407f4299a1",
+        "verifiedCommit": "039a6f36334524c5abbd5a8753f9456dd7aad0dd",
+        "verifiedCommitNote": "both defects are measured closed at the clean head 039a6f36: `run_quality_gate.py runtime-convergence` GATE_EXIT=0, `run_quality_gate.py security` GATE_EXIT=0 (`QUALITY_GATE_PASS gates=security`) and `governance` still GATE_EXIT=0 (2,674 tests) after the prose and reference repairs; the chain itself stops later at the two register floors recorded in ERR-264, which stay red by owner decision, so `verify` is not quotable as green at this head and this row does not claim it is",
+        "affectedCapability": "Gate runtime-convergence acceptance; the credibility of a stage-scoped local verdict",
+        "regressionCommand": "python -m pytest tests/workflow-assistance/test_gate_runtime_convergence_checks_execute.py",
+        "bindingBasis": "fix-commit-introduction: the three corrected imports and their call-site control land in one commit",
+        "bindingNote": "bound 2026-10-10 against 06c9cdc3 and d22d21eb, both read from git rather than typed; `git cat-file -e` proved the verifier and the new control exist in the fixing commit and the verifier in the introducing one before this field was written"
+      }
+    },
+    {
+      "error_id": "ERR-264",
+      "date": "2026-10-10",
+      "task_id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "contract_drift",
+      "entrypoint": "scripts/ci/verify_authority_index_paths.py, taskpacks/current/OPEN-TASK-REGISTER.md, apps/observer/frontend/DESIGN.md, docs/current/ui-priority-20261009/UI-V2-INTAKE-20261010.md",
+      "command": "python services/orchestration/run_quality_gate.py root-governance-suite",
+      "exit_code": 1,
+      "observed_error": "`CI_ROOT_GOVERNANCE_FAIL modules_ran=44 modules_failed=3` at 5f14677d, and the third module was this checker: `AUTHORITY_INDEX_PATHS_TOTAL targets=47 refs=829 broken=9 declared_in_row=10 failed_targets=3`. The nine are this round's own citations: DESIGN.md:403/405 wrote `skins/b10.css` and `skins/l10b-shell.css` while the shipped files are `apps/observer/frontend/src/skins/…`; UI-V2-INTAKE-20261010.md:5 wrote `record-20261010/SOURCE-INTEGRITY.json` and the readable package dir without their `docs/history/owner-inputs/` prefix; OPEN-TASK-REGISTER.md:14/25/30 wrote four shorthands, one of them ambiguous (`tauri.conf.json` exists twice in the tree); and register:34 quotes `apps/observer/frontend/src/lib/shared_rule_adaptation.ts` -- the dead citation the intake matrix carried, which the row itself reports. The same run also convicted the checker: `tracked_paths()` ran plain `git ls-files`, which quotes and octal-escapes every non-ASCII name, so the tracked tree as the checker saw it contained ZERO paths ending in `verification/model_tests.txt` (measured: old list 0 hits, new list 1 carrying the real name) -- a correct citation to a Chinese-named tracked file could never resolve, so the guard could only ever convict it. The sibling register guard was red for a fourth reason: the WUI-15 row carried three unescaped pipes inside backtick spans (`string | null`, `(\"A\"|\"B\")[]`, a quoted `was: 7 -> 17 | missing before:` tool line), so markdown read seven cells under a four-column header and the row's Status landed under the Evidence heading -- `SCAN bad_rows=1 … ('| ID | Priority | Status | Work |', 4)`.",
+      "root_cause": "Three separate causes sharing one mechanism: a reference was written the way it was convenient to say it, not the way the repository resolves it. Shorthands (`skins/b10.css`, `src-tauri/…`) read fine to a human who is standing in that directory and mean nothing to a checker that indexes from the root; the Chinese-named package paths were cited truthfully and were still convicted because the checker's own index was built through a porcelain that mangles non-ASCII names -- the trap this repository has recorded before for `ls-files`/`ls-tree`. The register row is the same mistake in punctuation: a cell containing a `|` is a column break unless it is escaped, and the row that quotes a union type is exactly the row most likely to contain one. And none of this surfaced earlier because `root-governance-suite` is not one of the stages any workflow invokes (measured: no `.github` reference to it) and the pre-push verdicts were taken from `governance` alone -- ERR-261's and ERR-263's coverage gap, in a third location.",
+      "fix": "Eight citations re-pointed to the tracked bytes, each replacement path READ FROM `git ls-files` by the repair script rather than typed (so no Chinese segment is hand-copied and no path is invented), each anchored to one occurrence on a named line with a count==1 assertion and a line-ending invariant. The ninth -- the `shared_rule_adaptation.ts` mention -- is answered with the checker's own in-row `[no-tree-claim NEVER_EXISTED ref=…]` token, because the code is measured rather than assumed: `never_in_history()` True and `git log --all -- '*shared_rule_adaptation.ts'` empty. It is NOT pointed at `packages/client-neutral-core/scripts/shared_rule_adaptation.py`, which plays the real role, because that would rewrite history to say the matrix had cited the right file. The three pipes are escaped at byte level (`REGISTER_TABLE_SHAPE_PASS wrong_width=0`, `bad_rows=0`). `tracked_paths()` now runs `git -c core.quotePath=false ls-files -z` and splits on NUL without stripping. Measured after: `AUTHORITY_INDEX_PATHS_TOTAL targets=47 refs=829 broken=0 declared_in_row=11 failed_targets=0` with exit 0, and the three affected modules read 53 passed / 2 failed.",
+      "regression_test": "tests/ci/test_authority_index_paths_resolve.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "A path in a document must be written the way the repository resolves it -- root-relative, or declared in-row with the reason -- and never as a shorthand that only reads correctly from inside the directory the author happened to be standing in. Any tool that asks `git` for a file list must use `-z` with `core.quotePath=false` and must not strip its records, because porcelain that quotes non-ASCII names silently deletes every Chinese-named file from the tool's world and the resulting verdict looks like a documentation defect. A markdown table row that must contain a vertical bar must escape it; the checker that counts columns is the only witness, so it must run in a stage someone actually invokes.",
+      "remaining_boundary": "TWO GUARDS ARE STILL RED, DELIBERATELY: `test_register_table_shape_is_uniform` demands `>= 3 tables` and `> 100 rows` and `test_register_pins_name_checkable_commits` demands `> 40 rows carrying pins`, both calibrated on the pre-cutover ledger. Measured across history: at d22d21eb^ OPEN-TASK-REGISTER.md held 8 tables / 190 rows / 404,985 B; at d22d21eb it holds 1 / 25 / 123,024 B -- this round replaced it with the single WUI table, which is what the 2026-10-09 decision describes (one live ledger, old tasks folded into WUI or frozen), and nothing was lost: the pre-cutover bytes survive tracked and byte-identical at `taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md` (404,985 B; its old first data row still greps there). Re-deriving those two floors to the declared shape -- or restoring the multi-table ledger -- changes what the human task register says, so it is the owner's call and the floors are left red rather than lowered to green. Also unchanged: no workflow invokes `root-governance-suite`, so CI cannot see a red here, and the live register's 25 rows carry 1 pin, which means any claim in them is currently bound by commit message rather than by the register itself.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "the named test, the checker, the register and all re-pointed targets resolve against git ls-files at the fixing commit",
+      "lifecycle": {
+        "introducedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "introducedCommitNote": "d22d21eb wrote the shorthands, the intake's unprefixed package paths, the pipe-carrying WUI-15 row and the single-table register; the checker's non-ASCII blindness predates it but was unobservable until a citation needed a Chinese-named path",
+        "fixedCommit": "039a6f36334524c5abbd5a8753f9456dd7aad0dd",
+        "verifiedCommit": null,
+        "verifiedCommitNote": "left null: the nine references and the row width are measured green at the fixing head, while the two register floors stay red by deliberate owner decision, so no head can be quoted as this row's full verification",
+        "affectedCapability": "Document-to-tree reference integrity; the register's table shape; the authority-index checker's coverage of non-ASCII paths",
+        "regressionCommand": "python -m pytest tests/ci/test_authority_index_paths_resolve.py",
+        "bindingBasis": "fix-commit-introduction: the re-pointed documents, the escaped row and the checker fix land in one commit whose ancestor introduced them",
+        "bindingNote": "bound 2026-10-10 against 039a6f36 and d22d21eb read from git; `git cat-file -e` proved the checker, the test, the register and DESIGN.md exist in the named commits before this field was written"
       }
     }
   ],
