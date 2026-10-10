@@ -15,9 +15,16 @@
 export interface RecordFocus {
   taskId: string | null
   executionId: string | null
+  /**
+   * WUI-02: the project this surface is addressed to. Optional rather than required because the record
+   * addresses that already exist (a task, an execution) are complete without it — and a lane that never
+   * spoke about a project must not start asserting `projectId: null`, which would read as "no project"
+   * where the truth is "this lane does not address one".
+   */
+  projectId?: string | null
 }
 
-export const EMPTY_FOCUS: RecordFocus = { taskId: null, executionId: null }
+export const EMPTY_FOCUS: RecordFocus = { taskId: null, executionId: null, projectId: null }
 
 /** Ledger ids in this repository are short and ASCII; a longer or control-character-laden value is an
  *  attack surface or a paste accident, not a record. */
@@ -54,12 +61,15 @@ function param(search: string, name: string): IdVerdict {
 export function readRecordFocus(search: string): { focus: RecordFocus; rejected: string[] } {
   const task = param(search, 'taskId')
   const execution = param(search, 'executionId')
+  const project = param(search, 'projectId')
   const rejected: string[] = []
-  const focus: RecordFocus = { taskId: null, executionId: null }
+  const focus: RecordFocus = { taskId: null, executionId: null, projectId: null }
   if (task.kind === 'ok') focus.taskId = task.value
   else if (task.kind === 'rejected') rejected.push(`taskId · ${task.reason}`)
   if (execution.kind === 'ok') focus.executionId = execution.value
   else if (execution.kind === 'rejected') rejected.push(`executionId · ${execution.reason}`)
+  if (project.kind === 'ok') focus.projectId = project.value
+  else if (project.kind === 'rejected') rejected.push(`projectId · ${project.reason}`)
   return { focus, rejected }
 }
 
@@ -68,6 +78,7 @@ export function readRecordFocus(search: string): { focus: RecordFocus; rejected:
 export function writeRecordFocus(params: URLSearchParams, focus: RecordFocus): void {
   if (focus.taskId) params.set('taskId', focus.taskId)
   if (focus.executionId) params.set('executionId', focus.executionId)
+  if (focus.projectId) params.set('projectId', focus.projectId)
 }
 
 export type FocusState<T> =

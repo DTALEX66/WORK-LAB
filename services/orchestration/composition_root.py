@@ -371,19 +371,60 @@ def _agent_platform_map() -> dict[str, str]:
     return mapping
 
 
+def _collector_is_fresh(row: dict[str, Any]) -> bool:
+    """One predicate for "this collector is currently delivering", shared by coverage and the delivery rows.
+
+    Two surfaces that each decide freshness on their own drift apart the first time one of them is tightened,
+    and then the same collector reads healthy in one lane and stale in another.
+    """
+    return bool(row.get("last_success_at")) \
+        and int(row.get("consecutive_failures") or 0) == 0 \
+        and not row.get("circuit_open_until")
+
+
 def _collector_coverage(store: CanonicalStore) -> dict[str, Any]:
     """collector_health 行 → coverage；无运行记录时保持空覆盖。"""
     rows = store.list_collector_health()
     if not rows:
         return {"numerator": None, "denominator": None, "scope": None}
-    fresh = sum(
-        1
-        for row in rows
-        if row.get("last_success_at")
-        and int(row.get("consecutive_failures") or 0) == 0
-        and not row.get("circuit_open_until")
-    )
+    fresh = sum(1 for row in rows if _collector_is_fresh(row))
     return {"numerator": fresh, "denominator": len(rows), "scope": "collector_health"}
+
+
+def _collector_delivery_rows(store: CanonicalStore) -> list[dict[str, Any]] | None:
+    """Per collector: how many rows it delivered, how many it refused, and why the refusals happened.
+
+    ERR-256 made these facts durable (`collector_health.refused_rows` / `last_refusal_reason`, migration 4);
+    this makes them reachable. Coverage alone cannot carry the statement: a source that refused half its rows
+    still reads fresh under the liveness predicate, and "the collector is green" over a stream of refusals is
+    the silent-filtering lie in a new costume.
+
+    Absent, never empty, on the same rule as `adapterCapabilities`: if the health table cannot be read the key
+    is not emitted at all, because `[]` would tell the surface "every source was read and there are none".
+
+    `circuit_open_until` is deliberately NOT projected. It is a `time.monotonic()` value from another process,
+    so it means nothing to a reader and would be re-derived wrong; the boolean is the fact.
+    """
+    try:
+        rows = store.list_collector_health()
+    except Exception:  # noqa: BLE001 - unreadable source is a gap, not a claim of "no collectors"
+        return None
+    return [
+        {
+            "collector": str(row.get("name") or "unknown"),
+            "totalRuns": int(row.get("total_runs") or 0),
+            "lastRunAt": row.get("last_run_at"),
+            "lastSuccessAt": row.get("last_success_at"),
+            "consecutiveFailures": int(row.get("consecutive_failures") or 0),
+            "circuitOpen": bool(row.get("circuit_open_until")),
+            "droppedEvents": int(row.get("dropped_count") or 0),
+            "refusedRows": int(row.get("refused_rows") or 0),
+            "deliveredRows": int(row.get("delivered_rows") or 0),
+            "lastRefusalReason": row.get("last_refusal_reason"),
+            "fresh": _collector_is_fresh(row),
+        }
+        for row in rows
+    ]
 
 
 def _git_states(store: CanonicalStore) -> dict[str, dict[str, Any]]:
@@ -486,6 +527,7 @@ def build_v3_snapshot(
         adapter_capabilities=_adapter_capability_rows(software_rows),
         artifact_handles=artifact_handle_rows,
         artifact_handles_summary=artifact_handles_summary,
+        collector_delivery=_collector_delivery_rows(store),
     )
 
 

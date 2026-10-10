@@ -36,6 +36,8 @@ from pathlib import Path
 LISTEN_RE = re.compile(r"DevTools listening on ws://127\.0\.0\.1:(\d+)")
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts" / "audit"))
+import bundle_provenance  # noqa: E402  # every receipt names the bytes the browser loaded
 OBS = ROOT / "apps" / "observer"
 DIST = OBS / "frontend" / "dist"
 OUT_DIR = ROOT / ".project-local" / "runs" / "geometry-gate"
@@ -64,6 +66,9 @@ EXPR = """JSON.stringify((()=>{
   }
   out.__viewport = innerWidth + 'x' + innerHeight;
   out.__innerWidth = innerWidth;
+  // Read by the display-scaling instrument: the layout checks below would still pass at a scale the
+  // browser never applied, and a sweep of four identical rasterisations looks like four DPIs.
+  out.__dpr = window.devicePixelRatio;
   out.__docScrollWidth = document.documentElement.scrollWidth;
   out.__elementsOverlappingRightEdge = [...document.querySelectorAll('body *')]
       .filter(e=>{const r=e.getBoundingClientRect();
@@ -619,7 +624,8 @@ def connect_with_retry(port: int, attempts: int = 6):
 
 
 def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: str,
-                   u19, shot: Path | None = None, viewport: tuple[int, int] | None = None) -> dict:
+                   u19, shot: Path | None = None, viewport: tuple[int, int] | None = None,
+                   scale_factor: float = 1.0) -> dict:
     """Serve the built `dist` and evaluate one expression in a headless Chrome.
 
     This is the browser bootstrap, not a topbar-specific step: a second instrument (the legibility
@@ -634,6 +640,12 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
     window: asking for 1280 yields an inner width of 1262, and asking for 430 yields 482, because
     Chrome clamps a too-narrow window instead of refusing. A measurement taken at a width the browser
     never had is not a measurement of that width.
+
+    `scale_factor` is the device-scale half of the same override, for the display-scaling instrument.
+    It only reaches the page when `viewport` is passed, because CDP has no "raster only" mode. What it
+    changes is the raster density and `window.devicePixelRatio`; the CSS pixel grid a layout runs on is
+    decided by `viewport`, so a caller emulating 150% display scaling on a 2560px screen passes
+    width=1706 (the CSS width the OS actually gives the window), not 2560 with a hopeful comment.
     """
     port = u19.pick_free_port()
     url = f"http://127.0.0.1:{port}{path}"
@@ -679,7 +691,7 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
                 if viewport is not None:
                     cdp.send("Emulation.setDeviceMetricsOverride",
                              {"width": viewport[0], "height": viewport[1],
-                              "deviceScaleFactor": 1, "mobile": False})
+                              "deviceScaleFactor": scale_factor, "mobile": False})
                     time.sleep(0.4)   # the reflow has to land before anything is measured
                 time.sleep(1.0)
                 raw = cdp.evaluate(expr)
@@ -760,6 +772,12 @@ def main() -> int:
     out = Path(args.json_out) if args.json_out else (
         OUT_DIR / f"geometry_{int(time.time())}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
+    # Name the bytes every row measured. `GATE_HEAD` binds a gate report to a commit; a render report has
+    # no commit at all, so without this a receipt cannot tell "measured these bytes" from "measured bytes
+    # that a later rebuild already replaced" (found 2026-10-10: every geometry receipt predated a rebuild).
+    bundle = bundle_provenance.describe(ROOT)
+    for row in reports:
+        row["servedBundle"] = bundle
     out.write_text(json.dumps(reports, indent=2, ensure_ascii=False), encoding="utf-8")
 
     ok = all(r["verdict"]["passed"] for r in reports)

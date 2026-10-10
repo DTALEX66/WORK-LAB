@@ -235,9 +235,9 @@ def default_log_path() -> Path:
 
 
 def run_self_test() -> int:
-    import tempfile
+    import project_temp
 
-    with tempfile.TemporaryDirectory() as raw:
+    with project_temp.fixture_root(prefix='monitor-selftest-') as raw:
         path = Path(raw) / "agent.log"
         path.write_text(
             json.dumps({"model": "test-model", "usage": {"prompt_tokens": 11, "completion_tokens": 7}})

@@ -1,5 +1,8 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+// WUI-14: the same composition guard the shell shortcut uses, so one rule cannot be honoured in one
+// handler and forgotten in the other.
+import { isImeComposing } from '@/lib/keyGuards'
 
 /**
  * UI_COMPONENTS (20260921) · L10b (2026-09-27): CommandPalette — L6 keyboard
@@ -37,7 +40,9 @@ export interface CommandPaletteProps {
   title?: string
 }
 
-function filterItems(items: PaletteItem[], query: string): PaletteItem[] {
+/** Exported so a contract test can drive the filter the overlay actually uses. A copy of this predicate
+ *  in a test file would pass while the real search went blind. */
+export function filterItems(items: PaletteItem[], query: string): PaletteItem[] {
   const q = query.trim().toLowerCase()
   if (!q) return items
   return items.filter(
@@ -84,6 +89,8 @@ export function CommandPalette({
   }
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    // WUI-14: a candidate-confirming Enter from an input method must not run the highlighted command.
+    if (isImeComposing(e)) return
     if (e.key === 'Escape') {
       e.preventDefault()
       onClose()

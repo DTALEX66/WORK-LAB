@@ -257,10 +257,15 @@ def apply_labels(data: dict) -> dict:
                 rec["regressionRepointNote"] = (
                     "a substitution was attempted 2026-10-07 but the operand still does not resolve, "
                     "so no re-point is claimed and the promise stays where it was")
+        # Read the label the record carried BEFORE this loop writes the measured one: line 260 below
+        # overwrites the field, and comparing after that makes previous_state == state always true, so
+        # the documented rule "a label that changed must carry the reason it was measured with" never
+        # fires and a stale sentence keeps explaining a state the record no longer claims.
+        prior_state = rec.get("regressionTestVerifiability")
+        prior_reason = rec.get("regressionTestVerifiabilityReason")
         rec["regressionTestVerifiability"] = state
         rec["regressionTestVerifiabilityReason"] = next_reason(
-            rec.get("regressionTestVerifiability"), rec.get("regressionTestVerifiabilityReason"),
-            state, r["reason"],
+            prior_state, prior_reason, state, r["reason"],
         )
     LEDGER.write_text(json.dumps(written, ensure_ascii=False, indent=2) + "\n",
                       encoding="utf-8", newline="\n")

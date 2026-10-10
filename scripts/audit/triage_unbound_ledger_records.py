@@ -1,8 +1,13 @@
 """Read-only triage of the ledger's unbound PASS records.
 
-95 records claim PASS but carry no fixedCommit, so nothing pins which change made them true. This partitions
-them by what is checkable today: whether the record's own regression command points at a file that exists,
-and when that file entered the tree relative to the record's date.
+Records that claim PASS but carry no fixedCommit leave nothing pinning which change made them true. This
+partitions them by what is checkable today: whether the record's own regression command points at a file
+that exists, and when that file entered the tree relative to the record's date. The count is printed by the
+run, never written here, because a number in this docstring goes stale the moment a row is appended.
+
+Run AFTER `ledger_regression_command_targets.py`. This reads that audit's labels as the authority for where a
+record's operand lives; regenerating this file against a stale targets audit writes states that
+`test_ledger_unbound_triage.py` then contradicts (measured 2026-10-10: 'RESOLVES' vs 'NOT_IN_TARGETS_AUDIT').
 
 It binds nothing. A fix commit is only honest when the record points at it; where the guard file predates
 the record by many commits the candidate is ambiguous and must be decided per record, not in a batch — that
@@ -71,9 +76,12 @@ clear = [r for r in rows if r.get("state") == "RESOLVES"
          and r.get("guardVsRecordDays") is not None
          and abs(r["guardVsRecordDays"]) <= CLEAR_WINDOW_DAYS]
 undated = [r for r in rows if r.get("state") == "RESOLVES" and r.get("guardVsRecordDays") is None]
-distant = [r for r in rows if r.get("state") == "RESOLVES"
-           and r.get("guardVsRecordDays") is not None
-           and r not in clear]
+# `distant` and the held partition are settled after the birth-commit pass below: a record that no commit
+# has ever carried cannot be a binding candidate however close its guard file sits to the record date, and
+# calling it one would let the audit promise a SHA that does not exist. Measured 2026-10-10: the six
+# in-window records included ERR-245, whose fix is in the uncommitted working set -- the typed ceiling of
+# five caught it, which is the ceiling's whole purpose.
+distant: list[dict] = []
 # The 2026-08 batch records carry no date field at all, so the window rule cannot be applied to them;
 # naming that reason keeps "ambiguous" from reading like "decided against".
 
@@ -131,6 +139,14 @@ bindable = [r for r in rows if r.get("birthTouchesNamedPath")
 born_in_import = [r for r in rows if r.get("birthCommit")
                   and (r.get("birthAddedRecords") or 0) > 1]
 
+# The window can only be settled now: a record no commit has ever carried has nothing to bind to, however
+# close its guard file sits to the record date.
+held = [r for r in clear if not r.get("birthCommit")]
+clear = [r for r in clear if r.get("birthCommit")]
+distant = [r for r in rows if r.get("state") == "RESOLVES"
+           and r.get("guardVsRecordDays") is not None
+           and r not in clear and r not in held]
+
 doc = {"schemaVersion": "work-lab/ledger-unbound-triage/v1",
        "tool": "scripts/audit/triage_unbound_ledger_records.py",
        "generatedByCommand": "python scripts/audit/triage_unbound_ledger_records.py",
@@ -146,8 +162,10 @@ doc = {"schemaVersion": "work-lab/ledger-unbound-triage/v1",
                   "noResolvableOperand": len(unbound) - sum(
                       1 for r in rows if r.get("state") == "RESOLVES"),
                   "bindableByBirthCommit": len(bindable),
+                  "inWindowButUncommittedRecord": len(held),
                   "bornInAnImportCommit": len(born_in_import)},
        "clearCandidates": [r["errorId"] for r in clear],
+       "heldForUncommittedRecord": [r["errorId"] for r in held],
        "bindableByBirthCommit": [r["errorId"] for r in bindable],
        "bornInAnImportCommit": [r["errorId"] for r in born_in_import],
        "resolvesGuardUndatedRecord": [r["errorId"] for r in undated],
@@ -156,7 +174,8 @@ doc = {"schemaVersion": "work-lab/ledger-unbound-triage/v1",
 OUT.write_text(json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 print("unboundPass", len(unbound), "byState", dict(kinds))
-print("clear", len(clear), "undated", len(undated), "distant", len(distant), "bindableByBirth", len(bindable))
+print("clear", len(clear), "heldUncommitted", len(held), "undated", len(undated),
+      "distant", len(distant), "bindableByBirth", len(bindable))
 for r in clear[:12]:
     print(f"  {r['errorId']} record={r['date']} guard={r['guardFirstCommit']} "
           f"added={r['guardAddedAt']} delta={r['guardVsRecordDays']}d {r['operand']}")

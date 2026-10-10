@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-08T22:59:03Z",
+  "at": "2026-10-10T00:05:48Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 106,
+    "RESOLVES": 113,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
-    "PATH_GONE": 34,
+    "PATH_GONE": 63,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 139,
+    "RESOLVES": 146,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
-    "PATH_GONE": 34,
+    "PATH_GONE": 63,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 139,
-  "records": 221,
-  "stateDigest": "4336ed18cf26d14275ee47bb0cb061f82da0b9faf31fd6e275ef936a92aa78fd",
+  "resolvedAfterApply": 146,
+  "records": 257,
+  "stateDigest": "af2cf930188c164dd784ffb28174689f8b9ca374d0af5a5ee35f97116d41a9b8",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -118,6 +118,8 @@
       "errorId": "ERR-094",
       "operand": "MANIFEST.json",
       "candidates": [
+        "docs/history/owner-inputs/20261009/final-readable/MANIFEST.json",
+        "docs/history/owner-inputs/20261009/ui-readable/MANIFEST.json",
         "reports/audit-evidence/assets-20260930/MANIFEST.json",
         "reports/audit-evidence/model-runtime-20260929/MANIFEST.json",
         "taskpacks/current/WORK-LAB-UNIVERSAL-WORKFLOW-TASKPACK-20260916/MANIFEST.json"
@@ -399,6 +401,166 @@
       "errorId": "ERR-138",
       "operand": "/chat/completions",
       "statusAfter": "PARTIAL"
+    },
+    {
+      "errorId": "ERR-224",
+      "operand": "apps/observer/frontend/src/homeIa.contract.test.tsx",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-224",
+      "operand": "apps/observer/frontend/src/lib/projectIdentity.test.ts",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-225",
+      "operand": "tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-226",
+      "operand": "apps/observer/frontend/src/theme/paletteMirror.contract.test.ts",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-228",
+      "operand": "apps/observer/frontend/src/skins/rowAlignment.contract.test.ts",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-229",
+      "operand": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-230",
+      "operand": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-234",
+      "operand": "tests/workflow-assistance/test_evidence_seal_binds_receipts_to_the_measured_bundle.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-235",
+      "operand": "apps/observer/frontend/src/auxiliaryEntries.contract.test.tsx",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-236",
+      "operand": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-237",
+      "operand": "reseal_wui_evidence.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-237",
+      "operand": ".project-local/runs/wui-20261009/legibility-both-backend.log",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-238",
+      "operand": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-239",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-240",
+      "operand": "tests/workflow-assistance/test_root_document_dispositions.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-240",
+      "operand": "tests/workflow-assistance/test_default_load_doc_citations_resolve.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-242",
+      "operand": "tests/workflow-assistance/test_default_load_doc_citations_resolve.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-243",
+      "operand": "tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-244",
+      "operand": "tests/workflow-assistance/test_canary_synthetic_secret_never_reaches_the_store.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-247",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-248",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-249",
+      "operand": "tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-250",
+      "operand": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+      "statusAfter": "BLOCKED"
+    },
+    {
+      "errorId": "ERR-251",
+      "operand": "tests/workflow-assistance/test_canonical_store_disk_is_bounded.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-252",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-253",
+      "operand": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-254",
+      "operand": "tests/workflow-assistance/test_generated_contract_types_project_the_schema.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-255",
+      "operand": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-256",
+      "operand": "tests/workflow-assistance/test_ingest_refusals_are_counted_not_silent.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-257",
+      "operand": "tests/workflow-assistance/test_sidecar_sse_reconnect_replays_the_gap.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-258",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-259",
+      "operand": "tests/workflow-assistance/test_collector_delivery_reaches_the_snapshot.py",
+      "statusAfter": "PASS"
     }
   ],
   "external": [
@@ -1790,6 +1952,8 @@
           "operand": "MANIFEST.json",
           "category": "AMBIGUOUS",
           "candidates": [
+            "docs/history/owner-inputs/20261009/final-readable/MANIFEST.json",
+            "docs/history/owner-inputs/20261009/ui-readable/MANIFEST.json",
             "reports/audit-evidence/assets-20260930/MANIFEST.json",
             "reports/audit-evidence/model-runtime-20260929/MANIFEST.json",
             "taskpacks/current/WORK-LAB-UNIVERSAL-WORKFLOW-TASKPACK-20260916/MANIFEST.json"
@@ -4231,6 +4395,596 @@
       ],
       "state": "RESOLVES",
       "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-224",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "apps/observer/frontend/src/homeIa.contract.test.tsx (WUI-04 block) and apps/observer/frontend/src/lib/projectIdentity.test.ts",
+      "operands": [
+        {
+          "operand": "apps/observer/frontend/src/homeIa.contract.test.tsx",
+          "category": "GONE",
+          "candidates": []
+        },
+        {
+          "operand": "apps/observer/frontend/src/lib/projectIdentity.test.ts",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-225",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-226",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "apps/observer/frontend/src/theme/paletteMirror.contract.test.ts",
+      "operands": [
+        {
+          "operand": "apps/observer/frontend/src/theme/paletteMirror.contract.test.ts",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-227",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "apps/observer/frontend/src/laneStateMatrix.sweep.test.tsx",
+      "operands": [
+        {
+          "operand": "apps/observer/frontend/src/laneStateMatrix.sweep.test.tsx",
+          "category": "RESOLVES",
+          "candidates": [
+            "apps/observer/frontend/src/laneStateMatrix.sweep.test.tsx"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-228",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "apps/observer/frontend/src/skins/rowAlignment.contract.test.ts",
+      "operands": [
+        {
+          "operand": "apps/observer/frontend/src/skins/rowAlignment.contract.test.ts",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-229",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-230",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py::test_producer_output_validates_minimal_and_full",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-231",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "apps/observer/tests/test_production_surface_static_contract.js ('no v3 snapshot literal is embedded in the production source')",
+      "operands": [
+        {
+          "operand": "apps/observer/tests/test_production_surface_static_contract.js",
+          "category": "RESOLVES",
+          "candidates": [
+            "apps/observer/tests/test_production_surface_static_contract.js"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-232",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/ci/test_push_permit.py (30 cases, including the narrow-run-cannot-claim-full case and the refusal-detail case)",
+      "operands": [
+        {
+          "operand": "tests/ci/test_push_permit.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/ci/test_push_permit.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-233",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_gate_runner_declares_pipe_encoding.py (test_the_runner_survives_a_non_unicode_console)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_gate_runner_declares_pipe_encoding.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_gate_runner_declares_pipe_encoding.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-234",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_evidence_seal_binds_receipts_to_the_measured_bundle.py (10 cases: the digest must move when a dynamically imported chunk moves, a receipt naming a different build must b",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_evidence_seal_binds_receipts_to_the_measured_bundle.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-235",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "apps/observer/frontend/src/auxiliaryEntries.contract.test.tsx (6 cases: nav invariants empty, the auxiliary section holds exactly the two existing registry lanes and invents no third projection, the r",
+      "operands": [
+        {
+          "operand": "apps/observer/frontend/src/auxiliaryEntries.contract.test.tsx",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-236",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py (8 cases: two generations of the projection must emit identical bytes and the committed file must equal them; the he",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-237",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "The instrument itself emits the checks and reseal_wui_evidence.py re-runs them; the static run now prints 'backend=static NOT_ENFORCED -- pills={}' and the live run prints the pill census, which is th",
+      "operands": [
+        {
+          "operand": "reseal_wui_evidence.py",
+          "category": "GONE",
+          "candidates": []
+        },
+        {
+          "operand": ".project-local/runs/wui-20261009/legibility-both-backend.log",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-238",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py (test_the_context_pack_moves_only_its_generation_stamp_between_renders). The stability of the corrected case is itse",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-239",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py (5 cases) plus the predicate control inside it, which fails if the matcher stops seeing any of the three citation shapes",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-240",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_root_document_dispositions.py (14 cases) plus tests/workflow-assistance/test_default_load_doc_citations_resolve.py (6 cases)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_root_document_dispositions.py",
+          "category": "GONE",
+          "candidates": []
+        },
+        {
+          "operand": "tests/workflow-assistance/test_default_load_doc_citations_resolve.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-241",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_ledger_regression_command_targets.py ReasonPreservationTests.test_the_rule_is_applied_at_the_call_site_not_only_in_the_helper",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_ledger_regression_command_targets.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_ledger_regression_command_targets.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-242",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_default_load_doc_citations_resolve.py (8 cases)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_default_load_doc_citations_resolve.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-243",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py (6 cases) plus tests/workflow-assistance/test_durable_worker.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py",
+          "category": "GONE",
+          "candidates": []
+        },
+        {
+          "operand": "tests/workflow-assistance/test_durable_worker.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_durable_worker.py"
+          ]
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-244",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_canary_synthetic_secret_never_reaches_the_store.py (4 cases) plus tests/workflow-assistance/nf01_rule_semantics_artifact_flow.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_canary_synthetic_secret_never_reaches_the_store.py",
+          "category": "GONE",
+          "candidates": []
+        },
+        {
+          "operand": "tests/workflow-assistance/nf01_rule_semantics_artifact_flow.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/nf01_rule_semantics_artifact_flow.py"
+          ]
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-245",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_fixture_root_names_are_readable_by_the_reader.py (10 cases) plus tests/workflow-assistance/test_token_monitor.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_fixture_root_names_are_readable_by_the_reader.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_fixture_root_names_are_readable_by_the_reader.py"
+          ]
+        },
+        {
+          "operand": "tests/workflow-assistance/test_token_monitor.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_token_monitor.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-246",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_ledger_unbound_triage.py (8 cases)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_ledger_unbound_triage.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_ledger_unbound_triage.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-247",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py (7 cases)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-248",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py (test_both_csvs_keep_the_packs_own_shape, with the planted-column control)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-249",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py (10 cases)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-250",
+      "statusAfter": "BLOCKED",
+      "hasFixedCommit": false,
+      "command": ".project-local/runs/wui-20261010/readback_hermes_overlay.py (receipt targetsTotal == the rows measured)",
+      "operands": [
+        {
+          "operand": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-251",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_canonical_store_disk_is_bounded.py (10 cases)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_canonical_store_disk_is_bounded.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-252",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py (8 cases)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-253",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py (DerivedProjectionDriftTests)",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-254",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_generated_contract_types_project_the_schema.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_generated_contract_types_project_the_schema.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-255",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-256",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_ingest_refusals_are_counted_not_silent.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_ingest_refusals_are_counted_not_silent.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-257",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_sidecar_sse_reconnect_replays_the_gap.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_sidecar_sse_reconnect_replays_the_gap.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-258",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-259",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_collector_delivery_reaches_the_snapshot.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_collector_delivery_reaches_the_snapshot.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
     }
   ],
   "notClaimed": [
@@ -4240,5 +4994,5 @@
     "OUT_OF_REPO_TARGET claims are re-checkable only on the machine holding the live client home, which is why they are labelled instead of counted as resolved",
     "no record's status_after was changed by this tool"
   ],
-  "whyItMatters": "the ledger carries 197 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
+  "whyItMatters": "the ledger carries 232 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
 }

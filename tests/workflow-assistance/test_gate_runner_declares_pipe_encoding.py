@@ -23,12 +23,26 @@ Discovered dynamically by `run_quality_gate.py governance`.
 from __future__ import annotations
 
 import ast
+import os
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PIPE_FUNCTIONS = {"run", "Popen", "check_output", "check_call", "call"}
+
+
+def _spawn(source: str, *, console_encoding: str) -> subprocess.CompletedProcess:
+    """Run a child whose console codec this test chooses, with bytes pipes so the decoding is chosen twice.
+
+    PYTHONIOENCODING has to be in the child's environment at exec time -- by the first statement of `-c`
+    code, sys.stdout already exists -- and the parent reads raw bytes rather than letting the host locale
+    decide what it can decode.
+    """
+    env = {key: value for key, value in os.environ.items() if key.upper() != "PYTHONIOENCODING"}
+    env["PYTHONIOENCODING"] = console_encoding
+    return subprocess.run([sys.executable, "-c", source], capture_output=True, env=env, cwd=ROOT, check=False)
 
 # Capability floor, measured 2026-10-08: the 642 tracked Python files open 223 text-mode pipes. The floor is
 # what makes "zero violations" mean "the rule holds" instead of "the scanner saw nothing"; it sits well below
@@ -178,6 +192,57 @@ class PipeEncodingTests(unittest.TestCase):
         self.assertIn('env["PYTHONIOENCODING"]', body,
                       "the batch child writes with whatever locale it inherited while the parent reads "
                       "UTF-8; both ends have to be pinned or the two disagree on a Chinese failure line")
+
+    def test_the_runner_survives_a_non_unicode_console(self) -> None:
+        """The PARENT stream, which the two checks above are silent about.
+
+        Measured 2026-10-10 (ERR-233): a mandatory test whose output contains `↔` reached
+        `_report_governance_failure`, the runner's own `print` raised UnicodeEncodeError against the
+        Windows console default, and the traceback replaced the receipt -- so the run that existed to say
+        WHICH module went red destroyed the statement that any module went red. Pinning the child pipes is
+        not enough if the process holding the verdict cannot speak.
+
+        Forced to cp936 on every OS rather than "whatever this host happens to prefer", so CI on Ubuntu
+        exercises the same branch instead of passing by luck. Captured as bytes and decoded here: the child
+        may emit a stream this test cannot assume is UTF-8.
+        """
+        runner = ROOT / "services" / "orchestration" / "run_quality_gate.py"
+        imports = (
+            "import importlib.util, sys\n"
+            f"spec = importlib.util.spec_from_file_location('wl_gate_under_test', {str(runner)!r})\n"
+            "module = importlib.util.module_from_spec(spec)\n"
+            "spec.loader.exec_module(module)\n"
+            "print('ARROW:' + chr(0x2194))\n"
+            "print('ENCODING:' + sys.stdout.encoding)\n"
+        )
+        with_declaration = _spawn(imports, console_encoding="gbk")
+        # The control: the same print, without importing the runner, on the same forced console. If this
+        # exits 0 the scenario is not actually hostile and the pass above would be decoration.
+        without_declaration = _spawn("print(chr(0x2194))\n", console_encoding="gbk")
+
+        self.assertEqual(
+            without_declaration.returncode, 1,
+            "the control print survived a forced gbk console, so this test proves nothing about the "
+            f"declaration -- {without_declaration.stdout.decode('utf-8', 'replace')!r}",
+        )
+        self.assertIn(
+            "UnicodeEncodeError", without_declaration.stderr.decode("utf-8", "replace"),
+            "the control failed for some reason other than the console codec, so it is not the fault "
+            "the product path is being asked to survive",
+        )
+        self.assertEqual(
+            with_declaration.returncode, 0,
+            "importing the runner did not make its own stream writable in UTF-8: the failure reporter can "
+            "still be killed mid-line by a non-ASCII test output (ERR-233) -- "
+            f"{with_declaration.stderr.decode('utf-8', 'replace')[:400]!r}",
+        )
+        printed = with_declaration.stdout.decode("utf-8", "replace")
+        self.assertIn("ARROW:\u2194", printed,
+                      "the parent printed a substitute character instead of the arrow; a reporter line "
+                      f"containing one would reach the receipt mangled -- {printed!r}")
+        codec = printed.partition("ENCODING:")[2].strip().lower().replace("-", "").replace("_", "")
+        self.assertEqual(codec, "utf8",
+                         f"the parent stream still reports {codec!r}, not UTF-8")
 
 
 if __name__ == "__main__":

@@ -95,9 +95,23 @@ class LedgerUnboundTriageGate(unittest.TestCase):
         counts = self.doc["counts"]
         self.assertEqual(counts["byState"].get("RESOLVES", 0),
                          len(self.doc["clearCandidates"])
+                         + len(self.doc["heldForUncommittedRecord"])
                          + len(self.doc["resolvesGuardUndatedRecord"])
                          + len(self.doc["resolvesGuardDistant"]))
         self.assertLessEqual(len(self.doc["clearCandidates"]), 5)
+        # The held partition is the ceiling made explicit: an in-window record that no commit has ever
+        # carried cannot be bound, and naming it keeps that from being read as a candidate whose SHA just
+        # has not been written yet (measured 2026-10-10, ERR-245 -- its guard file is older than its own
+        # uncommitted fix, so proximity was a coincidence). At the time the working set is committed, all
+        # six currently-held records can become real candidates at once; that is the moment to re-derive
+        # the ceiling from the commit graph, not to raise the number to make the run green.
+        rows = {r["errorId"]: r for r in self.doc["rows"]}
+        for eid in self.doc["heldForUncommittedRecord"]:
+            self.assertIsNone(rows[eid].get("birthCommit"), eid)
+            self.assertIsNotNone(rows[eid].get("guardVsRecordDays"), eid)
+        for eid in self.doc["clearCandidates"]:
+            self.assertIsNotNone(rows[eid].get("birthCommit"),
+                                 f"{eid}: a candidate must have a commit that carries the record")
         for eid in self.doc["resolvesGuardUndatedRecord"]:
             row = next(r for r in self.doc["rows"] if r["errorId"] == eid)
             self.assertIsNone(row.get("date"), f"{eid}: undated partition must mean no record date")

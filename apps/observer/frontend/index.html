@@ -10,7 +10,11 @@
          so the same static build serves both themes. Deliberately nothing is
          stored: `apps/observer/tests/test_production_surface_static_contract.js`
          forbids web storage in the UI layer, so the URL is the only state carrier
-         and any view this shell shows is reproducible from its address alone. -->
+         and any view this shell shows is reproducible from its address alone.
+         WUI-03: `?palette=master` opts into the 20261009 pack's colours on the SAME rule. It is set
+         before paint for the same reason the theme is — a first frame in the wrong colours — and it is
+         absent rather than "worklab" when not asked for, so the shipped sheets stay the single source
+         for the default. src/theme/paletteMode.ts applies the identical rule after mount. -->
     <script>
       (function () {
         try {
@@ -19,6 +23,9 @@
           var root = document.documentElement;
           root.classList.toggle('light', light);
           root.style.colorScheme = light ? 'light' : 'dark';
+          if (new URLSearchParams(location.search).get('palette') === 'master') {
+            root.setAttribute('data-palette', 'master');
+          }
         } catch (e) { document.documentElement.classList.add('dark'); }
       })();
     </script>

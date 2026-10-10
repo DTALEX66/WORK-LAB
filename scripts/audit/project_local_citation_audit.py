@@ -116,6 +116,15 @@ def classify(token: str, file: str, line: str) -> str:
 # unavailable-evidence claim. A queue entry with no disposition prints as UNADJUDICATED, which is
 # the state this table exists to eliminate.
 DISPOSITIONS: dict[str, str] = {
+    # Measured 2026-10-10: the directory exists and holds exactly `node-jiti/frontend-tailwind.config.js
+    # .a24e14cf.js` (a loader cache) and `outside-context.txt` (a test scratch file a guard wrote). The
+    # citations naming it are historical -- the error ledger and the cutover record both recount the round
+    # that moved TMP/TEMP binding off this path -- so the row is kept, and what is left here is residue
+    # for an audited cleanup, not evidence a reader owes.
+    ".project-local/runs/tmp":
+        "HISTORICAL ROUND + RESIDUE — the path is the old bound temp root the gate no longer uses; the two "
+        "files still on disk are a jiti loader cache and a scratch fixture, and deleting them is a separate "
+        "audited cleanup (prove recoverability first), not something a citation may assume.",
     ".project-local":
         "DECLARED ROOT — `.project/governance/project-data-boundary.json` names it as the runtime and "
         "evidence root every sanctioned writer targets. A directory declaration is not evidence a "

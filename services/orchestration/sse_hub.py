@@ -175,9 +175,9 @@ def start_heartbeat(projection: LiveProjection, seconds: float = HEARTBEAT_SECON
 
 
 if __name__ == "__main__":
-    import tempfile
+    import project_temp
 
-    with tempfile.TemporaryDirectory() as temporary:
+    with project_temp.fixture_root(prefix='sse-hub-selftest-') as temporary:
         store = CanonicalStore(Path := __import__("pathlib").Path(temporary) / "canonical.sqlite")
         projection = LiveProjection(store)
         projection.set_mode(LIVE)

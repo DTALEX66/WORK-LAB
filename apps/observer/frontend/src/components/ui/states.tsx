@@ -1,6 +1,9 @@
 import * as React from 'react'
-import { CloudOff, Inbox, TriangleAlert, Lock } from 'lucide-react'
+import { Ban, CircleSlash, CloudOff, EyeOff, HelpCircle, Inbox, Lock, Timer, TriangleAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
+// WUI-11: the eight-state vocabulary. The cards below print it rather than restating it, so a page and
+// the matrix cannot drift into two different meanings for the same word.
+import { STATE_BY_ID, STATE_DEFINITIONS, type ProductState } from '@/lib/stateVocabulary'
 
 /**
  * UI_COMPONENTS (20260921) · L10b (2026-09-27): the five L7 view-state
@@ -180,5 +183,90 @@ export function PermissionState({
       className={className}
       role="status"
     />
+  )
+}
+
+/* ---------------------------------------------------------------------------
+ * WUI-11 · the eight states, told apart.
+ *
+ * The five shells above cover empty / error / offline / unknown / permission. The taskpack asks for
+ * eight separately explained states, and a lane that renders 无数据 where the truth is 延迟 (or, worse,
+ * 权限不足) is not a shorter path — it is a different statement. So each of the remaining states gets its
+ * own affordance, and every one of them prints the field it is based on and the next action, taken from
+ * `lib/stateVocabulary` rather than restated here. That is what keeps the matrix and the pages from
+ * drifting into two vocabularies.
+ * ------------------------------------------------------------------------ */
+
+const STATE_ICONS: Record<string, React.ReactNode> = {
+  unsupported: <Ban size={26} strokeWidth={1.8} />,
+  delayed: <Timer size={26} strokeWidth={1.8} />,
+  'hidden-by-policy': <EyeOff size={26} strokeWidth={1.8} />,
+  'partial-failure': <CircleSlash size={26} strokeWidth={1.8} />,
+  'not-existing': <HelpCircle size={26} strokeWidth={1.8} />,
+  'insufficient-permission': <Lock size={26} strokeWidth={1.8} />,
+  'no-data': <Inbox size={26} strokeWidth={1.8} />,
+  'not-connected': <CloudOff size={26} strokeWidth={1.8} />,
+}
+
+export interface ProductStateCardProps {
+  state: ProductState
+  /** the concrete subject — a lane name, an id, a field — so the card is about something */
+  subject?: string
+  /** what this page actually observed, in one line */
+  detail?: string
+  className?: string
+}
+
+/** One of the eight states, rendered with its evidence rule and its way out. */
+export function ProductStateCard({ state, subject, detail, className }: ProductStateCardProps) {
+  const definition = STATE_BY_ID[state]
+  return (
+    <div className={cn('empty', className)} role="status" data-state={state}>
+      <div className="icon" aria-hidden="true">{STATE_ICONS[state]}</div>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-ink">
+          {definition.label}{subject ? ` · ${subject}` : ''}
+        </p>
+        <p className="mx-auto mt-1 max-w-xl text-xs">{detail ? detail : definition.meaning}</p>
+        <p className="mx-auto mt-2 max-w-xl text-[12px] text-muted">
+          依据：{definition.signal}
+        </p>
+        <p className="mx-auto mt-1 max-w-xl text-[12px] text-muted">
+          下一步：{definition.nextAction}
+        </p>
+        {definition.projectable === false && (
+          <p className="mx-auto mt-2 max-w-xl text-[12px] text-warning" data-testid={`state-not-projectable-${state}`}>
+            当前 v3 快照不携带可判定该状态的项目；本卡只在调用方明确告知时出现，不由空值推断。
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The state matrix itself (master page 14_states): all eight rows, each with whether the shipped
+ * projection can answer it. A developer reads this to know which affordance is legitimate where; the
+ * two rows that say 快照不携带 are the ones a view must never reach for by default.
+ */
+export function StateMatrixCard({ className }: { className?: string }) {
+  return (
+    <div className={cn('list', className)} data-testid="state-matrix">
+      {STATE_DEFINITIONS.map((definition) => (
+        <div key={definition.id} className="list-item flex-col items-stretch gap-1" data-state={definition.id}>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[12px] font-semibold text-ink">{definition.label}</span>
+            <span className={cn('text-[12px]',
+              definition.projectable === false ? 'text-warning' : 'text-muted')}>
+              {definition.projectable === false ? '快照不携带'
+                : definition.projectable === 'partly' ? '部分可判定' : '可由投影判定'}
+            </span>
+          </div>
+          <span className="text-[12px] text-muted">{definition.meaning}</span>
+          <span className="text-[12px] text-muted">依据：{definition.signal}</span>
+          <span className="text-[12px] text-muted">下一步：{definition.nextAction}</span>
+        </div>
+      ))}
+    </div>
   )
 }

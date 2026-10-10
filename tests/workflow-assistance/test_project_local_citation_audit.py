@@ -50,11 +50,18 @@ class CitationAuditGate(unittest.TestCase):
     def test_the_repair_names_the_import_root_that_the_register_records(self) -> None:
         # CI checks the tracked records agree; whether the bytes are still on this machine is a
         # local observation, because .project-local is git-ignored and absent from a fresh checkout.
-        handoff = (ROOT / "taskpacks" / "current" / "SESSION-HANDOFF-P0C-20261006.md") \
+        # The live file is now a FROZEN_ARCHIVED pointer whose own text names this original and its SHA-256
+        # (693b2f72…), so the guard follows the record to the bytes it describes instead of loosening itself.
+        handoff = (ROOT / "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree"
+                   / "taskpacks/current/SESSION-HANDOFF-P0C-20261006.md") \
             .read_text(encoding="utf-8")
-        rows = [ln for ln in (ROOT / "taskpacks" / "current" / "OPEN-TASK-REGISTER.md")
+        rows = [ln for ln in (ROOT / "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree"
+                              / "taskpacks/current/OPEN-TASK-REGISTER.md")
                 .read_text(encoding="utf-8").splitlines()
                 if ln.startswith("| WB-IMPORT-20261006 ")]
+        # The live register became the UI-priority WUI table on 2026-10-09, so the import round it used to
+        # carry now lives in the frozen original tree this guard reads (LEGACY-TASK-DISPOSITION.json records
+        # the per-row inheritance). Read from the file that holds the claim, do not drop the claim's guard.
         self.assertEqual(len(rows), 1, "the import round is no longer a single register row")
         for token in ("imported-from-workbuddy-20261006", "381e33ec"):
             self.assertIn(token, handoff, token)

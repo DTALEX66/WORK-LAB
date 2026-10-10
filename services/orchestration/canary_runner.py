@@ -19,7 +19,6 @@ from __future__ import annotations
 import json
 import os
 import subprocess
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +32,7 @@ sys.path.insert(0, str(SCRIPTS))
 from evidence_aggregator import EvidenceAggregator, ExecutionState  # noqa: E402
 from product_project import ProductProject, ProjectRootBinding, RepositoryIdentity  # noqa: E402
 from project_identity_resolver import ApprovedProjectIndex, GitProbe, resolve_execution_path  # noqa: E402
+from project_temp import fixture_dir, force_release  # noqa: E402
 from snapshot_api import build_snapshot  # noqa: E402
 
 
@@ -57,9 +57,12 @@ def run_canary() -> dict[str, Any]:
     )
 
     # 3) transient independent nested repo stays unresolved (no remote match).
-    raw = tempfile.TemporaryDirectory()
+    # A transient independent repo, built inside the declared runtime root: TemporaryDirectory's own
+    # cleanup is only reliable while nothing holds a handle open, and the leak it can leave is project
+    # content outside the Git root (measured 2026-10-10 in %TEMP%).
+    raw = fixture_dir(prefix="canary-nested-repo-")
     try:
-        nested = Path(raw.name) / "independent-repo"
+        nested = raw / "independent-repo"
         nested.mkdir()
         subprocess.run(["git", "init", "-q", str(nested)], check=True)
         resolved_nested = resolve_execution_path(str(nested), index, git=probe)
@@ -68,7 +71,7 @@ def run_canary() -> dict[str, Any]:
             or resolved_nested.project_id != "work-lab"
         )
     finally:
-        raw.cleanup()
+        results["nested_fixture_released"] = force_release(raw)
 
     # 4) weak evidence alone never RUNNING.
     agg = EvidenceAggregator()

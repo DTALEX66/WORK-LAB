@@ -80,9 +80,9 @@ def check_3_sse_append_during_connection() -> dict:
 def check_4_usage_token_allowlist() -> dict:
     """Legal input_tokens must enter canonical ledger; auth tokens rejected."""
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
+    import project_temp
     from canonical_store import CanonicalStore, validate_record
-    with tempfile.TemporaryDirectory() as td:
+    with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
         store = CanonicalStore(Path(td) / "c.sqlite")
         sample_id = store.record_usage_sample(
             {"project_id": "p", "provider": "deepseek", "model": "m",
@@ -109,7 +109,7 @@ def check_5_no_fabricated_exact() -> dict:
     import tempfile
     from canonical_store import CanonicalStore
     from composition_root import build_v3_snapshot, load_approved_index
-    with tempfile.TemporaryDirectory() as td:
+    with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
         store = CanonicalStore(Path(td) / "c.sqlite")
         index = load_approved_index(store)
         snapshot = build_v3_snapshot(
@@ -215,7 +215,7 @@ def check_8_ci_queued_no_job_releases_writer() -> dict:
     import tempfile
     from canonical_store import CanonicalStore
     from durable_worker import DurableWorker
-    with tempfile.TemporaryDirectory() as td:
+    with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
         store = CanonicalStore(Path(td) / "c.sqlite")
         store.upsert_task({"task_id": "boom", "project_id": "p", "status": "PENDING"})
 
@@ -312,7 +312,7 @@ def check_10_no_credentials_in_store() -> dict:
     import tempfile
     from canonical_store import CanonicalStore, validate_record
     rejected = False
-    with tempfile.TemporaryDirectory() as td:
+    with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
         store = CanonicalStore(Path(td) / "c.sqlite")
         try:
             store.append_telemetry({"event_id": "x", "prompt": "full body", "project_id": "p"})

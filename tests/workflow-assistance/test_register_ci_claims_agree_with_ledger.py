@@ -32,7 +32,13 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTER = ROOT / "taskpacks/current" / "OPEN-TASK-REGISTER.md"
+# The 2026-10-09 UI-priority cutover replaced this ledger with the WUI-00..24 register, and the frozen
+# original tree is where the rows carrying measured CI verdicts now live
+# (`docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json` records the per-row inheritance).
+# Repointing the guard keeps it reading a real register — the file it must not silently stop covering --
+# rather than deleting a check whose subject moved.
+REGISTER = (ROOT / "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree"
+            / "taskpacks/current" / "OPEN-TASK-REGISTER.md")
 LEDGER = ROOT / "taskpacks/current" / "error-ledger.json"
 MEASUREMENT_GLOB = "docs/audits/REGISTER_CI_CLAIMS_*.json"
 

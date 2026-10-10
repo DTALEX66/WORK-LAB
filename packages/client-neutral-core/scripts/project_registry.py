@@ -158,14 +158,14 @@ def load_project_profiles(store: CanonicalStore) -> dict[str, dict[str, Any]]:
 
 if __name__ == "__main__":
     import argparse
-    import tempfile
+    from project_temp import require_runtime_root
 
     parser = argparse.ArgumentParser(description="Discover and register Git projects")
     parser.add_argument("--search-root", type=Path, required=True)
     parser.add_argument("--runtime-root", type=Path)
     parser.add_argument("--max-depth", type=int, default=2)
     args = parser.parse_args()
-    runtime_root = (args.runtime_root or Path(tempfile.gettempdir()) / "workflow-assistance-registry").resolve()
+    runtime_root = require_runtime_root(args.runtime_root, "workflow-assistance-registry")
     store = CanonicalStore(runtime_root / "canonical.sqlite")
     try:
         profiles = discover_and_register(store, args.search_root, max_depth=args.max_depth)

@@ -30,7 +30,8 @@ _CNC = _ROOT / "packages" / "client-neutral-core" / "scripts"
 if str(_CNC) not in sys.path:
     sys.path.insert(0, str(_CNC))
 
-from canonical_store import CanonicalStore
+from canonical_store import CanonicalStore, RETAINABLE_TABLES
+from project_temp import require_runtime_root
 from sidecar_lock import SingleInstanceLock
 
 DEFAULT_TICK_SECONDS = 30.0
@@ -49,6 +50,11 @@ class CollectorResult:
     records: list[dict[str, Any]] = field(default_factory=list)
     error: str | None = None
     degraded: str | None = None
+    # Rows the collector read but could not turn into a fact, counted by named reason. Without this, an
+    # empty `records` list from a source that plainly had lines is indistinguishable from "source empty",
+    # which is the silent-filtering failure the old batch-abort was accidentally protecting against.
+    refusals: dict[str, int] = field(default_factory=dict)
+    refusal_samples: dict[str, str] = field(default_factory=dict)
 
 
 CollectorFn = Callable[[CanonicalStore, str], CollectorResult]
@@ -58,6 +64,36 @@ def fingerprint(cause: str) -> str:
     import hashlib
 
     return hashlib.sha256(cause.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _row_location(record: dict[str, Any]) -> str:
+    """Where a refused row came from, down to the line when the collector knew it.
+
+    A file name alone makes the reader open the file and hunt; the line number is the difference between a
+    traceable refusal and a rumour. `source_line` is a diagnostic key the store never persists.
+    """
+    where = str(record.get("source_ref") or record.get("row_id")
+                or record.get("sample_id") or "<unnamed row>")
+    line = record.get("source_line")
+    return f"{where}:{line}" if line is not None else where
+
+
+def _first_reason_text(counts: dict[str, int], samples: dict[str, str], *, limit: int = 4) -> str | None:
+    """Name EVERY refusal cause this tick carried, with its count and the first place it happened.
+
+    An earlier draft kept only the most frequent cause, which on a tick with two causes (a truncated line and
+    a credential-bearing row, the exact mixed file the canary fixture models) counted both and named one — the
+    reader could not tell that a second cause existed. A cap is kept because one pathological source could
+    otherwise emit a hundred distinct messages, and the truncation is stated rather than hidden.
+    """
+    if not counts:
+        return None
+    total = sum(counts.values())
+    ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    shown = [f"{reason} ×{count} @ {samples.get(reason) or '<no location reported>'}"
+             for reason, count in ordered[:limit]]
+    tail = f"；另有 {len(ordered) - limit} 类原因未列出" if len(ordered) > limit else ""
+    return (f"{total} row(s) refused: " + "；".join(shown) + tail)[:600]
 
 
 class DurableWorker:
@@ -97,14 +133,29 @@ class DurableWorker:
             name = str(getattr(collector, "collector_name", getattr(collector, "__name__", "unknown")))
             try:
                 outcome = collector(self.store, self.project_id)
-                for record in outcome.records:
-                    self._write_record(outcome.kind, record)
-                self._record_collector_health(name, ok=outcome.ok)
+                stored, ingest_refusals, ingest_samples = self._write_records(outcome.kind, outcome.records)
+                refusal_counts: dict[str, int] = dict(outcome.refusals)
+                for reason, count in ingest_refusals.items():
+                    refusal_counts[reason] = refusal_counts.get(reason, 0) + count
+                refused_total = sum(refusal_counts.values())
+                # One bad row no longer aborts the tick. What must not be lost is the fact that it was
+                # refused: a collector whose every row was refused did not deliver its source, so that is
+                # a failed run for health and breaker purposes, not a success with a footnote.
+                ok = outcome.ok and not (stored == 0 and bool(outcome.records))
+                self._record_collector_health(
+                    name, ok=ok, refused_total=refused_total, delivered_total=stored,
+                    last_refusal_reason=_first_reason_text(refusal_counts, {**outcome.refusal_samples,
+                                                                            **ingest_samples}),
+                )
                 collector_outcomes.append(
                     {
                         "kind": outcome.kind,
-                        "ok": outcome.ok,
+                        "ok": ok,
                         "records": len(outcome.records),
+                        "stored": stored,
+                        "refused": refused_total,
+                        "refusalReasons": refusal_counts,
+                        "refusalSamples": {**outcome.refusal_samples, **ingest_samples},
                         "degraded": outcome.degraded,
                     }
                 )
@@ -117,6 +168,27 @@ class DurableWorker:
             results["task"] = self._drive_task()
         return results
 
+    def _write_records(self, kind: str, records: list[dict[str, Any]]
+                       ) -> tuple[int, dict[str, int], dict[str, str]]:
+        """Write row by row, so one refused row cannot take the rest of the batch down with it.
+
+        Returns (stored, refusals_by_reason, first_sample_per_reason). The reason key is the exception
+        class plus the leading clause of its message, because "ValueError" alone would not distinguish a
+        sensitive-name refusal from a shape refusal, and the count is only useful if it is attributable.
+        """
+        stored = 0
+        refusals: dict[str, int] = {}
+        samples: dict[str, str] = {}
+        for record in records:
+            try:
+                self._write_record(kind, record)
+                stored += 1
+            except Exception as exc:  # noqa: BLE001 - a refused row is data, not a crashed tick
+                reason = f"{type(exc).__name__}: {str(exc)[:120]}"
+                refusals[reason] = refusals.get(reason, 0) + 1
+                samples.setdefault(reason, _row_location(record))
+        return stored, refusals, samples
+
     def _write_record(self, kind: str, record: dict[str, Any]) -> None:
         if kind == "telemetry":
             self.store.append_telemetry(record)
@@ -127,21 +199,31 @@ class DurableWorker:
         elif kind == "quality":
             self.store.append_quality(record)
 
-    def _record_collector_health(self, name: str, *, ok: bool) -> None:
+    def _record_collector_health(self, name: str, *, ok: bool, refused_total: int | None = None,
+                                 delivered_total: int | None = None,
+                                 last_refusal_reason: str | None = None) -> None:
         previous = {row["name"]: row for row in self.store.list_collector_health()}.get(name, {})
         now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         failures = 0 if ok else int(previous.get("consecutive_failures") or 0) + 1
-        self.store.upsert_collector_health(
-            {
-                "name": name,
-                "totalRuns": int(previous.get("total_runs") or 0) + 1,
-                "lastRunAt": now,
-                "lastSuccessAt": now if ok else previous.get("last_success_at"),
-                "consecutiveFailures": failures,
-                "circuitOpenUntil": previous.get("circuit_open_until"),
-                "droppedCount": int(previous.get("dropped_count") or 0),
-            }
-        )
+        record: dict[str, Any] = {
+            "name": name,
+            "totalRuns": int(previous.get("total_runs") or 0) + 1,
+            "lastRunAt": now,
+            "lastSuccessAt": now if ok else previous.get("last_success_at"),
+            "consecutiveFailures": failures,
+            "circuitOpenUntil": previous.get("circuit_open_until"),
+            "droppedCount": int(previous.get("dropped_count") or 0),
+        }
+        # Refusals ACCUMULATE rather than describe one tick: a reader who asks "how many rows has this
+        # source never managed to turn into a fact" wants the running total, and a single-tick number
+        # would be overwritten by the next clean tick and hide the debt.
+        if refused_total is not None:
+            record["refusedRows"] = int(previous.get("refused_rows") or 0) + int(refused_total)
+        if delivered_total is not None:
+            record["deliveredRows"] = int(previous.get("delivered_rows") or 0) + int(delivered_total)
+        if last_refusal_reason is not None:
+            record["lastRefusalReason"] = last_refusal_reason
+        self.store.upsert_collector_health(record)
 
     def _drive_task(self) -> dict[str, Any]:
         """Pick one ready task, lease it transactionally, run, reconcile."""
@@ -248,6 +330,43 @@ def make_worker(
     )
 
 
+def parse_retention(args: Any) -> dict[str, int] | None:
+    """`--retention-rows table=N[,table=N]` -> {table: N}, or None when the operator granted nothing.
+
+    Refusing a non-retained table *here* is the point: a ceiling that silently skipped `schema_migrations`
+    would leave the operator believing the disk was bounded while the version record stayed whole and the
+    ledger kept growing. The store refuses the same names, but a bad flag should fail at the CLI.
+    """
+    raw = getattr(args, "retention_rows", None)
+    if not raw:
+        return None
+    limits: dict[str, int] = {}
+    for chunk in str(raw).split(","):
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        table, _, value = chunk.partition("=")
+        if table not in RETAINABLE_TABLES:
+            raise ValueError(f"RETENTION_TABLE_NOT_PERMITTED {table}; retainable set is "
+                             f"{sorted(RETAINABLE_TABLES)}")
+        try:
+            ceiling = int(value)
+        except ValueError as exc:
+            raise ValueError(f"RETENTION_CEILING_INVALID {chunk!r} is not table=rows") from exc
+        if ceiling < 1:
+            raise ValueError(f"RETENTION_CEILING_INVALID {table}={ceiling} would empty a table")
+        limits[table] = ceiling
+    if not limits:
+        raise ValueError("RETENTION_CEILING_INVALID --retention-rows carried no table=rows pair")
+    return limits
+
+
+def apply_retention(store: CanonicalStore, limits: dict[str, int] | None) -> dict[str, Any] | None:
+    if not limits:
+        return None
+    return store.enforce_retention(limits, allow_prune=True)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the durable Workflow Assistance worker")
     parser.add_argument("--runtime-root", type=Path, required=True)
@@ -255,11 +374,19 @@ if __name__ == "__main__":
     parser.add_argument("--project-id", default="work-lab")
     parser.add_argument("--tick", type=float, default=DEFAULT_TICK_SECONDS)
     parser.add_argument("--once", action="store_true")
+    parser.add_argument("--retention-rows", default=None,
+                        help="cap append-only tables, e.g. telemetry_events=200000,usage_samples=50000; "
+                             "applied at startup and after a --once tick (a daemon tick has no post-hook "
+                             "to run it from)")
     args = parser.parse_args()
-    runtime_root = args.runtime_root.resolve()
+    limits = parse_retention(args)
+    # The store holds leases, checkpoints and collected facts: a root outside the repository is invisible
+    # to the boundary sweep and outlives the checkout, so the declared runtime root is enforced here.
+    runtime_root = require_runtime_root(args.runtime_root, "workflow-assistance-worker")
     project_root = args.project_root.resolve()
     store = CanonicalStore(runtime_root / "canonical.sqlite")
     store.register_project(args.project_id, str(project_root), display_name=project_root.name)
+    retention_report = apply_retention(store, limits)
     from collectors import build_standard_collectors
 
     worker = make_worker(
@@ -272,9 +399,14 @@ if __name__ == "__main__":
     supervisor.start()
     try:
         if args.once:
-            print(json.dumps(worker.run_once(), ensure_ascii=False, default=str))
+            payload = worker.run_once()
+            after_tick = apply_retention(store, limits)
+            if limits:
+                payload["retention"] = {"atStartup": retention_report, "afterTick": after_tick}
+            print(json.dumps(payload, ensure_ascii=False, default=str))
         else:
-            print(f"WORKFLOW_WORKER_READY holder={worker.holder} tick={args.tick}")
+            print(f"WORKFLOW_WORKER_READY holder={worker.holder} tick={args.tick} "
+                  f"retention={limits or 'UNSET'}")
             worker.run_forever()
     finally:
         worker.stop()

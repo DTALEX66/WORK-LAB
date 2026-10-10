@@ -1,5 +1,12 @@
 # Active Authority Index
 
+> 历史资料定位与来源登记：`docs/history/owner-inputs/INDEX.md`。这是导航，不是第二Authority。
+
+> 2026-10-09范围切换：唯一CURRENT为`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，完整交接在`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`。
+> 旧文档数量/状态/建议只描述此前盘点，现行任务以OPEN为准；UI优先、手机端不做。
+> 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
+
+
 > **NON-AUTHORITY VIEW** — 本文件是只读分类索引，不是第二顶层 Authority。
 >
 > **Top authority = `/WORK-LAB-AUTHORITY.md`**

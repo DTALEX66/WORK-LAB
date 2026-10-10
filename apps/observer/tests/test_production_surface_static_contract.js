@@ -233,7 +233,12 @@ function run() {
     // read, and an empty array would claim "the source was read and declared nothing". Naming the set here
     // is the point -- an unlisted new optional key means somebody added a projection without deciding
     // whether absent and empty are different statements.
-    const OPTIONAL = ["software", "taskRecords", "adapterCapabilities"];
+    // artifactHandles/artifactHandlesSummary are listed as a pair because the producer builds them as one
+    // conditional spread (snapshot_api.py:114-117): absent means no caller supplied an enumeration, while []
+    // means the walk enumerated nothing. snapshot_validator.py:366-377 refuses a summary without its list and
+    // a list without its scope, so the type must never let a reader hold one of the two alone.
+    const OPTIONAL = ["software", "taskRecords", "adapterCapabilities",
+                      "artifactHandles", "artifactHandlesSummary"];
     const optional = declared.filter((d) => d.optional).map((d) => d.name).sort();
     assert(JSON.stringify(optional) === JSON.stringify([...OPTIONAL].sort()),
       "optional keys must be exactly " + OPTIONAL.join("/") + ", got " + (optional.join(", ") || "none"));

@@ -26,6 +26,11 @@ from typing import Mapping, Sequence
 
 
 WINDOWS_REPARSE_POINT = 0x400
+# Ceiling on a Git *metadata* answer, not on a user command. Every wrapper call makes these lookups, so an
+# unbounded one puts the whole pre-tool hook behind a locked index or a credential prompt; 5s is far above the
+# measured p95 (see tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py), so
+# hitting it means Git is stuck rather than slow.
+GIT_METADATA_TIMEOUT_SECONDS = 5.0
 
 
 class ProjectDataBoundaryError(RuntimeError):
@@ -39,14 +44,27 @@ class RuntimeLayout:
         self.env = env
 
 
-def discover_project_root(start: Path | str = ".") -> Path:
+def discover_project_root(start: Path | str = ".", *, timeout: float = GIT_METADATA_TIMEOUT_SECONDS) -> Path:
+    """Ask Git where the project is, and refuse to guess when it does not answer.
+
+    This runs on every wrapper call, so an unbounded ``git`` call would put the whole hook behind whatever
+    the repository is doing (locked index, credential prompt, a huge working tree). A timeout is not a
+    "not a project" verdict either: the two reasons are reported apart, because a caller that reads "not
+    inside a Git project" from a stall would go looking for a defect that is not there.
+    """
     start_path = Path(start).resolve()
-    result = subprocess.run(
-        ["git", "-C", str(start_path), "rev-parse", "--show-toplevel"],
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(start_path), "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True, encoding="utf-8", errors="replace",
+            check=False, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ProjectDataBoundaryError(
+            f"git rev-parse did not answer within {timeout:g}s for {start_path}; "
+            "the project root is unresolved, which is not the same as absent"
+        ) from exc
     if result.returncode:
         raise ProjectDataBoundaryError(f"not inside a Git project: {start_path}")
     return Path(result.stdout.strip()).resolve()
@@ -82,13 +100,26 @@ def _reject_reparse_components(root: Path, candidate: Path) -> None:
             )
 
 
-def is_git_ignored(project_root: Path, relative_path: Path) -> bool:
-    result = subprocess.run(
-        ["git", "-C", str(project_root), "check-ignore", "-q", "--no-index", relative_path.as_posix()],
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
-        check=False,
-    )
+def is_git_ignored(project_root: Path, relative_path: Path,
+                   *, timeout: float = GIT_METADATA_TIMEOUT_SECONDS) -> bool:
+    """Whether Git ignores this path. A timeout raises: "unproven" must not read as "not ignored".
+
+    The caller's rule is that a runtime root has to be ignored *before* it is used, so returning False here on
+    a stalled ``git`` would let an unignored directory through the boundary check -- the failure mode this
+    whole wrapper exists to prevent.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(project_root), "check-ignore", "-q", "--no-index", relative_path.as_posix()],
+            capture_output=True,
+            text=True, encoding="utf-8", errors="replace",
+            check=False, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ProjectDataBoundaryError(
+            f"git check-ignore did not answer within {timeout:g}s for {relative_path.as_posix()}; "
+            "ignore status is unproven, so the path is not usable as a runtime root"
+        ) from exc
     return result.returncode == 0
 
 

@@ -1,4 +1,7 @@
 # WORK-LAB 前端 UI 最终落地 · 实施报告（L10b / B10 完全复刻）
+<!-- ROOT-DISPOSITION:BEGIN NON-NORMATIVE-HISTORICAL -->
+> **NON-NORMATIVE-HISTORICAL / 历史记录，不派工**（2026-10-10 登记，WUI-17）：本文件不在权威链里，正文逐字保留未改（门会把它与提交字节逐字节比对）。现行权威顺序：`WORK-LAB-AUTHORITY.md` → `.project/governance/project-authority-index.json` → `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md` → `taskpacks/current/OPEN-TASK-REGISTER.md`；根目录逐份处置见 `docs/current/DOCUMENT-CENSUS.md` §4 与 `.project/governance/root-document-dispositions.json`。
+<!-- ROOT-DISPOSITION:END -->
 
 > 本文件覆盖两个连续的执行：**L10（B10 收敛，已合并 PR #142）**与
 > **L10b（B10 1:1 完全复刻，本分支）**。§1–§8 为 L10b 现状；§9 保留 L10 历史记录。

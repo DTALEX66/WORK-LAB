@@ -11,13 +11,27 @@ import {
   LayoutDashboard, Bot, PlayCircle, Cpu, Brain, Wrench, Activity,
   Package, FolderGit2, ShieldCheck, Settings,
   ScrollText, History, CheckCircle2, Plug, PackageCheck, SquareKanban,
-  Workflow, Network, GitBranch, FileSearch,
+  Workflow, Network, GitBranch, FileSearch, FolderOpen,
+  // WUI-05/06/07/09 destination lanes
+  Layers, BarChart3, Boxes, SlidersHorizontal,
 } from 'lucide-react'
 import {
   AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView,
   MonitoringView, DeliveryView, TrustView, SettingsView, ProjectsView,
 } from '@/views/Views'
 import { SoftwareView } from '@/views/SoftwareView'
+// WUI-02 (20261009): the object-detail surface. One address (?projectId=) resolves one project
+// identity, and the collaboration summary lives here rather than in its own lane, per WUI-01.
+import { ProjectDetailView } from '@/views/ProjectDetailView'
+// WUI-05/06/07/09: the four remaining destination pages. Each composes the legacy lane's real projection
+// instead of replacing it, so the legacy ids below stay reachable and keep their own words.
+import { UsageCacheView } from '@/views/UsageCacheView'
+import { SoftwareEnvironmentView } from '@/views/SoftwareEnvironmentView'
+import { CapabilityAssetsView } from '@/views/CapabilityAssetsView'
+import { RuleAdaptationView } from '@/views/RuleAdaptationView'
+// WUI-12: the privacy / collection-lifecycle surface. Separate from the legacy 设置 lane on purpose:
+// that one is the existing settings view, this one answers what is collected, retained and stoppable.
+import { SettingsPrivacyView } from '@/views/SettingsPrivacyView'
 // D3 (2026-09-26 stage D): primary Work lane — the first read-only visible
 // closed loop (entry -> project -> task/execution -> state/failure ->
 // Context/Evidence -> next step) with a right-side Inspector.
@@ -57,6 +71,12 @@ export interface ViewEntry {
     | 'workflows' | 'workflow-editor' | 'observer' | 'execution-detail'
     // REQ-RANGE-20261007: evidence slice lane (identity / slice / verdict)
     | 'evidence'
+    // WUI-02 (20261009): object detail — one project identity, its participants, axes and collaboration summary
+    | 'project-detail'
+    // WUI-05/06/07/09 (20261009): the four destination pages, each composing the legacy lane(s) it absorbs
+    | 'usage' | 'environment' | 'capabilities' | 'rules-adaptation'
+    // WUI-12 (20261009): privacy and the collection lifecycle
+    | 'privacy'
 }
 
 // TaskPack U04 lanes: Overview, Projects, Agents, Executions, Models/Usage,
@@ -74,7 +94,26 @@ export const VIEW_REGISTRY: ViewEntry[] = [
   // project-platform table was folded into AgentsView (U04); it is now a
   // dedicated read-only view reusing the SAME real snap.projects projection.
   { id: 'projects',     label: '项目',   icon: FolderGit2,     component: ProjectsView,     lane: 'projects' },
+  // WUI-02: the object-detail lane. Addressed by ?projectId=, it is the one surface that answers
+  // "what does the projection know about THIS project" — identity, participants, the three axes,
+  // freshness, known usage and the collaboration summary. Named 项目详情 rather than 详情 because a
+  // per-lane distinct heading is what tells a user the rail moved (see offlineViewIdentity contract).
+  { id: 'project-detail', label: '项目详情', icon: FolderOpen, component: ProjectDetailView, lane: 'project-detail' },
+  // WUI-05/06/07/09 · the four destination pages. Each one composes the legacy lane(s) whose data it
+  // presents (software inside environment, tools+capability ladder inside capabilities, models inside
+  // usage), so nothing already working is rewritten — the destination adds the questions, the legacy lane
+  // stays the compatible entry to the same projection.
+  { id: 'environment',   label: '软件环境', icon: Layers,           component: SoftwareEnvironmentView, lane: 'environment' },
+  { id: 'capabilities',  label: '能力资产', icon: Boxes,            component: CapabilityAssetsView,    lane: 'capabilities' },
+  { id: 'usage',         label: '用量缓存', icon: BarChart3,        component: UsageCacheView,          lane: 'usage' },
+  { id: 'rules-adaptation', label: '规则适配', icon: SlidersHorizontal, component: RuleAdaptationView,   lane: 'rules-adaptation' },
+  // WUI-12: privacy and the collection lifecycle. The legacy 设置 lane stays next to it because deleting
+  // a working view is not how a destination is added.
+  { id: 'privacy',      label: '隐私与采集', icon: ShieldCheck,   component: SettingsPrivacyView,   lane: 'privacy' },
   { id: 'executions',   label: '执行',   icon: PlayCircle,      component: ExecutionsView,   lane: 'executions' },
+  // WUI-05..09 put the destination words on the NEW destination lanes; these four legacy lanes keep their
+  // own original words, because a compatibility entry that renames itself to look like the destination is
+  // how two entries end up claiming to be the same page.
   { id: 'models',       label: '模型',   icon: Cpu,             component: ModelsView,       lane: 'models' },
   { id: 'memory',       label: '记忆',   icon: Brain,           component: MemoryView,       lane: 'memory' },
   { id: 'tools',        label: '工具',   icon: Wrench,          component: ToolsView,        lane: 'tools' },
@@ -117,4 +156,8 @@ export const OVERVIEW_ID = 'overview'
 // N-1: the label lived in App.tsx, Sidebar.tsx and OverviewView.tsx as three
 // separate string literals, so the nav could say 总览 while the page header said
 // anything else. Overview has no registry entry, so it needs its own constant.
-export const OVERVIEW_LABEL = '总览'
+//
+// WUI-01 (20261009): the lane is now the 项目监控 home — the owner's route table maps `overview` into
+// 项目监控 and forbids a second home, so the id stays and the word changes. Nothing outside this
+// constant may spell it: the desktop component contract fails on a second source.
+export const OVERVIEW_LABEL = '项目监控'

@@ -238,5 +238,45 @@ class ReasonPreservationTests(unittest.TestCase):
         )
 
 
+    def test_the_rule_is_applied_at_the_call_site_not_only_in_the_helper(self) -> None:
+        """`next_reason` is correct; the loop that calls it must not overwrite the label first.
+
+        Measured 2026-10-10: a new record's authored label was RESOLVES while the operand set measured
+        PATH_GONE, and the record kept the RESOLVES sentence, because the loop wrote the new label into
+        the record and only then read it back as the previous state — so the comparison in
+        `next_reason` always saw two equal values and the documented replacement never fired.
+        """
+        scratch = ROOT / ".project-local" / "runs" / "ledger_reason_callsite_probe.json"
+        gone = "tests/workflow-assistance/test_a_promise_that_exists_nowhere_9a7c1f.py"
+        hand = "reads the schema, the catalogue, the code tuple and the module itself; no network"
+        data = {"errors": [
+            {"error_id": "ERR-900001", "regression_test": gone,
+             "regressionTestVerifiability": "RESOLVES",
+             "regressionTestVerifiabilityReason": hand},
+            {"error_id": "ERR-900002", "regression_test": gone,
+             "regressionTestVerifiability": "PATH_GONE",
+             "regressionTestVerifiabilityReason": "hand sentence for a label that has not moved"},
+        ]}
+        real = lrct.LEDGER
+        scratch.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            lrct.LEDGER = scratch
+            scratch.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8", newline="\n")
+            written, _applied = lrct.apply_labels({"errors": [dict(row) for row in data["errors"]]})
+            rows = {row["error_id"]: row for row in written["errors"]}
+            moved = rows["ERR-900001"]
+            stayed = rows["ERR-900002"]
+            self.assertEqual("PATH_GONE", moved["regressionTestVerifiability"])
+            self.assertNotEqual(hand, moved["regressionTestVerifiabilityReason"],
+                                "a record whose label moved kept the sentence about the old state")
+            self.assertIn("basename", moved["regressionTestVerifiabilityReason"])
+            self.assertEqual("hand sentence for a label that has not moved",
+                             stayed["regressionTestVerifiabilityReason"],
+                             "an unchanged label must not have its explanation flattened")
+        finally:
+            lrct.LEDGER = real
+            scratch.unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -8,3 +8,9 @@
 *.psd filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
+# Immutable 2026-10-09 input/snapshot bytes: preserve original line endings and hashes.
+taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/** -text -diff
+docs/history/owner-inputs/20261009/ui-readable/** -text -diff
+docs/history/owner-inputs/20261009/final-readable/** -text -diff
+# Lossless owner-source bytes; authored indexes/registries outside originals remain text.
+docs/history/owner-inputs/record-20261009/originals/** -text -diff

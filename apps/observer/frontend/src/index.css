@@ -110,6 +110,57 @@ html.light {
   --info-rgb: 29 78 216;
 }
 
+/*
+WUI-03 (20261009) · 母版配色主题 — OPT-IN, never the default.
+
+The 2026-10-09 UI pack ships its own palette (docs/history/owner-inputs/20261009/ui-readable/contracts/
+design_tokens.json). The owner's instruction is explicit: 配色不覆盖现行值. So the pack's numbers are
+added as a selectable palette that sits BESIDE the shipped one, chosen by `?palette=master` on the same
+URL mechanism that carries theme and layout, and the blocks above stay what a fresh session renders.
+
+Two honesty notes about the values themselves:
+* every hex/rgb below is copied from the pack, including its light `sidebar` and `panel` both being
+  #FFFFFF (that sheet separates them with `line`, not with a second surface tone);
+* the pack names no `secondary` (cyan) or `info` channel, and this UI paints gradients, edge bars and
+  status dots from those. They are deliberately NOT invented here — they keep the shipped value, which
+  is why this palette is a partial overlay rather than a full re-skin.
+
+`scripts/ci/verify_css_token_mirror.py` classifies this selector as a local scope, so it does not
+participate in the one-name-one-value rule for `:root` / `html.light`; the palette's own parity with
+`theme/tokens.ts` is asserted by src/theme/paletteMirror.contract.test.ts.
+*/
+html[data-palette="master"] {
+  --color-bg: #0B1018;
+  --color-sidebar: #0E1520;
+  --color-panel: #111C2B;
+  --color-panel2: #17263A;
+  --color-border: #2C3B50;
+  --color-ink: #ECF2FA;
+  --color-muted: #A4B2C6;
+  --primary-rgb: 98 168 255;
+  --success-rgb: 105 213 181;
+  --warning-rgb: 255 200 120;
+  --error-rgb: 255 154 171;
+  /* the glow tokens above are literals; they have to follow this palette's blue or the ambient light
+     and the selected-edge highlight would glow a colour nobody chose for it */
+  --glow-primary: color-mix(in srgb, rgb(var(--primary-rgb)) 40%, transparent);
+  --glow-secondary: color-mix(in srgb, rgb(var(--secondary-rgb)) 40%, transparent);
+}
+
+html[data-palette="master"].light {
+  --color-bg: #F3F6FA;
+  --color-sidebar: #FFFFFF;
+  --color-panel: #FFFFFF;
+  --color-panel2: #EAF0F7;
+  --color-border: #CBD5E1;
+  --color-ink: #172B46;
+  --color-muted: #4F627A;
+  --primary-rgb: 23 91 185;
+  --success-rgb: 20 107 83;
+  --warning-rgb: 135 83 9;
+  --error-rgb: 172 48 76;
+}
+
 @layer base {
   * { border-color: var(--color-border); }
   html, body { background-color: var(--color-bg); }

@@ -39,6 +39,8 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts" / "audit"))
+import bundle_provenance  # noqa: E402  # every receipt names the bytes the browser loaded
 GEOMETRY = ROOT / "scripts" / "audit" / "topbar_geometry_via_cdp.py"
 OUT_DIR = ROOT / ".project-local" / "artifacts" / "legibility"
 
@@ -378,6 +380,9 @@ HARVEST = "JSON.stringify(" + HARVEST_BODY + ")"
 
 MIN_VIEW_NODES = 12      # a lane rendering fewer readable nodes than this drew nothing but chrome
 MIN_VIEWS = 20           # the rail carries 23 lanes; reaching a handful is not "every view"
+# The sentence the product prints when it cannot reach a snapshot. Its presence inside a lane means the
+# lane's OWN surface was never rendered, so the nodes measured for that lane are shell, not content.
+OFFLINE_PANEL_MARK = "读不到快照"
 
 
 def views_expression(size_key: str) -> str:
@@ -410,7 +415,26 @@ def views_expression(size_key: str) -> str:
             "})()")
 
 
-def views_verdict(theme: str, collected: dict, size: int | None = None) -> dict:
+def pill_variants(views: list[dict]) -> dict[str, int]:
+    """Which tone components were actually on screen.
+
+    Found the hard way on 2026-10-10: a sweep that passes `every_text_node_meets_AA` over 980 nodes proved
+    nothing about the status pills, because the run used the static preview and every lane had collapsed to
+    the offline panel -- no `.tag` node existed anywhere. A count of what the sample contained is the only
+    way a reader can tell "measured the pills" from "never saw the pills".
+    """
+    variants: dict[str, int] = {}
+    for view in views:
+        for node in view.get("nodes") or []:
+            head = str(node.get("path") or "").split(" > ")[0]
+            match = re.match(r"span\.(tag[\w.\-]*)", head)
+            if match:
+                variants[match.group(1)] = variants.get(match.group(1), 0) + 1
+    return variants
+
+
+def views_verdict(theme: str, collected: dict, size: int | None = None,
+                  backend: str = "static") -> dict:
     """Pure: judge every view the rail produced, naming the view in every offender."""
     page_background = collected.get("pageBackground") or "rgb(0,0,0)"
     views = collected.get("views") or []
@@ -436,6 +460,22 @@ def views_verdict(theme: str, collected: dict, size: int | None = None) -> dict:
     thin = [lane for lane, rows in scored.items() if len(rows) < MIN_VIEW_NODES]
     add("every_view_rendered_readable_text", not thin,
         "thin_views=" + json.dumps([f"{lane}={len(scored[lane])}" for lane in thin])[:400])
+
+    seen = pill_variants(views)
+    stalled = [view["lane"] for view in views
+               if any(OFFLINE_PANEL_MARK in str(node.get("text") or "")
+                      for node in view.get("nodes") or [])]
+    if backend == "live":
+        add("every_lane_reached_its_own_content", not stalled,
+            f"backend=live lanes_showing_offline_panel={json.dumps(stalled)} -- a lane that only prints the "
+            "offline panel contributes no evidence about its own surface")
+        add("tone_components_were_actually_on_screen", bool(seen),
+            f"pillVariants={json.dumps(seen)} -- with no pill rendered, an AA pass says nothing about pill "
+            "contrast (this is how DESIGN.md gap 12 stayed unmeasured while a sweep went green)")
+    else:
+        add("lane_content_reached", True,
+            f"backend=static NOT_ENFORCED -- pills={json.dumps(seen)}; a static preview shows the offline "
+            "panel per lane, so this run is evidence about chrome typography only")
 
     def across(predicate):
         return [(lane, n) for lane, rows in scored.items() for n in rows if predicate(n)]
@@ -737,7 +777,9 @@ def main() -> int:
                             print(f"LEGIBILITY_GATE_NOT_RUN views/{theme} at {size}px {exc!r}")
                             return 3
                         reports.append({"theme": f"{theme}-views-{size}px",
-                                        "verdict": views_verdict(theme, collected, size),
+                                        "verdict": views_verdict(theme, collected, size,
+                                                                 "live" if args.live_backend else "static"),
+                                        "backend": "live" if args.live_backend else "static",
                                         "collected": collected, "browser": browser})
                     continue
                 try:
@@ -754,6 +796,11 @@ def main() -> int:
     out = Path(args.json_out) if args.json_out else (
         OUT_DIR / f"legibility_{int(time.time())}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
+    # Every row says which bytes it rendered: a legibility verdict is a claim about a stylesheet, and a
+    # rebuild moves the stylesheet under it without telling it (found 2026-10-10).
+    bundle = bundle_provenance.describe(ROOT)
+    for row in reports:
+        row["servedBundle"] = bundle
     out.write_text(json.dumps(reports, indent=2, ensure_ascii=False), encoding="utf-8")
 
     ok = all(r["verdict"]["passed"] for r in reports)

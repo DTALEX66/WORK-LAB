@@ -1,4 +1,7 @@
 # HANDOFF · UI L10b — B10 1:1 full style replication
+<!-- ROOT-DISPOSITION:BEGIN NON-NORMATIVE-HISTORICAL -->
+> **NON-NORMATIVE-HISTORICAL / 历史记录，不派工**（2026-10-10 登记，WUI-17）：本文件不在权威链里，正文逐字保留未改（门会把它与提交字节逐字节比对）。现行权威顺序：`WORK-LAB-AUTHORITY.md` → `.project/governance/project-authority-index.json` → `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md` → `taskpacks/current/OPEN-TASK-REGISTER.md`；根目录逐份处置见 `docs/current/DOCUMENT-CENSUS.md` §4 与 `.project/governance/root-document-dispositions.json`。
+<!-- ROOT-DISPOSITION:END -->
 
 > ## ⛔ CLOSED — DO NOT RE-EXECUTE THIS HANDOFF (status correction 2026-10-01)
 >

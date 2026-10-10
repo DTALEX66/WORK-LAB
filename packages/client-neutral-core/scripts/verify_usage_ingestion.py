@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import sys
-import tempfile
+import project_temp
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -34,7 +34,7 @@ def verify() -> dict:
             errors.append(f"{agent}: invalid status")
 
     # 2. Read-only incremental ingestion on a synthetic fixture.
-    with tempfile.TemporaryDirectory() as d:
+    with project_temp.fixture_root(prefix='usage-ingestion-fixture-') as d:
         usage = Path(d) / "usage.jsonl"
         usage.write_text(
             "{\"provider\":\"deepseek\",\"model\":\"deepseek-v4-flash\",\"operation\":\"chat\","

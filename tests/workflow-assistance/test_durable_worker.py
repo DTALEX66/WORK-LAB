@@ -13,6 +13,7 @@ from pathlib import Path
 
 from canonical_store import CanonicalStore
 from durable_worker import CollectorError, CollectorResult, DurableWorker, fingerprint
+import project_temp
 
 
 def _quality_collector(store: CanonicalStore, project_id: str) -> CollectorResult:
@@ -184,8 +185,10 @@ class DurableWorkerTests(unittest.TestCase):
         self.assertNotEqual(fingerprint("a:boom"), fingerprint("b:boom"))
 
     def test_cli_once_registers_project_and_runs_standard_collectors(self) -> None:
-        with tempfile.TemporaryDirectory() as raw:
-            root = Path(raw)
+        # The runtime root must stay inside the project: the worker CLI now refuses an outside root, because
+        # a canonical store in %TEMP% is invisible to the boundary sweep and outlives the checkout.
+        root = project_temp.fixture_dir(prefix="durable-worker-cli-")
+        try:
             project = root / "project"
             runtime = root / "runtime"
             project.mkdir()
@@ -217,6 +220,9 @@ class DurableWorkerTests(unittest.TestCase):
                 self.assertGreaterEqual(projection["tables"]["source_quality"], 1)
             finally:
                 readback.close()
+        finally:
+            self.assertTrue(project_temp.force_release(root) or not root.exists(),
+                            f"the CLI fixture root was left behind: {root}")
 
 
 if __name__ == "__main__":

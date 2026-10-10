@@ -38,6 +38,15 @@ RAW_PARENT_TRAVERSAL = re.compile(
 RAW_RUN_SEPARATOR = re.compile(r"(?:^|\s)run\s+--\s+")
 
 WRAPPER_NAME = "hermes-project-data.py"
+# Ceiling on the guard's one Git lookup. This hook runs before *every* terminal tool call, so an unbounded
+# git call would let a locked index or a credential prompt stall the whole client; the number sits far above
+# the measured p95 recorded by
+# tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py.
+ROOT_CHECK_TIMEOUT_SECONDS = 5.0
+
+
+class RootCheckUnresolved(RuntimeError):
+    """Git did not answer. Refuse the call, and say that -- not "this is not a Git project"."""
 SUBCOMMANDS = {"init", "check", "policy", "cleanup", "run", "kanban"}
 LEGACY_EXTERNAL_SPILL_ROOTS = ("d:/a", "d:/d", "d:/dev", "d:/tmp")
 
@@ -334,17 +343,28 @@ def block(reason: str) -> int:
     return 0
 
 
-def project_root(workdir: str) -> Path | None:
+def project_root(workdir: str, *, timeout: float = ROOT_CHECK_TIMEOUT_SECONDS) -> Path | None:
+    """Locate the Git root of a declared workdir, or answer None when it genuinely is not one.
+
+    A stall is reported apart from a negative answer (``RootCheckUnresolved``) because the guard's whole job is
+    to say *why* a call is refused. Returning None on a timeout would tell the user "this workdir is not a Git
+    project", which is a claim about their repository that a hung ``git`` has no authority to make -- and it is
+    also the claim that would send them looking for a project that isn't there.
+    """
     try:
         candidate = Path(workdir).expanduser().resolve(strict=True)
     except (OSError, RuntimeError):
         return None
-    result = subprocess.run(
-        ["git", "-C", str(candidate), "rev-parse", "--show-toplevel"],
-        capture_output=True,
-        text=True, encoding="utf-8", errors="replace",
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(candidate), "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True, encoding="utf-8", errors="replace",
+            check=False, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RootCheckUnresolved(
+            f"git rev-parse did not answer within {timeout:g}s for {candidate}") from exc
     if result.returncode:
         return None
     try:
@@ -363,7 +383,10 @@ def validate(payload: dict[str, Any]) -> str | None:
     workdir = tool_input.get("workdir")
     if not isinstance(workdir, str) or not workdir.strip():
         return "terminal calls must declare an explicit Git-project workdir."
-    root = project_root(workdir.strip())
+    try:
+        root = project_root(workdir.strip())
+    except RootCheckUnresolved as exc:
+        return f"project root is unresolved ({exc}); the call is refused rather than assumed safe."
     if root is None:
         return "workdir must resolve inside an existing Git project."
 

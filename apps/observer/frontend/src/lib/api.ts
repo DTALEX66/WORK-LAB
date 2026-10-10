@@ -162,16 +162,27 @@ export async function fetchSnapshot(): Promise<SnapshotV3 | null> {
 // polling remains only as a fallback. The Tauri shell persists the cursor
 // across restarts (lib.rs); the browser keeps it for the session.
 // ---------------------------------------------------------------------------
-export interface EventStreamHandlers {
-  onEvent: (event: MessageEvent, snapshot?: SnapshotV3) => void
+export interface EventStreamHandlers {  onEvent: (event: MessageEvent, snapshot?: SnapshotV3) => void
+  /** the FIRST successful open only — a resumed stream arrives through `onReconnect`, never twice */
   onOpen?: () => void
   onError?: (err: Event) => void
+  /** every open after the first, carrying the cursor the browser will send as `Last-Event-ID` */
   onReconnect?: (lastEventId: string | null) => void
   /** a `heartbeat` frame proves the stream is up; it must not cost a snapshot GET */
   onHeartbeat?: (event: MessageEvent) => void
   /** `observed` / `resync_required`: the caller re-reads the canonical snapshot */
   onResync?: () => void
 }
+
+/**
+ * `EventSource.lastEventId` is in the DOM standard (it is the value the platform puts into the
+ * `Last-Event-ID` header on its own reconnect) but not in this project's `lib` surface, where the interface
+ * is only `CLOSE/CONNECTING/OPEN` plus url/withCredentials. Naming the property in a narrow local type is
+ * the honest way to read it: the alternative was a hand-maintained mirror updated from each frame, which is
+ * a second copy of a value the browser already owns — and a copy nothing can falsify, because a test that
+ * resets the mirror still sees the platform's own value.
+ */
+type EventSourceWithCursor = EventSource & { readonly lastEventId?: string | null }
 
 export function openEventStream(handlers: EventStreamHandlers, url: string = EVENTS_URL ?? ''): () => void {
   if (!url) {
@@ -180,17 +191,22 @@ export function openEventStream(handlers: EventStreamHandlers, url: string = EVE
     return () => { /* nothing to close */ }
   }
   let es: EventSource | null = null
-  let lastEventId: string | null = null
+  let everOpened = false
   let closed = false
   function connect() {
     if (closed) return
     try { es = new EventSource(url) } catch { handlers.onError?.(new Event('sse-unavailable')); return }
     es.addEventListener('open', () => {
-      if (lastEventId) handlers.onReconnect?.(lastEventId)
-      handlers.onOpen?.()
+      // `EventSource` owns the resume cursor: it sends the last `id:` it saw as `Last-Event-ID` on its own
+      // reconnect, and the sidecar either replays the gap or answers `resync_required`. There is no second
+      // copy kept here — a local mirror of a value the platform already owns is how the previous version
+      // ended up "resetting the cursor" on error while the real cursor was never in it.
+      const cursor = (es as EventSourceWithCursor | null)?.lastEventId ?? null
+      if (everOpened) handlers.onReconnect?.(cursor)
+      else handlers.onOpen?.()
+      everOpened = true
     })
     es.addEventListener('snapshot', (ev: MessageEvent) => {
-      if (ev.lastEventId) lastEventId = ev.lastEventId
       let snap: SnapshotV3 | undefined
       // Same structural gate as the GET: a malformed or legacy frame degrades to
       // "no snapshot" instead of being cast into the typed model.
@@ -198,25 +214,23 @@ export function openEventStream(handlers: EventStreamHandlers, url: string = EVE
       handlers.onEvent(ev, snap)
     })
     es.addEventListener('message', (ev: MessageEvent) => {
-      if (ev.lastEventId) lastEventId = ev.lastEventId
       handlers.onEvent(ev)
     })
     es.addEventListener('heartbeat', (ev: MessageEvent) => {
-      if (ev.lastEventId) lastEventId = ev.lastEventId
       // A heartbeat only proves the stream is up. It must NOT trigger a snapshot
       // GET — that is what keeps a heartbeat burst from becoming a read storm.
       handlers.onHeartbeat?.(ev)
     })
     for (const name of ['observed', 'resync_required']) {
-      es.addEventListener(name, (ev: MessageEvent) => {
-        if (ev.lastEventId) lastEventId = ev.lastEventId
+      es.addEventListener(name, () => {
         handlers.onResync?.()
       })
     }
     es.addEventListener('error', (err: Event) => {
-      // EventSource auto-reconnects on transient errors; report + reset cursor.
+      // Report the interruption — LIVE is never claimed through a dead stream — and otherwise DO NOTHING:
+      // closing the source here would forfeit the browser's automatic reconnect and with it the cursor that
+      // makes replay possible.
       handlers.onError?.(err)
-      lastEventId = null
     })
   }
   connect()
@@ -525,8 +539,13 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
               reportReadFailure('SSE 帧不合 v3 结构 — 保持上次良好投影，不伪造数据')
             }
           },
-          // On (re)connect the stream may be behind us; re-read once to resync.
+          // First open: the stream may be behind us and nothing has been read yet, so read once.
           onOpen: () => { setSource(descriptor.authoritative ? 'live' : 'static-preview'); void tick() },
+          // A resumed stream: the server replays the gap or sends `resync_required` (handled below), and
+          // this surface still re-reads, because claiming LIVE through a connection that just came back is
+          // a stronger statement than a replayed tail alone can support. One read per open, never two —
+          // `onOpen` and `onReconnect` are mutually exclusive by construction.
+          onReconnect: () => { setSource(descriptor.authoritative ? 'live' : 'static-preview'); void tick() },
           // A stream error stops the LIVE claim immediately (the legacy contract
           // demanded this of the EventSource transport, not of the poll). The next
           // successful read clears it; nothing is wiped and nothing is invented.

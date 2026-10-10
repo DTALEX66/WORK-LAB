@@ -3,10 +3,11 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/ui/page-header'
 import type {
-  SnapshotV3, Execution, Project,
+  SnapshotV3, Execution, Project, GitMatchState,
 } from '@/types'
 import { fmtTokens, fmtCostQuality, fmtTimestamp, stateTone, activityTone } from '@/lib/api'
 import { AdapterCapabilityCards } from '@/views/AdapterCapabilityCards'
+import { StateMatrixCard } from '@/components/ui/states'
 
 type Snap = SnapshotV3 | null
 
@@ -30,6 +31,25 @@ function toneVariant(tone: string): 'success' | 'warning' | 'error' | 'info' | '
     case 'done': return 'info'
     default: return 'muted'
   }
+}
+
+/**
+ * Keyed by the union rather than switch-cased, so a seventh producer outcome is a compile error here
+ * instead of a badge that quietly renders `muted`. The row used to read
+ * `matchState === 'DRIFT' ? 'error' : 'muted'`: `DRIFT` is not a value `_git_match_state` returns, so
+ * `MISMATCH` — the state a user actually needs to see in red — was falling through to muted.
+ */
+const GIT_MATCH_VARIANT: Record<GitMatchState, 'success' | 'warning' | 'error' | 'info' | 'muted'> = {
+  MATCH: 'success',
+  LOCAL_REMOTE_MATCH: 'warning',
+  LOCAL_CI_MATCH: 'warning',
+  MISMATCH: 'error',
+  NO_LOCAL_CLAIM: 'muted',
+  UNVERIFIED: 'muted',
+}
+
+function gitMatchVariant(state: GitMatchState | undefined) {
+  return state === undefined ? 'muted' : GIT_MATCH_VARIANT[state]
 }
 
 const STATE_TEXT: Record<string, string> = {
@@ -372,6 +392,12 @@ export function MonitoringView({ snap }: { snap: Snap }) {
           <Row k="覆盖度" v={cov && cov.numerator != null ? cov.numerator + '/' + (cov.denominator ?? '?') + ' · ' + (cov.scope || 'UNKNOWN') : 'UNKNOWN'} />
         </div>
       </CardContent></Card>
+      <Card><CardHeader><span>产品状态矩阵（八态，含投影能否回答）</span></CardHeader><CardContent>
+        {/* Reachability, not decoration: this card shipped with WUI-11 and was imported only by its own
+            test, so no user could ever see which of the eight states the projection can answer. The
+            diagnostics lane is where that reference belongs. */}
+        <StateMatrixCard />
+      </CardContent></Card>
       <Card><CardHeader><span>说明</span></CardHeader><CardContent className="text-xs text-muted">
         服务健康 = 传输真值，不是伪造的 healthy。LIVE 仅当 live-gate verdict 为 LIVE；canonical readback 失败回退 DELAYED/OFFLINE。Observer 严格只读。
       </CardContent></Card>
@@ -391,7 +417,7 @@ export function DeliveryView({ snap }: { snap: Snap }) {
             <Row k="本地" v={git?.localSha ? git.localSha.slice(0, 7) : 'UNKNOWN'} />
             <Row k="远程" v={git?.remoteSha ? git.remoteSha.slice(0, 7) : 'UNKNOWN'} />
             <Row k="CI HEAD" v={git?.ciSha ? git.ciSha.slice(0, 7) : 'UNKNOWN'} />
-            <Row k="匹配状态" v={<Badge variant={git?.matchState === 'MATCH' ? 'success' : git?.matchState === 'DRIFT' ? 'error' : 'muted'}>{git?.matchState || 'UNKNOWN'}</Badge>} />
+            <Row k="匹配状态" v={<Badge variant={gitMatchVariant(git?.matchState)}>{git?.matchState || 'UNKNOWN'}</Badge>} />
           </div>
         </CardContent></Card>
         <Card><CardHeader><span>CI 运行</span></CardHeader><CardContent>

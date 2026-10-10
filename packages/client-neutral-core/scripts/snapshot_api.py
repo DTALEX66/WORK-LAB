@@ -53,6 +53,7 @@ def build_snapshot(
     adapter_capabilities: list[dict[str, Any]] | None = None,
     artifact_handles: list[dict[str, Any]] | None = None,
     artifact_handles_summary: dict[str, Any] | None = None,
+    collector_delivery: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the v3 snapshot from canonical facts (all fields optional for tests)."""
     generated_at = generated_at or _now()
@@ -115,6 +116,9 @@ def build_snapshot(
             **({"artifactHandlesSummary": artifact_handles_summary}
                if artifact_handles_summary is not None else {})}
            if artifact_handles is not None else {}),
+        # Per-collector delivery and refusal counts (ERR-256 made them durable). Same absent-never-empty rule
+        # as the sections above: the presence of the key is the statement that health was read at all.
+        **({"collectors": collector_delivery} if collector_delivery is not None else {}),
     }
 
 
@@ -281,7 +285,11 @@ def _project_projection(
             "costQuality": usage.get("costQuality") or "UNKNOWN",
         },
         "ci": project_ci,
-        "executionIds": [e.get("executionId") for e in project_executions],
+        # The line below this one filtered; this one did not, so a row built from an execution with no id
+        # emitted null inside a list the front model declares string[] — the join announced an identifier
+        # it did not have. An id-less execution is still visible in `executions[]`, where executionId is
+        # required, so dropping it here hides no fact.
+        "executionIds": [eid for eid in (e.get("executionId") for e in project_executions) if eid],
         "sourceRefs": [e.get("sourceRef") for e in project_executions if e.get("sourceRef")],
     }
 

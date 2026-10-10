@@ -30,11 +30,13 @@ from __future__ import annotations
 
 import atexit
 import gc
+import json
 import os
 import shutil
 import stat
 import sys
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 if str(Path(__file__).resolve().parent) not in sys.path:
@@ -44,6 +46,64 @@ from evidence_range_reader import name_is_sensitive  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_TMP = REPO_ROOT / ".project-local" / "runs" / "tmp"
+BOUNDARY_FILE = REPO_ROOT / ".project" / "governance" / "project-data-boundary.json"
+
+
+def declared_runtime_root() -> Path:
+    """The runtime root the data-boundary contract declares, resolved against this repository.
+
+    Read from the machine authority rather than hardcoded, because a CLI default that points at
+    ``%TEMP%`` writes canonical state (``canonical.sqlite``) outside the project root, which AGENTS.md
+    and ``project-data-boundary.json`` forbid.
+    """
+    declared = json.loads(BOUNDARY_FILE.read_text(encoding="utf-8"))["runtimeRoot"]
+    root = (REPO_ROOT / declared).resolve()
+    if not root.is_relative_to(REPO_ROOT):
+        raise RuntimeError(f"RUNTIME_ROOT_ESCAPES_PROJECT {root} (declared {declared!r})")
+    return root
+
+
+def runtime_dir(name: str) -> Path:
+    """A named durable runtime directory inside the declared root -- worker stores and CLI defaults."""
+    root = declared_runtime_root()
+    target = (root / name).resolve()
+    if not target.is_relative_to(root):
+        raise RuntimeError(f"RUNTIME_ROOT_ESCAPES_PROJECT {target}")
+    target.mkdir(parents=True, exist_ok=True)
+    return target
+
+
+@contextmanager
+def fixture_root(prefix: str = "work-lab-"):
+    """A `with` fixture directory that stays inside the boundary and is released on exit.
+
+    ``tempfile.TemporaryDirectory()`` deletes itself -- until cleanup fails, which on Windows is exactly
+    what a still-open ``canonical.sqlite`` handle does. Measured 2026-10-10 in the user temp root:
+    25 ``tmp*`` directories holding 2 canonical stores, 18 git-metadata files and 6,495,636 B, and 5 more
+    in ``C:\\Windows\\TEMP``. ``fixture_dir`` + ``force_release`` reports a refusal instead of swallowing
+    it, and the root is inside the declared runtime root either way.
+    """
+    path = fixture_dir(prefix=prefix)
+    try:
+        yield path
+    finally:
+        force_release(path)
+
+
+def require_runtime_root(value: Path | None, name: str) -> Path:
+    """Resolve a caller-supplied runtime root, refusing one that leaves the project.
+
+    A worker store written outside the repository is invisible to the boundary sweep and survives the
+    checkout, so the CLI cannot accept whatever it is handed; the refusal is named, not silent.
+    """
+    if value is None:
+        return runtime_dir(name)
+    resolved = Path(value).resolve()
+    if not resolved.is_relative_to(REPO_ROOT):
+        raise RuntimeError(f"RUNTIME_ROOT_ESCAPES_PROJECT {resolved} "
+                           f"(declared runtime root: {declared_runtime_root()})")
+    resolved.mkdir(parents=True, exist_ok=True)
+    return resolved
 
 
 def temp_root() -> Path:

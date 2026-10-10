@@ -161,7 +161,7 @@ describe('P1-02 · record deep link through the shell', () => {
       workspace: {},
       projects: [], executions: [], ci: [], tasks: {}, sourceRefs: [],
       tokenSummary: { inputTokens: null, outputTokens: null, totalTokens: null, costQuality: 'UNKNOWN' },
-      git: { localSha: null, remoteSha: null, ciSha: null, matchState: 'UNKNOWN' },
+      git: { localSha: null, remoteSha: null, ciSha: null, matchState: 'NO_LOCAL_CLAIM' },
       taskRecords: [taskRow],
     } as any
   }

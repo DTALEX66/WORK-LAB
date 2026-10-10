@@ -6,7 +6,7 @@
   "blueprintDoc": "docs/future/WORK-LAB-BLUEPRINT-20261006.md",
   "observedAt": "2026-10-07T00:31:37+0800",
   "baseSha": "6015f0ba1dc0c195a83e704bd73117b68f077347",
-  "note": "status reuses the existing register vocabulary (NOT_RUN FAIL UNVERIFIED PASS PARTIAL BLOCKED); disposition reuses the owner prompt's four decisions plus SOURCE_GAP. No parallel task-state enum is introduced. This file records its base SHA only: no artifact hashes itself, and the final commit SHA is read back by the PR/CI receipt, never written inside the commit it describes.",
+  "note": "2026-10-09: historical blueprint coverage, not current dispatch. New CURRENT UI-first WUI supersedes old planning obligations. Historical status remains evidence for its own observation, not new product PASS. Useful requirements mapped in docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json.",
   "inputs": [
     {
       "sourceId": "BLUEPRINT-DOCX",
@@ -63,8 +63,8 @@
       ],
       "status": "PASS",
       "evidence": "naming present in README + blueprint; C01 cited",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "GitHub About sync pending (§CH-19)"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-02",
@@ -77,8 +77,8 @@
       ],
       "status": "PASS",
       "evidence": "Authority §3 already states the control-plane mother definition",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "README wording drift corrected this round (it called the project a global-configuration layer only)"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-03",
@@ -93,8 +93,8 @@
       ],
       "status": "PASS",
       "evidence": "machine contracts exist and are gated by verify_project_data_boundary.py / verify_module_dependencies.py",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "none"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-04",
@@ -108,8 +108,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "registry/work-unit/governance/evidence surfaces exist; Runtime Control interpretation change is documentation, not code",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "no second ledger; capability claims stay bound to §13 evidence vocabulary"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-05",
@@ -123,8 +123,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "Hermes overlay + sync script + provenance file exist; transaction steps are enforced per surface, not by one contract test",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "readback truth across all clients is an open register item"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-06",
@@ -138,8 +138,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "verifiers present. 2026-10-08: the seven-layer ladder is machine-checked — `adapter_capability_projection.py` is the single source that decides each layer's state (MET requires a named source and a non-NO_EVIDENCE level; NOT_PROBED requires the missing thing by name; repeated layers refused), and `snapshot_validator` rejects `nativeStatus=NATIVELY_VERIFIED` unless OBSERVED_IN_EXECUTION is MET — the ladder cannot be climbed from the top. Live readback on this machine: 10 cards, INSTALLED=MET only for the client whose install identity is SINGLE_VERIFIED, NOT_SUPPORTED where absence was measured, NOT_PROBED where discovery says UNKNOWN; every card reports nativeStatus=NOT_IMPLEMENTED with the AG-06/G06 reason.",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "ladder is expressed as a snapshot contract, not inside capability-conformance.schema.json (that file describes protocols, not clients — binding it there would have been the wrong home); the upper five layers still need real execution evidence, and hermes/codex need U17 discovery to stop reporting UNKNOWN before INSTALLED can be MET"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-07",
@@ -153,8 +153,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "ledger and contract verifiers exist; lifecycle-state fidelity is tracked in the open register. 2026-10-08: the Work Unit is now addressable in the product — the snapshot carries taskRecords projected from the canonical store's own task rows, the Work lane deep-links to one record (?view=work&taskId=) and refuses to fall back to another record when the id is unknown, and a control-created unit reads back through the real sidecar.",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "late-receipt / revision semantics need live execution evidence; the v3 snapshot still carries no task↔execution foreign key, no Goal text, and no revision/attempt projection, so the detail card lists them as source gaps"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-08",
@@ -168,8 +168,8 @@
       ],
       "status": "UNVERIFIED",
       "evidence": "no live two-executor golden-chain run; AG-09/U18 remain open",
-      "disposition": "PENDING_CONFIRMATION",
-      "nextOrBlocked": "blocked on an owner-selected project + two real executors"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-09",
@@ -183,8 +183,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "handoff and context surfaces implemented for in-repo use; cross-client envelope not exercised",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "none newly invented"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-10",
@@ -197,8 +197,8 @@
       ],
       "status": "NOT_RUN",
       "evidence": "no automated transport implemented; manual handoff path is used but not registered as an executable contract",
-      "disposition": "PENDING_CONFIRMATION",
-      "nextOrBlocked": "AG-16/AG-17 open; the blueprint merges them into one row (SOURCE_GAP)"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-11",
@@ -212,8 +212,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "Observer read-only enforced and tested (a POST to the live sidecar is measured at 405, not asserted). 2026-10-08: the writable Control surface exists and is a separate loopback-only service that calls the existing Permission Gate and the one canonical store — the Observer gained no write path and the shell has no auth control of any kind. Completion Authority is still not reached from a control write, because dispatch is NOT_IMPLEMENTED.",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "T04 landed as PARTIAL; AG-15 stays open until an executor accepts a dispatch. OD01 remains a task-pack default, not a renewed permanent approval"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-12",
@@ -228,8 +228,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "registry + rollup + integrity checks exist; real consumer verification (AG-10) and OCR/ASR acceptance (AG-11) are open",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "9/29 environment snapshot is time-pointed; no reinstall or delete authorization"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-13",
@@ -244,8 +244,8 @@
       ],
       "status": "PASS",
       "evidence": "vocabulary is machine-enforced (verify_evidence_tiering.py) and the aggregate gate fails on skipped required jobs",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "none"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-14",
@@ -259,8 +259,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "stack matches the declared layering; U19 real-desktop surface still unproven (ERR-104/107)",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "desktop surface observation owed; see ERR-107 remaining_boundary"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-15",
@@ -273,8 +273,8 @@
       ],
       "status": "UNVERIFIED",
       "evidence": "phase 15.1 items map to open register rows; 15.5/15.6 have no acceptance criteria in the source",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "SOURCE_GAP: §15.6 conditional enhancements lack scenario, acceptance, phase slot and exit in the original — not invented here"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-16",
@@ -287,8 +287,8 @@
       ],
       "status": "PASS",
       "evidence": "the §16 table is landed with row keys 16.01…16.19 generated from the docx; the registry holds 22 candidates over 19 rows and every row has at least one claimant, checked in both directions. Since 2026-10-07 each row also carries a discovery readback (13 RESOLVED with org/repo and licence as returned by the GitHub API, 7 AMBIGUOUS, 2 NOT_FOUND), an absorption level with repository paths that must exist, and a decision: 15 REJECT, 7 KEEP_CANDIDATE, 0 PROMOTED. The gate refuses a licence the readback did not return, an evidence path that is not on disk, a PILOT row with no code, a kept row with no blocker and a retired row with no reason; falsified 10/10 and reproduced as 0/10 against the previous verifier (ERR-126)",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "7 kept rows, each with its blocker written down: FUT-001 needs an owner-authorized pilot on a real external project plus a launch path that does not exist yet, FUT-010 needs the official route's account and terms (AG-16/AG-17), FUT-020 needs an AGPL-3.0 licence decision, FUT-021 waits on a second MCP identity, FUT-022 on a real cross-time query, FUT-041 is a POC without a Windows artifact, FUT-047 is a research lead with no named gap. Retired rows keep their reversal conditions in pilot_trigger; no candidate was installed, launched or piloted, so no windows_support value is VERIFIED"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-17",
@@ -301,8 +301,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "AG-01..AG-20 and U01..U21 are enumerated in this matrix from the live files",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "SOURCE_GAP: blueprint has no AG-14 row, merges AG-16/17, omits AG-01..AG-08, omits W09, and cites OD03/04 jointly"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-18",
@@ -315,8 +315,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "live re-observation recorded in the audit snapshot; PR #162 head correction recorded",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "SOURCE_MISSING: original long chat, WORK-LAB-SUMMARY and the 9/28 startup/final attachments remain unrecovered (AG-19)"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-19",
@@ -329,8 +329,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "About text recorded as before→after in the audit snapshot; repository About is non-Git metadata",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "About readback required after the metadata write; source coverage table is chapter-keyed, not ID-keyed, hence this matrix"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "CH-APP",
@@ -343,8 +343,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "source ids registered in the matrix inputs block",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "the blueprint's 章节索引 omits this appendix; the doubled atlas path segment is recorded as-is"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "T01",
@@ -356,8 +356,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "PR #162 OPEN, head f3b5dec (advanced from the source-recorded 6f323a3); merge not authorized",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "merge to main requires explicit authorization"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "T02",
@@ -370,8 +370,8 @@
       ],
       "status": "PASS",
       "evidence": "2026-10-06T23:06+08:00 local re-run of the full canonical gate on the working copy at base 4115d63 (two docs-only files edited during the run): QUALITY_GATE_PASS, modules=180 executed=1896 ran=1904 skipped=8, aggregate exit 0. Receipt: .project-local/runs/blueprint-doc-20261006/full-gate.log (1019 lines, no gate FAIL). The 2026-10-05 FAIL figures (1903 tests / 9 skipped / 12 errors / 22 failures, rerun_after_runtime_fix=false) stay on the record as history — that round was archived without ever being re-run after its environment fix, which is precisely why T02 existed.",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "Residuals the aggregate itself declares, not closed by this run: RUNTIME_CANARY_PENDING (no WORKLAB_CANARY_PROJECT_ROOTS), TAURI_WINDOWS_PENDING (real desktop WebView2 E2E — see T03), and the exact-sha-ci / work-lab-os-canary gates report PENDING by design off GitHub Actions. skipped=8 are test-level skips inside modules, not skipped required gates."
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "T03",
@@ -384,8 +384,8 @@
       ],
       "status": "PASS",
       "evidence": "Observed by the owner on the real desktop on 2026-10-07, running `.project-local/runs/u19-msvc-20261006/target/release/app.exe` (sha256 6f73c14eb542f1a7…, 9,850,368 B, built against gitHead 307d90b): caption controls respond (ERR-103 re-confirmed), the top command row clears the window edge (ERR-106), and the layout is the intended one. Supported by the network oracle, the compiled capability artifact and a build receipt whose 12 inputs still match this tree.",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "no desktop observation owed any more; automated composited-surface capture (Windows.Graphics.Capture) is still unwired, so a pixel-only regression would not be caught without another owner look"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "T04",
@@ -400,8 +400,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "2026-10-08: the loopback-only Control service and its dependency-free shell landed. Three operations are implemented as measured from the service registry (13 declared, 10 answering NOT_IMPLEMENTED with a reason code and a next step): work-unit.create writes to the one canonical store and is read back through the Observer snapshot; work-unit.materialize consumes an authorised PlanningCandidate, re-running the authorization check server-side so a client claim is not evidence; config.diff returns a plan marked written=false. 60 tests guard the surface (29 in test_control_service, 31 in test_planning_candidate_handoff) and pin idempotent replay, foreign-key refusal, out-of-boundary refusal and READBACK_MISMATCH-when-unreadable. Register rows P1-06-CONTROL-SURFACE-20261008 and P1-02-RECORD-FOCUS-20261008.",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "must not smuggle write authority into Observer. Still owed: an authorised native executor for dispatch/cancel/retry/resume, an approval write contract, config apply/rollback with a recovery handle on an authorised exact target, and the measured gap that a Control write does not advance the sidecar revision (content visible on the next snapshot, no push event)."
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "T05",
@@ -413,8 +413,8 @@
       ],
       "status": "NOT_RUN",
       "evidence": "AG-16/17 open; no registered handoff contract",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "manual paste must never be reported as an automatic transport"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "T06",
@@ -426,8 +426,8 @@
       ],
       "status": "UNVERIFIED",
       "evidence": "AG-09/AG-10/AG-11 open; Hermes uninstall history conflicts with the package's dual-executor goal",
-      "disposition": "PENDING_CONFIRMATION",
-      "nextOrBlocked": "owner must select the project and the two executors"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "T07",
@@ -440,8 +440,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "4 of 5 pinned originals verified hash-identical on this machine (summary, R3 and daily taskpacks, 09-03 handoff); the 15.5 MB conversation timeline negatively proven absent across the tree, git history and archives; the two 2026-09-28 items have no digest pin so nothing can be claimed either way. Registry amended in place with AG-20 increments appended",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "originals remain unrecoverable from the source platform only; history_complete stays false; the registry is machine-local so the amendment is not CI-enforced and an atlas rebuild must re-apply it"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "T08",
@@ -453,8 +453,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "2026-09-17 convergence executed and frozen; later absorbable increments still judged per semantic diff",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "no long-lived shadow-main"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "T09",
@@ -467,8 +467,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "this round lands documentation and coverage; Authority unchanged (no decision changed)",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "final acceptance pending T02/T03 re-runs"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "OD01",
@@ -480,8 +480,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "source category is 任务包默认, not a renewed permanent approval. The default landed on 2026-10-08 as a loopback-only bind with a dynamic port and an endpoint descriptor in the runtime root, exercised by two real processes in one proof run.",
-      "disposition": "PENDING_CONFIRMATION",
-      "nextOrBlocked": "continued loopback-only operation is a task-pack default; a broader exposure would need a new owner decision"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "OD02",
@@ -493,8 +493,8 @@
       ],
       "status": "NOT_RUN",
       "evidence": "matches AG-16/17 sequencing",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "none"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "OD03",
@@ -506,8 +506,8 @@
       ],
       "status": "UNVERIFIED",
       "evidence": "SOURCE_GAP: the blueprint cites OD03/OD04 jointly, so the split of meaning between them is not recoverable from the source",
-      "disposition": "PENDING_CONFIRMATION",
-      "nextOrBlocked": "do not assign the joint citation's content to either id alone"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "OD04",
@@ -519,8 +519,8 @@
       ],
       "status": "UNVERIFIED",
       "evidence": "SOURCE_GAP as recorded for OD03",
-      "disposition": "PENDING_CONFIRMATION",
-      "nextOrBlocked": "same"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "OD05",
@@ -532,8 +532,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "SPEC_AND_RUNTIME_ADDED 2026-10-08 for Quick Entry: the field and permission spec exists at packages/contracts/schemas/workflow/quick-entry-request.schema.json, is declared in .project/governance/contracts/contract-catalog.json, is projected into packages/client-neutral-core/generated/contracts.ts, and has a runtime consumer at packages/client-neutral-core/scripts/quick_entry.py whose five outcomes are tested in tests/workflow-assistance/test_quick_entry.py. SOURCE_GAP still holds for Lite and the tray HUD: neither has a field or permission spec anywhere in the source.",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "Quick Entry has a contract and a consumer but no user-facing surface yet (nothing a person invokes), so the mode must not be presented as shipped; Lite and the tray HUD must not be presented as implemented modes at all."
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W01",
@@ -545,8 +545,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "live Authority re-read this session; the archived copy is historical",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "hash recorded in the source appendix only"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W02",
@@ -558,8 +558,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "its byte/line counts are report values, not proof",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "AG-19 recovery still open"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W03",
@@ -571,8 +571,8 @@
       ],
       "status": "PASS",
       "evidence": "its '14 candidates' figure is kept as a historical observation; the pool it describes is now row-keyed (19 rows, 22 candidates) and every row carries a decision, so the count no longer stands in for coverage and neither does the status word",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "none"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W04",
@@ -584,8 +584,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "architecture documented; write path unimplemented",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "none"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W05",
@@ -597,8 +597,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "dates and phases are planning prose, no committed duration",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "none"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W06",
@@ -610,8 +610,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "its SHA/PR/CI/test figures re-observed this round; PR head moved",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "see CH-18"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W07",
@@ -623,8 +623,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "OD sub-ids are cited in the body but not enumerated in the appendix",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "recorded as task-pack defaults"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W08",
@@ -636,8 +636,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "carried as cases, not as unverified conclusions",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "none"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W09",
@@ -649,8 +649,8 @@
       ],
       "status": "UNVERIFIED",
       "evidence": "SOURCE_MISSING: numbering gap; the body also claims a read list of W01—W08 while citing W10",
-      "disposition": "SOURCE_MISSING",
-      "nextOrBlocked": "do not reconstruct what W09 was"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "W10",
@@ -663,7 +663,7 @@
       "status": "PARTIAL",
       "evidence": "superseded in part by CH-04's re-interpretation of Runtime Control",
       "disposition": "SUPERSEDED",
-      "nextOrBlocked": "retained as historical evidence, not current spec"
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     },
     {
       "id": "C01",
@@ -676,8 +676,8 @@
       ],
       "status": "PARTIAL",
       "evidence": "appendix hash abbreviated; About sync recorded separately as non-Git metadata",
-      "disposition": "RETAINED",
-      "nextOrBlocked": "full hash value UNKNOWN, not reconstructed"
+      "disposition": "SUPERSEDED",
+      "nextOrBlocked": "FROZEN historical planning: follow current WUI register; no independent dispatch."
     }
   ]
 }

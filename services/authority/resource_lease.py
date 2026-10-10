@@ -245,8 +245,8 @@ class RuntimeSupervisor:
 
 
 if __name__ == "__main__":
-    import tempfile
-    with tempfile.TemporaryDirectory() as tmp:
+    import project_temp
+    with project_temp.fixture_root(prefix='resource-lease-selftest-') as tmp:
         lease = ResourceLease(Path(tmp), "gpu.heavy")
         first = lease.acquire()
         print("first:", first)

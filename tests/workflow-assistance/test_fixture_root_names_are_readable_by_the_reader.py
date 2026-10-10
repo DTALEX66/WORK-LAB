@@ -178,6 +178,13 @@ class TheSurfacesThemselvesAreReadableTests(unittest.TestCase):
 
 class NoCallerAsksForAnUnreadablePrefixTests(unittest.TestCase):
     def test_every_fixture_dir_call_in_the_repository_names_a_readable_prefix(self) -> None:
+        """Both helpers count: `fixture_root()` delegates to `fixture_dir()`, so it inherits the rule.
+
+        Measured 2026-10-10 -- a production self-test converted to `fixture_root(prefix='token-monitor-
+        selftest-')` passed this gate and then died at runtime with "5 consecutive fixture names ... were
+        refused", because the scan's vocabulary was only `fixture_dir`. A guard over call sites must list
+        every name the callers actually use.
+        """
         offenders: list[str] = []
         inspected = 0
         for path in _tracked_python_files():
@@ -185,7 +192,8 @@ class NoCallerAsksForAnUnreadablePrefixTests(unittest.TestCase):
             if tree is None:
                 continue
             for node in ast.walk(tree):
-                if not isinstance(node, ast.Call) or _call_name(node.func) != "fixture_dir":
+                if not isinstance(node, ast.Call) or _call_name(node.func) not in ("fixture_dir",
+                                                                                   "fixture_root"):
                     continue
                 prefix = _literal_prefix(node)
                 if prefix is None:

@@ -101,8 +101,8 @@ class CommitCoordinator:
 
 
 if __name__ == "__main__":
-    import tempfile
-    with tempfile.TemporaryDirectory() as tmp:
+    import project_temp
+    with project_temp.fixture_root(prefix='parallelism-selftest-') as tmp:
         leases = PathLease(Path(tmp))
         a = leases.acquire("t1", ["scripts/workflow/a.py"])
         b = leases.acquire("t2", ["scripts/workflow/a.py"])

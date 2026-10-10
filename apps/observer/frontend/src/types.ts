@@ -12,7 +12,17 @@ export type SchemaVersion = 'workflow/snapshot/v3'
 
 export type TransportState = 'LIVE' | 'DELAYED' | 'OFFLINE' | 'CONNECTING' | 'UNKNOWN'
 export type FreshnessState = 'FRESH' | 'STALE' | 'UNKNOWN'
-export type GitMatchState = 'MATCH' | 'UNVERIFIED' | 'DRIFT' | 'UNKNOWN'
+/**
+ * The six values `snapshot_api.py::_git_match_state` (lines 366-380) can actually return, listed in the
+ * order the function tests them. This union used to read `'MATCH' | 'UNVERIFIED' | 'DRIFT' | 'UNKNOWN'`:
+ * three of the four real outcomes (`LOCAL_REMOTE_MATCH`, `LOCAL_CI_MATCH`, `MISMATCH`) plus
+ * `NO_LOCAL_CLAIM` were un-declarable, while `DRIFT` and `UNKNOWN` could never arrive — so a component
+ * switching on `DRIFT` was dead code and the shipped row printed the real token raw. The WUI-15 schema
+ * conformance test now pins this union against the schema enum in both directions.
+ */
+export type GitMatchState =
+  | 'MATCH' | 'LOCAL_REMOTE_MATCH' | 'LOCAL_CI_MATCH'
+  | 'NO_LOCAL_CLAIM' | 'UNVERIFIED' | 'MISMATCH'
 export type FamilyState = 'CLEAN' | 'DRIFT' | 'UNKNOWN'
 export type ProjectActivityState = 'ACTIVE' | 'REGISTERED' | 'IDLE' | 'UNKNOWN'
 export type ExecutionState =
@@ -181,6 +191,18 @@ export interface AdapterVerbEvidenceRow {
   ref?: string
 }
 
+/** The entry-point readback as its own fact (`adapter_capability_projection.py::_card_probe`): an
+ *  executable answered, which is NOT a live session. `null` means no probe record exists at all. */
+export interface EntryProbeFact {
+  status: string
+  entryPoint: string | null
+  argv: string[]
+  exitCode: number | null
+  outputDigest?: string
+  detail?: string | null
+  probedAt: string | null
+}
+
 export interface AdapterCapabilityCard {
   clientId: string
   displayName: string
@@ -209,6 +231,15 @@ export interface AdapterCapabilityCard {
   verbEvidence?: AdapterVerbEvidenceRow[]
   verbEvidenceCounts?: Partial<Record<VerbEvidenceState, number>> & Record<string, number>
   verbEvidenceProbedAt?: string | null
+  /**
+   * WUI-06: the producer has emitted these two since the entry probe existed
+   * (`adapter_capability_projection.py:339,342`) and `types.ts` did not carry them — the drift
+   * `tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py` now fails on.
+   * `versionDrift` is a live-entry disagreement with the declared version; both strings stay visible,
+   * because the registry is not the truth and a stale note about it is not either.
+   */
+  entryProbe?: EntryProbeFact | null
+  versionDrift?: boolean
 }
 
 export interface TokenSummary {
@@ -232,7 +263,10 @@ export interface WorkspaceEvidence {
     tasks?: { taskId?: string; [k: string]: unknown }[]
     approvals?: { state?: string; [k: string]: unknown }[]
   }
-  governance?: { contracts?: number; [k: string]: unknown }
+  // `workspace_evidence.py:148` emits None when the governance file is unreadable, so the field is
+  // `number | null`, not `number | undefined`: "counted zero contracts", "could not read the file" and
+  // "the key is absent" are three different answers and the type must be able to hold all three.
+  governance?: { contracts?: number | null; [k: string]: unknown }
   history?: { totalErrors?: number; recentErrors?: { errorId?: string; [k: string]: unknown }[]; [k: string]: unknown }
   // packages/client-neutral-core/scripts/workspace_evidence.py appends one row per loaded surface:
   // {path, evidenceKind, loadedAt} (+ generatedAt for the JSON projections). `path` is a repository-RELATIVE
@@ -267,6 +301,55 @@ export interface SoftwareIdentity {
   discoverySource: string | null
 }
 
+/**
+ * The scope report the producer publishes alongside the handle list
+ * (`artifact_handle_projection.py:640-660`). It is the only projected field that can distinguish
+ * "the projection enumerated everything" from "it stopped at a cap or refused entries", which is why
+ * WUI-11's 局部故障 state reads it rather than an absence of rows.
+ *
+ * `contentIncluded: false` is a statement about the payload, not a gap: the handles are metadata, and
+ * the byte-range read endpoint is the only way to reach content.
+ */
+export interface ArtifactHandlesSummary {
+  enumeratedCount: number
+  projectedCount: number
+  omittedCount: number
+  cap: number
+  truncated: boolean
+  complete: boolean
+  refused: {
+    sensitiveNames: number
+    reparseDirectories: number
+    notRegularFiles: number
+    droppedOnVerification: number
+    unreadableEntries: number
+    prunedRegenerableDirectories: number
+  }
+  enumerationScope: string
+  digestIndex: { rowsWithDigest: number; rowsWithoutDigest: number; computedByHashing: boolean; [k: string]: unknown }
+  contentIncluded: boolean
+  [k: string]: unknown
+}
+
+export interface CollectorDelivery {
+  collector: string
+  totalRuns: number
+  lastRunAt: string | null
+  lastSuccessAt: string | null
+  consecutiveFailures: number
+  /** derived boolean: the stored `circuit_open_until` is a monotonic value from another process */
+  circuitOpen: boolean
+  /** events dropped from this collector's bounded queue — NOT the same fault as a refused row */
+  droppedEvents: number
+  /** rows the source offered that the store refused, accumulated since the collector was first seen */
+  refusedRows: number
+  /** rows that reached the store, accumulated — the other half of "delivered vs refused" */
+  deliveredRows: number
+  lastRefusalReason: string | null
+  /** the same predicate `coverage.numerator` is counted with, so the two lanes cannot disagree */
+  fresh: boolean
+}
+
 export interface SnapshotV3 {
   schemaVersion: SchemaVersion
   revision: number
@@ -293,4 +376,14 @@ export interface SnapshotV3 {
   // P1-03: per-client capability cards with the seven-layer ladder. ABSENT (producer could not read the
   // declared sources) is reported as a source gap, not as "no adapters".
   adapterCapabilities?: AdapterCapabilityCard[]
+  // WUI-15: emitted by `snapshot_api.py:114-115` and validated by
+  // `snapshot_validator.py:364-372`, but the frontend type did not carry either, so the UI could not
+  // read the projection's own truncation/refusal report. The item shape stays `unknown` deliberately:
+  // no view consumes it yet, and declaring fields nobody renders is how a type becomes folklore.
+  artifactHandles?: unknown[]
+  artifactHandlesSummary?: ArtifactHandlesSummary
+  // WUI-18(e)/WUI-11: per-collector delivery and refusal counts. ABSENT means the health table could not be
+  // read; an empty list means it was read and no collector is registered. The diagnostics lane renders the
+  // first as a source gap and only the second as "no collectors" — never a padded zero.
+  collectors?: CollectorDelivery[]
 }

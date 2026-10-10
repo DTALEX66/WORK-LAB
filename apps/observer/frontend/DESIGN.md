@@ -383,8 +383,27 @@ Normative sizes, to be asserted by `scripts/audit/topbar_geometry_via_cdp.py`:
 - **Vertical reachability (every size)**: every item in `{components.nav-item}` is either visible in the
   viewport or reachable by scrolling the rail. A scroll container that cannot scroll is a defect, not a
   layout. The rail must be height-bounded (`100dvh` or grid row sizing) so its `overflow-y` is live.
-  Measured at the 900×600 floor: the rail is a 345px scroll box over 1554px of content, 23 lanes, 7
-  group disclosures.
+  Measured at the 900×600 floor: the rail is a 345px scroll box over 1778px of content, **27 lanes**, 7
+  group disclosures, last item hit-testable (`geometry2.json`, 2026-10-09; the same 27/7 at 1280 with
+  `clientH 432`). The 2026-10-08 receipt above was taken at 23 lanes and is kept as the dated record of
+  that head, not restated as today's count.
+- **The navigation model is data, in one file.** `{components.nav-item}` grouping, which lanes are daily
+  destinations, and which lane left the default rail all live in `src/lib/navigation.ts`; the rail, the
+  command palette and the contract tests read it, and `navInvariantViolations()` is asserted empty. No
+  test may pin a group count: the taskpack's rule is to repair a stale number, not to replace it with a
+  new permanent one. A lane may leave the rail only through `OFF_DEFAULT_NAV_IDS`, and only while its
+  registry entry, its deep link, its palette entry and an on-arrival reason all remain.
+- **Colour themes are additive, never a replacement.** The shipped `DARK`/`LIGHT` values in
+  `src/theme/tokens.ts` are what a bare address renders and are pinned by `tokensMirror` and by
+  `paletteMirror.contract.test.ts`, which also fails if the pack's hex values appear in the default
+  scopes. The 20261009 pack's palette is opt-in at `?palette=master` and overlays only the variables its
+  source names — the channels it does not specify (secondary/info) keep the shipped value rather than
+  being invented.
+- **A utility that must beat the pinned skin needs a two-class rule in the last layer.** `src/main.tsx`
+  loads `index.css` (Tailwind utilities) before `skins/b10.css`, so equal-specificity skin declarations
+  win over utilities; `.list-item{align-items:center}` silently centred every stacked detail row while
+  all text and contrast assertions stayed green. Overrides belong in `skins/l10b-shell.css` (b10 is
+  pinned verbatim by D-11) and must carry a test that pins both the override and the conflict.
 - Overflow收纳: when the action row cannot fit, controls collapse into a `更多` menu; they must not
   stack vertically forever.
 
@@ -511,5 +530,50 @@ each one declared at the sentence rather than excused repo-wide:
     `var(--primary)`/`var(--secondary)` — read from `skins/b10.css:258-261`. A pill's green is therefore
     neither `--success` in dark (`#22C55E`) nor in light (`#15803D`), in either theme, so a pill and a label
     that name the same state are different colours; the pinned skin (D-11) cannot be edited to fix it, so the
-    override belongs in `src/skins/l10b-shell.css`. No contrast measurement exists for those literals on either
-    canvas — that is the first thing this gap needs, not a code change.
+    override belongs in `src/skins/l10b-shell.css`.
+    **The measurement this gap asked for now exists, and it found a hole in the gate rather than in the
+    pills.** Every legibility sweep before 2026-10-10 ran against the static preview, where all 28 lanes
+    collapse to the offline panel: the receipt held 980 nodes, `every_text_node_meets_AA` passed, and
+    **zero `.tag` nodes existed anywhere** — so the AA claim never covered a single pill, in either theme,
+    while reading as full coverage. Re-running with `--live-backend`
+    (`.project-local/artifacts/wui-20261009/legibility-live-views.json`, bundle `3929e3f84a97ee2f`) renders
+    34 pill nodes per theme — `tag.bg-panel2.text-muted` ×18, `tag.info` ×8, `tag.ok` ×4, `tag.warn` ×4 —
+    inside a sweep of 0 AA failures and 0 sub-floor nodes, and `every_lane_reached_its_own_content` PASS with
+    an empty offline-panel list. `tag.bad` never appears in the live projection, so its literal gradient is
+    still unmeasured; the colour-mismatch design question above is likewise open, and it is a decision, not a
+    missing number. The instrument now records `backend` per row and enforces the two coverage checks only in
+    live mode, printing `NOT_ENFORCED` in static mode, so a chrome-only sweep cannot be quoted as lane
+    coverage again (ERR-237).
+13. **The fixed HUD does not fit the acceptance screen at 200% display scaling.** `tauri.conf.json` declares
+    the panel as 440×780 with `resizable: false`, so its declared size is the physical demand: at 200% that is
+    880×1560 against a 2560×1392 work area (the −48px taskbar is an assumption the receipt prints rather than
+    hides). This is derived by `scripts/audit/display_scaling_via_cdp.py` from the shipped declaration, and it
+    is NOT a desktop measurement — whether tao clamps a non-resizable window to the work area is unverified,
+    because no release binary exists to read back (row 14). Owed: an owner decision — shrink the declared HUD,
+    make it resizable with a floor, or accept that 200% on a 1440-tall panel costs the bottom of the float.
+14. **No DPI-awareness readback exists for this product.** `src-tauri/build.rs` is a bare
+    `tauri_build::build()` and the repo carries no Windows manifest of its own, so Per-Monitor v2 is framework
+    behaviour asserted by dependency rather than something this repository states. The native half of WUI-14
+    is therefore unmeasured, and the reason is recorded rather than glossed:
+    `.project-local/artifacts/wui-20261009/keyboard-focus-fresh.json` carries the artifact gate's
+    `STALE_OR_MISSING_BINARY` with `src-tauri/target/release/app.exe` `exists=false`. What IS measured is the
+    browser half — four scaling levels, 21 geometry checks each, with `window.devicePixelRatio` asserted
+    against the asked scale so a sweep of four identical rasters cannot pass as four DPIs.
+15. **Reading position is proven at the mechanism level, not in pixels.**
+    `src/desktopInteractionPreservation.contract.test.tsx` pushes a new snapshot through the live hook's own
+    state setter and asserts that the lane root and the rail scroll container survive as the SAME nodes, that
+    focus and `selectionStart/End` stay in the field being typed in, and that a text selection stays attached —
+    with a negative control that switches lane and proves `isConnected` can report false. jsdom performs no
+    layout, so no `scrollTop` number is asserted; the production tree contains no `scrollTo(`, `scrollTop =` or
+    `removeAllRanges` anywhere under `src/`, which makes node survival the complete mechanism rather than a
+    proxy for it. The pixel half is now measured: `scripts/audit/sse_revision_via_cdp.py` serves real
+    `snapshot_api.build_snapshot` payloads to Chromium and lets the PAGE release the next revision (a fixed
+    clock was falsified twice — pushed too fast and rev 9 was already on screen before the reading, pushed too
+    slow and nothing changed at all), then measures `rail scrollTop 240 → 240` with `railScrollable=true`, the
+    selection still attached and focus still in the INPUT across an observed `rev7 → rev9` advance, while a
+    deliberately trailing LOWER revision is served and never reaches the screen.
+    `.project-local/artifacts/wui-20261009/sse-revision.json` holds the pass; `--revisions 7,9,10` produced the
+    matching red, so the check can report a wrong answer.
+    What stays open is the reconnect half: that stream never dropped, the receipt records
+    `reconnectCursor=[]`, and so `Last-Event-ID` resumption is covered only by
+    `src/lib/transportTruthContract.test.ts:155`, not by a live disconnect readback.

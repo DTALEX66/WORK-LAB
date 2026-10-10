@@ -7,21 +7,31 @@
   "whyItMatters": "a PASS record without fixedCommit claims an outcome with no pinned cause; this splits that debt into what a commit can actually answer for and what it cannot",
   "clearWindowDays": 3,
   "counts": {
-    "unboundPassRecords": 94,
+    "unboundPassRecords": 129,
     "byState": {
-      "RESOLVES": 36,
+      "RESOLVES": 43,
       "NO_FILE_OPERAND_IN_COMMAND": 42,
-      "PATH_GONE": 15,
+      "PATH_GONE": 43,
       "OUT_OF_REPO_TARGET": 1
     },
     "clearCandidates": 0,
     "resolvesGuardUndatedRecord": 32,
     "resolvesGuardDistant": 4,
-    "noResolvableOperand": 58,
+    "noResolvableOperand": 86,
     "bindableByBirthCommit": 0,
+    "inWindowButUncommittedRecord": 7,
     "bornInAnImportCommit": 86
   },
   "clearCandidates": [],
+  "heldForUncommittedRecord": [
+    "ERR-227",
+    "ERR-231",
+    "ERR-232",
+    "ERR-233",
+    "ERR-241",
+    "ERR-245",
+    "ERR-246"
+  ],
   "bindableByBirthCommit": [],
   "bornInAnImportCommit": [
     "ERR-001",
@@ -1502,6 +1512,307 @@
       "birthAddedRecords": 1,
       "birthTouchesNamedPath": [],
       "birthContainsPromisedScript": true
+    },
+    {
+      "errorId": "ERR-224",
+      "date": "2026-10-09",
+      "state": "PATH_GONE",
+      "operand": "apps/observer/frontend/src/homeIa.contract.test.tsx",
+      "command": "apps/observer/frontend/src/homeIa.contract.test.tsx (WUI-04 block) and apps/observer/frontend/src/lib/projectIdentity.te",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-225",
+      "date": "2026-10-09",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py",
+      "command": "tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-226",
+      "date": "2026-10-09",
+      "state": "PATH_GONE",
+      "operand": "apps/observer/frontend/src/theme/paletteMirror.contract.test.ts",
+      "command": "apps/observer/frontend/src/theme/paletteMirror.contract.test.ts",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-227",
+      "date": "2026-10-09",
+      "state": "RESOLVES",
+      "operand": "apps/observer/frontend/src/laneStateMatrix.sweep.test.tsx",
+      "command": "apps/observer/frontend/src/laneStateMatrix.sweep.test.tsx",
+      "guardFirstCommit": "7b7a2e92",
+      "guardAddedAt": "2026-10-08",
+      "guardVsRecordDays": -1,
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-228",
+      "date": "2026-10-09",
+      "state": "PATH_GONE",
+      "operand": "apps/observer/frontend/src/skins/rowAlignment.contract.test.ts",
+      "command": "apps/observer/frontend/src/skins/rowAlignment.contract.test.ts",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-229",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "command": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-230",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "command": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py::test_producer_output_validates_minim",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-231",
+      "date": "2026-10-10",
+      "state": "RESOLVES",
+      "operand": "apps/observer/tests/test_production_surface_static_contract.js",
+      "command": "apps/observer/tests/test_production_surface_static_contract.js ('no v3 snapshot literal is embedded in the production so",
+      "guardFirstCommit": "1d3b20d0",
+      "guardAddedAt": "2026-10-07",
+      "guardVsRecordDays": -3,
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-232",
+      "date": "2026-10-10",
+      "state": "RESOLVES",
+      "operand": "tests/ci/test_push_permit.py",
+      "command": "tests/ci/test_push_permit.py (30 cases, including the narrow-run-cannot-claim-full case and the refusal-detail case)",
+      "guardFirstCommit": "b83eaaa3",
+      "guardAddedAt": "2026-10-09",
+      "guardVsRecordDays": -1,
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-233",
+      "date": "2026-10-10",
+      "state": "RESOLVES",
+      "operand": "tests/workflow-assistance/test_gate_runner_declares_pipe_encoding.py",
+      "command": "tests/workflow-assistance/test_gate_runner_declares_pipe_encoding.py (test_the_runner_survives_a_non_unicode_console)",
+      "guardFirstCommit": "950c4075",
+      "guardAddedAt": "2026-10-08",
+      "guardVsRecordDays": -2,
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-234",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_evidence_seal_binds_receipts_to_the_measured_bundle.py",
+      "command": "tests/workflow-assistance/test_evidence_seal_binds_receipts_to_the_measured_bundle.py (10 cases: the digest must move wh",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-235",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "apps/observer/frontend/src/auxiliaryEntries.contract.test.tsx",
+      "command": "apps/observer/frontend/src/auxiliaryEntries.contract.test.tsx (6 cases: nav invariants empty, the auxiliary section hold",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-236",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py",
+      "command": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py (8 cases: two generations of the pro",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-237",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "reseal_wui_evidence.py",
+      "command": "The instrument itself emits the checks and reseal_wui_evidence.py re-runs them; the static run now prints 'backend=stati",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-238",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py",
+      "command": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py (test_the_context_pack_moves_only_it",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-239",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py (5 cases) plus the predicate control inside it, which fail",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-240",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_root_document_dispositions.py",
+      "command": "tests/workflow-assistance/test_root_document_dispositions.py (14 cases) plus tests/workflow-assistance/test_default_load",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-241",
+      "date": "2026-10-10",
+      "state": "RESOLVES",
+      "operand": "tests/workflow-assistance/test_ledger_regression_command_targets.py",
+      "command": "tests/workflow-assistance/test_ledger_regression_command_targets.py ReasonPreservationTests.test_the_rule_is_applied_at_",
+      "guardFirstCommit": "f49025c8",
+      "guardAddedAt": "2026-10-07",
+      "guardVsRecordDays": -3,
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-242",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_default_load_doc_citations_resolve.py",
+      "command": "tests/workflow-assistance/test_default_load_doc_citations_resolve.py (8 cases)",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-243",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py",
+      "command": "tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py (6 cases) plus tests/workflow-assistance/",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-244",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_canary_synthetic_secret_never_reaches_the_store.py",
+      "command": "tests/workflow-assistance/test_canary_synthetic_secret_never_reaches_the_store.py (4 cases) plus tests/workflow-assistan",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-245",
+      "date": "2026-10-10",
+      "state": "RESOLVES",
+      "operand": "tests/workflow-assistance/test_fixture_root_names_are_readable_by_the_reader.py",
+      "command": "tests/workflow-assistance/test_fixture_root_names_are_readable_by_the_reader.py (10 cases) plus tests/workflow-assistanc",
+      "guardFirstCommit": "5e74a071",
+      "guardAddedAt": "2026-10-08",
+      "guardVsRecordDays": -2,
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-246",
+      "date": "2026-10-10",
+      "state": "RESOLVES",
+      "operand": "tests/workflow-assistance/test_ledger_unbound_triage.py",
+      "command": "tests/workflow-assistance/test_ledger_unbound_triage.py (8 cases)",
+      "guardFirstCommit": "ad441a3e",
+      "guardAddedAt": "2026-10-07",
+      "guardVsRecordDays": -3,
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-247",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py (7 cases)",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-248",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py (test_both_csvs_keep_the_packs_own_shape, with the planted",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-249",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py",
+      "command": "tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py (10 cases)",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-251",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_canonical_store_disk_is_bounded.py",
+      "command": "tests/workflow-assistance/test_canonical_store_disk_is_bounded.py (10 cases)",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-252",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py (8 cases)",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-253",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py",
+      "command": "tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py (DerivedProjectionDriftTests)",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-254",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_generated_contract_types_project_the_schema.py",
+      "command": "tests/workflow-assistance/test_generated_contract_types_project_the_schema.py",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-255",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "command": "tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-256",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_ingest_refusals_are_counted_not_silent.py",
+      "command": "tests/workflow-assistance/test_ingest_refusals_are_counted_not_silent.py",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-257",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_sidecar_sse_reconnect_replays_the_gap.py",
+      "command": "tests/workflow-assistance/test_sidecar_sse_reconnect_replays_the_gap.py",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-258",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "command": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-259",
+      "date": "2026-10-10",
+      "state": "PATH_GONE",
+      "operand": "tests/workflow-assistance/test_collector_delivery_reaches_the_snapshot.py",
+      "command": "tests/workflow-assistance/test_collector_delivery_reaches_the_snapshot.py",
+      "birthCommit": null
     }
   ]
 }

@@ -154,8 +154,8 @@ class PromotionGate:
 
 
 if __name__ == "__main__":
-    import tempfile
-    with tempfile.TemporaryDirectory() as tmp:
+    import project_temp
+    with project_temp.fixture_root(prefix='memory-isolation-selftest-') as tmp:
         ns = Namespace("u1", "i1", "p1", "c1", task_id="t1")
         store = MemoryStore(Path(tmp))
         store.write(ns, "task_ephemeral", "notes", {"id": "n1", "text": "x", "ttl_seconds": 60})

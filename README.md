@@ -1,14 +1,15 @@
 # WORK-LAB
 
-`DTALEX66/WORK-LAB`（对外 **工作流实验室 / Workflow Lab**）是**客户端中立的个人 AI 工作流治理、
-控制与交付系统**——个人 AI 工程控制平面。它把最高一层的用户级能力（Rules、Skills、
-plugins/MCP 声明、Portable Memory、Capabilities、workflow policy）收成一份规范源，再为每个当前
-客户端投影出原生形态，并裁决任务边界、权限、预算、证据与完成度。它**不是** agent runtime、
-不是产品平台、不是第四个产品，也不因统一界面而取得写权。
+**找资料先看：[历史资料与原件总入口](docs/history/owner-inputs/INDEX.md)**（文件名/别名/压缩包成员检索、归档登记、去重与历史摘要）。
 
-核心价值是**工作方法的可迁移**：更换 Codex、DSH、Hermes、Qoder、WorkBuddy 或其他客户端时，
-项目规则、任务合同、受管技能、工具声明、授权范围与验收标准不随品牌消失。企业化、K8S 与集中
-账号不是前置条件。
+`DTALEX66/WORK-LAB` 是软件中立、本地优先的 **AI工作观测与配置治理工作台**。外部AI软件执行业务，
+本方默认按项目观察参与软件、活动、阻碍、资源与新鲜度，并评价能力、适配用户选定目标、验证目标及维护受管版本。
+规则统一意图，保护用户原生配置与编辑；AAOS和DESIGN-LAB独立负责知识学习及专业设计。
+
+**2026-10-09当前任务：UI优先，仅桌面；手机端不做，也没有手机延后/冻结任务。**
+完整后续交接：[docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md](docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md)。
+唯一CURRENT：`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`；旧任务有用要求并账，无用冻结归档，不再独立派工。
+本轮完成任务整理和归档，产品代码未开始实现。实现状态与本机/CI/发布证据分别读回。
 
 > **规范 Authority 与唯一入口（必读顺序）**：`WORK-LAB-AUTHORITY.md`（顶层人类权威）→
 > `.project/governance/project-authority-index.json`（顶层机器权威）→ `AGENTS.md` →
@@ -27,25 +28,15 @@ plugins/MCP 声明、Portable Memory、Capabilities、workflow policy）收成�
 > `integrations/`、`config/`、`apps/token-monitor/` 服务这两个模块，不是独立模块根。
 > 受管客户端：**Hermes · Codex · DSH · GitHub · Open Design · OpenHuman**，未来任何 AI 软件经同一
 > Adapter 合同接入；CC Switch 为 LEGACY_OBSERVE（只观测、不主动写）。冻结历史在
-> `docs/history/`（唯一检索锚点；见 `WL_INHERITANCE_MATRIX.json`，MiniGame = `FOREIGN_HISTORICAL`）。
+> `docs/history/`（唯一检索锚点；见 `.project/governance/generated/WL_INHERITANCE_MATRIX.json`，MiniGame = `FOREIGN_HISTORICAL`）。
 > 参见 [`docs/decisions/PROJECT_POSITIONING.md`](docs/decisions/PROJECT_POSITIONING.md)。
 
-## 当前 / 未来 / 候选（展示状态：Ongoing）
+## 当前任务与历史范围
 
-- **当前（有证据范围）**：规范源与配置事务治理、Task Ledger 与交付门、只读 Observer（React +
-  Tauri 2）、模型注册与用量汇总、错误台账与权威链校验。证据等级一律用
-  `NO_EVIDENCE / SIMULATED / SYNTHETIC / INTEGRATED / REAL`，`REAL` 必须有可核验句柄、身份与
-  readback；跳过、取消或缺失的必需作业不计聚合 PASS。
-- **未来（在册未成）**：真 Windows 桌面表面证明（U19/T03）、薄 Control 写路径（T04/AG-15）、
-  结构化 Super Entry handoff（T05/AG-16/17）、双执行器黄金链（T06/AG-09）、模型真实消费者与
-  OCR/ASR 验收（AG-10/AG-11）、缺失原件恢复（T07/AG-19）。逐行状态见
-  [`docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md`](docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md)
-  的生成投影，唯一可变源是 `.project/governance/blueprint-coverage.json`。
-- **候选（按需触发，不按名单部署）**：`.project/governance/future-candidate-registry.json`，
-  状态词表 `DEFERRED / PILOT_CANDIDATE / PILOT / PROMOTED / REJECTED`；22 条候选覆盖蓝图 §16 的 19 行，
-  每行另有 `discovery` 上游回读、`native_evidence` 现存路径与 `decision`（2026-10-07 判定：15 退役 / 7 保留 / 0 晋升）。
-- 完整项目描述与未来蓝图的仓库承接：
-  [`docs/future/WORK-LAB-BLUEPRINT-20261006.md`](docs/future/WORK-LAB-BLUEPRINT-20261006.md)。
+当前WUI任务状态见`taskpacks/current/OPEN-TASK-REGISTER.md`，当前执行输入见唯一CURRENT。
+原件与历史归档：`docs/history/owner-inputs/20261009/SOURCE-INTEGRITY.json`、`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`。
+旧蓝图、Atlas、UI/Qoder/ORCA等计划已冻结为历史或逐条继承，不作为当前首版义务；有效实现与安全门保留。
+历史coverage投影仍可用于追溯，不产生当前派工；候选名录保留证据，不授安装/部署权限。
 
 ## Neutrality (unbound, unlocked)
 

@@ -1,6 +1,11 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
+// WUI-01/WUI-02: the grouping is data now, and it lives in `lib/navigation` next to the statement of
+// which lanes are daily destinations and which left the default nav. The rail renders that model; it no
+// longer owns it, because a grouping that only a component can read cannot be asserted, searched or
+// reused by the command palette.
+import { NAV_GROUPS, DAILY_DESTINATION_IDS, isOnDefaultNav } from '@/lib/navigation'
 
 /**
  * L10b (2026-09-27): B10 sidebar — the verbatim B10 DOM:
@@ -25,8 +30,8 @@ import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
  * pinned skin itself stays verbatim per decision D-11) / `.nav button` (+ `.active` gradient + `::before` cyan→blue edge bar) /
  * `.nav-dot` / `.sidebar-footer` / `.avatar` are all B10-verbatim in
  * src/skins/b10.css. This component only supplies the data (the lanes) — the
- * seven NAV_GROUPS (P1-01 invariant) render as the B10 buttons, each group with
- * its own labelled block so all 22 reachable lanes stay one click away.
+ * groups from `lib/navigation` render as the B10 buttons, each group with its
+ * own labelled disclosure block so every lane on the default nav stays one click away.
  *
  * Read-only contract: the rail is pure navigation — no write, approve or
  * configuration affordance exists here.
@@ -36,23 +41,11 @@ interface LaneDef {
   label: string
 }
 
-// L10 (2026-09-27): B07 IA page matrix regrouping — 7 primary nav groups
-// covering all 22 reachable lanes exactly once (the P1-01 invariant, now
-// including the four B10 lanes: workflows / workflow-editor / observer /
-// execution-detail). D3 `work` lane still leads the work group.
-export const NAV_GROUPS: { key: string; label: string; ids: string[] }[] = [
-  { key: 'home',   label: '首页',   ids: [OVERVIEW_ID] },
-  { key: 'work',   label: '工作',   ids: ['work', 'evidence', 'executions', 'task-packs', 'delivery', 'execution-detail'] },
-  { key: 'agents', label: '智能体', ids: ['agents'] },
-  { key: 'projects', label: '项目', ids: ['projects'] },
-  { key: 'gov',    label: '治理',   ids: ['workflows', 'rules-policy', 'approvals', 'audit', 'trust'] },
-  { key: 'integrations', label: '集成', ids: ['integrations', 'workflow-editor'] },
-  { key: 'system', label: '系统',   ids: ['observer', 'software', 'models', 'monitoring', 'memory', 'tools', 'settings'] },
-]
-
-// TASKPACK-UI-20260930: 7-group IA binding verified (home/work/agents/projects/gov/integrations/system).
-// All 22 lanes remain reachable (VIEW_REGISTRY unchanged). Observer (observer, rules-policy, audit, approvals, integrations, workflow-editor) stays READ-ONLY: no write/approve/deny/retry/cancel/rollback/install/apply controls exposed in this component; those must be blocked by backend contract and not only hidden here.
-// Control/Observer permission matrix (per WORK-LAB contract): only Control Surface executes writes; Observer projection never writes task/state/telemetry.
+// The rail renders every lane in NAV_GROUPS that is still on the default nav. `workflow-editor` is the
+// one registry lane that left it (20261009 route table: 退出默认导航) — its component, its deep link and
+// its palette entry all stay, so an experimental surface is demoted rather than deleted.
+// Read-only contract: navigation only. No write, approve or configuration affordance exists here; those
+// must be blocked by the backend contract, not merely hidden from this rail.
 
 
 function buildLanes(): Map<string, LaneDef> {
@@ -96,7 +89,7 @@ function Nav({
     () =>
       NAV_GROUPS.map((g) => ({
         ...g,
-        items: g.ids.map((id) => lanes.get(id)).filter(Boolean) as LaneDef[],
+        items: g.ids.filter(isOnDefaultNav).map((id) => lanes.get(id)).filter(Boolean) as LaneDef[],
       })).filter((g) => g.items.length > 0),
     [lanes],
   )
@@ -157,6 +150,9 @@ function Nav({
                       type="button"
                       onClick={() => onSelect(l.id)}
                       data-lane={l.id}
+                      // The five suggested destinations + settings are marked rather than counted, so a
+                      // contract can assert "these are the daily entries" without pinning the number 5.
+                      data-daily={DAILY_DESTINATION_IDS.includes(l.id) ? 'true' : undefined}
                       title={l.label}
                       aria-current={active ? 'page' : undefined}
                       className={cn(active && 'active')}

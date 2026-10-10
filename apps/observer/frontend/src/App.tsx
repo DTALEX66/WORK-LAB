@@ -14,6 +14,9 @@ import {
   type ThemeMode, type LayoutMode,
 } from '@/lib/api'
 import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
+// WUI-01/WUI-02: which lanes are daily destinations, which left the default nav, and why — read from
+// the navigation model so the rail, the palette and this shell cannot disagree about the IA.
+import { isOnDefaultNav, paletteGroupForLane, OFF_NAV_NOTES } from '@/lib/navigation'
 // P1-02: record-level deep links ride the SAME ?view= lane mechanism — a task or
 // execution is addressed by ?taskId= / ?executionId=, never by a second router.
 import {
@@ -25,6 +28,12 @@ import {
 import { EVIDENCE_PARAM_NAMES } from '@/lib/evidenceRange'
 import { LaneErrorBoundary } from '@/components/ui/lane-error-boundary'
 import { announce } from '@/lib/a11y'
+// WUI-14: one IME guard shared by the shell shortcut and the palette.
+import { isImeComposing } from '@/lib/keyGuards'
+// WUI-03: the palette dimension. Orthogonal to light/dark, URL-carried, and defaulted to the shipped
+// colours so opting in is the only way a session sees the 20261009 pack's values.
+import { DEFAULT_PALETTE_ID, PALETTE_LABELS, type PaletteId } from '@/theme/tokens'
+import { applyPalette, readPaletteParam } from '@/theme/paletteMode'
 
 type ViewId = string
 
@@ -43,7 +52,7 @@ function UnknownLane({ requested, onFallback }: { requested: string; onFallback:
       />
       <div className="mt-3 flex justify-center">
         <button type="button" className="ghost-btn" onClick={onFallback}>
-          返回总览
+          返回项目监控
         </button>
       </div>
     </div>
@@ -55,8 +64,17 @@ function UnknownLane({ requested, onFallback }: { requested: string; onFallback:
 // real, not a hardcoded class. The default landing view is the Overview panel.
 function readInitialView(): ViewId {
   try {
-    const v = new URLSearchParams(window.location.search).get('view')
-    if (v && (VIEW_REGISTRY.some((e) => e.id === v) || v === OVERVIEW_ID)) return v
+    const s = new URLSearchParams(window.location.search)
+    const v = s.get('view')
+    if (!v) return OVERVIEW_ID
+    // `?view=full|compact` is the legacy Tauri entry contract for the LAYOUT (readInitialLayout), not
+    // a lane. Treating it as an unknown lane would turn every saved floating-panel link into a report.
+    if (v === 'full' || v === 'compact') return OVERVIEW_ID
+    if (VIEW_REGISTRY.some((e) => e.id === v) || v === OVERVIEW_ID) return v
+    // WUI-02/WUI-13: an id the registry does not carry is KEPT rather than rewritten. Falling back to
+    // the home silently is how a stale link becomes an unexplained landing page — the same rule the
+    // record addresses follow (never jump to "the latest" or the nearest same-named object).
+    return v
   } catch { /* no URL (SSR/test) -> default */ }
   return OVERVIEW_ID
 }
@@ -85,6 +103,15 @@ function readInitialLayout(): LayoutMode {
   return 'full'
 }
 
+// WUI-03: which palette the address asks for. An unrecognised value is the shipped one, not an error and
+// not a guess — an old link must keep the colours it was saved with.
+function readInitialPalette(): PaletteId {
+  try {
+    return readPaletteParam(window.location.search)
+  } catch { /* no URL (SSR/test) -> default */ }
+  return DEFAULT_PALETTE_ID
+}
+
 // P1-02: the record a deep link points at, read once from the URL. An id that fails validation is kept
 // as a reason to show, not dropped silently — a link that "did nothing" is indistinguishable from a
 // broken product unless the product says why.
@@ -109,6 +136,7 @@ export default function App() {
   const [view, setView] = useState<ViewId>(readInitialView)
   const [theme, setTheme] = useState<ThemeMode>(readInitialTheme)
   const [layout, setLayout] = useState<LayoutMode>(readInitialLayout)
+  const [palette, setPalette] = useState<PaletteId>(readInitialPalette)
   // P1-02: the focused record (taskId / executionId) and any id the URL carried but the
   // validator refused. Selecting a row in a lane updates this; the URL writer below persists it.
   const [initialFocus] = useState(readInitialFocus)
@@ -132,6 +160,8 @@ export default function App() {
   // by the Modal itself → drawer), matching the B10 single-file keydown block.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // WUI-14: while an input method owns the keystroke, this shell has no business acting on it.
+      if (isImeComposing(e)) return
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         setPaletteOpen((o) => !o)
@@ -149,13 +179,17 @@ export default function App() {
   // theme/layout actions. Deep-link mechanism (?view=/theme=/layout=) is
   // unchanged — selecting just calls setView, which the existing URL writer
   // (useEffect below) persists.
+  //
+  // WUI-02: the items are grouped by the navigation model rather than dumped into one 跳转 list, so the
+  // palette answers "where is this lane in the product" as well as "how do I get there". The lane list
+  // still comes from the registry, which means a lane cannot be forgotten by the palette.
   const paletteItems = useMemo<PaletteItem[]>(() => {
     const viewItems: PaletteItem[] = [
-      { id: 'nav-overview', label: OVERVIEW_LABEL, group: '跳转', run: () => setView(OVERVIEW_ID) },
+      { id: 'nav-overview', label: OVERVIEW_LABEL, group: paletteGroupForLane(OVERVIEW_ID), run: () => setView(OVERVIEW_ID) },
       ...VIEW_REGISTRY.map((e): PaletteItem => ({
         id: 'nav-' + e.id,
         label: e.label,
-        group: '跳转',
+        group: paletteGroupForLane(e.id),
         run: () => setView(e.id),
       })),
     ]
@@ -173,6 +207,14 @@ export default function App() {
         run: () => setLayout((l) => (l === 'full' ? 'compact' : 'full')),
       },
       {
+        // WUI-03: an opt-in palette, worded so the reader knows the shipped colours are not being
+        // replaced — they stay what a bare address renders.
+        id: 'act-palette',
+        label: palette === 'master' ? '切回现行配色（默认）' : '改用母版建议配色（现行值不被覆盖）',
+        group: '动作',
+        run: () => setPalette((current) => (current === 'master' ? DEFAULT_PALETTE_ID : 'master')),
+      },
+      {
         id: 'act-workspace',
         label: '打开工作区 / Context',
         group: '动作',
@@ -180,7 +222,7 @@ export default function App() {
       },
     ]
     return [...viewItems, ...actions]
-  }, [theme, layout])
+  }, [theme, layout, palette])
 
   // U05/B3: theme is projected through the SAME contract as the pre-render
   // script in index.html — the CSS defines :root (dark default) + html.light
@@ -198,6 +240,14 @@ export default function App() {
     requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-instant')))
   }, [theme])
 
+  // WUI-03: the palette rides the same attribute contract as index.html's pre-render script, and the
+  // default REMOVES the attribute instead of writing `worklab` — otherwise the shipped sheets would no
+  // longer be the single description of what a default session renders.
+  useEffect(() => {
+    applyPalette(document.documentElement, palette)
+    announce(`配色：${PALETTE_LABELS[palette]}`)
+  }, [palette])
+
   // UI_SHELL (20260921): keep the deep-link (?view=/?theme=/?layout=) in sync
   // so refreshing / sharing a URL preserves the active view + theme + layout.
   // This extends (does not change) the existing read-only deep-link init.
@@ -207,6 +257,9 @@ export default function App() {
     if (view !== OVERVIEW_ID) p.set('view', view)
     if (theme !== 'dark') p.set('theme', theme)
     if (layout !== 'full') p.set('layout', layout)
+    // WUI-03: the palette is part of what makes an address reproducible, so it survives navigation for
+    // the same reason the theme does — and only when it is NOT the default.
+    if (palette !== DEFAULT_PALETTE_ID) p.set('palette', palette)
     // B4: keep the validated data-source param (?api=) that the Tauri shell
     // injects — api.ts loadRuntimeDescriptor() reads it at module init, so
     // dropping it on navigation/refresh would silently fall back to the
@@ -235,7 +288,7 @@ export default function App() {
     const qs = p.toString()
     const url = window.location.pathname + (qs ? '?' + qs : '')
     window.history.replaceState(null, '', url)
-  }, [view, theme, layout, focus])
+  }, [view, theme, layout, palette, focus])
 
   const isOverview = view === OVERVIEW_ID
 
@@ -293,13 +346,34 @@ export default function App() {
           return <UnknownLane onFallback={() => setView(OVERVIEW_ID)} requested={view} />
         }
         const C = entry.component
+        // A lane that left the default rail but is still reachable by deep link says so on arrival.
+        // Without the note, an address that renders a working page nobody can click to is indistinguishable
+        // from a page that was silently deleted.
+        const offNavNote = isOnDefaultNav(view) ? null : OFF_NAV_NOTES[view] ?? null
         return (
-          <C
-            snap={snap}
-            focus={focus}
-            onFocus={setFocus}
-            focusRejected={initialFocus.rejected}
-          />
+          <>
+            {offNavNote && (
+              <div className="panel mb-3 p-3" role="note" data-testid="off-nav-entry-note">
+                <div className="text-[12px] font-semibold text-ink">实验入口：本页不在默认导航里</div>
+                <p className="mt-1 text-[12px] text-muted">{offNavNote}</p>
+              </div>
+            )}
+            <C
+              snap={snap}
+              focus={focus}
+              onFocus={setFocus}
+              focusRejected={initialFocus.rejected}
+              // WUI-12: the settings surface shows and changes the three appearance facts. They are
+              // passed rather than re-parsed inside the lane so there is exactly one reader of UI state
+              // in this shell; every other lane ignores props it does not declare.
+              theme={theme}
+              layout={layout}
+              palette={palette}
+              onTheme={setTheme}
+              onLayout={setLayout}
+              onPalette={setPalette}
+            />
+          </>
         )
       })()
     )

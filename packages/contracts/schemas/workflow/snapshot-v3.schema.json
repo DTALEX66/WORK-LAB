@@ -1,0 +1,837 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "work-lab/workflow-snapshot/v3",
+  "title": "WORK-LAB read-only Observer snapshot (workflow/snapshot/v3)",
+  "description": "The cross-language shape of the projection the sidecar answers at GET /api/v1/snapshot and pushes over /api/v1/events. Registered in the contract catalog because WUI-15's acceptance says the JSON Schema set is the single source of truth, and until now this payload was outside it: the shape lived in packages/client-neutral-core/scripts/snapshot_validator.py (Python) and apps/observer/frontend/src/types.ts (TypeScript) with nothing proving the two agreed, which is how ERR-225 happened — the producer emitted entryProbe/versionDrift that the front model never declared, so the facts could not be rendered and every gate stayed green. Division of labour, deliberately not a duplication: THIS schema owns the key set, the optionality of each key and the primitive types; snapshot_validator.py keeps the semantic invariants JSON Schema cannot state (capability-ladder monotonicity, checkpoint digest shape, duplicate handles, truncation without an ordering key). Top level is additionalProperties:false on purpose — a new producer key must arrive here as a decision, because an undeclared key is precisely the drift direction that is invisible from the reading side. Key set and optionality measured 2026-10-09 from the live sidecar readbacks .project-local/runs/wui-20261009/snapshot-readback.json and snapshot-readback2.json (20 top-level keys, 15 always present, 5 conditional), and the enum values are copied from apps/observer/frontend/src/types.ts:13-21 rather than invented.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "revision",
+    "generatedAt",
+    "sourceWatermark",
+    "transport",
+    "coverage",
+    "governance",
+    "workspace",
+    "projects",
+    "executions",
+    "tasks",
+    "tokenSummary",
+    "git",
+    "ci",
+    "sourceRefs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "workflow/snapshot/v3",
+      "description": "Compared, never re-derived: api.ts parses the payload by comparing this literal, and the static contract refuses any file that EMBEDS a v3 snapshot literal."
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic source of ordering. api.ts rejects a lower revision arriving after a higher one rather than letting a late older projection replace newer facts on screen."
+    },
+    "generatedAt": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$",
+      "description": "RFC3339, the same rule snapshot_validator.py enforces with RFC3339_RE."
+    },
+    "sourceWatermark": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+      "description": "Nullable and required: the key is always present, and null is the statement that no source watermark was read. Absent-vs-null is not a distinction here; null-vs-a-timestamp is, so the field must never be dropped."
+    },
+    "transport": {
+      "type": "object",
+      "required": [
+        "transportState",
+        "freshnessState"
+      ],
+      "properties": {
+        "transportState": {
+          "enum": [
+            "LIVE",
+            "DELAYED",
+            "OFFLINE",
+            "CONNECTING",
+            "UNKNOWN"
+          ]
+        },
+        "freshnessState": {
+          "enum": [
+            "FRESH",
+            "STALE",
+            "UNKNOWN"
+          ]
+        },
+        "eventsUrl": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "connectedSince": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lastHeartbeatAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "writerWatermarkAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "eventStreamConnected": {
+          "type": "boolean"
+        }
+      },
+      "description": "Disconnect is not stop: OFFLINE never licenses a downstream 'stopped' claim (the read-only iron law)."
+    },
+    "coverage": {
+      "type": "object",
+      "required": [
+        "numerator",
+        "denominator",
+        "scope"
+      ],
+      "properties": {
+        "numerator": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "denominator": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "scope": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Nullable: build_snapshot emits coverage.scope = None when no coverage scope was computed. The first draft of this schema said `string` because the one live readback it was read off carried a string — validating the producer's minimal call instead of only its full one is what caught it. types.ts:36 already declared `string | null`, so the front model was right and the schema was wrong."
+        }
+      },
+      "description": "A null denominator means unmeasurable, not zero, and the UI must not divide it into a percentage."
+    },
+    "governance": {
+      "type": "object",
+      "required": [
+        "state",
+        "families"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "CLEAN",
+            "DRIFT",
+            "UNKNOWN"
+          ]
+        },
+        "families": {
+          "type": "object"
+        }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "description": "Plan/sources/history/governance projection. Interior keys are owned by the workflow side and validated semantically, not here."
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "projectId",
+          "agentPlatform",
+          "displayName",
+          "identityState",
+          "activityState",
+          "attentionState",
+          "activeExecutionCount",
+          "workingAreas",
+          "visibility",
+          "quality",
+          "lastStrongEvidenceAt",
+          "repositories",
+          "git",
+          "token",
+          "ci",
+          "executionIds",
+          "sourceRefs"
+        ],
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "agentPlatform": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "displayName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "identityState": {
+            "type": "string"
+          },
+          "activityState": {
+            "enum": [
+              "ACTIVE",
+              "REGISTERED",
+              "IDLE",
+              "UNKNOWN"
+            ]
+          },
+          "attentionState": {
+            "type": "string"
+          },
+          "activeExecutionCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "workingAreas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "quality": {
+            "type": "string"
+          },
+          "lastStrongEvidenceAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "repositories": {
+            "type": "array"
+          },
+          "git": {
+            "type": "object",
+            "required": [
+              "matchState"
+            ],
+            "properties": {
+              "localSha": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "remoteSha": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "matchState": {
+                "enum": [
+                  "MATCH",
+                  "LOCAL_REMOTE_MATCH",
+                  "LOCAL_CI_MATCH",
+                  "NO_LOCAL_CLAIM",
+                  "UNVERIFIED",
+                  "MISMATCH"
+                ]
+              },
+              "branch": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "dirtyCount": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "observedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "quality": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "freshness": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "sourceRef": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "token": {
+            "type": "object",
+            "required": [
+              "costQuality"
+            ],
+            "properties": {
+              "inputTokens": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "outputTokens": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "totalTokens": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "costQuality": {
+                "enum": [
+                  "EXACT",
+                  "ESTIMATED",
+                  "UNKNOWN"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "ci": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "executionIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sourceRefs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "One row per product project. additionalProperties:false here is the point of this section: the top level has been closed since ERR-225 while this nested block kept seven of seventeen keys and accepted the other ten silently, so ten projected facts had no authority and a new one would still arrive un-named. Key set and types measured 2026-10-10 from snapshot_api.py::_project_projection (253-286) and pinned three ways by tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py against apps/observer/frontend/src/types.ts::Project. Note what the row does NOT carry: git.ciSha, so a row can state matchState=MATCH (computed from the upstream git dict) that cannot be re-derived from the row alone — the enum keeps all six values because reachability depends on the input, not on the emitted keys. token.* stays null for unknown and is never padded to 0."
+      }
+    },
+    "executions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "executionId",
+          "state"
+        ],
+        "properties": {
+          "executionId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "enum": [
+              "RUNNING",
+              "STARTING",
+              "WAITING_USER",
+              "WAITING_APPROVAL",
+              "BLOCKED",
+              "COMPLETED",
+              "FAILED",
+              "UNKNOWN"
+            ]
+          },
+          "anchorProjectId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "Count map, not a record list: the task rows themselves are taskRecords, and the two carry different statements."
+    },
+    "tokenSummary": {
+      "type": "object",
+      "required": [
+        "costQuality"
+      ],
+      "properties": {
+        "inputTokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "outputTokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "totalTokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "costQuality": {
+          "enum": [
+            "EXACT",
+            "ESTIMATED",
+            "UNKNOWN"
+          ]
+        }
+      },
+      "description": "Tokens stay separate from credits, subscription, cost and resource metrics; null is unknown and is never displayed as 0."
+    },
+    "git": {
+      "type": "object",
+      "required": [
+        "matchState"
+      ],
+      "properties": {
+        "localSha": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "remoteSha": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ciSha": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "matchState": {
+          "enum": [
+            "MATCH",
+            "LOCAL_REMOTE_MATCH",
+            "LOCAL_CI_MATCH",
+            "NO_LOCAL_CLAIM",
+            "UNVERIFIED",
+            "MISMATCH"
+          ],
+          "description": "The six returns of snapshot_api.py::_git_match_state (366-380), in the order the function tests them. apps/observer/frontend/src/types.ts used to declare 'MATCH' | 'UNVERIFIED' | 'DRIFT' | 'UNKNOWN': three real outcomes were un-declarable and DRIFT/UNKNOWN could never arrive, so the shipped row (ProjectSummaryTable.tsx:119) prints the raw token while any code switching on DRIFT was dead. The pairing test pins this enum against the TypeScript union in both directions."
+        },
+        "branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dirtyCount": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "observedAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "quality": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "freshness": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sourceRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ci": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "sourceRefs": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "software": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "softwareId"
+        ],
+        "properties": {
+          "softwareId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "locationStatus": {
+            "type": "string"
+          },
+          "duplicateInstallation": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Install identity projection (U17/P0-07). ABSENT means the source was not read; the panel then shows UNKNOWN, never a fabricated Healthy."
+    },
+    "taskRecords": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "taskId",
+          "projectId",
+          "status",
+          "checkpointPresent",
+          "checkpointKeys"
+        ],
+        "properties": {
+          "taskId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "projectId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fencingToken": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "checkpointPresent": {
+            "type": "boolean"
+          },
+          "checkpointKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "checkpointDigest": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "description": "Deep-link targets. ABSENT means the producer did not query the task table, which is a different statement from an empty list (queried, nothing there); the checkpoint VALUES never enter a read-only projection, only their key names and a digest."
+    },
+    "adapterCapabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "clientId",
+          "layers"
+        ],
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "layers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "layer",
+                "state"
+              ],
+              "properties": {
+                "layer": {
+                  "enum": [
+                    "REGISTERED",
+                    "INSTALLED",
+                    "LOADED_CONNECTED",
+                    "QUALIFIED",
+                    "OBSERVED_IN_EXECUTION"
+                  ]
+                },
+                "state": {
+                  "enum": [
+                    "MET",
+                    "NOT_PROBED",
+                    "NOT_SUPPORTED"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "Seven-layer ladder cards. ABSENT is a source gap, not 'no adapters'. Ladder monotonicity is the validator's job, not this schema's."
+    },
+    "artifactHandles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "handle",
+          "surface",
+          "kind"
+        ],
+        "properties": {
+          "handle": {
+            "type": "string",
+            "minLength": 1
+          },
+          "surface": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "modifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "surfaceRoot": {
+            "type": "string"
+          },
+          "digestRecorded": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Identity-only evidence rows for the byte-range route: the validator refuses a row that carries content fields, so no payload body can ride in on a handle."
+    },
+    "artifactHandlesSummary": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "cap",
+        "enumeratedCount",
+        "projectedCount",
+        "omittedCount",
+        "truncated",
+        "orderingKey"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "string"
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "enumeratedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "projectedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "omittedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "orderingKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "refused": {
+          "type": "object"
+        }
+      },
+      "description": "The enumeration scope of that exact list. An enumeration can be capped; it can never be quietly capped, which is why a truncated list without its ordering key is refused by the validator."
+    },
+    "collectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "collector": {
+            "type": "string",
+            "minLength": 1
+          },
+          "totalRuns": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastRunAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastSuccessAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "consecutiveFailures": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "circuitOpen": {
+            "type": "boolean"
+          },
+          "droppedEvents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "refusedRows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "deliveredRows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastRefusalReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fresh": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "collector",
+          "totalRuns",
+          "lastRunAt",
+          "lastSuccessAt",
+          "consecutiveFailures",
+          "circuitOpen",
+          "droppedEvents",
+          "refusedRows",
+          "deliveredRows",
+          "lastRefusalReason",
+          "fresh"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Per-collector delivery and refusal counts, read from `collector_health` by `composition_root._collector_delivery_rows`. ABSENT means the health table could not be read at all; an empty list means every registered collector was read and none is registered — two different statements, which is why the section is optional rather than defaulted. `refusedRows` is the cumulative count of rows the source offered that were refused by named rule (ERR-256), and `lastRefusalReason` names the most frequent one plus the first place it happened; `droppedEvents` stays separate because it means events dropped from the collector's bounded queue, a different fault with a different remedy. `circuitOpen` is a boolean on purpose: the stored `circuit_open_until` is a `time.monotonic()` value from another process and means nothing to a reader. `fresh` is the SAME predicate `coverage.numerator` is counted with, so a collector cannot look healthy in one lane and stale in another."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "artifactHandles"
+        ]
+      },
+      "then": {
+        "required": [
+          "artifactHandlesSummary"
+        ]
+      },
+      "description": "A handle list with no stated scope reads as a complete list whether or not it is one."
+    },
+    {
+      "if": {
+        "required": [
+          "artifactHandlesSummary"
+        ]
+      },
+      "then": {
+        "required": [
+          "artifactHandles"
+        ]
+      },
+      "description": "A scope report for a list this snapshot does not carry is a claim about a snapshot the reader is not looking at."
+    }
+  ]
+}

@@ -193,7 +193,7 @@ def sync_workspace_projects(store: CanonicalStore, workspace_root: Path, max_dep
 
 if __name__ == "__main__":
     import argparse
-    import tempfile
+    from project_temp import require_runtime_root
 
     parser = argparse.ArgumentParser(description="Discover workspace projects and detect active ones")
     parser.add_argument("--workspace-root", type=Path, required=True)
@@ -201,7 +201,7 @@ if __name__ == "__main__":
     parser.add_argument("--max-depth", type=int, default=3)
     args = parser.parse_args()
 
-    runtime_root = (args.runtime_root or Path(tempfile.gettempdir()) / "workflow-assistance-workspace").resolve()
+    runtime_root = require_runtime_root(args.runtime_root, "workflow-assistance-workspace")
     store = CanonicalStore(runtime_root / "canonical.sqlite")
     try:
         report = sync_workspace_projects(store, args.workspace_root, max_depth=args.max_depth)

@@ -45,15 +45,32 @@ describe('validateRecordId', () => {
 })
 
 describe('readRecordFocus / writeRecordFocus', () => {
-  it('reads both ids and keeps rejection reasons beside the usable focus', () => {
+  it('reads the record ids and keeps rejection reasons beside the usable focus', () => {
     const parsed = readRecordFocus('?view=work&taskId=WL-1&executionId=ex-9&note=%22private%20text%22')
-    expect(parsed.focus).toEqual({ taskId: 'WL-1', executionId: 'ex-9' })
+    expect(parsed.focus).toEqual({ taskId: 'WL-1', executionId: 'ex-9', projectId: null })
     expect(parsed.rejected).toEqual([])
+  })
+
+  // WUI-02: 项目详情 is addressed by projectId on this SAME mechanism, not by a second router. The rules
+  // that make a task link honest apply unchanged: validated at the edge, refused loudly, round-tripped.
+  it('the project address rides the same one mechanism, with the same refusals', () => {
+    const parsed = readRecordFocus('?view=project-detail&projectId=WORK-LAB')
+    expect(parsed.focus.projectId).toBe('WORK-LAB')
+    expect(parsed.rejected).toEqual([])
+
+    const refused = readRecordFocus('?view=project-detail&projectId=' + encodeURIComponent('D:\\all projects'))
+    expect(refused.focus.projectId).toBeNull()
+    expect(refused.rejected).toEqual(['projectId · 定位标识包含非法字符，已拒绝'])
+
+    const params = new URLSearchParams()
+    writeRecordFocus(params, { taskId: null, executionId: null, projectId: 'repo:origin/main' })
+    expect(params.toString()).toBe('projectId=repo%3Aorigin%2Fmain')
+    expect(readRecordFocus('?' + params.toString()).focus.projectId).toBe('repo:origin/main')
   })
 
   it('a value that is not an identifier is refused, and the refusal is named', () => {
     const parsed = readRecordFocus('?view=work&taskId=' + encodeURIComponent('WL 777') + '&executionId=' + encodeURIComponent('ex\t9'))
-    expect(parsed.focus).toEqual({ taskId: null, executionId: null })
+    expect(parsed.focus).toEqual({ taskId: null, executionId: null, projectId: null })
     expect(parsed.rejected).toEqual([
       'taskId · 定位标识包含非法字符，已拒绝',
       'executionId · 定位标识包含非法字符，已拒绝',

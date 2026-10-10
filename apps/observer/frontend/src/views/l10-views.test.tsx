@@ -47,7 +47,7 @@ const base: SnapshotV3 = {
   ],
   tasks: {},
   tokenSummary: { inputTokens: null, outputTokens: null, totalTokens: null, costQuality: 'UNKNOWN' },
-  git: { localSha: null, remoteSha: null, ciSha: null, matchState: 'UNKNOWN' },
+  git: { localSha: null, remoteSha: null, ciSha: null, matchState: 'NO_LOCAL_CLAIM' },
   ci: [],
   sourceRefs: [],
 }

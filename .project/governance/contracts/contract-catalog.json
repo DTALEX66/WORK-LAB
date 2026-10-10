@@ -387,6 +387,33 @@
         "workflow",
         "ci"
       ]
+    },
+    {
+      "id": "workflow-snapshot-v3",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/snapshot-v3.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "workflow-operation-progress-v1",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/operation-progress.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
+      "id": "workflow-isolated-trial-v1",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/isolated-trial.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
     }
   ],
   "breakingChange": "version-plus-migration-fixture",

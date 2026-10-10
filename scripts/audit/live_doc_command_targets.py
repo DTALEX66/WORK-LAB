@@ -98,6 +98,40 @@ ALLOW = {
         "Pre-convergence spelling of the same missing example (wlg130-delivery-verdict.md).",
     "tests/test_release_manifest.py":
         "Illustrative filename in a python-testing reference, not this repository's path.",
+    # The 2026-10-09 cutover record (docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json) is a
+    # per-row account of what happened to the OLD ledger's claims. Its quoted paths are the historical
+    # object of the sentence, not instructions, so re-pointing one to a file that happens to exist today
+    # would rewrite the record. Each entry below is measured with `git log --all -1 --format=%h -- <path>`
+    # on 2026-10-10: "in history" means it existed at some point in this repository, "never" means it did
+    # not, and a name that never existed here belongs to the foreign tree the quoted row was about.
+    "10-workflow/workflow-assistance/config/codex-enhancement-boundary.json":
+        "IN HISTORY, removed at the 2026-09 directory convergence (AGENTS.md: the legacy "
+        "10-workflow/workflow-assistance path was split out and is no longer tracked). Named by a "
+        "disposition row that exists precisely to record that removal.",
+    "HERMES_HOME/bin/hermes.exe":
+        "A Hermes Home launcher path, outside the repository by design (AGENTS.md: `bin/` is a Hermes-Home "
+        "overlay path whose tracked sources live under packages/client-neutral-core/bin/). A repo-relative "
+        "existence check cannot and must not resolve it.",
+    "apps/observer/tests/helpers.js":
+        "IN HISTORY, since deleted. Quoted by a disposition row about an old test-side file, not offered as "
+        "something to run.",
+    "scripts/run-tests.cjs":
+        "IN HISTORY, since deleted at the frontend convergence. Same: a quoted historical operand.",
+    "tests/test_render_v3.js":
+        "NEVER in this repository's history. The disposition row inherits a claim written against the frozen "
+        "source document's own tree, so the name is evidence about that record, not a path here.",
+    "tests/test_observer_canonical.py":
+        "NEVER in this repository's history; same foreign-tree spelling as tests/test_render_v3.js above.",
+    "tests/test_observer_dashboard_render.py":
+        "NEVER in this repository's history; same foreign-tree spelling.",
+    "scripts/verify_open_design_assistance.py":
+        "NEVER in this repository's history. The Open Design assistance migration belongs to "
+        "DTALEX66/DESIGN-LAB's domain (AGENTS.md: two distinct identities), so the row quotes the other "
+        "project's verifier name.",
+    "tests/run_all_tests.js":
+        "NEVER at this spelling in this repository (the tracked runner is apps/observer/tests/run_all_tests.js). "
+        "Deliberately NOT re-pointed: the string sits inside LEGACY-TASK-DISPOSITION.json, whose quoted paths "
+        "are the historical object of each row, and rewriting them would falsify the record.",
     "tests/test_evidence_connectors.py":
         "Illustrative filename in a python-testing reference, not this repository's path.",
     "scripts/run_bakeoff.py":

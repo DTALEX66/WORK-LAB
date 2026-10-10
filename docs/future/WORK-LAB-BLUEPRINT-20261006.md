@@ -1,3 +1,5 @@
+> FROZEN_ARCHIVED / NO_EXECUTION_AUTHORITY（2026-10-09）：旧蓝图仅为历史依据，当前派工由新WUI任务包承载，有用要求已并账；不是当前首版欠账。
+
 # WORK-LAB 完整项目描述与未来蓝图（仓库承接）
 
 Workflow Lab · 客户端中立的工作流治理、控制与交付 · 状态：**Ongoing**

@@ -54,7 +54,11 @@ REFS_FLOOR = 300
 # Re-measured 2026-10-08 after the extension widening: the register yields 393 references (333 at
 # 097320d0, before the row rewrites of task #26). The floor moves with the measurement rather than with
 # the row count, so a row retirement is a decision and not a silent shrink of the scan.
-REGISTER_REFS_FLOOR = 300
+# Owner 2026-10-09 replaced the 186-row historical register with 21 UI-first tasks.
+# The old bytes are frozen, and the current register now carries six real entry references.
+# Rebaseline this surface only; strict non-empty parsing, broken-reference rejection,
+# documentation and design floors, and the existing negative controls remain unchanged.
+REGISTER_REFS_FLOOR = 5
 # Per-surface floors for the design contract, measured 2026-10-08 at 34 and 10 references (24 and 9 before
 # the stylesheet suffixes were recognised). Below these the extractor stopped reading the file; the
 # documents are short, so the register's floor would be instantly wrong for them.

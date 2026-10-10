@@ -63,6 +63,18 @@ EXPECTED = {
     "software-update-preflight": "workflow",
     "execution-parallel-dispatch": "workflow",
     "software-update-postflight": "workflow",
+    # WUI-15 (2026-10-10): the read-only Observer snapshot finally joins the SSOT. It was the one
+    # cross-language payload the front and the producer both depend on and that lived only as Python
+    # validation code plus a hand-maintained types.ts, which is how ERR-225 happened — the producer emitted
+    # entryProbe/versionDrift the front model never declared, so those facts could not render and nothing
+    # went red. Registering it here is the review gate this file exists for.
+    "workflow-snapshot-v3": "workflow",
+    # WUI-21 read models. Registered here rather than left as loose schema files because the whole
+    # point of this registry is that a field the producer cannot answer has to be visible as a gap:
+    # both contracts carry a producer_gaps list, and the state enum refuses SUBMITTING, which no
+    # module in this repository produces.
+    "workflow-operation-progress-v1": "workflow",
+    "workflow-isolated-trial-v1": "workflow",
 }
 CANONICAL_SCHEMA_PREFIXES = {
     "module-profile": (".project/governance/",),
@@ -109,6 +121,9 @@ CANONICAL_SCHEMA_PREFIXES = {
     "software-update-preflight": ("packages/contracts/",),
     "execution-parallel-dispatch": ("packages/contracts/",),
     "software-update-postflight": ("packages/contracts/",),
+    "workflow-snapshot-v3": ("packages/contracts/",),
+    "workflow-operation-progress-v1": ("packages/contracts/",),
+    "workflow-isolated-trial-v1": ("packages/contracts/",),
 }
 
 

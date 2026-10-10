@@ -1,16 +1,31 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import os
+import platform
 import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any, Callable, NamedTuple
 
 ROOT = Path(__file__).resolve().parents[2]
+
+# The runner hands its children `PYTHONIOENCODING=utf-8` (see _run below) but its OWN stdout was left at the
+# Windows console default. Measured 2026-10-10: a mandatory test whose output contains `↔` reached
+# `_report_governance_failure`, the `print` raised UnicodeEncodeError ('gbk' codec), and the failure report —
+# the one artifact that says WHICH of ~230 modules went red — was destroyed mid-line. A verdict that cannot be
+# printed is not a verdict, so the parent speaks UTF-8 and replaces anything a console still cannot render.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
 RETIRED_ORDINARY_TESTS = {
     "test_design_token_compliance.py",
     "test_figma_sync.py",
@@ -1408,28 +1423,94 @@ VERIFY_ORDER = (
 )
 
 
-def run_gate_sequence(names: tuple[str, ...]) -> int:
+def _source_binding() -> tuple[str, str, str, int]:
+    """(head commit, head tree, digest of the worktree state, count of changed-or-untracked paths).
+
+    The receipt has to name the bytes it judged. A head hash alone is not enough: the gates read the working
+    tree, so a verification run against a dirty checkout certifies bytes that no commit will ever carry, and
+    a run whose tree changed halfway certifies nothing at all. `git status --porcelain -uall` is 35ms here
+    because `.project-local/` -- where the receipts themselves are written -- is ignored, so the act of
+    recording cannot move the digest it records.
+    """
+    def _git(*args: str) -> str:
+        try:
+            return subprocess.run(
+                ["git", *args], cwd=ROOT, capture_output=True, text=True,
+                encoding="utf-8", errors="replace"
+            ).stdout
+        except Exception:
+            return ""
+    commit, tree = _git_head_identity()
+    status = _git("status", "--porcelain=v1", "-uall")
+    paths = [line for line in status.splitlines() if line.strip()]
+    return commit, tree, hashlib.sha256("\n".join(paths).encode("utf-8")).hexdigest()[:16], len(paths)
+
+
+def _tool_versions() -> str:
+    """Which interpreters ran. Node is resolved per gate here, so say so rather than print a misleading absent."""
+    node = os.environ.get("NODE") or shutil.which("node")
+    version = "not-on-PATH(observer-frontend-contracts resolves its own managed runtime)"
+    if node:
+        try:
+            version = subprocess.run([node, "--version"], capture_output=True, text=True,
+                                     encoding="utf-8", errors="replace").stdout.strip()
+        except Exception:
+            version = "unresolvable"
+    return (f"GATE_TOOLS python={platform.python_version()}({sys.executable}) "
+            f"node={node or 'unset'}@{version}")
+
+
+def run_gate_sequence(names: tuple[str, ...], command: str = "") -> int:
     # Stamp the head FIRST, before any gate runs. A receipt that never says which commit it describes
     # cannot distinguish "verified and red" from "never verified", and the second one is not evidence
     # about the first. `scripts/ci/push_permit.py` reads this line; the verdict comes from GATE_EXIT.
-    commit, tree = _git_head_identity()
+    start_commit, start_tree, start_dirty, start_paths = _source_binding()
     # GATE_FULL is the property a push decision actually turns on: a receipt from one cheap gate must
     # not be readable as "the head was verified". Derived, never passed in, so a new call site cannot
     # forget to set it.
     full = "yes" if set(names) == set(VERIFY_ORDER) else "no"
-    print(f"GATE_HEAD={commit} GATE_TREE={tree} GATE_FULL={full} gates={len(names)}")
-    for name in names:
+    print(f"GATE_HEAD={start_commit} GATE_TREE={start_tree} GATE_FULL={full} gates={len(names)}")
+    print(f"GATE_DIRTY={start_dirty} dirty_paths={start_paths}")
+    print(_tool_versions())
+    if command:
+        print(f"GATE_COMMAND={command}")
+
+    def finish(code: int, ran: int, failed_gate: str = "") -> int:
+        """Close the receipt: the end binding, whether the source moved, then the verdict line.
+
+        Every path lands here, including the red one. The completion line is written by this process and
+        nowhere else -- a receipt a wrapper has to complete by hand is a receipt that eventually is not,
+        and a token printed only on the pass path makes 'ran and failed' indistinguishable from 'never ran'.
+        """
+        end_commit, end_tree, end_dirty, end_paths = _source_binding()
+        drift = (end_commit, end_tree, end_dirty) != (start_commit, start_tree, start_dirty)
+        print(f"GATE_HEAD_END={end_commit} GATE_TREE_END={end_tree} "
+              f"GATE_DIRTY_END={end_dirty} dirty_paths_end={end_paths}")
+        print(f"GATE_STAGES ran={ran} planned={len(names)} full={full}"
+              + (f" failed_gate={failed_gate}" if failed_gate else ""))
+        print(f"GATE_SOURCE_DRIFT={'yes' if drift else 'no'}")
+        if drift and code == 0:
+            # A pass over bytes that are gone is not a pass over these bytes. Refuse rather than let the
+            # oldest still-valid-looking line carry the verdict.
+            print("QUALITY_GATE_SOURCE_CHANGED head/tree/worktree moved during the run; "
+                  "the stages above did not all see the same source")
+            code = 70
+        if failed_gate:
+            print(f"QUALITY_GATE_FAIL gate={failed_gate} exit_code={code}")
+        print(f"GATE_EXIT={code}")
+        return code
+
+    for index, name in enumerate(names):
         gate = GATES[name]
         print(f"\n### gate: {gate.name} — {gate.description}")
+        started = time.monotonic()
         exit_code = gate.runner()
+        # Per-stage seconds and exit code: the tier split below is only defensible if the receipt says what
+        # each stage cost, and a red receipt that names no failing stage cannot be triaged without a rerun.
+        print(f"GATE_STAGE gate={gate.name} exit={exit_code} seconds={time.monotonic() - started:.1f}")
         if exit_code != 0:
-            print(f"\nQUALITY_GATE_FAIL gate={gate.name} exit_code={exit_code}")
-            # Every path prints its own verdict line, including the red one. A token written only on the
-            # pass path makes `push_permit.py`'s RECEIPT_RED branch unreachable, and a receipt a call site
-            # has to complete by hand is a receipt that eventually isn't completed: this runner used to
-            # print no GATE_EXIT at all while its own comment claimed the permit reads it.
-            print(f"GATE_EXIT={exit_code}")
-            return exit_code
+            print("")
+            return finish(exit_code, ran=index + 1, failed_gate=gate.name)
     print("\nQUALITY_GATE_PASS gates=" + ",".join(names))
     # The GATE_HEAD/GATE_FULL stamp is emitted at the top of this function, before any gate runs, so a
     # red receipt identifies its head too.
@@ -1440,8 +1521,7 @@ def run_gate_sequence(names: tuple[str, ...]) -> int:
         "TAURI_WINDOWS_PENDING=yes(real desktop WebView2 E2E not executed in this run) "
         "EXACT_SHA_CI_UNVERIFIED=yes(local only, no exact-SHA Actions run)"
     )
-    print("GATE_EXIT=0")
-    return 0
+    return finish(0, ran=len(names))
 
 
 # WLOSS-700: changed-files -> relevant gates.
@@ -1633,6 +1713,11 @@ def _head_tree() -> str:
     return result.stdout.strip() if result.returncode == 0 else "unresolved"
 
 
+def cli_command(argv: list[str] | None = None) -> str:
+    """The command line as typed, for the receipt. A verdict with no command cannot be reproduced."""
+    args = list(sys.argv[1:] if argv is None else argv)
+    return "python services/orchestration/run_quality_gate.py" + (" " + " ".join(args) if args else "")
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Workflow-assistance local quality gate runner.")
     parser.add_argument(
@@ -1679,10 +1764,10 @@ def main(argv: list[str] | None = None) -> int:
               f"gates={','.join(selected) or 'none'} executed={len(selected)}")
         if not selected:
             return 0
-        return run_gate_sequence(selected)
+        return run_gate_sequence(selected, command=cli_command())
     if args.gate == "verify":
-        return run_gate_sequence(VERIFY_ORDER)
-    return run_gate_sequence((args.gate,))
+        return run_gate_sequence(VERIFY_ORDER, command=cli_command())
+    return run_gate_sequence((args.gate,), command=cli_command())
 
 
 if __name__ == "__main__":

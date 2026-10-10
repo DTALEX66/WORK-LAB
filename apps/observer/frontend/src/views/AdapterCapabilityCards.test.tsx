@@ -23,7 +23,7 @@ function snapshotWith(cards?: AdapterCapabilityCard[]): SnapshotV3 {
   s.executions = []
   s.tasks = {}
   s.tokenSummary = { inputTokens: null, outputTokens: null, totalTokens: null, costQuality: 'UNKNOWN' }
-  s.git = { localSha: null, remoteSha: null, ciSha: null, matchState: 'UNKNOWN' }
+  s.git = { localSha: null, remoteSha: null, ciSha: null, matchState: 'NO_LOCAL_CLAIM' }
   s.ci = []
   s.sourceRefs = []
   if (cards !== undefined) s.adapterCapabilities = cards

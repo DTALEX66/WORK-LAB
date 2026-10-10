@@ -1,7 +1,7 @@
 // D3 (2026-09-26 stage D) behavior tests for the primary Work lane.
 //
 // Pins the prompt's D3 discipline against the REAL v3 snapshot contract:
-//   1. the `work` lane is registered and covered exactly once by the 7 groups
+//   1. the `work` lane is registered and covered exactly once by the nav model
 //   2. with no snapshot, WorkView shows UNKNOWN/empty markers — never a
 //      fabricated "0" execution count, CI count, or task count
 //   3. the Inspector shows EXPLICIT source-gap markers for every dimension
@@ -16,7 +16,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { WorkView } from '@/views/WorkView'
 import type { SnapshotV3, TaskRecord } from '@/types'
 import { VIEW_REGISTRY, VIEW_BY_ID, OVERVIEW_ID } from '@/lib/viewRegistry'
-import { NAV_GROUPS } from '@/components/layout/Sidebar'
+import { NAV_GROUPS, knownLaneIds, isOnDefaultNav, navInvariantViolations } from '@/lib/navigation'
 import { EMPTY_FOCUS, readRecordFocus, type RecordFocus } from '@/lib/recordFocus'
 
 // Minimal real-shape v3 snapshot (only the fields WorkView reads; the rest
@@ -53,7 +53,7 @@ function realSnap(): SnapshotV3 {
     quality: 'high', lastStrongEvidenceAt: null, repositories: [],
     git: {
       localSha: '279e80e111111111111111111111111111111111', remoteSha: null,
-      matchState: 'UNKNOWN', branch: 'main', dirtyCount: 0, observedAt: null,
+      matchState: 'UNVERIFIED', branch: 'main', dirtyCount: 0, observedAt: null,
       quality: null, freshness: null, sourceRef: null,
     },
     token: { inputTokens: 1000, outputTokens: 500, totalTokens: 1500, costQuality: 'UNKNOWN' },
@@ -70,24 +70,25 @@ function realSnap(): SnapshotV3 {
   } as unknown as SnapshotV3['executions'][number]]
   s.tasks = { open: 2, done: 1 }
   s.tokenSummary = { inputTokens: 1000, outputTokens: 500, totalTokens: 1500, costQuality: 'UNKNOWN' }
-  s.git = { localSha: '279e80e11111111111111111111111111111111', remoteSha: null, ciSha: '20f42df111111111111111111111111111111111', matchState: 'UNKNOWN' }
+  s.git = { localSha: '279e80e11111111111111111111111111111111', remoteSha: null, ciSha: '20f42df111111111111111111111111111111111', matchState: 'MISMATCH' }
   s.ci = [s.projects[0].ci[0]]
   s.sourceRefs = ['git:origin/main@279e80e']
   return s
 }
 
 describe('D3 Work lane (read-only closed loop, honest source gaps)', () => {
-  it('the work lane is registered and covered exactly once by the 7 nav groups', () => {
+  it('the work lane is registered and covered exactly once by the nav model', () => {
     expect(VIEW_BY_ID['work']).toBeDefined()
     expect(VIEW_BY_ID['work'].lane).toBe('work')
-    const groupKeys = NAV_GROUPS.map((g) => g.key)
-    expect(groupKeys).toHaveLength(7)
+    // WUI-01 moved the grouping out of the Sidebar and re-cut the IA, so this asserts the partition
+    // property rather than the old literal group count.
+    expect(navInvariantViolations()).toEqual([])
     const knownIds = new Set<string>([OVERVIEW_ID, ...VIEW_REGISTRY.map((v) => v.id)])
     const flat = NAV_GROUPS.flatMap((g) => g.ids)
     // `work` is reachable (in some group) and no lane is doubled
     expect(flat.filter((id) => id === 'work')).toHaveLength(1)
     expect(new Set(flat).size).toBe(flat.length)
-    expect(new Set(flat)).toEqual(knownIds)
+    expect(new Set(flat)).toEqual(new Set([...knownIds].filter(isOnDefaultNav)))
   })
 
   it('no snapshot -> UNKNOWN markers, never a fabricated 0 count', () => {

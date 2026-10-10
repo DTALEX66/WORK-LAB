@@ -106,8 +106,8 @@ The product has exactly two windows, and both sizes are declared in `apps/observ
 
 | Surface | Size | Rail | Action row | Search | Required assertions |
 |---|---|---|---|---|---|
-| `main`, default | 1280×820, resizable | 210px visible | inline, overflow menu when the band cannot hold it | full width | no horizontal overflow; no wrap; every lane reachable |
-| `main`, at its floor | ≥ 900×600 (`minWidth`/`minHeight`) | 210px visible, text labels | overflow menu allowed | full width | the same set, re-measured at 900×600 |
+| `main`, default | 1280×820, resizable | 214.5px measured at a 1262px inner width (`clamp(210px, 17vw, 280px)`; 2026-10-09 `geometry2.json`) | inline, overflow menu when the band cannot hold it | full width | no horizontal overflow; no wrap; every lane reachable |
+| `main`, at its floor | ≥ 900×600 (`minWidth`/`minHeight`) | rail is its own scroll box, 345px over 1778px of content, 27 lanes, last item hit-testable | overflow menu allowed | full width | the same set, re-measured at 900×600 |
 | `panel` (HUD) | 440×780, `resizable: false` | none by design | inline | icon + shortcut chip | no rail; no horizontal overflow |
 
 **There is no narrow band.** Owner decision 2026-10-07 (优先跑通全量执行桌面端电脑端 UI，先删除手机端其他端)

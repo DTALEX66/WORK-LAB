@@ -58,6 +58,7 @@ def extract_ag_rows() -> list[dict]:
     if not ATLAS.is_file():
         raise FileNotFoundError(str(ATLAS))
     text = ATLAS.read_text(encoding="utf-8", errors="replace")
+    frozen = "FROZEN_ARCHIVED / NO_EXECUTION_AUTHORITY" in text
     rows = []
     for match in re.finditer(r"^\|\s*\*\*(AG-\d{2})\*\*\s*([^|]*)\|([^|]*)\|(.*)$",
                              text, re.M):
@@ -66,13 +67,13 @@ def extract_ag_rows() -> list[dict]:
         rows.append({
             "id": identifier, "kind": "atlas-gap",
             "title": re.sub(r"\s*—.*$", "", title)[:90],
-            "decision": "planning record row; priority " + (priority or "UNKNOWN"),
+            "decision": ("frozen historical row; priority " if frozen else "planning record row; priority ") + (priority or "UNKNOWN"),
             "anchors": ["taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md"],
-            "status": "UNVERIFIED", "liveStatus": "PLANNED (no live status column)",
+            "status": "UNVERIFIED", "liveStatus": ("FROZEN_ARCHIVED (historical, no dispatch)" if frozen else "PLANNED (no live status column)"),
             "evidence": ("corresponds to open register row U" + linked.group(1)
                          if linked else "no live register cross-reference in its own row"),
-            "disposition": "RETAINED",
-            "nextOrBlocked": "planning record only: grants no execution authority",
+            "disposition": "SUPERSEDED" if frozen else "RETAINED",
+            "nextOrBlocked": ("follow current WUI register; this historical row is not a pending task" if frozen else "planning record only: grants no execution authority"),
         })
     return rows
 

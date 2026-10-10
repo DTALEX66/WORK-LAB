@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-authority-index/v1",
-  "authorityId": "WORK-LAB-AUTHORITY-20260918-V2",
+  "authorityId": "WORK-LAB-AUTHORITY-20261009-UI-PRIORITY",
   "repository": "DTALEX66/WORK-LAB",
   "baselineAtCreation": {
     "commit": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
@@ -15,7 +15,7 @@
     "config": ".project/governance/config-authority-index.json",
     "fieldOwnership": "config/config-ownership.json"
   },
-  "currentTaskpack": "taskpacks/current/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md",
+  "currentTaskpack": "taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md",
   "currentOpenTaskRegister": "taskpacks/current/OPEN-TASK-REGISTER.md",
   "auditBootstrap": [
     "resolve current origin/main commit and tree",
@@ -55,7 +55,7 @@
     },
     {
       "path": "docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md",
-      "role": "generated projection of blueprint-coverage.json — never hand-edited; drift fails the gate"
+      "role": "generated projection of .project/governance/blueprint-coverage.json — never hand-edited; drift fails the gate"
     },
     {
       "path": "docs/future/WORK-LAB-BLUEPRINT-20261006.md",
@@ -73,5 +73,20 @@
     "50-taskpacks",
     "80-evidence",
     "90-archive"
-  ]
+  ],
+  "currentDecision": {
+    "date": "2026-10-09",
+    "source": "docs/current/ui-priority-20261009/CONVERSATION-DECISIONS.md",
+    "uiFirst": true,
+    "mobile": "OUT_OF_SCOPE_NO_DEFERRED_TASK",
+    "legacyDisposition": "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
+    "implementation": "NOT_EXECUTED"
+  },
+  "ownerMaterialCatalog": {
+    "index": "docs/history/owner-inputs/INDEX.md",
+    "register": "docs/history/owner-inputs/RECORD-ARCHIVE-REGISTER.json",
+    "memberRegister": "docs/history/owner-inputs/RECORD-ARCHIVE-MEMBERS.jsonl",
+    "role": "source locator only; not task authority",
+    "historicalDigest": "docs/history/owner-inputs/HISTORICAL-KEY-POINTS.md"
+  }
 }
