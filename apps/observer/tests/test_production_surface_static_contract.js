@@ -234,11 +234,14 @@ function run() {
     // is the point -- an unlisted new optional key means somebody added a projection without deciding
     // whether absent and empty are different statements.
     // artifactHandles/artifactHandlesSummary are listed as a pair because the producer builds them as one
-    // conditional spread (snapshot_api.py:114-117): absent means no caller supplied an enumeration, while []
+    // conditional spread (snapshot_api.py:115-118): absent means no caller supplied an enumeration, while []
     // means the walk enumerated nothing. snapshot_validator.py:366-377 refuses a summary without its list and
     // a list without its scope, so the type must never let a reader hold one of the two alone.
+    // collectors is absent-only by the same rule: composition_root._collector_delivery_rows returns None when
+    // the health table cannot be read (its `except` branch exists precisely so an unreadable source is not
+    // reported as "no collectors"), and snapshot_api.py:121 spreads the key only when it is not None.
     const OPTIONAL = ["software", "taskRecords", "adapterCapabilities",
-                      "artifactHandles", "artifactHandlesSummary"];
+                      "artifactHandles", "artifactHandlesSummary", "collectors"];
     const optional = declared.filter((d) => d.optional).map((d) => d.name).sort();
     assert(JSON.stringify(optional) === JSON.stringify([...OPTIONAL].sort()),
       "optional keys must be exactly " + OPTIONAL.join("/") + ", got " + (optional.join(", ") || "none"));

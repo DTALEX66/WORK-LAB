@@ -223,25 +223,46 @@ class UiV2CitationTests(unittest.TestCase):
 
         Measured the way it happened: `packages/client-neutral-core/scripts/operation_progress.py` was written
         this session, is cited by four matrix rows, and did not exist as far as a directory-list index was
-        concerned. The population is asserted to add something over `git ls-files` so a regression to a
-        tracked-only index turns this red rather than quietly re-acquitting the missing-file branch.
+        concerned. That regression is still what this test guards, but the way it was proved was wrong: the
+        population was asserted to be STRICTLY BIGGER than `git ls-files`, i.e. the test passed only while some
+        untracked file happened to sit in the walked tree. In a clean checkout every cited file is tracked, so
+        the walk contributes nothing extra and the control can never pass -- CI read
+        `2483 not greater than 2484` at 47d13507 while this box stayed green on the strength of its own residue.
+        A gate whose population is the property it audits measures the machine, not the repository (ERR-142's
+        rule, in a new costume). The canary is therefore PLANTED here, in a walked module root, so the same
+        bytes prove the same thing on every machine.
         """
-        paths, _ = file_index()
         # Bytes, decoded here:  with no encoding= hands the pipe to the console codepage, and on a
         # cp936 machine a Chinese path kills the reader thread -- the call still reports returncode 0 with a
         # None stdout, so the comparison would have read an empty tracked set and passed for the wrong reason.
-        tracked_only = subprocess.run(["git", "-c", "core.quotePath=false", "ls-files", "-z"],
-                                      cwd=ROOT, capture_output=True).stdout.decode("utf-8", "replace").split("\0")
-        self.assertGreater(len(paths), len(tracked_only),
-                           f"the index holds {len(paths)} paths against {len(tracked_only)} tracked ones; "
-                           "the walk stopped contributing, so an untracked file the tables cite would be "
-                           "reported as resolving to no file")
-        self.assertIn("packages/client-neutral-core/scripts/operation_progress.py", paths,
-                      "the module root this session added a producer to is not indexed")
-        walked = paths - set(tracked_only)
-        leaked = sorted(rel for rel in walked if rel.startswith(".project-local/"))
-        self.assertEqual([], leaked[:4], f"the walk reached the runtime root: {leaked[:4]}; a file that only "
-                                        "exists on this machine must not be what makes a citation resolve")
+        raw = subprocess.run(["git", "-c", "core.quotePath=false", "ls-files", "-z"],
+                             cwd=ROOT, capture_output=True).stdout
+        tracked_only = {rel for rel in raw.decode("utf-8", "replace").split("\0") if rel}
+
+        canary_dir = ROOT / "packages" / "client-neutral-core" / "scripts"
+        canary = canary_dir / f"_index_walk_canary_{os.getpid()}.py"
+        canary.write_text("# planted by test_ui_v2_csv_citations_resolve; removed in finally\n",
+                          encoding="utf-8", newline="\n")
+        try:
+            paths, _ = file_index()
+            self.assertNotIn("", paths, "the index accepted an empty path -- `-z` output has a trailing NUL")
+            self.assertIn(canary.relative_to(ROOT).as_posix(), paths,
+                          "the walk does not see an untracked file in a module root, so a citation to newly "
+                          "written code would be convicted as resolving to no file")
+            missing = sorted(tracked_only - paths)
+            self.assertEqual([], missing[:6],
+                             f"{len(missing)} tracked paths are absent from the walked index, e.g. "
+                             f"{missing[:3]}; a tracked file the walk cannot see makes the whole gate's "
+                             "'resolves' verdict mean less than it claims")
+            self.assertIn("packages/client-neutral-core/scripts/operation_progress.py", paths,
+                          "the module root this session added a producer to is not indexed")
+            leaked = sorted(rel for rel in paths if rel.startswith(".project-local/"))
+            self.assertEqual([], leaked[:4],
+                             f"the walk reached the runtime root: {leaked[:4]}; a file that only exists on "
+                             "this machine must not be what makes a citation resolve")
+        finally:
+            canary.unlink(missing_ok=True)
+            self.assertFalse(canary.exists(), "the planted canary survived the run")
 
     def test_the_scan_actually_sees_the_citations_it_claims(self) -> None:
         paths, _ = file_index()
@@ -297,13 +318,17 @@ class UiV2CitationTests(unittest.TestCase):
     def test_a_runtime_receipt_citation_is_not_invented(self) -> None:
         """`.project-local/` citations are exempt in a fresh checkout but must not be fabricated here.
 
-        A runtime root is not checkout-verifiable -- that is the rule ERR-142 established -- so a CI runner
-        without the directory asserts nothing. On the machine that wrote the citation, though, a named
-        receipt either exists or it was invented.
+        Two claims, only one of which is a repository fact, and the test used to assert them as if they were
+        the same: `present > 0` required this box to still hold the round's receipts, so a runner that creates
+        its own `.project-local/` (CI writes gate logs there) reached the assertion with nothing cited-present
+        and failed at 47d13507 with `0 not greater than 0 : no runtime receipt is cited at all`. What is
+        verifiable from the checkout is that the tables DO cite runtime receipts -- that is the counter that
+        must not be decoration. Whether each cited receipt is real bytes is a fact about a machine, so it is
+        judged on a machine that holds any of them, and reported as unjudgable on one that holds none
+        (ERR-142's rule: answer existence from the repository, and say so when the box cannot answer).
         """
-        if not (ROOT / ".project-local").is_dir():
-            self.skipTest("no runtime root on this checkout; a receipt citation cannot be judged here")
         missing: list[str] = []
+        cited = 0
         present = 0
         for csv_path, _, _ in EXPECTED:
             with csv_path.open(encoding="utf-8-sig", newline="") as handle:
@@ -313,11 +338,17 @@ class UiV2CitationTests(unittest.TestCase):
                             token = match.group(2)
                             if not token.startswith(".project-local/"):
                                 continue
+                            cited += 1
                             if (ROOT / token).is_file():
                                 present += 1
                             else:
                                 missing.append(f"{csv_path.name}:{row['id']}:{field}: {token}")
-        self.assertGreater(present, 0, "no runtime receipt is cited at all; the counter is decoration")
+        self.assertGreater(cited, 0,
+                           "the tables cite no runtime receipt at all, so this counter is decoration — the "
+                           "matcher or the fields it reads stopped reaching `.project-local/` paths")
+        if present == 0:
+            self.skipTest(f"this checkout holds none of the {cited} cited runtime receipts; a receipt "
+                          "citation cannot be judged from bytes that are not here")
         self.assertEqual(missing, [],
                          f"a receipt cited as evidence does not exist on this machine: {missing[:6]}")
 

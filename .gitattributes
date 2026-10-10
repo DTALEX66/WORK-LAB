@@ -1,5 +1,9 @@
 * text=auto
 *.sh text eol=lf
+# Shell hooks have no extension, so `* text=auto` + core.autocrlf=true hands the working tree CRLF
+# bytes and `sh` mis-parses every line (the reason .githooks/pre-commit ran as a silent no-op until
+# 2026-10-10, ERR-261). Hooks must stay LF in the checkout, not just in the object.
+.githooks/** text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
 *.json text eol=lf
