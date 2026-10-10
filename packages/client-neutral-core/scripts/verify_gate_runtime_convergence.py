@@ -106,7 +106,7 @@ def check_5_no_fabricated_exact() -> dict:
     the v3 snapshot semantic (empty store -> OFFLINE/UNKNOWN/null tokens).
     """
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
+    import project_temp
     from canonical_store import CanonicalStore
     from composition_root import build_v3_snapshot, load_approved_index
     with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
@@ -212,7 +212,7 @@ def check_8_ci_queued_no_job_releases_writer() -> dict:
     # The durable worker never acquires a lease for CI waiting; watcher
     # semantics are covered by ci_watcher tests. Verify bounded retry blocks.
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
+    import project_temp
     from canonical_store import CanonicalStore
     from durable_worker import DurableWorker
     with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
@@ -309,7 +309,7 @@ def check_9_tauri_real_sidecar() -> dict:
 def check_10_no_credentials_in_store() -> dict:
     """No credentials/prompt-response/desktop private state in DB or UI."""
     sys.path.insert(0, str(ROOT / "packages/client-neutral-core/scripts/workflow"))
-    import tempfile
+    import project_temp
     from canonical_store import CanonicalStore, validate_record
     rejected = False
     with project_temp.fixture_root(prefix='gate-runtime-conv-') as td:
