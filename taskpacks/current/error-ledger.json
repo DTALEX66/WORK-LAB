@@ -9,11 +9,11 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 262,
+    "total": 263,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 81,
-      "test_behavior_alignment": 35,
+      "test_behavior_alignment": 36,
       "working_directory_recovery": 2,
       "evidence_state": 50,
       "ci_configuration": 22,
@@ -7959,6 +7959,38 @@
         "regressionCommand": "python -m pytest tests/ci/test_authority_index_paths_resolve.py",
         "bindingBasis": "fix-commit-introduction: the re-pointed documents, the escaped row and the checker fix land in one commit whose ancestor introduced them",
         "bindingNote": "bound 2026-10-10 against 039a6f36 and d22d21eb read from git; `git cat-file -e` proved the checker, the test, the register and DESIGN.md exist in the named commits before this field was written"
+      }
+    },
+    {
+      "error_id": "ERR-265",
+      "date": "2026-10-11",
+      "task_id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "tests/ci/test_register_table_shape_is_uniform.py, tests/ci/test_register_pins_name_checkable_commits.py",
+      "command": "python services/orchestration/run_quality_gate.py root-governance-suite",
+      "exit_code": 1,
+      "observed_error": "Two guards had been red at every head since 87f2839b and ERR-264 recorded them as an owner call: `test_register_table_shape_is_uniform.py::RealRegister::test_the_register_has_several_tables_and_many_rows` (`AssertionError: 1 not greater than or equal to 3 : [('| ID | Priority | Status | Work |', 4)]`) and `test_register_pins_name_checkable_commits.py::TheRealRegister::test_the_register_itself_still_carries_many_pins` (`AssertionError: 1 not greater than 40 : only 1 rows carry pins; the extractor changed`), giving `CI_ROOT_GOVERNANCE_FAIL modules_ran=44 modules_failed=2`.",
+      "root_cause": "The floors were not wrong, they were pinned to the wrong document. Measured on the tree before any edit: the live register is 1 table / 25 rows / 1 pinned rows, while the pre-cutover ledger -- still TRACKED and byte-identical at taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md -- is 8 tables / 190 rows / 65 pinned rows / 0 bad. d22d21eb replaced the multi-table register with the single WUI table, which is what the 2026-10-09 decision says to do, and an absolute floor calibrated on the old shape went on demanding that shape from the new document. The guard's real purpose is anti-vacuity -- prove the parser and the extractor still see a large ledger -- and that purpose is served by any real large ledger, so the right home for the floor is the archived one rather than a fixture invented for the test.",
+      "fix": "Re-attachment, not relaxation. `>= 3 tables`, `> 100 rows` and `> 40 rows carrying pins` now run against the tracked archived ledger, and the live register is judged against its own measured shape with `assertEqual(1, len(tables))`, `assertEqual(25, rows)` and `bad == []`, while its single pin is named (WUI-00 -> 71b1ae86) so a register that loses it convicts. Both halves were falsified with the same measurement that produced them: dropping the WUI-15 row moves the live scan 25 -> 24, and slicing the archive to its first 80 lines moves its pinned rows 65 -> 31, so neither floor is decoration. Measured after the change at the clean head 1928fa8a: the two modules read 19 passed and the stage reads CI_ROOT_GOVERNANCE_PASS modules=44 excluded_post_merge=1 discovered=45 with GATE_EXIT=0.",
+      "regression_test": "tests/ci/test_register_table_shape_is_uniform.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "An absolute floor must be attached to the document whose shape produced it, and a restructure that changes that shape must move the floor in the same change -- never delete it, and never leave it demanding the old shape from the new file. When the old bytes survive tracked, the non-vacuity control belongs on them: a guard proven against real repository content cannot be quietly satisfied by a fixture, and a document that loses rows still convicts because its own measured count is now asserted. Before calling a red guard a policy question, measure the shape it is judging across revisions; ERR-264 recorded these two as owner-gated and they turned out to be mis-attached.",
+      "remaining_boundary": "The live register still carries only 1 pinned row out of 25 rows, so most PASS claims in it are bound by their commit message rather than by a pin in the register itself; adding pins is real work per row (each must name a commit that carries that claim) and is not done here. `root-governance-suite` remains uninvoked by any workflow (measured: no `.github` reference to it), so CI still cannot see a red in this stage -- ERR-261's coverage gap in its third location, and wiring it into the Actions surface is a separate change to shared CI. The archived ledger is used only as a shape control: no claim in it is treated as current, and historical records stay non-normative.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "both test modules, the shape tool, the pin extractor and the two ledger paths resolve against git ls-files",
+      "lifecycle": {
+        "introducedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "introducedCommitNote": "d22d21eb changed the register's shape while the floors kept the pre-cutover numbers; the floors themselves are older (53dbfb36, 2026-10-08)",
+        "fixedCommit": "1928fa8a878bad6ab33eb8ec89c582783ac07ba2",
+        "verifiedCommit": "1928fa8a878bad6ab33eb8ec89c582783ac07ba2",
+        "verifiedCommitNote": "the stage receipt quoted above was read from `.project-local/runs/root-gov-at-clean-head.log` taken at this head with a clean tree; the live/archive shape numbers were recomputed from the written bytes when this row was composed",
+        "affectedCapability": "Register table-shape and commit-pin guards; the anti-vacuity control that keeps those parsers honest",
+        "regressionCommand": "python -m pytest tests/ci/test_register_table_shape_is_uniform.py tests/ci/test_register_pins_name_checkable_commits.py",
+        "bindingBasis": "fix-commit-introduction: the re-attached floors and their falsification numbers land in one commit",
+        "bindingNote": "bound 2026-10-11 against 1928fa8a read from git (`git rev-parse HEAD` after the commit carrying both test edits); `git cat-file -e` proved both named test files and the archived ledger path exist in it before this field was written"
       }
     }
   ],
