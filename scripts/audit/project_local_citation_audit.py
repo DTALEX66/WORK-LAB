@@ -221,6 +221,21 @@ DISPOSITIONS: dict[str, str] = {
         "controls in tests/workflow-assistance/test_project_local_citation_audit.py, which feed the "
         "classifier an evidence-shaped sentence and a destination-shaped sentence. A fictional path "
         "used to prove a matcher works is not a broken promise.",
+    # --- 2026-10-10: this round's SSE readback, added when DESIGN.md and the two UI-V2 rows began citing it
+    ".project-local/artifacts/wui-20261009/sse-revision.json":
+        "MACHINE-LOCAL READBACK WITH A RE-MEASURE COMMAND — produced by the tracked instrument "
+        "`scripts/audit/sse_revision_via_cdp.py`, which writes exactly this path (its default `OUT_DIR`) "
+        "and prints `SSE_REVISION_GATE_PASS` / `_FAIL` as its own verdict. Re-measure with "
+        "`python scripts/audit/sse_revision_via_cdp.py`; the falsification run the register cites is "
+        "`--revisions 7,9,10`, which must exit 1. Present on the authoring box as of 2026-10-10 "
+        "(2,591 B, sha256 578d6a8f9388f242…, `verdictToken: SSE_REVISION_GATE_PASS`, `failures: []`, "
+        "`revisionsPushed: [7, 9, 8]`, and `reconnectLastEventIds: []` — the empty cursor list is the "
+        "honest record that this stream never disconnected, so the `Last-Event-ID` branch was covered "
+        "elsewhere instead of being claimed here). The reader-facing citations (`apps/observer/frontend/"
+        "DESIGN.md`, `taskpacks/current/OPEN-TASK-REGISTER.md` WUI-14/WUI-15, the two UI-V2 CSVs) quote "
+        "the observation that was made, not bytes a checkout must supply; `.project-local/` is "
+        "git-ignored by declaration, so CI is asked to see the re-measure command, never to believe the "
+        "receipt.",
 }
 
 

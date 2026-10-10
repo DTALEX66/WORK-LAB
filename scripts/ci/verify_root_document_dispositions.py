@@ -64,6 +64,18 @@ def authority_named_root_documents(index: dict) -> set[str]:
     return {token for token in text.split() if token.lower().endswith(".md")}
 
 
+def same_text(left: str, right: str) -> bool:
+    """Compare text, not line terminators.
+
+    The repository normalizes on check-in (`text=auto`), so a tracked `.md` is stored with LF and checked out
+    with CRLF on Windows. A byte comparison therefore convicts every historical root document the moment it is
+    committed -- which is what it did at `0db79f9f`, having had nothing to compare against while the files were
+    still untracked. What this guard exists to catch is a REWRITE of the body, and a terminator is not a word.
+    """
+    return (left.replace("\r\n", "\n").replace("\r", "\n")
+            == right.replace("\r\n", "\n").replace("\r", "\n"))
+
+
 def strip_banner(text: str) -> str:
     """Return the document as it was before its disposition block was inserted."""
     lines = text.splitlines(keepends=True)
@@ -97,7 +109,13 @@ def check_document(rel: str, entry: dict | None, disk_text: str, prior_text: str
         elif current_taskpack not in disk_text[:4000]:
             findings.append(f"STALE_POINTER {rel}: its banner does not name the current "
                             f"taskpack {current_taskpack!r}")
-        if strip_banner(disk_text) != prior_text:
+        # Both sides are stripped: the committed version of these documents CARRIES the banner from the moment
+        # the labelling round is committed, so comparing a stripped body against an unstripped baseline convicts
+        # every historical file -- which is what it did at `0db79f9f`, the first commit that contained them.
+        # What remains under comparison is exactly what the verdict promises: text outside the disposition
+        # block, differing from the committed bytes. A rewrite already committed is out of this guard's scope
+        # by construction, and the test below says so rather than implying a history audit it does not do.
+        if not same_text(strip_banner(disk_text), strip_banner(prior_text)):
             findings.append(f"BODY_REWRITTEN {rel}: text outside the disposition block "
                             f"differs from the committed bytes")
     if disposition in ("authority", "convention-current"):

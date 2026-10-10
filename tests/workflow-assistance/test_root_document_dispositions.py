@@ -101,6 +101,43 @@ class RootDocumentDispositionTests(unittest.TestCase):
         findings = MODULE.check_document("X.md", self.historical_entry(), bannered, original, taskpack)
         self.assertEqual([], findings, f"a banner-only change must be clean: {findings}")
 
+    def test_a_line_ending_difference_is_not_a_body_rewrite(self):
+        """The repository normalizes on check-in, so CRLF on disk is the same text as LF in the object.
+
+        Measured the other way round: at `0db79f9f` the guard convicted all six historical root documents the
+        moment they were committed, because the comparison was byte-exact and the checkout is CRLF. A check that
+        fires on every file it inspects is not protecting those files, it is training the reader to ignore it --
+        so the terminator is normalized while a changed WORD still has to be caught (the case above).
+        """
+        original = "# Title\r\n\r\noriginal bytes\r\n"
+        bannered = "# Title\r\n" + BANNER.replace("\n", "\r\n") + "\r\noriginal bytes\r\n"
+        taskpack = json.loads(AUTHORITY_INDEX.read_text(encoding="utf-8"))["currentTaskpack"]
+        self.assertEqual([], MODULE.check_document("X.md", self.historical_entry(), bannered,
+                                                  original.replace("\r\n", "\n"), taskpack))
+        # and the same document with one word changed is still convicted, terminator normalization and all
+        rewritten = bannered.replace("original bytes", "quietly edited")
+        findings = MODULE.check_document("X.md", self.historical_entry(), rewritten,
+                                         original.replace("\r\n", "\n"), taskpack)
+        self.assertTrue(any(f.startswith("BODY_REWRITTEN X.md") for f in findings), findings)
+
+    def test_a_committed_banner_is_not_read_as_a_rewritten_body(self):
+        """Once the labelling round is committed, BOTH sides carry the banner.
+
+        The first version of the comparison stripped only the disk text, so the day the banners landed in a
+        commit every historical document was convicted of rewriting itself. This is the state after that
+        commit, and the honest scope statement: the guard compares against the committed bytes, so a rewrite
+        already inside history is out of its reach -- it catches an uncommitted edit to a file that is
+        declared immutable outside its banner.
+        """
+        taskpack = json.loads(AUTHORITY_INDEX.read_text(encoding="utf-8"))["currentTaskpack"]
+        committed = "# Title\n" + BANNER + "\noriginal bytes\n"
+        untouched = committed
+        findings = MODULE.check_document("X.md", self.historical_entry(), untouched, committed, taskpack)
+        self.assertEqual([], findings, f"a committed banner must not convict its own file: {findings}")
+        edited = "# Title\n" + BANNER + "\noriginal bytes, quietly changed\n"
+        findings = MODULE.check_document("X.md", self.historical_entry(), edited, committed, taskpack)
+        self.assertTrue(any(f.startswith("BODY_REWRITTEN X.md") for f in findings), findings)
+
     def test_an_authority_document_cannot_claim_a_historical_banner(self):
         entry = {"disposition": "authority", "reason": "named by the index"}
         text = "# Title\n" + BANNER + "\nrules\n"

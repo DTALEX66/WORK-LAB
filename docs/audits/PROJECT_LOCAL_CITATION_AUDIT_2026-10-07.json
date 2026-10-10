@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-09T18:59:29Z",
+  "generatedAt": "2026-10-10T13:26:22Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2356,
-    "distinctProjectLocalTokens": 484,
+    "trackedFilesScanned": 2482,
+    "distinctProjectLocalTokens": 541,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 484,
-    "citationsToAbsentTokens": 1551
+    "tokensAbsent": 541,
+    "citationsToAbsentTokens": 1714
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,24 +21,24 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 300,
-      "distinctPaths": 103
+      "citations": 316,
+      "distinctPaths": 106
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 15,
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 726,
-      "distinctPaths": 358
+      "citations": 833,
+      "distinctPaths": 410
     },
     "machine_local_runtime_pointer": {
-      "citations": 234,
-      "distinctPaths": 119
+      "citations": 253,
+      "distinctPaths": 132
     },
     "negative_assertion_or_removal_record": {
-      "citations": 171,
-      "distinctPaths": 56
+      "citations": 183,
+      "distinctPaths": 64
     },
     "path_pattern_or_truncated_token": {
       "citations": 13,
@@ -49,8 +49,8 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 64,
-      "distinctPaths": 4
+      "citations": 73,
+      "distinctPaths": 5
     }
   },
   "buckets": {
@@ -76,7 +76,7 @@
       {
         "path": ".project-local",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 189,
+        "line": 220,
         "text": "All task-scoped state belongs under this repository's `.project-local/` directory."
       },
       {
@@ -120,6 +120,12 @@
         "file": "scripts/audit/ledger_binding_readback.py",
         "line": 77,
         "text": "if verified_ok and script and not script.startswith(\".project-local/\"):"
+      },
+      {
+        "path": ".project-local",
+        "file": "scripts/audit/normalise_doc_citations.py",
+        "line": 150,
+        "text": "if token.startswith(\".project-local/\"):"
       },
       {
         "path": ".project-local",
@@ -296,6 +302,42 @@
         "text": "if rel.startswith(\".project-local/\") or \"/node_modules/\" in f\"/{rel}\":"
       },
       {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+        "line": 127,
+        "text": "if token.startswith(\".project-local/\"):"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+        "line": 158,
+        "text": "if rel.startswith(\".project-local/\") or rel not in files:"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+        "line": 188,
+        "text": "if rel in bodies or rel.startswith(\".project-local/\"):"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+        "line": 242,
+        "text": "leaked = sorted(rel for rel in walked if rel.startswith(\".project-local/\"))"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+        "line": 314,
+        "text": "if not token.startswith(\".project-local/\"):"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py",
+        "line": 35,
+        "text": "SKIP_PREFIXES = (\".project-local/\", \"taskpacks/history/\", \"docs/history/\", \"reports/audit-archive/\")"
+      },
+      {
         "path": ".project-local/RUNS/a.log",
         "file": "tests/workflow-assistance/test_snapshot_artifact_handles.py",
         "line": 790,
@@ -322,7 +364,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 196,
+        "line": 227,
         "text": "- durable verification evidence: `.project-local/artifacts/` or `.project-local/evidence/`"
       },
       {
@@ -776,10 +818,40 @@
         "text": "\".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json\":"
       },
       {
+        "path": ".project-local/artifacts/wui-20261009",
+        "file": "scripts/audit/reseal_wui_evidence.py",
+        "line": 17,
+        "text": "`.project-local/runs/`, and the receipts land in `.project-local/artifacts/wui-20261009/`."
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009",
+        "file": "scripts/audit/seal_wui_evidence.py",
+        "line": 6,
+        "text": "DPI and keyboard receipt in `.project-local/artifacts/wui-20261009` silently became a description of bytes"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009",
+        "file": "scripts/audit/wui_slice_capture.py",
+        "line": 14,
+        "text": "Screenshots and the receipt stay inside the repository boundary (.project-local/artifacts/wui-20261009)."
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009",
+        "file": "tests/workflow-assistance/test_evidence_seal_binds_receipts_to_the_measured_bundle.py",
+        "line": 4,
+        "text": "DPI and keyboard receipt in `.project-local/artifacts/wui-20261009` had already been written. Nothing in the"
+      },
+      {
         "path": ".project-local/artifacts/wui-20261009/keyboard-focus-fresh.json",
         "file": "scripts/audit/sse_revision_via_cdp.py",
         "line": 5,
         "text": "`.project-local/artifacts/wui-20261009/keyboard-focus-fresh.json` recorded why nothing like this existed:"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/sse-revision.json",
+        "file": "scripts/audit/project_local_citation_audit.py",
+        "line": 225,
+        "text": "\".project-local/artifacts/wui-20261009/sse-revision.json\":"
       },
       {
         "path": ".project-local/atlas-2026-09-29/.../WORK-LAB_MASTER_SOURCE_REGISTRY.json",
@@ -808,13 +880,13 @@
       {
         "path": ".project-local/evidence",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 196,
+        "line": 227,
         "text": "- durable verification evidence: `.project-local/artifacts/` or `.project-local/evidence/`"
       },
       {
         "path": ".project-local/handoffs",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 194,
+        "line": 225,
         "text": "- plans and handoffs: `.project-local/plans/` and `.project-local/handoffs/`"
       },
       {
@@ -832,7 +904,7 @@
       {
         "path": ".project-local/kanban",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 197,
+        "line": 228,
         "text": "- Hermes project board: `.project-local/kanban/` (run through `hermes-project-data.py kanban`)"
       },
       {
@@ -856,7 +928,7 @@
       {
         "path": ".project-local/plans",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 194,
+        "line": 225,
         "text": "- plans and handoffs: `.project-local/plans/` and `.project-local/handoffs/`"
       },
       {
@@ -910,31 +982,31 @@
       {
         "path": ".project-local/runs",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 184,
+        "line": 215,
         "text": "# .project-local/runs → root base is parent.parent; .hermes/task-runtime → parent"
       },
       {
         "path": ".project-local/runs",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 195,
+        "line": 226,
         "text": "- temporary command data: `.project-local/runs/`"
       },
       {
         "path": ".project-local/runs",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 203,
+        "line": 234,
         "text": "and common tool caches to `.project-local/runs/` and pins `HERMES_KANBAN_HOME`"
       },
       {
         "path": ".project-local/runs",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 215,
+        "line": 246,
         "text": "Remove confirmed regenerable files from `.project-local/runs/`; retain only"
       },
       {
         "path": ".project-local/runs",
         "file": "packages/client-neutral-core/bin/hermes-project-terminal-guard.py",
-        "line": 406,
+        "line": 429,
         "text": "f\"move the output under .project-local/runs instead of {external_spill}\""
       },
       {
@@ -1002,6 +1074,12 @@
         "file": "scripts/audit/release_chrome_profile_residue.py",
         "line": 165,
         "text": "\"scope\": \".project-local/runs\", \"kind\": \"headless-chrome-profiles\","
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "scripts/audit/reseal_wui_evidence.py",
+        "line": 17,
+        "text": "`.project-local/runs/`, and the receipts land in `.project-local/artifacts/wui-20261009/`."
       },
       {
         "path": ".project-local/runs",
@@ -1206,6 +1284,12 @@
         "file": "tests/workflow-assistance/test_toolchain_declarations.py",
         "line": 114,
         "text": "self.assertEqual(\".project-local/runs\", self.boundary[\"runtimeRoot\"])"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py",
+        "line": 3,
+        "text": "`.project/governance/project-data-boundary.json` declares ``runtimeRoot: .project-local/runs`` and AGENTS.md"
       },
       {
         "path": ".project-local/runs/../../../Windows/x",
@@ -1414,7 +1498,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-k/ledger_targets_detail.json",
         "file": "scripts/audit/ledger_regression_command_targets.py",
-        "line": 275,
+        "line": 280,
         "text": "default=\".project-local/runs/convergence-20261007-k/ledger_targets_detail.json\")"
       },
       {
@@ -1646,6 +1730,12 @@
         "text": "The pile it left was 4811 directories / 531.7 MiB under ``.project-local/runs/tmp``, 676 of them"
       },
       {
+        "path": ".project-local/runs/tmp",
+        "file": "tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py",
+        "line": 134,
+        "text": "``.project-local/runs/tmp``, so a temp-based 'outside' path would resolve INSIDE the project under"
+      },
+      {
         "path": ".project-local/runs/tmp/cookies.sqlite",
         "file": "tests/workflow-assistance/test_control_service.py",
         "line": 447,
@@ -1724,6 +1814,12 @@
         "text": "\"--runtime-root .project-local/runs/workflow (serves \""
       },
       {
+        "path": ".project-local/runs/wui-20261009/snapshot-readback2.json",
+        "file": "tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py",
+        "line": 78,
+        "text": "# (.project-local/runs/wui-20261009/snapshot-readback2.json), not copied from the type file: the point is"
+      },
+      {
         "path": ".project-local/runs/x.json",
         "file": "tests/ci/test_authority_index_paths_resolve.py",
         "line": 110,
@@ -1792,7 +1888,7 @@
       {
         "path": ".project-local/sleep-mode",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 193,
+        "line": 224,
         "text": "- queues and durable task state: `.project-local/tasks/` or `.project-local/sleep-mode/`"
       },
       {
@@ -1834,7 +1930,7 @@
       {
         "path": ".project-local/tasks",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 193,
+        "line": 224,
         "text": "- queues and durable task state: `.project-local/tasks/` or `.project-local/sleep-mode/`"
       },
       {
@@ -2604,6 +2700,12 @@
         "text": "\"taskpackPath\": \".project-local/artifacts/task-artifacts/r4/taskpack-r4.md\","
       },
       {
+        "path": ".project-local/artifacts/temp-residue-reclaim/manifest-20261009T204026Z.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 99,
+        "text": "**新红 ④：`test_temp_fixture_residue_is_bounded` 点出一个 6.5 小时前的孤儿 `.project-local/runs/tmp/node-jiti`**（1 个文件、2,250 B、无嵌套 git），是本轮早前为读基线跑 node 工具链留下的编译缓存。走仓内既有工具做有清单的回收：`scripts/maintenance/release_temp_f"
+      },
+      {
         "path": ".project-local/artifacts/ui-audit-20261007",
         "file": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 211,
@@ -2652,16 +2754,64 @@
         "text": "\".project-local/artifacts/work-lab-migration-v6\","
       },
       {
+        "path": ".project-local/artifacts/wui-20261009",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 28,
+        "text": "| WUI-17 | P2 | PARTIAL_20261010 / 默认加载链的引用已机械化并加门；根目录处置成机器合同；历史文件的物理移动经实测被消费者锁死，未做 | 旧消费者迁移与剩余历史整理；依赖 WUI-16；验收见唯一CURRENT对应任务。**① 默认加载链引用**：`scripts/audit/normalise_doc_citations.py`（作用面＝权威引导链 8 份文档）"
+      },
+      {
         "path": ".project-local/artifacts/wui-20261009/01-main-dark.png",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 12,
-        "text": "| WUI-01 | P0 | EXECUTED_20261009 / INTEGRATED（界面+受控测试+headless 渲染读回；无 Tauri 安装读回） | 桌面项目首页与信息架构；依赖 WUI-00；验收见唯一CURRENT对应任务。交付：首页改为项目监控（`?view=overview` 保留为同一身份，不建双首页），新增 `components/dashboard/Project"
+        "text": "| WUI-01 | P0 | EXECUTED_20261009 / INTEGRATED（界面+受控测试+headless 渲染读回；无 Tauri 安装读回） | 桌面项目首页与信息架构；依赖 WUI-00；验收见唯一CURRENT对应任务。交付：首页改为项目监控（`?view=overview` 保留为同一身份，不建双首页），新增 `apps/observer/frontend/src/c"
       },
       {
         "path": ".project-local/artifacts/wui-20261009/display-scaling.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 25,
         "text": "| WUI-14 | P0 | PARTIAL_20261009 / DPI·可读性·交互保留已实测，原生读回未做 | 桌面交互与可读性实测；依赖 WUI-03, WUI-13；验收见唯一CURRENT对应任务。交付门 `scripts/audit/display_scaling_via_cdp.py`（表由 `src-tauri/tauri.conf.json` 读出，不硬编码尺寸）：2560×"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/evidence-receipt.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 12,
+        "text": "| WUI-01 | P0 | EXECUTED_20261009 / INTEGRATED（界面+受控测试+headless 渲染读回；无 Tauri 安装读回） | 桌面项目首页与信息架构；依赖 WUI-00；验收见唯一CURRENT对应任务。交付：首页改为项目监控（`?view=overview` 保留为同一身份，不建双首页），新增 `apps/observer/frontend/src/c"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/geometry.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 13,
+        "text": "| WUI-02 | P0 | EXECUTED_20261009 / INTEGRATED | 桌面导航、搜索与对象详情骨架；依赖 WUI-01；验收见唯一CURRENT对应任务。交付：新泳道 `project-detail`（`apps/observer/frontend/src/views/ProjectDetailView.tsx`），对象详情按 `?projectId=` 完整命名空间寻"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/keyboard-focus-fresh.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 25,
+        "text": "| WUI-14 | P0 | PARTIAL_20261009 / DPI·可读性·交互保留已实测，原生读回未做 | 桌面交互与可读性实测；依赖 WUI-03, WUI-13；验收见唯一CURRENT对应任务。交付门 `scripts/audit/display_scaling_via_cdp.py`（表由 `src-tauri/tauri.conf.json` 读出，不硬编码尺寸）：2560×"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/keyboard-focus-fresh.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 62,
+        "text": "`.project-local/artifacts/wui-20261009/keyboard-focus-fresh.json` 只能绑到「stage 时的 dist」而不能绑到实际绘制的字节——它测的是发行二进制"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/legibility-allviews-fresh.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 25,
+        "text": "| WUI-14 | P0 | PARTIAL_20261009 / DPI·可读性·交互保留已实测，原生读回未做 | 桌面交互与可读性实测；依赖 WUI-03, WUI-13；验收见唯一CURRENT对应任务。交付门 `scripts/audit/display_scaling_via_cdp.py`（表由 `src-tauri/tauri.conf.json` 读出，不硬编码尺寸）：2560×"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/legibility-dpi-widths.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 25,
+        "text": "| WUI-14 | P0 | PARTIAL_20261009 / DPI·可读性·交互保留已实测，原生读回未做 | 桌面交互与可读性实测；依赖 WUI-03, WUI-13；验收见唯一CURRENT对应任务。交付门 `scripts/audit/display_scaling_via_cdp.py`（表由 `src-tauri/tauri.conf.json` 读出，不硬编码尺寸）：2560×"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/legibility-live-views.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 79,
+        "text": "`NOT_ENFORCED`＋药丸普查。live 实测（bundle `3929e3f84a97ee2f`，`.project-local/artifacts/wui-20261009/legibility-live-views.json`）：每主题 34 个药丸节点、"
       },
       {
         "path": ".project-local/artifacts/wui-20261009/sse-revision.json",
@@ -2673,7 +2823,43 @@
         "path": ".project-local/artifacts/wui-20261009/sse-revision.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 26,
-        "text": "| WUI-15 | P1 | PARTIAL_20261010 / SSOT 已并入并双向钉住；live SSE 与类型生成未做 | Schema/Snapshot/SSE与前后端兼容验收；依赖 WUI-04, WUI-05, WUI-06, WUI-07, WUI-09, WUI-12；验收见唯一CURRENT对应任务。核心交付：**`workflow/snapshot/v3` 现在在 JSO"
+        "text": "| WUI-15 | P1 | PARTIAL_20261010 / SSOT 已并入并双向钉住；类型生成缺陷已修并钉住、行级 section 已收紧；剩余为前端改消费生成物（`Last-Event-ID` 复订已于本批读回，见 WUI-18 (f)） | Schema/Snapshot/SSE与前后端兼容验收；依赖 WUI-04, WUI-05, WUI-06, WUI-07, WUI-09, "
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261010/citation-expansion.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 110,
+        "text": "⑧ 可恢复性：两表改动前已按字节备份（`.project-local/runs/wui-20261010/csv-backup/`，`.project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv` 40,406 B / `7aeddf5d5c25e084`，`.project-local/runs/wui-20261010/csv-ba"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261010/collector-delivery-card.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 22,
+        "text": "| WUI-11 | P0 | EXECUTED_20261009 / INTEGRATED（八态词表与矩阵已交付；逐泳道异常文案覆写未完成） | 状态矩阵、限定诊断与协作摘要空态；依赖 WUI-04。交付：`apps/observer/frontend/src/lib/stateVocabulary.ts` 八态一词一源（各自 meaning/依据字段/下一步），`NON_PROJECTABLE"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261010/collector-delivery-card.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261010/hermes-overlay-readback.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 128,
+        "text": "`.project-local/artifacts/wui-20261010/hermes-overlay-readback.json`（sha `e597acf91ca9b3b7`，"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261010/perf-baseline.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261010/two-source-canary-read.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
       },
       {
         "path": ".project-local/artifacts并校验摘要",
@@ -2930,6 +3116,18 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 28,
+        "text": "| WUI-17 | P2 | PARTIAL_20261010 / 默认加载链的引用已机械化并加门；根目录处置成机器合同；历史文件的物理移动经实测被消费者锁死，未做 | 旧消费者迁移与剩余历史整理；依赖 WUI-16；验收见唯一CURRENT对应任务。**① 默认加载链引用**：`scripts/audit/normalise_doc_citations.py`（作用面＝权威引导链 8 份文档）"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 49,
         "text": "每份回执都写入它；切片捕获仪表从临时目录 `.project-local/runs/` 升为受版本控制的"
       },
@@ -2996,8 +3194,26 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 7076,
+        "line": 7086,
         "text": "\"root_cause\": \"I bound gate reports to a commit (GATE_HEAD) and left render reports bound to nothing. The instruments that produce them were written to answer what the page did, so no artifact could d"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7284,
+        "text": "\"fix\": \"The prior label and prior reason are now captured before the record is written (scripts/audit/ledger_regression_command_targets.py, apply_labels), and a call-site case was added to tests/workf"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7338,
+        "text": "\"observed_error\": \"Three tracked CLIs and one worker entry point wrote or accepted the canonical store outside the project root. `collectors.py:332`, `active_projects.py:204` and `project_registry.py:"
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7544,
+        "text": "\"regressionTestVerifiabilityReason\": \"the instrument is an untracked working-set file under .project-local/runs, so it is not checkout-verifiable (ERR-142)\","
       },
       {
         "path": ".project-local/runs",
@@ -3524,19 +3740,19 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/falsify_render_ports.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 307,
+        "line": 308,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-c/falsify_render_ports.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/falsify_render_ports.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2367,
+        "line": 2318,
         "text": "\"command\": \"apps/observer/frontend/src/views/renderTruthContract.test.tsx (8 mounted cases). Falsified 8/8 by mutating the production components (.project-local/runs/convergence-20261007-c/falsify_ren"
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/falsify_render_ports.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2382,
+        "line": 2333,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-c/falsify_render_ports.py\","
       },
       {
@@ -3554,13 +3770,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-c/falsify_u03_ports.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 297,
+        "line": 298,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-c/falsify_u03_ports.py):\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/falsify_u03_ports.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2348,
+        "line": 2299,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-c/falsify_u03_ports.py):\","
       },
       {
@@ -3746,13 +3962,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_candidate_decisions.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 367,
+        "line": 368,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-d/falsify_candidate_decisions.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_candidate_decisions.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2568,
+        "line": 2519,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-d/falsify_candidate_decisions.py\","
       },
       {
@@ -3770,13 +3986,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_model_claims.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 372,
+        "line": 373,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-d/falsify_model_claims.py\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_model_claims.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2597,
+        "line": 2548,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-d/falsify_model_claims.py\","
       },
       {
@@ -3794,19 +4010,19 @@
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_source_registry_fix.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 347,
+        "line": 348,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-d/falsify_source_registry_fix.py):\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_source_registry_fix.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2506,
+        "line": 2457,
         "text": "\"command\": \"tests/workflow-assistance/test_recovered_source_registry.py, 8 cases. Falsified 5/5 (.project-local/runs/convergence-20261007-d/falsify_source_registry_fix.py): flipping the SVG working tr"
       },
       {
         "path": ".project-local/runs/convergence-20261007-d/falsify_source_registry_fix.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2521,
+        "line": 2472,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-d/falsify_source_registry_fix.py):\","
       },
       {
@@ -3914,13 +4130,13 @@
       {
         "path": ".project-local/runs/convergence-20261007-f/falsify_regression_gate.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 392,
+        "line": 393,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-f/falsify_regression_gate.py):\","
       },
       {
         "path": ".project-local/runs/convergence-20261007-f/falsify_regression_gate.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2682,
+        "line": 2633,
         "text": "\"operand\": \".project-local/runs/convergence-20261007-f/falsify_regression_gate.py):\","
       },
       {
@@ -3994,6 +4210,78 @@
         "file": "reports/audit-archive/20260930/hermes/skills/software-development/dsh-administration/SKILL.md",
         "line": 357,
         "text": "1. 只读 live 探针（不写任何全局配置）：运行 `python .project-local/runs/dsh_codex_probe.py`（或等效只读脚本），将 DSH exe 路径、版本（从 resources/app/package.json）、桌面 .lnk 三字段（TargetPath/Arguments/IconLocation）、Codex wrapper 路径（packag"
+      },
+      {
+        "path": ".project-local/runs/falsify_callsite_reason_rule.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 28,
+        "text": "| WUI-17 | P2 | PARTIAL_20261010 / 默认加载链的引用已机械化并加门；根目录处置成机器合同；历史文件的物理移动经实测被消费者锁死，未做 | 旧消费者迁移与剩余历史整理；依赖 WUI-16；验收见唯一CURRENT对应任务。**① 默认加载链引用**：`scripts/audit/normalise_doc_citations.py`（作用面＝权威引导链 8 份文档）"
+      },
+      {
+        "path": ".project-local/runs/falsify_callsite_reason_rule.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7284,
+        "text": "\"fix\": \"The prior label and prior reason are now captured before the record is written (scripts/audit/ledger_regression_command_targets.py, apply_labels), and a call-site case was added to tests/workf"
+      },
+      {
+        "path": ".project-local/runs/falsify_canary_value_scan.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
+      },
+      {
+        "path": ".project-local/runs/falsify_canary_value_scan.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7368,
+        "text": "\"fix\": \"Two functions over one pattern set in `artifact_flow_policy.py`: `find_nested_secrets` (unchanged, still what the flow decision uses) and `secret_value_paths`, which applies the same credentia"
+      },
+      {
+        "path": ".project-local/runs/falsify_citation_cases.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 28,
+        "text": "| WUI-17 | P2 | PARTIAL_20261010 / 默认加载链的引用已机械化并加门；根目录处置成机器合同；历史文件的物理移动经实测被消费者锁死，未做 | 旧消费者迁移与剩余历史整理；依赖 WUI-16；验收见唯一CURRENT对应任务。**① 默认加载链引用**：`scripts/audit/normalise_doc_citations.py`（作用面＝权威引导链 8 份文档）"
+      },
+      {
+        "path": ".project-local/runs/falsify_fixture_prefix_census.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
+      },
+      {
+        "path": ".project-local/runs/falsify_fixture_prefix_census.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7396,
+        "text": "\"fix\": \"The prefix became `monitor-selftest-` (verified against `name_is_sensitive` directly before and after), and the census now accepts both `fixture_dir` and `fixture_root` with a comment recordin"
+      },
+      {
+        "path": ".project-local/runs/falsify_normalised_citation_assertion.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 28,
+        "text": "| WUI-17 | P2 | PARTIAL_20261010 / 默认加载链的引用已机械化并加门；根目录处置成机器合同；历史文件的物理移动经实测被消费者锁死，未做 | 旧消费者迁移与剩余历史整理；依赖 WUI-16；验收见唯一CURRENT对应任务。**① 默认加载链引用**：`scripts/audit/normalise_doc_citations.py`（作用面＝权威引导链 8 份文档）"
+      },
+      {
+        "path": ".project-local/runs/falsify_normalised_citation_assertion.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7256,
+        "text": "\"fix\": \"The disposition changed from move to label-in-place, with the blocking evidence measured and written out: .project/governance/root-document-dispositions.json classifies all 11 tracked root Mar"
+      },
+      {
+        "path": ".project-local/runs/falsify_root_dispositions.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 28,
+        "text": "| WUI-17 | P2 | PARTIAL_20261010 / 默认加载链的引用已机械化并加门；根目录处置成机器合同；历史文件的物理移动经实测被消费者锁死，未做 | 旧消费者迁移与剩余历史整理；依赖 WUI-16；验收见唯一CURRENT对应任务。**① 默认加载链引用**：`scripts/audit/normalise_doc_citations.py`（作用面＝权威引导链 8 份文档）"
+      },
+      {
+        "path": ".project-local/runs/falsify_runtime_root_scan.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
+      },
+      {
+        "path": ".project-local/runs/falsify_runtime_root_scan.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7340,
+        "text": "\"fix\": \"One shared predicate in `packages/client-neutral-core/scripts/project_temp.py`: `declared_runtime_root()` reads `runtimeRoot` from the boundary contract, `runtime_dir(name)` hangs a named dire"
       },
       {
         "path": ".project-local/runs/fill_ui_v2_acceptance_20261010.py",
@@ -4356,6 +4644,12 @@
         "text": "\"canonicalDownloader\": \".project-local/runs/model-governance-20260928/wl_model_download.py\","
       },
       {
+        "path": ".project-local/runs/normalise_ui_v2_citations.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 34,
+        "text": "| WUI-23 | P0 | EXECUTED_20261010 / 40 行逐行填毕，0 行可绑满 | 接口绑定矩阵按真实合同、字段路径、源码位置、未知处理与证据逐行填写（40 行 B01–B40）；依赖 WUI-15；来源＝WL-REC-0103 `docs/03_接口绑定矩阵.csv`，包内 40 行 `binding_status` 全为 `待绑定` 且 `source_file_or_"
+      },
+      {
         "path": ".project-local/runs/p002_paths.py",
         "file": "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "line": 165,
@@ -4562,31 +4856,31 @@
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 232,
+        "line": 233,
         "text": "\"operand\": \".project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2036,
+        "line": 1987,
         "text": "\"command\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the release binary with Origin http://tauri.localhost, with headless Ch"
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 2039,
+        "line": 1990,
         "text": "\"operand\": \".project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
-        "line": 1437,
+        "line": 1434,
         "text": "\"operand\": \".project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
-        "line": 1438,
+        "line": 1435,
         "text": "\"command\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the\","
       },
       {
@@ -4656,6 +4950,18 @@
         "text": "\"regressionCommandPrior\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
+        "path": ".project-local/runs/probe",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
+      },
+      {
+        "path": ".project-local/runs/probe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7508,
+        "text": "\"fix\": \"The two metadata lookups now carry a declared ceiling (`ROOT_CHECK_TIMEOUT_SECONDS = 5.0` in the guard, `GIT_METADATA_TIMEOUT_SECONDS = 5.0` in the wrapper, both sited against the measured lat"
+      },
+      {
         "path": ".project-local/runs/qoder-20261007-a/gate-verify-242be880.log",
         "file": "taskpacks/current/error-ledger.json",
         "line": 5498,
@@ -4716,6 +5022,24 @@
         "text": "\"observed_error\": \"With every other gate green at 3700cb53, the canonical governance batch reported `FAIL: test_every_refusal_is_typed_and_carries_no_content (test_evidence_range_reader.RefusalTests) "
       },
       {
+        "path": ".project-local/runs/quality-gate-governance-20261010c.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 118,
+        "text": "`.project-local/runs/quality-gate-governance-20261010c.log`。本轮全部改动落定后**又跑了一次全量**：`Ran 2613 tests in 213.924s` / `FAILED (failures=2, skipped=10)` / `GATE_EXIT=1`，`modules_run=240`（新增的两道必门 `test_hooks_"
+      },
+      {
+        "path": ".project-local/runs/quality-gate-governance-20261010d.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 118,
+        "text": "`.project-local/runs/quality-gate-governance-20261010c.log`。本轮全部改动落定后**又跑了一次全量**：`Ran 2613 tests in 213.924s` / `FAILED (failures=2, skipped=10)` / `GATE_EXIT=1`，`modules_run=240`（新增的两道必门 `test_hooks_"
+      },
+      {
+        "path": ".project-local/runs/quality-gate-governance-20261010f.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 193,
+        "text": "`.project-local/runs/quality-gate-governance-20261010f.log`，全量转写 `.project-local/runs/quality-gate-governance-fail.log`。"
+      },
+      {
         "path": ".project-local/runs/quality-gate-governance-fail.log",
         "file": "docs/history/archive/workflow-convergence-20261005.md",
         "line": 37,
@@ -4726,6 +5050,24 @@
         "file": "docs/history/archive/workflow-convergence-receipt-20261005.json",
         "line": 10,
         "text": "\"log\": \".project-local/runs/quality-gate-governance-fail.log\","
+      },
+      {
+        "path": ".project-local/runs/quality-gate-governance-fail.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 118,
+        "text": "`.project-local/runs/quality-gate-governance-20261010c.log`。本轮全部改动落定后**又跑了一次全量**：`Ran 2613 tests in 213.924s` / `FAILED (failures=2, skipped=10)` / `GATE_EXIT=1`，`modules_run=240`（新增的两道必门 `test_hooks_"
+      },
+      {
+        "path": ".project-local/runs/quality-gate-governance-fail.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 193,
+        "text": "`.project-local/runs/quality-gate-governance-20261010f.log`，全量转写 `.project-local/runs/quality-gate-governance-fail.log`。"
+      },
+      {
+        "path": ".project-local/runs/quality-gate-governance-fail.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 209,
+        "text": "（完整转写 `.project-local/runs/quality-gate-governance-fail.log`）。"
       },
       {
         "path": ".project-local/runs/quality-gate-governance-fail.log",
@@ -4762,6 +5104,18 @@
         "file": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json",
         "line": 2884,
         "text": "\"command\": \"python .project-local/runs/readback_global_deployment.py (sha256 repo source vs live Hermes skills tree)\","
+      },
+      {
+        "path": ".project-local/runs/record-20261010",
+        "file": "docs/history/owner-inputs/record-20261010/SOURCE-INTEGRITY.json",
+        "line": 6,
+        "text": "\"recoveryReceipt\": \".project-local/runs/record-20261010\","
+      },
+      {
+        "path": ".project-local/runs/repoint_matrix_line_citations.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 100,
+        "text": "**同轮把行号指针变成可检断言**（这是③教我的同一类失效：指针写的是一回事，文件里是另一回事）：新探测对绑定矩阵的 **149** 条带行号引用逐条回查，量出 **7 条漂移**（多为 ±1～2 行；其中 `packages/client-neutral-core/scripts/collectors.py:267→268` 是本轮我自己删掉一行造成的），用 `.project-local/ru"
       },
       {
         "path": ".project-local/runs/secret_scan_package.py",
@@ -4828,6 +5182,12 @@
         "file": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json",
         "line": 6383,
         "text": "\"remaining_boundary\": \"The bound gate watches only the declared throwaway root `.project-local/runs/tmp`; named task-ledger and runtime evidence directories under `runs` are out of scope by design and"
+      },
+      {
+        "path": ".project-local/runs/tmp/node-jiti",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 99,
+        "text": "**新红 ④：`test_temp_fixture_residue_is_bounded` 点出一个 6.5 小时前的孤儿 `.project-local/runs/tmp/node-jiti`**（1 个文件、2,250 B、无嵌套 git），是本轮早前为读基线跑 node 工具链留下的编译缓存。走仓内既有工具做有清单的回收：`scripts/maintenance/release_temp_f"
       },
       {
         "path": ".project-local/runs/topbar-measure-20261006/geometry.json",
@@ -5054,20 +5414,254 @@
       {
         "path": ".project-local/runs/wui-20261009/legibility-both-backend.log",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 462,
+        "line": 408,
         "text": "\"operand\": \".project-local/runs/wui-20261009/legibility-both-backend.log\","
       },
       {
         "path": ".project-local/runs/wui-20261009/legibility-both-backend.log",
         "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "line": 4519,
+        "line": 4492,
         "text": "\"operand\": \".project-local/runs/wui-20261009/legibility-both-backend.log\","
       },
       {
         "path": ".project-local/runs/wui-20261009/legibility-both-backend.log",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 7159,
-        "text": "\"regression_test\": \"The instrument itself emits the checks and reseal_wui_evidence.py re-runs them; the static run now prints 'backend=static NOT_ENFORCED -- pills={}' and the live run prints the pill"
+        "line": 7172,
+        "text": "\"regression_test\": \"The instrument itself emits the checks and scripts/audit/reseal_wui_evidence.py re-runs them; the static run now prints 'backend=static NOT_ENFORCED -- pills={}' and the live run p"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/correct_err255_observed_text.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7675,
+        "text": "\"fix\": \"`projects.items` now declares all 17 keys with `required` listing every one of them and `additionalProperties: false`, with types read off the row builder's own expressions (`x or \\\"UNKNOWN\\\"`"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/csv-backup",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 110,
+        "text": "⑧ 可恢复性：两表改动前已按字节备份（`.project-local/runs/wui-20261010/csv-backup/`，`.project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv` 40,406 B / `7aeddf5d5c25e084`，`.project-local/runs/wui-20261010/csv-ba"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/csv-backup/CHECKLIST.before.csv",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 110,
+        "text": "⑧ 可恢复性：两表改动前已按字节备份（`.project-local/runs/wui-20261010/csv-backup/`，`.project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv` 40,406 B / `7aeddf5d5c25e084`，`.project-local/runs/wui-20261010/csv-ba"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 110,
+        "text": "⑧ 可恢复性：两表改动前已按字节备份（`.project-local/runs/wui-20261010/csv-backup/`，`.project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv` 40,406 B / `7aeddf5d5c25e084`，`.project-local/runs/wui-20261010/csv-ba"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/csv-backup/snapshot-v3.schema.before.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 26,
+        "text": "| WUI-15 | P1 | PARTIAL_20261010 / SSOT 已并入并双向钉住；类型生成缺陷已修并钉住、行级 section 已收紧；剩余为前端改消费生成物（`Last-Event-ID` 复订已于本批读回，见 WUI-18 (f)） | Schema/Snapshot/SSE与前后端兼容验收；依赖 WUI-04, WUI-05, WUI-06, WUI-07, WUI-09, "
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/csv-backup/snapshot-v3.schema.before.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7673,
+        "text": "\"observed_error\": \"ERR-225 was closed by making the snapshot schema an authority with `additionalProperties: false` -- at the TOP LEVEL only. One level down, `projects.items` declared 6 keys (['active"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/declare_projects_section.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 26,
+        "text": "| WUI-15 | P1 | PARTIAL_20261010 / SSOT 已并入并双向钉住；类型生成缺陷已修并钉住、行级 section 已收紧；剩余为前端改消费生成物（`Last-Event-ID` 复订已于本批读回，见 WUI-18 (f)） | Schema/Snapshot/SSE与前后端兼容验收；依赖 WUI-04, WUI-05, WUI-06, WUI-07, WUI-09, "
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/declare_projects_section.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7675,
+        "text": "\"fix\": \"`projects.items` now declares all 17 keys with `required` listing every one of them and `additionalProperties: false`, with types read off the row builder's own expressions (`x or \\\"UNKNOWN\\\"`"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/expand_shorthand_citations.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 105,
+        "text": "③ 怎么修的：`.project-local/runs/wui-20261010/expand_shorthand_citations.py` 的替换表来自**门自己的扫描**（因此正文里提到 `package.json` 不会被改写成路径），要求 basename 在树中**只有一个**文件才落笔（`EXPAND_ABORT` 是默认拒绝），且错目录那六条必须**先在候选文件里命中被引代码**才"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/expand_shorthand_citations.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7452,
+        "text": "\"fix\": \"Every unresolved citation was expanded against the tree by `.project-local/runs/wui-20261010/expand_shorthand_citations.py`, which derives its replacement map from the gate's own scan (so pros"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/expand_shorthand_citations.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7475,
+        "text": "\"entrypoint\": \".project-local/runs/wui-20261010/expand_shorthand_citations.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_hook_bound_guard.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_hook_bound_guard.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 136,
+        "text": "`.project-local/runs/wui-20261010/readback_hermes_overlay.py`（读回）与 `.project-local/runs/wui-20261010/falsify_hook_bound_guard.py`（伪证还原）都在仓内运行时根下。"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_ingest_refusal_guards.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7699,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/falsify_ingest_refusal_guards.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_pack_digest_fix.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 189,
+        "text": "`.project-local/runs/wui-20261010/falsify_pack_digest_fix.py`）。途中我自己的探针先被判空：子进程输出是 CRLF，`$` 锚定的正则什么都匹配不到而返回码仍是 0。"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_ragged_row_assertion.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 108,
+        "text": "⑥ **我自己的第二个缺陷**：把替换句子以原文写进**未加引号**的 CSV 字段，而句子里有逗号——B34 因此从 14 列变 **15 列**，表却照样\"通过\"：`csv.DictReader` 把多余字段挂在 `None` 键下，而门只断言表头名与行数，看不见多列。修正分两处：句子改用分号（`.project-local/runs/wui-20261010/fix_b34_field_sh"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_resume_cursor_and_restart.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7727,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/falsify_resume_cursor_and_restart.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_retention_exemption.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 29,
+        "text": "| WUI-18 | P1 | PARTIAL_20261010 / 两来源正向读取、运行时根边界、合成秘密canary、真实CPU/内存/延迟读数、Hook 上限及时延、磁盘有界、毒记录逐行隔离与具名计数、**交付/拒绝计数已进入可视面**、`Last-Event-ID` 真实断连复订读回均已交付并实测（ERR-256/257/259）；仍未完成：状态矩阵本身尚未复用这张卡（见本段末）；另记 E"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_row_section_guards.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 26,
+        "text": "| WUI-15 | P1 | PARTIAL_20261010 / SSOT 已并入并双向钉住；类型生成缺陷已修并钉住、行级 section 已收紧；剩余为前端改消费生成物（`Last-Event-ID` 复订已于本批读回，见 WUI-18 (f)） | Schema/Snapshot/SSE与前后端兼容验收；依赖 WUI-04, WUI-05, WUI-06, WUI-07, WUI-09, "
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_row_section_guards.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7675,
+        "text": "\"fix\": \"`projects.items` now declares all 17 keys with `required` listing every one of them and `additionalProperties: false`, with types read off the row builder's own expressions (`x or \\\"UNKNOWN\\\"`"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_widened_file_index.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 162,
+        "text": "（`.project-local/runs/wui-20261010/falsify_widened_file_index.py`）。同一个\"部分宇宙\"缺陷此前已在文档引用门上出现过一次并修过，"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_widened_file_index.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7591,
+        "text": "\"fix\": \"`file_index()` now takes `git ls-files` union a repo-wide `os.walk`, pruning during traversal: `.project-local`, `.ui-reference`, `node_modules`, `dist`, `.git`, `__pycache__`, `.venv`, `targe"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/fix_b34_field_shape.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 108,
+        "text": "⑥ **我自己的第二个缺陷**：把替换句子以原文写进**未加引号**的 CSV 字段，而句子里有逗号——B34 因此从 14 列变 **15 列**，表却照样\"通过\"：`csv.DictReader` 把多余字段挂在 `None` 键下，而门只断言表头名与行数，看不见多列。修正分两处：句子改用分号（`.project-local/runs/wui-20261010/fix_b34_field_sh"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/gate-batch2-20261010.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 208,
+        "text": "`GATE_SOURCE_DRIFT=no`。日志 `.project-local/runs/wui-20261010/gate-batch2-20261010.log`"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/ledger_rows_254_255.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7671,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/ledger_rows_254_255.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/probe_ledger_binding_convictions.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 214,
+        "text": "`.project-local/runs/wui-20261010/probe_ledger_binding_convictions.py` 现场打印），本批新增的 ERR-254/255"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/prove_generator_projection_and_idempotence.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 26,
+        "text": "| WUI-15 | P1 | PARTIAL_20261010 / SSOT 已并入并双向钉住；类型生成缺陷已修并钉住、行级 section 已收紧；剩余为前端改消费生成物（`Last-Event-ID` 复订已于本批读回，见 WUI-18 (f)） | Schema/Snapshot/SSE与前后端兼容验收；依赖 WUI-04, WUI-05, WUI-06, WUI-07, WUI-09, "
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/prove_generator_projection_and_idempotence.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7643,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/prove_generator_projection_and_idempotence.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/prove_generator_projection_and_idempotence.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7645,
+        "text": "\"observed_error\": \"The TypeScript projection that the frontend and Rust are told to consume instead of hand-forking contract shapes rendered every JSON-Schema `enum` as a fixed-length TUPLE, and dropp"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/prove_pack_digest_stable_across_seconds_v2.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 188,
+        "text": "`d7ef1321edeba540`（`.project-local/runs/wui-20261010/prove_pack_digest_stable_across_seconds_v2.py`、"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+        "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
+        "line": 413,
+        "text": "\"operand\": \".project-local/runs/wui-20261010/readback_hermes_overlay.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+        "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
+        "line": 4736,
+        "text": "\"command\": \".project-local/runs/wui-20261010/readback_hermes_overlay.py (receipt targetsTotal == the rows measured)\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+        "file": "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
+        "line": 4739,
+        "text": "\"operand\": \".project-local/runs/wui-20261010/readback_hermes_overlay.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 136,
+        "text": "`.project-local/runs/wui-20261010/readback_hermes_overlay.py`（读回）与 `.project-local/runs/wui-20261010/falsify_hook_bound_guard.py`（伪证还原）都在仓内运行时根下。"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7531,
+        "text": "\"entrypoint\": \".project-local/runs/wui-20261010/readback_hermes_overlay.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7532,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/readback_hermes_overlay.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7537,
+        "text": "\"regression_test\": \".project-local/runs/wui-20261010/readback_hermes_overlay.py (receipt targetsTotal == the rows measured)\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/repair_matrix_line_endings.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7755,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/repair_matrix_line_endings.py\","
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/repoint_convicted_pointers.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 106,
+        "text": "④ 路径一通，八条指针随即在行号上判红（偏离 1～4 行；`packages/client-neutral-core/scripts/perf_baseline.py:42-43 → 46-47` 是本轮我自己在那个文件里加行造成的）。`.project-local/runs/wui-20261010/repoint_convicted_pointers.py` 只移动**门自己点名**的指针、只"
       },
       {
         "path": ".project-local/sleep-mode",
@@ -6103,6 +6697,18 @@
       },
       {
         "path": ".project-local/toolchains/wl-py311",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 26,
+        "text": "| WUI-15 | P1 | PARTIAL_20261010 / SSOT 已并入并双向钉住；类型生成缺陷已修并钉住、行级 section 已收紧；剩余为前端改消费生成物（`Last-Event-ID` 复订已于本批读回，见 WUI-18 (f)） | Schema/Snapshot/SSE与前后端兼容验收；依赖 WUI-04, WUI-05, WUI-06, WUI-07, WUI-09, "
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 223,
+        "text": "- 本批定向读回（治理批之外，全部现场复跑于 `.project-local/toolchains/wl-py311`，Python 3.11.15）："
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311",
         "file": "taskpacks/history/SESSION-HANDOFF-ATLAS-GAP-20261001.md",
         "line": 134,
         "text": "1. **Wrong interpreter.** Use `.project-local/toolchains/wl-py311`. The bare bundled runtime"
@@ -6164,56 +6770,188 @@
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 6826,
+        "line": 6827,
         "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 6938,
+        "line": 6943,
         "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 6965,
+        "line": 6971,
         "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 6992,
+        "line": 6999,
         "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 7019,
+        "line": 7027,
         "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/ci/test_push_permit.py\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 7046,
+        "line": 7055,
         "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe services/orchestration/run_quality_gate.py verify\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 7073,
+        "line": 7083,
         "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe scripts/audit/seal_wui_evidence.py\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 7127,
+        "line": 7139,
         "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 7154,
+        "line": 7167,
         "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe scripts/audit/text_legibility_via_cdp.py --all-views --live-backend\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7196,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe services/orchestration/run_quality_gate.py verify\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7224,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7252,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_default_load_doc_citations_resolve.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7280,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_ledger_regression_command_targets.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7308,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe scripts/audit/normalise_doc_citations.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7336,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7364,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_durable_worker.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7392,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_token_monitor.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7420,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_ledger_unbound_triage.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7448,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7476,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7504,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7532,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/readback_hermes_overlay.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7559,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_canonical_store_disk_is_bounded.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7587,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7615,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7643,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/prove_generator_projection_and_idempotence.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7671,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/ledger_rows_254_255.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7699,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/falsify_ingest_refusal_guards.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7727,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/falsify_resume_cursor_and_restart.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7755,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe .project-local/runs/wui-20261010/repair_matrix_line_endings.py\","
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7783,
+        "text": "\"command\": \".project-local/toolchains/wl-py311/Scripts/python.exe scripts/audit/collector_delivery_render.py\","
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
@@ -6800,10 +7538,82 @@
         "text": "\"legacyLocalArchiveManifest\": \".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json\","
       },
       {
+        "path": ".project-local/artifacts/wui-20261009/07-object-detail.png",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 40,
+        "text": "T39,P1,对端协作未接通,接收/知识/教学/接受/真人学习/效果未取得,责任方来源检查,是,未执行：对端协作（接收/知识/教学/接受/真人学习/效果）在本仓无生产者，WUI-20 为按需独立项、不阻塞核心发布；界面侧只有明确的协作摘要空态。,.project-local/artifacts/wui-20261009/07-object-detail.png,UNCOMMITTED_WORKIN"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/10-software-environment.png",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 32,
+        "text": "T31,P3,真实首次接入,软件/资格/字段/差异/授权/读回/样例活动均来自真实源,实机接入证据,是,未执行：真实首次接入（软件/资格/字段/差异/授权/读回/样例活动同源）需要外部软件写通道；属 WUI-06 之后的 WUI-08/10。软件环境页与首次资格判定界面已交付。,.project-local/artifacts/wui-20261009/10-software-environmen"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/12-rules-adaptation.png",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 36,
+        "text": "T35,P3,规则无冲突/三方冲突,保留用户字段；未决冲突不自动提交,真实格式三方比较,是,部分通过：规则三方差异界面按五阶段逐行独立显示（意图/投影生成/写入/原生加载/行为验证），未决冲突不自动提交；缺：真实格式三方比较与「保留用户字段」的原生读回未做。,apps/observer/frontend/src/lib/ruleProjectionTruth.ts;.project-local/a"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/display-scaling.json",
+        "file": "docs/current/ui-priority-20261009/UI-V2-INTAKE-20261010.md",
+        "line": 62,
+        "text": "（`.project-local/artifacts/wui-20261009/display-scaling.json`）。222 这个固定值在当前布局下任何宽度都不会产出。"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/display-scaling.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 43,
+        "text": "T42,P4,Windows 100/125/150/200% DPI,字体清晰、弹窗不裁切、命中区可用,真实Windows截图,是,未通过：100/125/150% 三档 CSS 视口（2560×1440 物理推导 2048/1706/1280）各 21 项布局判决全绿且 dpr 已断言，字号下限与命中区在几何门内通过；派生检查 fixed_hud_window_fits 在 200% FAIL"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/geometry-freshbundle.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 2,
+        "text": "T01,P1,1280px与1440px,正文仍14px，布局重排，未用画布缩放,浏览器截图与计算字号,是,部分通过：1280 与 1440 两档各 28 条泳道在真实浏览器测量，字号低于 12px 的节点 0 个、AA 对比失败 0 个、窄带无横向溢出（scrollWidth==innerWidth）。缺：包要求正文 14px，现行默认正文 16px 是 owner 未撤销的既有决定，本行按现行"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/geometry-freshbundle.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 4,
+        "text": "T03,P1,深浅主题与键盘,焦点可见，文字/图标状态不只靠颜色,实际键盘与对比度证据,是,部分通过：深/浅两主题每个文本节点 AA 4.5:1 通过（0 失败），节点图把每个条件用文字说出而不只靠色点，焦点控件不被遮挡且每个可见探针都能取得焦点（真实浏览器）。缺：焦点环的 native WebView2 读回从未产出，其回执自报 KEYBOARD_FOCUS_GATE_NOT_RUN。,.pro"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/geometry-freshbundle.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 43,
+        "text": "T42,P4,Windows 100/125/150/200% DPI,字体清晰、弹窗不裁切、命中区可用,真实Windows截图,是,未通过：100/125/150% 三档 CSS 视口（2560×1440 物理推导 2048/1706/1280）各 21 项布局判决全绿且 dpr 已断言，字号下限与命中区在几何门内通过；派生检查 fixed_hud_window_fits 在 200% FAIL"
+      },
+      {
         "path": ".project-local/artifacts/wui-20261009/keyboard-focus-fresh.json",
         "file": "apps/observer/frontend/DESIGN.md",
         "line": 558,
         "text": "`.project-local/artifacts/wui-20261009/keyboard-focus-fresh.json` carries the artifact gate's"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/keyboard-focus-fresh.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 4,
+        "text": "T03,P1,深浅主题与键盘,焦点可见，文字/图标状态不只靠颜色,实际键盘与对比度证据,是,部分通过：深/浅两主题每个文本节点 AA 4.5:1 通过（0 失败），节点图把每个条件用文字说出而不只靠色点，焦点控件不被遮挡且每个可见探针都能取得焦点（真实浏览器）。缺：焦点环的 native WebView2 读回从未产出，其回执自报 KEYBOARD_FOCUS_GATE_NOT_RUN。,.pro"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/legibility-1440.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 2,
+        "text": "T01,P1,1280px与1440px,正文仍14px，布局重排，未用画布缩放,浏览器截图与计算字号,是,部分通过：1280 与 1440 两档各 28 条泳道在真实浏览器测量，字号低于 12px 的节点 0 个、AA 对比失败 0 个、窄带无横向溢出（scrollWidth==innerWidth）。缺：包要求正文 14px，现行默认正文 16px 是 owner 未撤销的既有决定，本行按现行"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/legibility-allviews-fresh.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 2,
+        "text": "T01,P1,1280px与1440px,正文仍14px，布局重排，未用画布缩放,浏览器截图与计算字号,是,部分通过：1280 与 1440 两档各 28 条泳道在真实浏览器测量，字号低于 12px 的节点 0 个、AA 对比失败 0 个、窄带无横向溢出（scrollWidth==innerWidth）。缺：包要求正文 14px，现行默认正文 16px 是 owner 未撤销的既有决定，本行按现行"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/legibility-allviews-fresh.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 4,
+        "text": "T03,P1,深浅主题与键盘,焦点可见，文字/图标状态不只靠颜色,实际键盘与对比度证据,是,部分通过：深/浅两主题每个文本节点 AA 4.5:1 通过（0 失败），节点图把每个条件用文字说出而不只靠色点，焦点控件不被遮挡且每个可见探针都能取得焦点（真实浏览器）。缺：焦点环的 native WebView2 读回从未产出，其回执自报 KEYBOARD_FOCUS_GATE_NOT_RUN。,.pro"
       },
       {
         "path": ".project-local/artifacts/wui-20261009/legibility-live-views.json",
@@ -6816,6 +7626,12 @@
         "file": "apps/observer/frontend/DESIGN.md",
         "line": 575,
         "text": "`.project-local/artifacts/wui-20261009/sse-revision.json` holds the pass; `--revisions 7,9,10` produced the"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009/sse-revision.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv",
+        "line": 5,
+        "text": "B04,项目,SourceFreshness,eventAt;receivedAt;displayAt;lastGood;historyReadback,现有来源/观测合同,read,显示最后可信摘要与缺口,UI刷新不产生新事件,the four timestamps collapse onto generatedAt/transport times; separate event/receipt"
       },
       {
         "path": ".project-local/artifacts内",
@@ -7216,7 +8032,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-k/measure_lane_state_matrix.py",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 313,
+        "line": 316,
         "text": "因此「要么被用要么删」的处置前提不成立。实测（`.project-local/runs/convergence-20261007-k/measure_lane_state_matrix.py`"
       },
       {
@@ -7244,10 +8060,22 @@
         "text": "legacy isolated-checkout layout `.project-local/runs/deepseek-harness/`"
       },
       {
+        "path": ".project-local/runs/falsify_citation_cases.py",
+        "file": "docs/current/DOCUMENT-CENSUS.md",
+        "line": 214,
+        "text": "两次工具均按字节还原、还原后 8/8 绿，`.project-local/runs/falsify_citation_cases.py`）。教训登记 ERR-242。"
+      },
+      {
         "path": ".project-local/runs/falsify_mobile_sweep.py",
         "file": "apps/observer/frontend/SCREEN_SPEC.md",
         "line": 241,
         "text": "(`.project-local/runs/falsify_mobile_sweep.py`)."
+      },
+      {
+        "path": ".project-local/runs/falsify_root_dispositions.py",
+        "file": "docs/current/DOCUMENT-CENSUS.md",
+        "line": 92,
+        "text": "两次都红并逐字节还原（13,210 B / 10,255 B），脚本 `.project-local/runs/falsify_root_dispositions.py`。"
       },
       {
         "path": ".project-local/runs/falsify_stale_permission.py",
@@ -7426,7 +8254,7 @@
       {
         "path": ".project-local/runs/qoder-20261007-a/gate-verify.log",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 403,
+        "line": 406,
         "text": "**【2026-10-07 当日更正，原文保留不改】** 上面那段 FAIL 在换一台主机后被证伪：同一棵树（HEAD `cda4165`）用声明工具链 `.project-local/toolchains/wl-py311/Scripts/python.exe` 重跑整仓 `verify`，得到 `QUALITY_GATE_GOVERNANCE_PASS modules=207 executed"
       },
       {
@@ -7438,7 +8266,7 @@
       {
         "path": ".project-local/runs/qoder-20261007-a/prove_control_to_observer.py",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 423,
+        "line": 426,
         "text": "真实读回（`.project-local/runs/qoder-20261007-a/prove_control_to_observer.py`，两个真进程、项目内运行根）：写入 WL-E2E-CONTROL-1 → ACCEPTED + digest 回执 → Observer 的 `/api/v1/snapshot` 实测含该记录（QUEUED、checkpoint 键名与摘要、无正文）→ 对"
       },
       {
@@ -7462,7 +8290,7 @@
       {
         "path": ".project-local/runs/qoder-20261008-d/recovery",
         "file": "docs/current/DOCUMENT-CENSUS.md",
-        "line": 87,
+        "line": 111,
         "text": "`untouched=True`，证据 JSON 在 `.project-local/runs/qoder-20261008-d/recovery/`。"
       },
       {
@@ -7492,19 +8320,19 @@
       {
         "path": ".project-local/runs/tmp",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 401,
+        "line": 404,
         "text": "整仓 `python services/orchestration/run_quality_gate.py verify` **FAIL / 本地环境未能完成**：治理批次运行 2,184 项，出现 22 个 `test_project_terminal_guard` 断言失败和 `test_clean_with_unpushed_commit` 错误；前一组的失败值集中为 Windows `Pa"
       },
       {
         "path": ".project-local/runs/tmp",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 403,
+        "line": 406,
         "text": "**【2026-10-07 当日更正，原文保留不改】** 上面那段 FAIL 在换一台主机后被证伪：同一棵树（HEAD `cda4165`）用声明工具链 `.project-local/toolchains/wl-py311/Scripts/python.exe` 重跑整仓 `verify`，得到 `QUALITY_GATE_GOVERNANCE_PASS modules=207 executed"
       },
       {
         "path": ".project-local/runs/tmp",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 476,
+        "line": 479,
         "text": "`TMP/TEMP/TMPDIR` 绑到 `.project-local/runs/tmp`，门内系统 temp 在仓库里；探针改为引用上一级一个永不创建"
       },
       {
@@ -7564,49 +8392,49 @@
       {
         "path": ".project-local/runs/ui-audit-20261007-cda-build",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 399,
+        "line": 402,
         "text": "复验：Observer 前端 25 文件 / 167 项通过；`tsc -p tsconfig.json --noEmit` 退出 0；Vite production build 退出 0，输出写入 `.project-local/runs/ui-audit-20261007-cda-build/`。没有安装依赖。"
       },
       {
         "path": ".project-local/runs/ui-suite",
         "file": "ASSET_REPLACEMENT_MANIFEST.md",
-        "line": 12,
+        "line": 15,
         "text": "- 参考 zip 内的 1920×1080 页面图 / VI 图 = **审计对照源**（`.project-local/runs/ui-suite/`，"
       },
       {
         "path": ".project-local/runs/ui-suite",
         "file": "HANDOFF-UI-L10B.md",
-        "line": 168,
+        "line": 171,
         "text": "for L10b + closeout evidence under `.project-local/runs/ui-suite/`"
       },
       {
         "path": ".project-local/runs/ui-suite/extraction-report.json",
         "file": "UI_REFERENCE_MANIFEST.md",
-        "line": 18,
+        "line": 21,
         "text": "## 1. 权威批次（WORK-LAB 相关条目，SHA 见 .project-local/runs/ui-suite/extraction-report.json）"
       },
       {
         "path": ".project-local/runs/ui-suite/l10b-verify/verify.mjs",
         "file": "VISUAL_QA_REPORT.md",
-        "line": 113,
+        "line": 116,
         "text": "- 验证 harness：`.project-local/runs/ui-suite/l10b-verify/verify.mjs`（tsc → vitest →"
       },
       {
         "path": ".project-local/runs/ui-suite/work-lab_最终版_高保真可部署UI/index.html",
         "file": "HANDOFF-UI-L10B.md",
-        "line": 59,
+        "line": 62,
         "text": "- B10 single-file: `.project-local/runs/ui-suite/work-lab_最终版_高保真可部署UI/index.html`"
       },
       {
         "path": ".project-local/runs/ui-suite/work-lab_最终版_高保真可部署UI/index.html",
         "file": "HANDOFF-UI-L10B.md",
-        "line": 180,
+        "line": 183,
         "text": "2) .project-local/runs/ui-suite/work-lab_最终版_高保真可部署UI/index.html"
       },
       {
         "path": ".project-local/runs/ui-suite/work-lab_最终版_高保真可部署UI/index.html",
         "file": "UI_REFERENCE_MANIFEST.md",
-        "line": 15,
+        "line": 18,
         "text": "> B10 单一文件路径 `.project-local/runs/ui-suite/work-lab_最终版_高保真可部署UI/index.html`"
       },
       {
@@ -7620,6 +8448,30 @@
         "file": "apps/observer/docs/observer-source-architecture.md",
         "line": 90,
         "text": "--runtime-root .project-local/runs/workflow \\"
+      },
+      {
+        "path": ".project-local/runs/wui-20261009/governance-after-regen.log",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 45,
+        "text": "T44,P4,当前仓库与发布候选,现有要求全部通过，生成源/投影一致；留未通过项不假部署,当前提交及真实验收报告,是,未通过：本轮要求尚未全绿——治理批 2541 例中 2 例红，且两例都因工作集未提交（受版本控制的仪表清单要求新工具已入库、PASS 记录要求 fixedCommit 指向提交）；因此只能交可评审工作集＋明确缺口，不得写「成熟可部署」。未通过项已逐条留在本清单（T42 与 T13–"
+      },
+      {
+        "path": ".project-local/runs/wui-20261009/snapshot-readback.json",
+        "file": "packages/contracts/schemas/workflow/snapshot-v3.schema.json",
+        "line": 5,
+        "text": "\"description\": \"The cross-language shape of the projection the sidecar answers at GET /api/v1/snapshot and pushes over /api/v1/events. Registered in the contract catalog because WUI-15's acceptance sa"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/expand_shorthand_citations.py",
+        "file": "docs/current/DOCUMENT-CENSUS.md",
+        "line": 225,
+        "text": "是被路径修复满足的）。修法是**改数据不是改门**：`.project-local/runs/wui-20261010/expand_shorthand_citations.py`"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/repoint_convicted_pointers.py",
+        "file": "docs/current/DOCUMENT-CENSUS.md",
+        "line": 229,
+        "text": "由 `.project-local/runs/wui-20261010/repoint_convicted_pointers.py` 只搬\"门点名\"的指针、只落在 30 行内唯一命中处，写后用门的谓词复跑："
       },
       {
         "path": ".project-local/runs/x/receipt.json",
@@ -7690,7 +8542,7 @@
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 403,
+        "line": 406,
         "text": "**【2026-10-07 当日更正，原文保留不改】** 上面那段 FAIL 在换一台主机后被证伪：同一棵树（HEAD `cda4165`）用声明工具链 `.project-local/toolchains/wl-py311/Scripts/python.exe` 重跑整仓 `verify`，得到 `QUALITY_GATE_GOVERNANCE_PASS modules=207 executed"
       },
       {
@@ -7740,7 +8592,7 @@
       {
         "path": ".project-local",
         "file": "ASSET_REPLACEMENT_MANIFEST.md",
-        "line": 46,
+        "line": 49,
         "text": "- 这些文件是**本地证据**，不进仓库（`.project-local/` 已 gitignored）。"
       },
       {
@@ -7842,7 +8694,7 @@
       {
         "path": ".project-local",
         "file": "packages/client-neutral-core/bin/hermes-project-data.py",
-        "line": 116,
+        "line": 147,
         "text": "\"project runtime root must be git-ignored before use: add `.project-local/` or `.hermes/` to .gitignore\""
       },
       {
@@ -7914,7 +8766,7 @@
       {
         "path": ".project-local",
         "file": "scripts/audit/project_local_citation_audit.py",
-        "line": 308,
+        "line": 323,
         "text": "\"from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under \""
       },
       {
@@ -7952,6 +8804,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 4238,
         "text": "\"root_cause\": \"The audit answered 'does this citation's bytes exist?' from the local filesystem, and the declared runtime root .project-local/ is git-ignored, so the answer — and therefore the queue, "
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7228,
+        "text": "\"fix\": \"Added `tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py` as a mandatory gate: every citation in either CSV must resolve to a file in the repository or carry an explicit `ABSENT:` "
       },
       {
         "path": ".project-local",
@@ -8024,6 +8882,12 @@
         "file": "tests/workflow-assistance/test_toolchain_declarations.py",
         "line": 48,
         "text": "The property is about the repository: an ignored cache under `.project-local/` can hold a"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+        "line": 298,
+        "text": "\"\"\"`.project-local/` citations are exempt in a fresh checkout but must not be fabricated here."
       },
       {
         "path": ".project-local",
@@ -8184,8 +9048,26 @@
       {
         "path": ".project-local/artifacts/wui-20261009",
         "file": "taskpacks/current/error-ledger.json",
-        "line": 7075,
+        "line": 7085,
         "text": "\"observed_error\": \"Every render receipt in .project-local/artifacts/wui-20261009 turned out to describe bytes that no longer existed. The Observer dist was rebuilt at 01:49 after a production source c"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261009",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7312,
+        "text": "\"fix\": \"Population is now the checkout: `git ls-files` unioned with a repository-wide walk (runtime root `.project-local` excluded so a local copy can never decide what a bare name means; measured 2,4"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261010/collector-delivery-card.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7787,
+        "text": "\"fix\": \"Full vertical path. `collector_health` gains `delivered_rows` (migration 4 extended, DDL + ALTER for existing stores) and `DurableWorker` accumulates `stored` into it beside `refused_rows`. `c"
+      },
+      {
+        "path": ".project-local/artifacts/wui-20261010/hermes-overlay-readback.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7536,
+        "text": "\"fix\": \"Added `.project-local/runs/wui-20261010/readback_hermes_overlay.py`, which resolves the home through `sync.default_hermes_home()` (never a hardcoded drive letter), calls the shipped `guard_row"
       },
       {
         "path": ".project-local/artifacts/x.txt",
@@ -8232,7 +9114,7 @@
       {
         "path": ".project-local/runs",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 513,
+        "line": 516,
         "text": "`.git/config`、治理机读文件全部 REFUSED 且不返回内容，`.project-local/runs` 下真实运行日志仍按区间读出；"
       },
       {
@@ -8476,6 +9358,12 @@
         "text": "\"fix\": \"The scanner now excludes the vitest-only directory and, in the same file, asserts that no production source imports anything inside it, so the narrowing cannot hide the failure the rule exists"
       },
       {
+        "path": ".project-local/runs/falsify_citation_cases.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7312,
+        "text": "\"fix\": \"Population is now the checkout: `git ls-files` unioned with a repository-wide walk (runtime root `.project-local` excluded so a local copy can never decide what a bare name means; measured 2,4"
+      },
+      {
         "path": ".project-local/runs/frontend-baseline-vitest-only.py",
         "file": "reports/SESSION-CONSOLIDATION-20261001.md",
         "line": 75,
@@ -8524,6 +9412,12 @@
         "text": "| 原始运行证据（gitignored） | `.project-local/runs/model-governance-20260928/`（`CLOSEOUT.md`、`HANDOFF.md`、`protection-baseline.json`、`inventory.utf8.json`、`bench-deep*.json`、`deep-serving.json`、`deep-usabili"
       },
       {
+        "path": ".project-local/runs/normalise_ui_v2_citations.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7228,
+        "text": "\"fix\": \"Added `tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py` as a mandatory gate: every citation in either CSV must resolve to a file in the repository or carry an explicit `ABSENT:` "
+      },
+      {
         "path": ".project-local/runs/p0a-diag-20261006/shot3.py",
         "file": "taskpacks/current/error-ledger.json",
         "line": 2978,
@@ -8564,6 +9458,18 @@
         "file": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 238,
         "text": "| INSTRUMENT-FIXES-20261007 | P1 | AUDIT_SELF_SCAN_REMOVED_1.7MB_TO_130KB / POLICY_SCANNER_BLIND_TO_LIST_STRINGS_ERR-139 / 2_NEW_GATE_MODULES | 两处是自家仪器骗了自己。(1) `scripts/audit/project_local_citation_au"
+      },
+      {
+        "path": ".project-local/runs/probe",
+        "file": "tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py",
+        "line": 190,
+        "text": "wrapper.is_git_ignored(ROOT, Path(\".project-local/runs/probe\"))"
+      },
+      {
+        "path": ".project-local/runs/probe",
+        "file": "tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py",
+        "line": 202,
+        "text": "self.assertTrue(wrapper.is_git_ignored(ROOT, Path(\".project-local/runs/probe\")),"
       },
       {
         "path": ".project-local/runs/qoder-agent-verbs",
@@ -8640,20 +9546,38 @@
       {
         "path": ".project-local/runs/ui-suite",
         "file": "UI_REFERENCE_MANIFEST.md",
-        "line": 14,
+        "line": 17,
         "text": "> 解压工作区 / 视觉事实源：`.project-local/runs/ui-suite/`（gitignored，仅审计用）；"
       },
       {
         "path": ".project-local/runs/ui-suite/l10b-closeout.md",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 115,
+        "line": 118,
         "text": "| `.project-local/runs/ui-suite/l10b-closeout.md` | 本地（gitignored） | 完整 closeout 证据 |"
       },
       {
         "path": ".project-local/runs/ui-suite/l10b-verify",
         "file": "UI_IMPLEMENTATION_REPORT.md",
-        "line": 116,
+        "line": 119,
         "text": "| `.project-local/runs/ui-suite/l10b-verify/` | 本地（gitignored） | 验证 harness + 日志 + 17 张截图 |"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/falsify_pack_digest_fix.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7619,
+        "text": "\"fix\": \"`build_context_pack.py` now hashes a body with the `- Generated UTC:` line removed, beside the `filled-after-render` placeholder it already excluded, and states why in a comment at the call si"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/prove_pack_digest_stable_across_seconds_v2.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7619,
+        "text": "\"fix\": \"`build_context_pack.py` now hashes a body with the `- Generated UTC:` line removed, beside the `filled-after-render` placeholder it already excluded, and states why in a comment at the call si"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7536,
+        "text": "\"fix\": \"Added `.project-local/runs/wui-20261010/readback_hermes_overlay.py`, which resolves the home through `sync.default_hermes_home()` (never a hardcoded drive letter), calls the shipped `guard_row"
       },
       {
         "path": ".project-local/runs/x.json",
@@ -8810,7 +9734,7 @@
       {
         "path": ".project-local/runs/ui-suite/l10b-verify/shot-",
         "file": "ASSET_REPLACEMENT_MANIFEST.md",
-        "line": 43,
+        "line": 46,
         "text": "- `.project-local/runs/ui-suite/l10b-verify/shot-*.png` —— 17 张 1600×1050 headless 截图，"
       },
       {
@@ -9024,7 +9948,13 @@
       {
         "path": ".project-local",
         "file": "docs/current/DOCUMENT-CENSUS.md",
-        "line": 153,
+        "line": 72,
+        "text": "扩展名 md/json/py/csv，全仓排除 `.project-local/`，含其自身 = **21** 个文件点名；其中"
+      },
+      {
+        "path": ".project-local",
+        "file": "docs/current/DOCUMENT-CENSUS.md",
+        "line": 177,
         "text": "- `.project-local/` 内未被跟踪的 md 数量：未测（该根整体被忽略，需要单独枚举才能给数）。"
       },
       {
@@ -9167,6 +10097,36 @@
       },
       {
         "path": ".project-local",
+        "file": "scripts/audit/project_local_citation_audit.py",
+        "line": 236,
+        "text": "\"the observation that was made, not bytes a checkout must supply; `.project-local/` is \""
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 28,
+        "text": "| WUI-17 | P2 | PARTIAL_20261010 / 默认加载链的引用已机械化并加门；根目录处置成机器合同；历史文件的物理移动经实测被消费者锁死，未做 | 旧消费者迁移与剩余历史整理；依赖 WUI-16；验收见唯一CURRENT对应任务。**① 默认加载链引用**：`scripts/audit/normalise_doc_citations.py`（作用面＝权威引导链 8 份文档）"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 28,
+        "text": "| WUI-17 | P2 | PARTIAL_20261010 / 默认加载链的引用已机械化并加门；根目录处置成机器合同；历史文件的物理移动经实测被消费者锁死，未做 | 旧消费者迁移与剩余历史整理；依赖 WUI-16；验收见唯一CURRENT对应任务。**① 默认加载链引用**：`scripts/audit/normalise_doc_citations.py`（作用面＝权威引导链 8 份文档）"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 32,
+        "text": "| WUI-21 | P1 | PARTIAL_20261010 / 服务端读模型合同＋生产者已交付并实测；三页界面与快照携带面仍未做 | 隔离试用与目标验证三页（方案/失败/读回）及其读模型合同；依赖 WUI-08, WUI-10；来源＝入册材料 WL-REC-0103（UI 深化 v2）§5，判定见 `docs/current/ui-priority-20261009/UI-V2-INTAKE"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 34,
+        "text": "| WUI-23 | P0 | EXECUTED_20261010 / 40 行逐行填毕，0 行可绑满 | 接口绑定矩阵按真实合同、字段路径、源码位置、未知处理与证据逐行填写（40 行 B01–B40）；依赖 WUI-15；来源＝WL-REC-0103 `docs/03_接口绑定矩阵.csv`，包内 40 行 `binding_status` 全为 `待绑定` 且 `source_file_or_"
+      },
+      {
+        "path": ".project-local",
         "file": "taskpacks/current/error-ledger.json",
         "line": 3912,
         "text": "\"fix\": \"The two moved paths were left alone after measuring them against the `cd` prefix the command itself carries — `cd apps/observer && node tests/run_all_tests.js` is correct and my first pass had"
@@ -9194,6 +10154,18 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 5911,
         "text": "\"observed_error\": \"The README's Quick Start tells a new machine to run ./setup.sh and .\\\\setup.ps1. Neither file has ever existed in this repository: `git log --all -- setup.sh` returns nothing and th"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7254,
+        "text": "\"observed_error\": \"Three defects in one slice, all of them in artifacts I had already written about as done. (1) The census disposition I published told the next agent to fix the references to the six"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7591,
+        "text": "\"fix\": \"`file_index()` now takes `git ls-files` union a repo-wide `os.walk`, pruning during traversal: `.project-local`, `.ui-reference`, `node_modules`, `dist`, `.git`, `__pycache__`, `.venv`, `targe"
       },
       {
         "path": ".project-local",
@@ -9364,6 +10336,12 @@
         "text": "Kanban 是例外：Hermes 原生支持 `HERMES_KANBAN_HOME`，因此所有项目 task board 都必须经本 helper 启动并落入 `<project>/.project-local/`。Cron job 定义与其调度输出当前由 Hermes Home 统一管理；每个项目 cron 的 `workdir` 和执行命令仍必须指向项目，并使用本 helper 写入项目内 "
       },
       {
+        "path": ".project-local/artifacts/wui-20261009/sse-revision.json",
+        "file": "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
+        "line": 9,
+        "text": "T08,P1,断连/日志缺口/turn_end,三轴独立；保留上次可信源；不判项目完成/软件停止,来源夹具与页面结果,是,部分通过：断连/日志缺口/turn_end 三轴各自独立——无快照≠离线≠空，读取失败与传输 OFFLINE 都落 not-connected，延迟/陈旧不写成无数据，短覆盖=partial-failure，查询为空=no-data；LIVE 药丸遇 OFFLINE 快照在每条"
+      },
+      {
         "path": ".project-local/runs",
         "file": "docs/current/workflow-assistance/workflow/token-monitor.md",
         "line": 130,
@@ -9381,6 +10359,7 @@
     ".project-local",
     ".project-local/artifacts",
     ".project-local/artifacts/model-library-readback.json",
+    ".project-local/artifacts/wui-20261009/sse-revision.json",
     ".project-local/runs",
     ".project-local/runs/observer",
     ".project-local/runs/tmp",
@@ -9390,16 +10369,17 @@
     ".project-local": "DECLARED ROOT — `.project/governance/project-data-boundary.json` names it as the runtime and evidence root every sanctioned writer targets. A directory declaration is not evidence a reader has to open, and it is git-ignored by design, so CI never sees it and is not asked to.",
     ".project-local/artifacts": "DECLARED ROOT — `taskArtifactsRoot`/`canonicalEvidenceRoot` in the boundary declaration; the citations name where sanctioned tools write, not bytes a reader must recover.",
     ".project-local/artifacts/model-library-readback.json": "MACHINE-LOCAL RECEIPT WITH A RE-MEASURE COMMAND — `.project/governance/model-registry.json` quotes it as '(machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)', the regenerator is tracked, and a tracked counterpart exists at `docs/audits/MODEL_LIBRARY_READBACK_2026-10-07.md`. The file was present on the authoring box (14,754 B, 2026-10-07). CI is not asked to believe the bytes — only to see that the claim names how to reproduce them.",
+    ".project-local/artifacts/wui-20261009/sse-revision.json": "MACHINE-LOCAL READBACK WITH A RE-MEASURE COMMAND — produced by the tracked instrument `scripts/audit/sse_revision_via_cdp.py`, which writes exactly this path (its default `OUT_DIR`) and prints `SSE_REVISION_GATE_PASS` / `_FAIL` as its own verdict. Re-measure with `python scripts/audit/sse_revision_via_cdp.py`; the falsification run the register cites is `--revisions 7,9,10`, which must exit 1. Present on the authoring box as of 2026-10-10 (2,591 B, sha256 578d6a8f9388f242…, `verdictToken: SSE_REVISION_GATE_PASS`, `failures: []`, `revisionsPushed: [7, 9, 8]`, and `reconnectLastEventIds: []` — the empty cursor list is the honest record that this stream never disconnected, so the `Last-Event-ID` branch was covered elsewhere instead of being claimed here). The reader-facing citations (`apps/observer/frontend/DESIGN.md`, `taskpacks/current/OPEN-TASK-REGISTER.md` WUI-14/WUI-15, the two UI-V2 CSVs) quote the observation that was made, not bytes a checkout must supply; `.project-local/` is git-ignored by declaration, so CI is asked to see the re-measure command, never to believe the receipt.",
     ".project-local/runs": "DECLARED ROOT — `runtimeRoot`/`logsRoot`/`cacheRoot` in the boundary declaration; the citations describe where run logs and receipts land.",
     ".project-local/runs/observer": "DESTINATION — `apps/observer/module-profile.json` declares where the read-only projection writes when it runs; nothing validates its existence and it has not been asked to run.",
     ".project-local/runs/tmp": "HISTORICAL ROUND + RESIDUE — the path is the old bound temp root the gate no longer uses; the two files still on disk are a jiti loader cache and a scratch fixture, and deleting them is a separate audited cleanup (prove recoverability first), not something a citation may assume.",
     ".project-local/runs/u19-msvc-20261006/target/release/app.exe": "MACHINE-LOCAL BUILD OUTPUT NAMED AS WHAT WAS RUN — the desktop readback records (`docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json`, `docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md`) cite the binary the owner actually launched. The readback claim rests on that recorded observation, not on this path existing on a runner, and the binary is regenerable from tracked source by the recorded cargo build."
   },
   "counts": {
-    "reviewQueue": 7,
+    "reviewQueue": 8,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 251
+    "presentOnThisMachine": 306
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
