@@ -79,6 +79,12 @@ jobs:
           python services/orchestration/run_quality_gate.py context-pack
           python services/orchestration/run_quality_gate.py client-neutral-manifest
           python services/orchestration/run_quality_gate.py core-schemas
+          # ERR-261/263/264 recorded the same blind spot three times: this stage runs the root tests/ci
+          # governance suite (44 modules -- the register's table shape and commit pins, the authority-index
+          # reference checks, the tool inventory) and no workflow invoked it, so a red there was invisible on
+          # push while every CI check stayed green. The chain above stops at its first failure, which is why
+          # a stage list has to be named in full rather than assumed covered.
+          python services/orchestration/run_quality_gate.py root-governance-suite
           python tests/workflow-assistance/test_platform_identity.py
           python tests/workflow-assistance/test_instance_reconciler.py
           python tests/workflow-assistance/test_config_ownership.py
