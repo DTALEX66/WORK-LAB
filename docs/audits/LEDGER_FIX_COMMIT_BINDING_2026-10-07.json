@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-08T06:16:56Z",
+  "generatedAt": "2026-10-10T13:07:58Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -8,7 +8,7 @@
     "null": "an unverified fix stays null, and a PASS record with no fixedCommit is listed as owed rather than left silently unbound"
   },
   "counts": {
-    "bound": 94,
+    "bound": 143,
     "unboundPassRecords": 94,
     "anomalies": 0
   },
@@ -947,11 +947,501 @@
       "id": "ERR-209",
       "statusAfter": "PASS",
       "fixedCommit": "837c52b9eb4360b8c4c8b08a7621a469e1054058",
+      "verifiedCommit": "5ef54c88584018c25a35ad7ec31d0ce08b32f18b",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-210",
+      "statusAfter": "PASS",
+      "fixedCommit": "9f644c48f42237496480f86172b2dedb5fd3b19f",
+      "verifiedCommit": "840f9a281b9ce7a37b91619993348618595df90d",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-211",
+      "statusAfter": "PASS",
+      "fixedCommit": "950c4075fc82bbb967e9827b7801c4a91a849e51",
+      "verifiedCommit": "840f9a281b9ce7a37b91619993348618595df90d",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-212",
+      "statusAfter": "PASS",
+      "fixedCommit": "3ba4346138314f12293bdcbf6b2b6295d8acc198",
+      "verifiedCommit": "840f9a281b9ce7a37b91619993348618595df90d",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-213",
+      "statusAfter": "PASS",
+      "fixedCommit": "bd4d6dead0991b7916b258cf27a2e2295804c0b0",
+      "verifiedCommit": "840f9a281b9ce7a37b91619993348618595df90d",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-214",
+      "statusAfter": "PASS",
+      "fixedCommit": "058842daca16de5a776e70d3080cc97c3c9cded0",
+      "verifiedCommit": "784b0a23016803f350c55dd463adb0a49b875f76",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-215",
+      "statusAfter": "PASS",
+      "fixedCommit": "5e74a07151e3602caf462a54f93ae704307b4515",
+      "verifiedCommit": "784b0a23016803f350c55dd463adb0a49b875f76",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-216",
+      "statusAfter": "PASS",
+      "fixedCommit": "780b5947aeb2aafc1aa78a1a72f8920203b10894",
+      "verifiedCommit": "784b0a23016803f350c55dd463adb0a49b875f76",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-217",
+      "statusAfter": "PASS",
+      "fixedCommit": "a36f58903fc46e0a603348fb6b959858e46469f4",
+      "verifiedCommit": "0b004fbdadffbacf4e3623a41b7c5c4ae8959f35",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-218",
+      "statusAfter": "PASS",
+      "fixedCommit": "c4daada5721f76a15fee5fe2c59240f9b7577e70",
+      "verifiedCommit": "0b004fbdadffbacf4e3623a41b7c5c4ae8959f35",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": false
+    },
+    {
+      "id": "ERR-219",
+      "statusAfter": "PASS",
+      "fixedCommit": "48f9e4d080df17147d32b3bdd5390c2876b2f71f",
+      "verifiedCommit": "0b004fbdadffbacf4e3623a41b7c5c4ae8959f35",
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": true,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-220",
+      "statusAfter": "PASS",
+      "fixedCommit": "b83eaaa37ca252763c60a8815ab5f29c4edf2903",
       "verifiedCommit": null,
       "promise": null,
       "promisePresentInFixTree": true,
       "verifiedTreeChecked": false,
-      "bindingNotePresent": false
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-221",
+      "statusAfter": "PARTIAL",
+      "fixedCommit": "a376f1f561059c26bd55e8eb83a1cc0c21a871ed",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-222",
+      "statusAfter": "PARTIAL",
+      "fixedCommit": "2965e66b0b674a674cfd9e063776e84e2bc81a7d",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-223",
+      "statusAfter": "PARTIAL",
+      "fixedCommit": "139cbfdaa1156e2f484daeb55519e6d68dec7a55",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-224",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-225",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": "tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py",
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-226",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-227",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-228",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-229",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-230",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-231",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-232",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-233",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-234",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-235",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-236",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-237",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-238",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-239",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-240",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-241",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-242",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-243",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-244",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-245",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-246",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-247",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-248",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-249",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-251",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-252",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-253",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-254",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-255",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-256",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-257",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-258",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
+    },
+    {
+      "id": "ERR-259",
+      "statusAfter": "PASS",
+      "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+      "verifiedCommit": null,
+      "promise": null,
+      "promisePresentInFixTree": true,
+      "verifiedTreeChecked": false,
+      "bindingNotePresent": true
     }
   ],
   "unboundPassRecords": [

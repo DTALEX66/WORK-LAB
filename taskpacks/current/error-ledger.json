@@ -6806,14 +6806,15 @@
       "remaining_boundary": "The claim is checked by the wording of the test, not by a producer-side contract test; a future producer that starts populating repositories must update the gap list deliberately.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "The defect was found by reading snapshot_api.py:265 and composition_root.py::_project_rows before any test existed; the assertion was written against the fixed tree and would fail on the pre-fix wording.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and fixed inside the uncommitted 2026-10-09 WUI-01..04 working set",
-        "fixedCommit": null,
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
         "verifiedCommit": null,
-        "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/homeIa.contract.test.tsx src/lib/projectIdentity.test.ts"
+        "regressionCommand": "cd apps/observer/frontend && npm test -- src/homeIa.contract.test.tsx src/lib/projectIdentity.test.ts",
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names apps/observer/frontend/src/lib/projectIdentity.test.ts, each present in the commit tree; the cell previously promised `node_modules/vitest/vitest.mjs`, an installed runner no commit can contain, so the command now names the two tracked specs it runs"
       },
       "date": "2026-10-09"
     },
@@ -6834,14 +6835,15 @@
       "remaining_boundary": "The gate covers the capability card only. Other snapshot sections (projects, software, transport) still have no key-set coverage check, and value-level drift such as number-vs-null on other fields is unguarded.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "The gate's first run reported FAIL on the invented direction (verbEvidence, verbEvidenceProbedAt) with exit 1; after both sides were corrected it reports producer=27 declared=27 PASS.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "drift predates this taskpack; surfaced while scoping WUI-06",
-        "fixedCommit": null,
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
         "verifiedCommit": null,
-        "regressionCommand": "python tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py"
+        "regressionCommand": "python tests/workflow-assistance/test_capability_card_fields_cover_the_producer.py",
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time"
       },
       "date": "2026-10-09"
     },
@@ -6862,14 +6864,15 @@
       "remaining_boundary": "Proven by computed background values in the live capture (default rgb(5,13,22)/rgb(244,247,250) vs master rgb(11,16,24)/rgb(243,246,250)) and by the screenshot, not by a jsdom computed-style assertion, which cannot see custom properties from linked sheets.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "The pre-fix tree passed every existing assertion; the new selector-name test is what makes it red, and it was authored after the fix was known.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and fixed inside the uncommitted 2026-10-09 WUI-03 working set",
-        "fixedCommit": null,
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
         "verifiedCommit": null,
-        "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/theme/paletteMirror.contract.test.ts"
+        "regressionCommand": "cd apps/observer/frontend && npm test -- src/theme/paletteMirror.contract.test.ts",
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified against `git ls-tree -r <commit>`; the cell previously promised `node_modules/vitest/vitest.mjs`, an installed runner no commit can contain, so the command now names the tracked spec it runs (src/theme/paletteMirror.contract.test.ts)"
       },
       "date": "2026-10-09"
     },
@@ -6895,9 +6898,10 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and fixed inside the uncommitted 2026-10-09 WUI-07/09 working set",
-        "fixedCommit": null,
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
         "verifiedCommit": null,
-        "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/laneStateMatrix.sweep.test.tsx"
+        "regressionCommand": "cd apps/observer/frontend && npm test -- src/laneStateMatrix.sweep.test.tsx",
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified against `git ls-tree -r <commit>`; the cell previously promised `node_modules/vitest/vitest.mjs`, an installed runner no commit can contain, so the command now names the tracked spec it runs (src/laneStateMatrix.sweep.test.tsx)"
       },
       "date": "2026-10-09"
     },
@@ -6918,14 +6922,15 @@
       "remaining_boundary": "Only the `.list-item` conflict is pinned. Other utilities fighting other b10 declarations (transition, padding, hover lift) are handled case by case and have no equivalent guard.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "Found by reading the re-captured screenshot after the palette fix; the guard test was written with the fix, so the pre-fix tree is red by inspection of the missing rule.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "pre-existing since the B10 skin was pinned; surfaced by the WUI-05/06 detail pages on 2026-10-09",
-        "fixedCommit": null,
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
         "verifiedCommit": null,
-        "regressionCommand": "cd apps/observer/frontend && node node_modules/vitest/vitest.mjs run src/skins/rowAlignment.contract.test.ts"
+        "regressionCommand": "cd apps/observer/frontend && npm test -- src/skins/rowAlignment.contract.test.ts",
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified against `git ls-tree -r <commit>`; the cell previously promised `node_modules/vitest/vitest.mjs`, an installed runner no commit can contain, so the command now names the tracked spec it runs (src/skins/rowAlignment.contract.test.ts)"
       },
       "date": "2026-10-09"
     },
@@ -6946,13 +6951,14 @@
       "remaining_boundary": "The check covers git.matchState only. transportState/freshnessState/costQuality/FamilyState are declared in both schema and types.ts but no test yet proves the producer cannot emit a value outside them; adding one per vocabulary is the owed follow-up.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "Observed as a real red run: the test named the three producer-only values, and tsc independently rejected the dead 'DRIFT' comparison with TS2367 before the badge was rewritten.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "drift predates this taskpack; surfaced when the snapshot first joined the SSOT on 2026-10-10",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time"
       },
       "date": "2026-10-10"
     },
@@ -6973,13 +6979,14 @@
       "remaining_boundary": "Two payloads, not a matrix: a snapshot where some sections are present and others absent is not enumerated by this test.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "The failure was the discovery mechanism: the schema's own conformance test went red on the minimal call before anything was merged.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and fixed inside the uncommitted 2026-10-10 WUI-15 working set",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7005,8 +7012,9 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and removed inside the uncommitted 2026-10-10 WUI-15 working set",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names apps/observer/tests/test_production_surface_static_contract.js, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7032,8 +7040,9 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and repaired inside the uncommitted 2026-10-10 WUI-15 working set; no commit ever carried the broken file",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/ci/test_push_permit.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7059,8 +7068,9 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the parent-stream gap predates this session -- ERR-211's read-side fix left it open; the crash and the fix both sit in the uncommitted 2026-10-10 working set",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_gate_runner_declares_pipe_encoding.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7081,13 +7091,14 @@
       "remaining_boundary": "The seal proves a receipt names the build that exists now, not that the browser fetched it: a stale page cache would still print a current digest. The native keyboard gate is a named CEILING rather than a stale success: its own verdict line says KEYBOARD_FOCUS_GATE_NOT_RUN (no_current_binary: no release app.exe is at least as new as the last front-end content change), so it has never produced a verdict on this machine, and rebuilding frontend/dist is precisely what makes every existing binary too old to launch.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "The seal refused with two named problems and exit 1 on the real directory before the re-measurement and passes at exit 0 after it; the guard's STALE and UNBOUND cases fail if the classifier is made permissive, so the pass is not the scanner going blind.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the unbound-receipt gap is structural and predates this session; the rebuild that exposed it and the fix both sit in the uncommitted 2026-10-10 working set",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_evidence_seal_binds_receipts_to_the_measured_bundle.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7108,13 +7119,14 @@
       "remaining_boundary": "Nothing yet fails a repo-wide sweep for test-only components, so the next unmounted surface will be caught only if someone asks the same question of it. A general 'every exported view component is reachable from a registry entry' guard is the missing piece and is not built here.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "Before the mount, the registry-rendered assertion had no [data-testid=state-matrix] element to find and would have failed on that fact; the palette control case fails if the filter is loosened to match anything, so the pass is not an always-true check.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the unmounted card shipped in the uncommitted 2026-10-09 WUI-11 work; the mount and the guard are in the uncommitted 2026-10-10 WUI-22 work",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified against `git ls-tree -r <commit>`; named apps/observer/frontend/src/auxiliaryEntries.contract.test.tsx"
       },
       "date": "2026-10-10"
     },
@@ -7135,13 +7147,14 @@
       "remaining_boundary": "The guard checks the words and the citations, not the understanding: a skill can name every authority and still be applied wrongly by a session. Whether an external client actually loads this projection is recorded as unverified this round -- no Hermes or Codex home was read back and no global configuration was touched.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "The marker and drive assertions were written against the old source and fail on it by construction (the old text contains neither F: nor the client-neutral sentence); the drift case compares two real generations, so a second moving field would be named with its line content.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the source predates the 2026-09 directory convergence in its ownership wording; the staleness was exposed and repaired in the uncommitted 2026-10-10 WUI-16 work",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7156,7 +7169,7 @@
       "observed_error": "A green legibility sweep had never seen the thing it was quoted as covering. Every --all-views run before 2026-10-10 used the static preview, where all 28 rail lanes collapse to the offline panel because no snapshot is reachable. The receipt recorded 980 nodes across 28 lanes, every_text_node_meets_AA PASS, below-floor 0, thin_views 0 -- and contained ZERO .tag nodes, so the four status pill variants (the literals DESIGN.md gap 12 names) were never measured in either theme. The register and DESIGN.md both quoted that sweep as lane-level coverage.",
       "root_cause": "The instrument counted nodes and checked contrast, but never asked whether the measured nodes belonged to the lane under test. Shell chrome is text too, so a lane that rendered nothing of its own still contributed ~35 readable nodes -- enough to clear the thin-view floor. Node counts also cannot distinguish 'a sample of the whole product' from 'a sample that happens to exclude a component class'. The static-versus-live backend difference was implicit in a flag, invisible in the receipt.",
       "fix": "Each row now records backend=live|static, and two checks were added that are enforced only in live mode: every_lane_reached_its_own_content (a lane whose nodes contain the offline sentence contributes no evidence about its own surface) and tone_components_were_actually_on_screen (no .tag node anywhere fails the sweep). In static mode the same slot prints NOT_ENFORCED with the pill census, so a chrome-only run states its own limit instead of looking like coverage. Re-measured live against bundle 3929e3f84a97ee2f: 34 pill nodes per theme (tag.bg-panel2.text-muted x18, tag.info x8, tag.ok x4, tag.warn x4), 0 AA failures, 0 sub-floor nodes, offline-panel lanes empty. tag.bad still never renders in the live projection, and that is written as a gap rather than folded into the pass.",
-      "regression_test": "The instrument itself emits the checks and reseal_wui_evidence.py re-runs them; the static run now prints 'backend=static NOT_ENFORCED -- pills={}' and the live run prints the pill census, which is the observable difference (.project-local/runs/wui-20261009/legibility-both-backend.log)",
+      "regression_test": "The instrument itself emits the checks and scripts/audit/reseal_wui_evidence.py re-runs them; the static run now prints 'backend=static NOT_ENFORCED -- pills={}' and the live run prints the pill census, which is the observable difference (.project-local/runs/wui-20261009/legibility-both-backend.log)",
       "evidence_level": "isolated-runtime",
       "repeat_prevention": "A coverage claim must name what was in the sample, not only how many items passed: whenever a gate sweeps 'every X', it must also assert that the component classes it exists to police appear in the collected set, and record which backend or fixture produced the sample. A count of nodes is not evidence of reachability. 覆盖率声明必须写出样本里实际出现的组件种类与数量，光有通过数不算测到。",
       "remaining_boundary": "The pill census proves presence, not proportion: a variant that renders once counts the same as one that renders twenty times, and tag.bad is still absent because no live state in this repository produces a failing transport plus a project row. Measuring it needs a projection that can say 'bad', which is WUI-18 territory, not a browser flag.",
@@ -7167,10 +7180,12 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the sweep has been static-backend since it shipped in the uncommitted 2026-10-09 WUI-14 work; the exposure and the fix are in the uncommitted 2026-10-10 work",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names reseal_wui_evidence.py, each present in the commit tree"
       },
-      "date": "2026-10-10"
+      "date": "2026-10-10",
+      "regressionRepointNote": "a substitution was attempted 2026-10-07 but the operand still does not resolve, so no re-point is claimed and the promise stays where it was"
     },
     {
       "error_id": "ERR-238",
@@ -7189,13 +7204,14 @@
       "remaining_boundary": "Nothing enforces that future generated artifacts declare their timestamp field to the comparing test; a second pack that prints two stamps would only be caught by the 'exactly one stamp' assertion I added here, which is per-artifact.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "The original assertion failed in the batch with the two stamps shown in the diff, so the fault was reproduced from real bytes; the rewritten case passes three consecutive module runs and the failure mode it guards (a non-stamp line moving) is asserted directly.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and repaired inside the uncommitted 2026-10-10 WUI-16 work; no commit ever carried the passing-by-luck version",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7216,13 +7232,14 @@
       "remaining_boundary": "The guard resolves paths; it cannot judge whether a cited line makes the claim the cell says it does. That still needs a reader, which is why the one invented path was replaced only after reading both target lines.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "The guard ran red against the data as published (before normalisation the shorthand form is reported as a problem, and the invented path as unresolved); the synthetic predicate case fails if the matcher or the index goes blind, so the pass is not vacuous.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and repaired inside the uncommitted 2026-10-10 WUI-23/WUI-24 working set; no commit ever carried the unverified citations",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7243,13 +7260,14 @@
       "remaining_boundary": "The gate judges that a citation can be followed from the repository root, not that the sentence around it is true. Whether the six historical files eventually move to docs/history/archive/ stays an owner decision - it now has the consumer list and the byte-preservation proof attached, and the banner makes a mistaken pickup survivable rather than impossible.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "PATH_GONE is a statement about tracked bytes, not about whether the guard exists: the two test files this record promises are new in the uncommitted 2026-10-10 working set, and the labeller matches operands against `git ls-files` — the same scope CI sees — so an untracked instrument reads as a path this repository does not carry. Both files run green locally (14 and 6 cases) and the label re-measures as RESOLVES once the working set is committed, which is the same commit-gating recorded for T44 in WUI-24. The falsifier that produces the red lives under .project-local/runs, a runtime root the citation gate exempts but that exists on the machine that wrote it.",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and repaired inside the uncommitted 2026-10-10 WUI-17 working set; no commit ever carried the unscoped count or the blind guard",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_default_load_doc_citations_resolve.py, tests/workflow-assistance/test_root_document_dispositions.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7275,8 +7293,9 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the read-after-write order predates this session; it was made visible by the first record this round authored with a label the measurement disagreed with",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_ledger_regression_command_targets.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7297,13 +7316,14 @@
       "remaining_boundary": "The rewrite makes every citation followable; it does not make the sentence true. The register still cites runtime receipts that a clean checkout does not carry, which the guard exempts by name rather than silently — and on the machine that wrote them their absence is a failure, so the exemption is checked rather than assumed.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "both defects were introduced and repaired inside the uncommitted 2026-10-10 working set; no commit ever carried the narrower scope or the allowlist population",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_default_load_doc_citations_resolve.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7324,13 +7344,14 @@
       "remaining_boundary": "The scan convicts the shape it was written against -- an assignment feeding `gettempdir()` into a runtime root. A root computed some other way (a literal path, an environment variable read directly) is outside its vocabulary, so the worker's runtime root stays covered by the CLI refusal rather than by the scan alone.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the defaults predate this session's HEAD; the repair and its gate are in the uncommitted 2026-10-10 WUI-18 working set, so no fixedCommit can be written yet",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_durable_worker.py, tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7351,13 +7372,14 @@
       "remaining_boundary": "Refusal at ingest is strict by design: one poisoned line inside a collected file raises, the tick records a collector failure, and the circuit breaker eventually opens for that collector -- so a hostile source degrades collection visibly instead of being silently filtered. The value shapes are the artifact-flow set (provider prefixes, bearer, long base64), not a general entropy detector, and a short or unusual credential format can still pass as an ordinary string.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the name-only screening predates this session; the over-strict first attempt and the digest-aware repair both live in the uncommitted 2026-10-10 working set",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/nf01_rule_semantics_artifact_flow.py, tests/workflow-assistance/test_canary_synthetic_secret_never_reaches_the_store.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7383,8 +7405,9 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the census vocabulary gap predates this session and was exposed by today's fixture_root helper; both the exposure and the repair are in the uncommitted 2026-10-10 working set",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_fixture_root_names_are_readable_by_the_reader.py, tests/workflow-assistance/test_token_monitor.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7410,8 +7433,9 @@
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the candidate rule predates this session; the exposure came from the 2026-10-10 governance batch and the repair is in the uncommitted working set",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_ledger_unbound_triage.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7432,13 +7456,14 @@
       "remaining_boundary": "The expansion proves the cited file exists and the cited line holds the quoted code; it does not prove the surrounding sentence's interpretation of that code. Six citations had a directory that does not exist, and each was accepted only because its line content matched -- a citation with a wrong directory and no line number would still pass. B34's rewrite also records that the truth vocabulary and the config-ownership vocabulary are two different three-state sets, which the original row conflated.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the two CSVs are untracked working-set files written this session; the shorthand came from the research reports they were filled from",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7459,13 +7484,14 @@
       "remaining_boundary": "The new assertion counts fields; it cannot tell whether a field that grew was meant to hold a comma and lose its quoting, or hold a sentence and gain one. The sentence now avoids the delimiter instead of being quoted, which keeps the pack's own unquoted style for that column; a future rewrite that needs commas must add the quotes, and the row-level field count is the tripwire, not the quote style.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "both defects are in this session's uncommitted working set; the seven pointers that lost their earlier repair are recorded under ERR-247's re-run",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7486,13 +7512,14 @@
       "remaining_boundary": "The ceiling is in the tracked source. The live client runs whatever is deployed in Hermes Home, and ERR-250 measures that this machine has none of the declared overlay `bin/` assets at all, so the bound protects the source today and the installed client only after a sanctioned sync. A ceiling of 5s also means a stuck `git` costs up to 5s per call rather than forever; it is not a retry budget, and no cache of the root answer was added.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "the new gate is an untracked working-set file; it becomes RESOLVES when the working set is committed",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the hooks have shipped without a timeout since they were first written; the exposure is this round's read of them, not a new regression",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_hooks_answer_within_a_bound_without_waking_a_model.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7540,13 +7567,14 @@
       "remaining_boundary": "The daemon loop has no post-tick hook, so a long-running `run_forever()` worker prunes only at startup; the ceiling is enforced per process launch, and closing that gap needs a hook on the worker loop rather than a longer flag list. Nothing here sets a default ceiling: `--retention-rows` unset means the store still grows, because choosing the number is an owner/product decision about how much history the Observer is allowed to lose, and a default invented in code would silently delete evidence. The reclaimed-byte figure is one run on one store under one ceiling, not a projected steady-state growth rate.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "the new gate is an untracked working-set file; it becomes RESOLVES when the working set is committed",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the store has shipped without a lifecycle since its first schema, and the COUNT-derived sequence has been latent since the telemetry table existed; both were found while implementing the missing ceiling",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_canonical_store_disk_is_bounded.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7567,13 +7595,14 @@
       "remaining_boundary": "Widening the index makes it more permissive about *existence*: a path that exists only as a vendored copy inside the checkout would now resolve. Frozen and reference trees are pruned for that reason, but the gate still answers \"is there a file here\", not \"is this the file the sentence means\" -- the line-pointer content check is what carries that, and it abstains on citations that quote no code.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the directory-list index was written this session in the same gate file; it exposed itself the first time a cited path fell outside its five roots",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7594,13 +7623,14 @@
       "remaining_boundary": "The six-render proof runs in one process against one working tree; it does not make the digest stable across commits (the body legitimately changes when the register or a source file changes, which is the point). Nothing here binds the digest to a git object: HEAD is printed separately and is the commit-side fact.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the digest has covered the stamp since the pack existed; it was latent because every render pair so far happened within one second",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time; the cell names tests/workflow-assistance/test_agent_default_material_is_regenerated_and_current.py, each present in the commit tree"
       },
       "date": "2026-10-10"
     },
@@ -7621,13 +7651,14 @@
       "remaining_boundary": "Nesting deeper than five levels still collapses (28 lines measured); that is the generator's documented limit, not a proof of harmlessness. No Rust readback was produced for this file in this round -- the docstring says frontend/Rust consume it, and only the frontend side (tsc strict) was exercised. Exact-SHA CI evidence is owed because nothing here has been committed or pushed.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the tuple projection shipped with the generator (U16); every enum the generated file reached at HEAD carried it (77 fields counted in those bytes)",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time"
       },
       "date": "2026-10-10"
     },
@@ -7648,13 +7679,14 @@
       "remaining_boundary": "Only `projects.items` was closed in this round. `workspace`, `governance.families` and the interiors of `repositories` remain open objects by declaration, so a new key arriving there is still not convicted -- the M-series proves the row is now guarded and says nothing about those. The row's `git` block does not emit `ciSha`, so a row can state `matchState=MATCH` that cannot be re-derived from the row alone; the enum keeps all six values because reachability depends on the input dict, and making the row self-verifying would be a producer plus front-model change that is recorded here rather than made. No exact-SHA CI.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "no introducing commit exists: snapshot-v3.schema.json was written in this task round and is still untracked (`git ls-files --error-unmatch` says so), and its first draft carried the seven-key row section from the start",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time"
       },
       "date": "2026-10-10"
     },
@@ -7675,13 +7707,14 @@
       "remaining_boundary": "The refusal counts are durable and in the tick payload, but no Observer surface renders them yet: `_collector_coverage` (composition_root.py:374) still computes numerator/denominator from liveness only (`last_success_at`, `consecutive_failures`, `circuit_open_until`) and does not treat a source that refused half its rows as anything but fresh, so the WUI-11 state matrix has the data and not yet the claim -- that is the register's next step, not this row. The refusal total accumulates per collector name and is not reset by retention pruning. No exact-SHA CI evidence: nothing here is committed.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the bare write loop predates this taskpack; the silent skips were written with the collectors themselves and the growth collector's comment documents the intent as omission",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time"
       },
       "date": "2026-10-10"
     },
@@ -7702,13 +7735,14 @@
       "remaining_boundary": "The sidecar still emits no `retry:` field on `/api/v1/events` (the 2000 ms retry lives in the unused `sse_hub.py:103`), so the reconnect delay is the browser default rather than a stated server policy; the replay ring stays fixed at 1000 frames and no instrument in this repo forces more than ~1100 publishes to prove the trim end to end over HTTP (the unit case does it on the hub object directly). The Observer still re-reads the whole snapshot on every open, so replay saves a read only in principle -- kept deliberately, because claiming LIVE through a replayed tail alone is a stronger statement than the evidence supports. No exact-SHA CI evidence.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "tracked history at HEAD has no `snapshot-v3` schema and this hub shipped with the SSE v3 work; the empty-ring silence and the dead hook were in the shipped bytes before this round",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time"
       },
       "date": "2026-10-10"
     },
@@ -7729,13 +7763,14 @@
       "remaining_boundary": "The matrix rows still cite LINE NUMBERS, which drift every time the cited file is edited; the quoted-fragment check converts silent drift into a red, but the durable fix is for pointers to carry the symbol/fragment only, or for the guard to search the fragment and report where it actually lives. That design question is open and named rather than answered here. The 41 doubled terminators are gone from this file only; no other tracked CSV was touched by this write, and the checklists' own line-ending style was verified rather than assumed.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "introduced and repaired inside one uncommitted working set in this round; the matrix has never been committed in the corrupted state",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time"
       },
       "date": "2026-10-10"
     },
@@ -7756,13 +7791,14 @@
       "remaining_boundary": "Coverage still reads UNKNOWN in the render while the card shows real counts: the sidecar's `_collector_coverage` returns empty coverage unless `worker_running()` and the expected-collector set are live, and the instrument ran one tick without a daemon. That is the two surfaces saying different true things (the loop is not alive; the durable counts are what the last ticks did), not a defect, and it is why the card is worded as counts rather than as health. The card is on the settings lane only: the WUI-11 state matrix and the object-level diagnostics do not repeat it yet, and `refused_rows` is cumulative per collector name with no reset, so a long-lived store accumulates and the surface says '累计' rather than a rate. `delivered_rows` counts rows the store accepted, not rows the source held. No exact-SHA CI: nothing in this round is committed, and the new instrument is a 7th still-untracked file under `scripts/audit/`.",
       "status_before": "FAIL",
       "status_after": "PASS",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "introducedCommit": null,
         "introducedCommitNote": "the unreachability is original to ERR-256's own round: it persisted the counts and stopped there",
-        "fixedCommit": null,
-        "verifiedCommit": null
+        "fixedCommit": "d22d21eb64a9829c7cbb985962fdfd212768d371",
+        "verifiedCommit": null,
+        "bindingNote": "bound to the round's single upload commit (owner authorized 全部上传 on 2026-10-10); the commit contains this record's named regression_test file, verified with `git cat-file -e <commit>:<path>` at bind time"
       },
       "date": "2026-10-10"
     }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-09T19:45:50Z",
+  "generatedAt": "2026-10-10T13:11:23Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 67,
+    "trackedTools": 74,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 67,
+    "referencedSomewhere": 74,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -196,6 +196,20 @@
       ]
     },
     {
+      "path": "scripts/audit/bundle_provenance.py",
+      "sha256": "ea2d828b10f6af63532905297790cf3c81d2d4832e58f3d4e4552ce8c4334d03",
+      "bytes": 2188,
+      "lines": 43,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_evidence_seal_binds_receipts_to_the_measured_bundle.py"
+      ]
+    },
+    {
       "path": "scripts/audit/cdp_layout_probe.mjs",
       "sha256": "3984cd5a5d15d5aedb8c0a78301a20cd3b4f4ec5e0ab172cf26518fe60bb86f1",
       "bytes": 5918,
@@ -213,17 +227,31 @@
       ]
     },
     {
-      "path": "scripts/audit/display_scaling_via_cdp.py",
-      "sha256": "aad1ad8602146e3a372d1322521c17d762bf31e3301c5e0d74a5f53fbe996640",
-      "bytes": 11896,
-      "lines": 241,
+      "path": "scripts/audit/collector_delivery_render.py",
+      "sha256": "4b7a10e977d74a37617c1d17d2a8a46c15650de199a6d13535e16f6a4832cde7",
+      "bytes": 13285,
+      "lines": 259,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 2,
+      "citedBy": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/display_scaling_via_cdp.py",
+      "sha256": "73dc88a4fa378d8488f111f5391e434ae70637292747fbe0c897eb01684e4251",
+      "bytes": 12106,
+      "lines": 245,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
       "citedBy": [
         "apps/observer/frontend/DESIGN.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
@@ -384,19 +412,19 @@
     },
     {
       "path": "scripts/audit/ledger_regression_command_targets.py",
-      "sha256": "db3b1971666aa6d4bdcb71931f0a139b9969b9ec3acf27a8a07c5a25424719c7",
-      "bytes": 22304,
-      "lines": 381,
+      "sha256": "6c1f7ad9c09c13bb5d71102f3e3e20b1b36b146d8ad2007a2916bde203956d40",
+      "bytes": 22759,
+      "lines": 386,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 13,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.csv"
+        "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.csv",
+        "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json"
       ]
     },
     {
@@ -418,9 +446,9 @@
     },
     {
       "path": "scripts/audit/live_doc_command_targets.py",
-      "sha256": "4bb9755e088da0044455354d0f34e6e6a41f071d77df17d11c02f0e82e21901e",
-      "bytes": 14633,
-      "lines": 271,
+      "sha256": "a59e867dd9825b28c6a4a5a1836146c7f472b1a2f25908da3b8de05609a1fdc4",
+      "bytes": 17368,
+      "lines": 305,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 9,
@@ -465,6 +493,21 @@
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/normalise_doc_citations.py",
+      "sha256": "c84eea3820647866c215b3331098534a031ed99d36d3d1cdb3b235f94f026702",
+      "bytes": 15008,
+      "lines": 241,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 4,
+      "citedBy": [
+        "docs/current/DOCUMENT-CENSUS.md",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_default_load_doc_citations_resolve.py"
       ]
     },
     {
@@ -545,9 +588,9 @@
     },
     {
       "path": "scripts/audit/project_local_citation_audit.py",
-      "sha256": "495a7068a35bd43460484e968e6fe20a3e5e168425f19b333552834c37281742",
-      "bytes": 20673,
-      "lines": 327,
+      "sha256": "94fadbcff449c279e8e03373dde5f22299b45997cb17cc4ebc7277bc23889c42",
+      "bytes": 21497,
+      "lines": 336,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 4,
       "citedByRecords": 9,
@@ -668,6 +711,21 @@
       ]
     },
     {
+      "path": "scripts/audit/reseal_wui_evidence.py",
+      "sha256": "df328680a18479d0263e49cd7409908d34dc171a80c09797cf796ee933c2d220",
+      "bytes": 7730,
+      "lines": 152,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 4,
+      "citedBy": [
+        "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
       "path": "scripts/audit/scan_stale_digest_references.py",
       "sha256": "4b30f243ce787bbc6a2dc2499e4d600c354118740b98bade286ab0cc6079815d",
       "bytes": 2105,
@@ -697,18 +755,36 @@
       ]
     },
     {
-      "path": "scripts/audit/sse_revision_via_cdp.py",
-      "sha256": "e9a9ca836ca676e6226ad4d22b4dabaab181c5f9b1b187a7ffe8946f9ebfadbd",
-      "bytes": 19427,
-      "lines": 376,
+      "path": "scripts/audit/seal_wui_evidence.py",
+      "sha256": "12425f7284869b88efe6f88cdedd0788fe79daaf3274f5866718a23ab91364cd",
+      "bytes": 10807,
+      "lines": 218,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 5,
+      "citedBy": [
+        "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_evidence_seal_binds_receipts_to_the_measured_bundle.py"
+      ]
+    },
+    {
+      "path": "scripts/audit/sse_revision_via_cdp.py",
+      "sha256": "fe0374cb22f88ec8c4cbe17e10996f7212d33f502c6280795ea8978c37a8a8b3",
+      "bytes": 19637,
+      "lines": 380,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 6,
       "citedBy": [
         "apps/observer/frontend/DESIGN.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "docs/current/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -730,9 +806,9 @@
     },
     {
       "path": "scripts/audit/text_legibility_via_cdp.py",
-      "sha256": "4bb05ab84b3eb26c29bd0b60d35d11bffd6e5f8c52bfcd38329cdd7b238fab1e",
-      "bytes": 40352,
-      "lines": 773,
+      "sha256": "60aad93f8fe52d56c7d39641bb4bdc5d404cd784923c44b1802d74446d9d4dfe",
+      "bytes": 43144,
+      "lines": 820,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 11,
@@ -752,14 +828,14 @@
       "lines": 178,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 9,
+      "citedByRecords": 10,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json",
         "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json",
-        "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007.md"
+        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -781,12 +857,12 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "899a3f846997f6c7ab55f50d167a2360e0720ec1263f601cb6d5fd23e020ec4e",
-      "bytes": 40754,
-      "lines": 780,
+      "sha256": "72dfd8b527d2e98226131c0007012a5bc0bce321c8666e51a4213b71f9a71d3f",
+      "bytes": 42120,
+      "lines": 798,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 17,
+      "citedByRecords": 18,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "UI_IMPLEMENTATION_REPORT.md",
@@ -846,19 +922,31 @@
     },
     {
       "path": "scripts/audit/triage_unbound_ledger_records.py",
-      "sha256": "6168ab9e9d8e7a010a10503efcbdeef7324b80b62e4fc0e69e60b62742d9bdb4",
-      "bytes": 8617,
-      "lines": 163,
+      "sha256": "1de89fe291408c315dfba14ba29694158935dad3adf8a75e6d5ffe292a0c92e6",
+      "bytes": 10011,
+      "lines": 182,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 7,
+      "citedByRecords": 8,
       "citedBy": [
         "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json"
+        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md"
+      ]
+    },
+    {
+      "path": "scripts/audit/two_source_canary_read.py",
+      "sha256": "f9721a64e6e2fff2bae5e7cb0dcf8f5a5da73afbc1e91b53d5f507a5119e4520",
+      "bytes": 6611,
+      "lines": 149,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 1,
+      "citedBy": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -904,6 +992,19 @@
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/error-ledger.json",
         "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/wui_slice_capture.py",
+      "sha256": "9e1b71afe8fc685ec7606050e307a7060c638c88c0ca5832172261f73163334f",
+      "bytes": 9432,
+      "lines": 182,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -955,9 +1056,9 @@
     },
     {
       "path": "scripts/maintenance/owner_material_catalog.py",
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "bytes": 0,
-      "lines": 0,
+      "sha256": "15c0e99e422bfbe260f99bb5dffc74b35c9210a92dd1e9422c254c2d10b00d34",
+      "bytes": 19429,
+      "lines": 301,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 7,
@@ -1028,14 +1129,14 @@
       "lines": 180,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 8,
+      "citedByRecords": 10,
       "citedBy": [
         "docs/audits/OUTSIDE_ROOT_SPILL_SWEEP_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json",
-        "taskpacks/history/session-handoffs/SESSION-HANDOFF-CONVERGENCE-20261007-J.md"
+        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -1079,14 +1180,14 @@
       "lines": 149,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 8,
+      "citedByRecords": 9,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "packages/client-neutral-core/scripts/project_temp.py",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json"
+        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     }
   ]
