@@ -24,6 +24,9 @@ sys.path.insert(0, str(REPO / "scripts" / "audit"))
 import register_pin_reachability as pins  # noqa: E402
 
 REGISTER = "taskpacks/current/OPEN-TASK-REGISTER.md"
+# the pre-cutover ledger, tracked byte-for-byte by the 2026-10-09 cutover record: 404,985 B, 65 pinned rows
+ARCHIVE_REGISTER = ("taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/"
+                    "taskpacks/current/OPEN-TASK-REGISTER.md")
 # a commit that is on main, and one that exists locally but no ref contains it
 ON_MAIN = "62f666ef36999b846ea1c9bcb075a0970be18933"
 ZERO_REFS = "0600d6f680dd"
@@ -114,10 +117,24 @@ class TheRealRegister(unittest.TestCase):
             shutil.rmtree(workdir, ignore_errors=True)
 
     def test_the_register_itself_still_carries_many_pins(self) -> None:
-        """A guard that could pass on an emptied file guards nothing."""
-        text = (REPO / REGISTER).read_text(encoding="utf-8")
-        rows = pins.rows_with_pins(text)
-        self.assertGreater(len(rows), 40, f"only {len(rows)} rows carry pins; the extractor changed")
+        """A guard that could pass on an emptied file guards nothing -- so the floor sits on the ledger
+        that has the pins, and the live one keeps a floor equal to what it actually carries.
+
+        Measured 2026-10-11: the live register has 1 pinned row (WUI-00 -> 71b1ae86) because the 2026-10-09
+        cutover replaced the 190-row multi-table ledger with the 25-row WUI table; the pre-cutover bytes
+        survive tracked and the extractor finds 65 pinned rows in them. `>40` therefore stays as an absolute
+        floor -- on the archived ledger, where the shape that produced it still exists -- while the live
+        assertion names the pin it expects, so a register that loses its pins or a parser that stops reading
+        them both go red. Nothing here was relaxed to green: the floor moved to the document it measures.
+        """
+        archived = (REPO / ARCHIVE_REGISTER).read_text(encoding="utf-8")
+        self.assertGreater(len(pins.rows_with_pins(archived)), 40,
+                           "the archived pre-cutover ledger is the positive control for this extractor; "
+                           "if it no longer yields many pinned rows, the extractor changed, not the register")
+        live = pins.rows_with_pins((REPO / REGISTER).read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(live), 1, f"the live register carries no pins at all: {live}")
+        self.assertIn("WUI-00", [row[1] for row in live],
+                      f"the one pin the live register carries is on WUI-00; the extractor lost it: {live}")
 
 
 if __name__ == "__main__":

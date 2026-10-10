@@ -18,6 +18,10 @@ sys.path.insert(0, str(REPO / "scripts" / "ci"))
 import verify_register_table_shape as shape  # noqa: E402
 
 REGISTER = REPO / "taskpacks/current/OPEN-TASK-REGISTER.md"
+# The pre-cutover ledger, kept tracked byte-for-byte (404,985 B, 8 tables, 190 rows) by the 2026-10-09
+# UI-priority cutover record. It is the positive control for the multi-table floors below.
+ARCHIVE = REPO / ("taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/"
+                  "taskpacks/current/OPEN-TASK-REGISTER.md")
 
 
 class RealRegister(unittest.TestCase):
@@ -25,10 +29,29 @@ class RealRegister(unittest.TestCase):
         self.assertEqual(0, shape.main([]), "the register has rows that do not match their table header")
 
     def test_the_register_has_several_tables_and_many_rows(self) -> None:
-        bad, tables, rows = shape.scan(REGISTER.read_text(encoding="utf-8"))
+        """The floors live on the ledger that has the shape; the live one is judged for what it declares.
+
+        Measured across history rather than assumed: at d22d21eb^ OPEN-TASK-REGISTER.md held 8 tables /
+        190 rows / 404,985 B, and at d22d21eb it holds 1 table / 25 rows / 123,260 B, because the 2026-10-09
+        UI-priority cutover replaced the multi-ledger register with the single WUI table. The absolute floors
+        were written against the old document, so they convicted the new one -- and deleting them would leave
+        the parser with nothing that proves it still sees a multi-table ledger. The pre-cutover bytes survive
+        TRACKED, byte-for-byte, at the archive path below, so the non-vacuity control runs on real repository
+        content instead of a fixture, while the live file keeps its own measured floor: a row disappearing or
+        a column drifting still goes red.
+        """
+        bad, tables, rows = shape.scan(ARCHIVE.read_text(encoding="utf-8"))
         self.assertGreaterEqual(len(tables), 3, tables)
         self.assertGreater(rows, 100, f"only {rows} rows judged; the parser lost a table")
         self.assertEqual([], bad)
+
+        live_bad, live_tables, live_rows = shape.scan(REGISTER.read_text(encoding="utf-8"))
+        self.assertEqual(1, len(live_tables),
+                         f"the live register is the single WUI table; the parser saw {live_tables}")
+        self.assertEqual(25, live_rows,
+                         f"the live register carries 25 rows on 2026-10-10; {live_rows} were judged, so a "
+                         "row was lost or the parser stopped splitting them")
+        self.assertEqual([], live_bad)
 
 
 class ScanJudgement(unittest.TestCase):
