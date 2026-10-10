@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-10T13:26:22Z",
+  "generatedAt": "2026-10-10T14:38:39Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2482,
-    "distinctProjectLocalTokens": 541,
+    "trackedFilesScanned": 2484,
+    "distinctProjectLocalTokens": 546,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 541,
-    "citationsToAbsentTokens": 1714
+    "tokensAbsent": 546,
+    "citationsToAbsentTokens": 1728
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 316,
+      "citations": 318,
       "distinctPaths": 106
     },
     "machine_field_pointing_at_absent_path": {
@@ -29,12 +29,12 @@
       "distinctPaths": 4
     },
     "machine_local_runtime_narration": {
-      "citations": 833,
-      "distinctPaths": 410
+      "citations": 839,
+      "distinctPaths": 414
     },
     "machine_local_runtime_pointer": {
-      "citations": 253,
-      "distinctPaths": 132
+      "citations": 257,
+      "distinctPaths": 133
     },
     "negative_assertion_or_removal_record": {
       "citations": 183,
@@ -49,7 +49,7 @@
       "distinctPaths": 1
     },
     "unclassified_needs_human_read": {
-      "citations": 73,
+      "citations": 75,
       "distinctPaths": 5
     }
   },
@@ -322,14 +322,26 @@
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 242,
-        "text": "leaked = sorted(rel for rel in walked if rel.startswith(\".project-local/\"))"
+        "line": 259,
+        "text": "leaked = sorted(rel for rel in paths if rel.startswith(\".project-local/\"))"
       },
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 314,
+        "line": 323,
+        "text": "its own `.project-local/` (CI writes gate logs there) reached the assertion with nothing cited-present"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+        "line": 339,
         "text": "if not token.startswith(\".project-local/\"):"
+      },
+      {
+        "path": ".project-local",
+        "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
+        "line": 348,
+        "text": "\"matcher or the fields it reads stopped reaching `.project-local/` paths\")"
       },
       {
         "path": ".project-local",
@@ -2046,6 +2058,12 @@
     ],
     "machine_local_runtime_narration": [
       {
+        "path": ".project-local/.project",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7814,
+        "text": "\"observed_error\": \"The canonical governance gate at the pushed head 0db79f9f read `GATE_EXIT=1` with `Ran 2669 tests`, `FAILED (failures=3, skipped=10)` and `dirty_paths=0` -- so all three reds were d"
+      },
+      {
         "path": ".project-local/agents",
         "file": "reports/audit-archive/20260930/projects/ArcheAxis-Knowledge-OS/DIRECTORY_AUTHORITY.yaml",
         "line": 561,
@@ -2826,6 +2844,12 @@
         "text": "| WUI-15 | P1 | PARTIAL_20261010 / SSOT 已并入并双向钉住；类型生成缺陷已修并钉住、行级 section 已收紧；剩余为前端改消费生成物（`Last-Event-ID` 复订已于本批读回，见 WUI-18 (f)） | Schema/Snapshot/SSE与前后端兼容验收；依赖 WUI-04, WUI-05, WUI-06, WUI-07, WUI-09, "
       },
       {
+        "path": ".project-local/artifacts/wui-20261009/sse-revision.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7814,
+        "text": "\"observed_error\": \"The canonical governance gate at the pushed head 0db79f9f read `GATE_EXIT=1` with `Ran 2669 tests`, `FAILED (failures=3, skipped=10)` and `dirty_paths=0` -- so all three reds were d"
+      },
+      {
         "path": ".project-local/artifacts/wui-20261010/citation-expansion.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 110,
@@ -3214,6 +3238,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 7544,
         "text": "\"regressionTestVerifiabilityReason\": \"the instrument is an untracked working-set file under .project-local/runs, so it is not checkout-verifiable (ERR-142)\","
+      },
+      {
+        "path": ".project-local/runs",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7814,
+        "text": "\"observed_error\": \"The canonical governance gate at the pushed head 0db79f9f read `GATE_EXIT=1` with `Ran 2669 tests`, `FAILED (failures=3, skipped=10)` and `dirty_paths=0` -- so all three reds were d"
       },
       {
         "path": ".project-local/runs",
@@ -4362,6 +4392,12 @@
         "text": "\"observed_error\": \"GitHub Actions cannot produce a verdict for any new head. Measured at 6c500d66 (pushed 2026-10-08 20:24Z): 19 check-runs, success=0, failure=9, skipped=10, pending=0, and every fail"
       },
       {
+        "path": ".project-local/runs/gate-after-inventory-reseal.log",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7833,
+        "text": "\"bindingNote\": \"bound 2026-10-10 against the round's own heads, all three read from git rather than typed: introduced d22d21eb, fixed 1d239abd, verified 47d13507; `git cat-file -e` proved both named p"
+      },
+      {
         "path": ".project-local/runs/gate-exit-probe/probe.log",
         "file": "taskpacks/current/error-ledger.json",
         "line": 6771,
@@ -5496,6 +5532,12 @@
         "text": "\"entrypoint\": \".project-local/runs/wui-20261010/expand_shorthand_citations.py\","
       },
       {
+        "path": ".project-local/runs/wui-20261010/falsify_citation_test_controls.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7879,
+        "text": "\"fix\": \"(1) The untracked contribution is now PLANTED inside the test in a walked module root (`packages/client-neutral-core/scripts/_index_walk_canary_<pid>.py`), asserted present in the index, and d"
+      },
+      {
         "path": ".project-local/runs/wui-20261010/falsify_hook_bound_guard.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 29,
@@ -5662,6 +5704,12 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 106,
         "text": "④ 路径一通，八条指针随即在行号上判红（偏离 1～4 行；`packages/client-neutral-core/scripts/perf_baseline.py:42-43 → 46-47` 是本轮我自己在那个文件里加行造成的）。`.project-local/runs/wui-20261010/repoint_convicted_pointers.py` 只移动**门自己点名**的指针、只"
+      },
+      {
+        "path": ".project-local/runs/wui-20261010/repro_old_root_disposition_checker.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7814,
+        "text": "\"observed_error\": \"The canonical governance gate at the pushed head 0db79f9f read `GATE_EXIT=1` with `Ran 2669 tests`, `FAILED (failures=3, skipped=10)` and `dirty_paths=0` -- so all three reds were d"
       },
       {
         "path": ".project-local/sleep-mode",
@@ -8541,6 +8589,24 @@
       },
       {
         "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": ".githooks/pre-commit",
+        "line": 8,
+        "text": "#      `.project-local/toolchains/wl-py311/Scripts/python.exe`，与 CI 一致），于是"
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": ".githooks/pre-commit",
+        "line": 36,
+        "text": "for candidate in \"$ROOT/.project-local/toolchains/wl-py311/Scripts/python.exe\" \\"
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
+        "file": ".githooks/pre-commit",
+        "line": 46,
+        "text": "echo \"  (.project-local/toolchains/wl-py311/Scripts/python.exe) or python/python3 on PATH.\" >&2"
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/Scripts/python.exe",
         "file": "UI_IMPLEMENTATION_REPORT.md",
         "line": 406,
         "text": "**【2026-10-07 当日更正，原文保留不改】** 上面那段 FAIL 在换一台主机后被证伪：同一棵树（HEAD `cda4165`）用声明工具链 `.project-local/toolchains/wl-py311/Scripts/python.exe` 重跑整仓 `verify`，得到 `QUALITY_GATE_GOVERNANCE_PASS modules=207 executed"
@@ -8556,6 +8622,12 @@
         "file": "docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md",
         "line": 70,
         "text": "使用声明项目工具链；本轮已有Python入口是.project-local/toolchains/wl-py311/Scripts/python.exe（接手时核对存在，不假定永久）。"
+      },
+      {
+        "path": ".project-local/toolchains/wl-py311/bin/python",
+        "file": ".githooks/pre-commit",
+        "line": 37,
+        "text": "\"$ROOT/.project-local/toolchains/wl-py311/bin/python\" \\"
       },
       {
         "path": ".project-local/worktrees/ui-20261007",
@@ -8766,7 +8838,7 @@
       {
         "path": ".project-local",
         "file": "scripts/audit/project_local_citation_audit.py",
-        "line": 323,
+        "line": 324,
         "text": "\"from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under \""
       },
       {
@@ -8886,7 +8958,7 @@
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 298,
+        "line": 319,
         "text": "\"\"\"`.project-local/` citations are exempt in a fresh checkout but must not be fabricated here."
       },
       {
@@ -10098,7 +10170,7 @@
       {
         "path": ".project-local",
         "file": "scripts/audit/project_local_citation_audit.py",
-        "line": 236,
+        "line": 237,
         "text": "\"the observation that was made, not bytes a checkout must supply; `.project-local/` is \""
       },
       {
@@ -10166,6 +10238,18 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 7591,
         "text": "\"fix\": \"`file_index()` now takes `git ls-files` union a repo-wide `os.walk`, pruning during traversal: `.project-local`, `.ui-reference`, `node_modules`, `dist`, `.git`, `__pycache__`, `.venv`, `targe"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7820,
+        "text": "\"remaining_boundary\": \"The repair does not green 0db79f9f retroactively; that head keeps its recorded failure and the next head carries the corrected comparison. The guard still compares TEXT rather t"
+      },
+      {
+        "path": ".project-local",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 7877,
+        "text": "\"observed_error\": \"Two controls in the same module were green on this box and red in a clean checkout, with the runner's own words showing the mechanism. (1) `test_the_index_is_the_checkout_and_not_a_"
       },
       {
         "path": ".project-local",
@@ -10369,7 +10453,7 @@
     ".project-local": "DECLARED ROOT — `.project/governance/project-data-boundary.json` names it as the runtime and evidence root every sanctioned writer targets. A directory declaration is not evidence a reader has to open, and it is git-ignored by design, so CI never sees it and is not asked to.",
     ".project-local/artifacts": "DECLARED ROOT — `taskArtifactsRoot`/`canonicalEvidenceRoot` in the boundary declaration; the citations name where sanctioned tools write, not bytes a reader must recover.",
     ".project-local/artifacts/model-library-readback.json": "MACHINE-LOCAL RECEIPT WITH A RE-MEASURE COMMAND — `.project/governance/model-registry.json` quotes it as '(machine-local receipt; regenerate with: python scripts/audit/model_library_readback.py)', the regenerator is tracked, and a tracked counterpart exists at `docs/audits/MODEL_LIBRARY_READBACK_2026-10-07.md`. The file was present on the authoring box (14,754 B, 2026-10-07). CI is not asked to believe the bytes — only to see that the claim names how to reproduce them.",
-    ".project-local/artifacts/wui-20261009/sse-revision.json": "MACHINE-LOCAL READBACK WITH A RE-MEASURE COMMAND — produced by the tracked instrument `scripts/audit/sse_revision_via_cdp.py`, which writes exactly this path (its default `OUT_DIR`) and prints `SSE_REVISION_GATE_PASS` / `_FAIL` as its own verdict. Re-measure with `python scripts/audit/sse_revision_via_cdp.py`; the falsification run the register cites is `--revisions 7,9,10`, which must exit 1. Present on the authoring box as of 2026-10-10 (2,591 B, sha256 578d6a8f9388f242…, `verdictToken: SSE_REVISION_GATE_PASS`, `failures: []`, `revisionsPushed: [7, 9, 8]`, and `reconnectLastEventIds: []` — the empty cursor list is the honest record that this stream never disconnected, so the `Last-Event-ID` branch was covered elsewhere instead of being claimed here). The reader-facing citations (`apps/observer/frontend/DESIGN.md`, `taskpacks/current/OPEN-TASK-REGISTER.md` WUI-14/WUI-15, the two UI-V2 CSVs) quote the observation that was made, not bytes a checkout must supply; `.project-local/` is git-ignored by declaration, so CI is asked to see the re-measure command, never to believe the receipt.",
+    ".project-local/artifacts/wui-20261009/sse-revision.json": "MACHINE-LOCAL READBACK WITH A RE-MEASURE COMMAND — produced by the tracked instrument `scripts/audit/sse_revision_via_cdp.py`, which writes exactly this path (its default `OUT_DIR`) and prints `SSE_REVISION_GATE_PASS` / `_FAIL` as its own verdict. Re-measure with `python scripts/audit/sse_revision_via_cdp.py`; the falsification run the register cites is `--revisions 7,9,10`, which must exit 1. Present on the authoring box as of 2026-10-10 (2,591 B, sha256 578d6a8f9388f242…, its verdict token reads `SSE_REVISION_GATE_PASS`, `failures` is empty, `revisionsPushed` is `[7, 9, 8]`, and `reconnectLastEventIds` is empty — the empty cursor list is the honest record that this stream never disconnected, so the `Last-Event-ID` branch was covered elsewhere instead of being claimed here). The reader-facing citations (`apps/observer/frontend/DESIGN.md`, `taskpacks/current/OPEN-TASK-REGISTER.md` WUI-14/WUI-15, the two UI-V2 CSVs) quote the observation that was made, not bytes a checkout must supply; `.project-local/` is git-ignored by declaration, so CI is asked to see the re-measure command, never to believe the receipt.",
     ".project-local/runs": "DECLARED ROOT — `runtimeRoot`/`logsRoot`/`cacheRoot` in the boundary declaration; the citations describe where run logs and receipts land.",
     ".project-local/runs/observer": "DESTINATION — `apps/observer/module-profile.json` declares where the read-only projection writes when it runs; nothing validates its existence and it has not been asked to run.",
     ".project-local/runs/tmp": "HISTORICAL ROUND + RESIDUE — the path is the old bound temp root the gate no longer uses; the two files still on disk are a jiti loader cache and a scratch fixture, and deleting them is a separate audited cleanup (prove recoverability first), not something a citation may assume.",
@@ -10379,7 +10463,7 @@
     "reviewQueue": 8,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 306
+    "presentOnThisMachine": 309
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
