@@ -247,6 +247,94 @@ class GeneratedFileCompilesTests(unittest.TestCase):
             project_temp.force_release(scratch)
 
 
+class FrontModelConsumesGeneratedContractTests(unittest.TestCase):
+    """WUI-15: the front model must IMPORT the generated projection, and name every place it cannot.
+
+    Until this batch the generated artifact was checked against `types.ts` by a Python gate that read both as
+    text, and the front end itself consumed neither. `apps/observer/frontend/src/contractConformance.ts` is
+    the seam, and it only means anything if two things stay true: the front keeps importing the generated
+    module, and its list of COLLAPSED paths is exactly the set the generator actually produces. The second is
+    the one that rots silently -- if the schema names a section the generator used to collapse, the front
+    would be exempting a path that no longer needs exempting, and the compile-time assertions would simply
+    cover less while still passing.
+    """
+
+
+    def _block(self) -> str:
+        text = generated_text()
+        start = text.index("export type WorkflowSnapshotV3 = {")
+        start = text.index("{", start)
+        depth = 0
+        for index in range(start, len(text)):
+            if text[index] == "{":
+                depth += 1
+            elif text[index] == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start:index + 1]
+        raise AssertionError("the generated snapshot block is unbalanced")
+
+    def test_the_front_end_imports_the_generated_contract_module(self) -> None:
+        importers = sorted(str(path.relative_to(ROOT)).replace("\\", "/")
+                           for path in (FRONTEND / "src").rglob("*.ts*")
+                           if "packages/client-neutral-core/generated/contracts"
+                           in path.read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(importers), 2,
+                                "no front-end file imports the generated contract, so the SSOT projection "
+                                f"is decorative again: {importers}")
+        self.assertIn("apps/observer/frontend/src/contractConformance.ts", importers)
+
+    COLLAPSE_LINE = re.compile(r"^\s+(\w+)\??: (Record<string, unknown>(\[\])?|unknown(\[\])?)\s*,?$", re.M)
+
+    def test_the_collapse_inventory_is_exactly_what_the_generator_produces(self) -> None:
+        """Leaf names must match one-for-one, and each declared parent must really be the object it is in.
+
+        The comparison is line-shaped on purpose: an indent- or brace-tracking parser inside a gate test is
+        its own bug farm (mine missed six of the seven collapses first time). What is proven here is the
+        thing that can rot -- a collapse the generator no longer produces staying on the front's exemption
+        list, or a new collapse arriving unnamed -- plus the claim that each entry sits under the object it
+        says it does.
+        """
+        block = self._block()
+        measured = sorted(match.group(1) for match in self.COLLAPSE_LINE.finditer(block))
+        self.assertEqual(7, len(measured),
+                         f"the scan found {measured}; a collapse set this small or this different means the "
+                         "scan stopped reading the block, not that the contract got clean")
+        source = (FRONTEND / "src/contractConformance.ts").read_text(encoding="utf-8")
+        listed = re.search(r"GENERATED_COLLAPSED_PATHS = \[([\s\S]*?)\] as const", source)
+        self.assertIsNotNone(listed, "contractConformance.ts no longer declares GENERATED_COLLAPSED_PATHS")
+        declared = re.findall(r"'([^']+)'", listed.group(1))
+        self.assertEqual(measured, sorted(path.split(".")[-1].replace("[]", "") for path in declared),
+                         f"the generated projection collapses {measured} but the front model exempts "
+                         f"{declared} -- an exemption that no longer matches a real collapse silently "
+                         "shrinks what the compile-time refinements cover")
+        for path in declared:
+            if "." not in path:
+                self.assertTrue(re.search(rf"^    {re.escape(path)}\??:", block, re.M),
+                                f"{path} is declared top-level but the generated block has no such key")
+                continue
+            parent, leaf = path.rsplit(".", 1)
+            parent = parent.replace("[]", "")
+            opener = rf"{re.escape(parent)}\??:\s*\(?{{"
+            self.assertRegex(block, opener,
+                             f"{path} claims its parent is {parent!r}, which the generated block never opens")
+            self.assertIn(leaf, block.split(f"{parent}", 1)[1][:4000],
+                          f"{leaf} is not inside the {parent} section as claimed")
+
+    def test_every_pinned_refinement_path_is_a_declared_key_of_the_contract(self) -> None:
+        source = (FRONTEND / "src/contractConformance.ts").read_text(encoding="utf-8")
+        block = re.search(r"PINNED_REFINEMENT_PATHS = \[([\s\S]*?)\] as const", source)
+        self.assertIsNotNone(block, "the refinement list disappeared; the seam pins nothing")
+        pinned = re.findall(r"'([^']+)'", block.group(1))
+        self.assertGreaterEqual(len(pinned), 8, f"only {len(pinned)} paths are pinned: {pinned}")
+        schema = json.loads((ROOT / "packages/contracts/schemas/workflow/snapshot-v3.schema.json")
+                            .read_text(encoding="utf-8"))
+        declared = set(schema["required"]) | set(schema.get("properties", {}))
+        missing = [name for name in pinned if name not in declared]
+        self.assertEqual([], missing,
+                         f"pinned paths that the contract does not declare: {missing}")
+
+
 if __name__ == "__main__":
     if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
