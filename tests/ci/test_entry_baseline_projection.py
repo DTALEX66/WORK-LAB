@@ -10,10 +10,11 @@ come out green or silently disappear.
 """
 from __future__ import annotations
 
+import ast
 import importlib.util
 import struct
 import unittest
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "audit" / "entry_baseline_readback.py"
@@ -72,7 +73,7 @@ class VocabularyTests(unittest.TestCase):
             {"require_desktop": True, "shortcut": good_shortcut(target_exists=False),
              "install_roots": ["D:\\elsewhere"]},
             {"require_desktop": True, "shortcut": good_shortcut(icon=TEMP_ROOTS[0] + "\\nsD.tmp\\a.exe"),
-             "temp_roots": TEMP_ROOTS, "install_roots": [str(Path(good_shortcut()["target"]).parent)]},
+             "temp_roots": TEMP_ROOTS, "install_roots": [str(PureWindowsPath(good_shortcut()["target"]).parent)]},
         ]
         for res in cases:
             res.setdefault("temp_roots", TEMP_ROOTS)
@@ -240,6 +241,58 @@ class LnkParserTests(unittest.TestCase):
         out = MODULE.parse_lnk(b"NOPE" + b"\x00" * 100)
         self.assertFalse(out["parse_ok"])
         self.assertIn("header", (out["parse_error"] or "").lower())
+
+
+
+class PlatformIndependenceTests(unittest.TestCase):
+    """The decision surface must give the same verdict on a Linux runner as on the box it describes.
+
+    CI failed 2 + 1 here while this Windows box passed 22/22, because two call sites folded Windows-shaped
+    strings through the PLATFORM Path: on Linux `Path("C:\\a\\b.exe").parent` is `.` and
+    `Path("C:\\dir") / "x.exe"` is `C:\\dir/x.exe`. The behaviour test pins the verdict across spellings
+    that mean the same Windows location, and the static test refuses any `Path(` inside the pure surface --
+    so a regression convicts on either runner, not only on the one that is not Windows.
+    """
+
+    PURE_SURFACE = ("decide", "_norm", "_in_temp", "parse_lnk")
+
+    def _decide(self, shortcut_over=None, roots=None):
+        sc = good_shortcut(**(shortcut_over or {}))
+        return MODULE.decide({"require_desktop": True, "temp_roots": TEMP_ROOTS,
+                              "install_roots": list(roots or []), "expected_roots": [],
+                              "shortcut": sc, "wscript_agree": True})["verdict"]
+
+    def test_the_same_windows_location_verdicts_the_same_however_it_is_spelled(self) -> None:
+        backslash = "C:\\Users\\X\\AppData\\Local\\Programs\\App"
+        forward = "C:/Users/X/AppData/Local/Programs/App"
+        upper = "C:\\USERS\\X\\APPDATA\\LOCAL\\PROGRAMS\\APP"
+        base = self._decide(roots=[backslash])
+        self.assertEqual("SINGLE_VERIFIED", base,
+                         f"a clean single chain must verify before spelling is discussed: {base}")
+        for label, root in (("forward-slash", forward), ("upper-case", upper)):
+            self.assertEqual(base, self._decide(roots=[root]),
+                             f"the {label} spelling of the same Windows install changed the verdict; the "
+                             "decision surface is reading the runner's path flavour, not the domain")
+        dead = self._decide(shortcut_over={"target_exists": False}, roots=[])
+        self.assertEqual("NOT_INSTALLED", dead)
+        self.assertEqual(dead, self._decide(shortcut_over={"target_exists": False,
+                                                           "target": "C:/Users/X/AppData/Local/Programs/App/app.exe"},
+                                            roots=[]),
+                         "a dead target stays a dead target whatever the separator")
+
+    def test_the_pure_surface_never_asks_the_platform_how_to_read_a_windows_path(self) -> None:
+        tree = ast.parse((ROOT / "scripts/audit/entry_baseline_readback.py")
+                         .read_text(encoding="utf-8"))
+        offenders = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name in self.PURE_SURFACE:
+                for call in ast.walk(node):
+                    if (isinstance(call, ast.Call) and isinstance(call.func, ast.Name)
+                            and call.func.id == "Path"):
+                        offenders.append(f"{node.name}:{call.lineno}")
+        self.assertEqual([], offenders,
+                         f"these call sites in the pure decision surface use the platform Path and will "
+                         f"diverge on a non-Windows runner: {offenders}; use PureWindowsPath")
 
 
 if __name__ == "__main__":

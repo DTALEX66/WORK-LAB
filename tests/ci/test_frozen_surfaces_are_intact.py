@@ -43,8 +43,8 @@ def derive(root: str) -> dict[str, dict]:
         rel = rel.replace("\\", "/")
         if rel == f"{root}/{MANIFEST_NAME}":
             continue
-        data = (ROOT / rel).read_bytes()
-        members[rel] = {"path": rel, "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()}
+        digest, size = gen.sha256_of(rel)
+        members[rel] = {"path": rel, "bytes": size, "sha256": digest}
     return members
 
 

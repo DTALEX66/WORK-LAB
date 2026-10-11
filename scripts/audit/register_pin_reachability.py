@@ -71,11 +71,15 @@ def rows_with_pins(text: str) -> list[tuple[int, str, list[str]]]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--register", default=str(REGISTER))
+    ap.add_argument("--repo", default=None,
+                    help="the repository whose objects decide a pin's reachability. A test may point it at a "
+                         "scratch repo where the dangling-commit case is CONSTRUCTED, because an object that "
+                         "exists only in the author's clone is a different state on a fresh one")
     ap.add_argument("--check", action="store_true", help="exit 1 when a pin is contained by no ref")
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
 
-    root = repo_root()
+    root = Path(args.repo).resolve() if args.repo else repo_root()
     path = Path(args.register)
     if not path.is_absolute():
         path = root / path

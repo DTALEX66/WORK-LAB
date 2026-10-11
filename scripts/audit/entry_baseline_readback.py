@@ -41,7 +41,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 REPO = Path(__file__).resolve().parents[2]
 CAPABILITY_MATRIX = REPO / "config" / "capability-matrix.json"
@@ -174,7 +174,7 @@ def parse_lnk(raw: bytes) -> dict:
             for off in (8, 12, 16, 20, 24):
                 cand = _cstr(body, off, True).strip()
                 head = cand.split(",")[0]
-                if not icon and _PATHISH.match(cand) and Path(head).suffix.lower() in {".ico", ".exe", ".dll", ".msi", ".lnk"}:
+                if not icon and _PATHISH.match(cand) and PureWindowsPath(head).suffix.lower() in {".ico", ".exe", ".dll", ".msi", ".lnk"}:
                     icon = cand
             p += blen
         out["icon_location"] = icon
@@ -182,7 +182,7 @@ def parse_lnk(raw: bytes) -> dict:
         # WorkingDirectory. A relative string alone is not trusted.
         target = local_base
         if target and out.get("working_directory") and not _PATHISH.match(target):
-            target = str(Path(out["working_directory"]) / target)
+            target = str(PureWindowsPath(out["working_directory"]) / target)
         if not target and relpath and _PATHISH.match(relpath):
             target = relpath
         out["target_path"] = target
@@ -254,7 +254,7 @@ def decide(res: dict) -> dict:
         if s and s.get("target_exists") and s.get("target"):
             live_norm.setdefault(_norm(s["target"]), s["target"])
     live_targets = sorted(live_norm.values())
-    sc_root = str(Path(sc["target"]).parent) if sc and sc.get("target_exists") else None
+    sc_root = str(PureWindowsPath(sc["target"]).parent) if sc and sc.get("target_exists") else None
     observed = reg_roots + ([sc_root] if sc_root else [])
 
     # NSIS / invented-launcher traps convict before any "single +1" comfort.

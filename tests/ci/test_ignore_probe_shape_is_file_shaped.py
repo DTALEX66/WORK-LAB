@@ -51,16 +51,24 @@ def directory_shaped_check_ignore_args(source: str) -> list[str]:
 
 
 class IgnoreProbeShape(unittest.TestCase):
-    def test_a_directory_shaped_probe_matches_even_tracked_directories(self) -> None:
-        """The trap, kept as evidence: rc=0 here means nothing, because the tree says the opposite."""
-        for tracked_dir in ("services/", "docs/current/", "tests/"):
-            self.assertEqual(0, probe(tracked_dir),
-                             f"{tracked_dir} is tracked, yet the directory-shaped probe still says "
-                             "'ignored' -- if this assertion ever fails, git changed the behaviour and the "
-                             "rule below needs re-measuring, not deleting")
+    def test_a_directory_shaped_probe_cannot_tell_a_tracked_directory_from_a_fabricated_one(self) -> None:
+        """The rule is the indiscrimination, not this box's exit code.
 
-    def test_a_directory_shaped_probe_also_matches_a_directory_that_does_not_exist(self) -> None:
-        self.assertEqual(0, probe("totally-made-up-dir-8f2c/"))
+        Measured 2026-10-11: on this Windows checkout `git check-ignore -v --no-index services/` exits 0 and
+        names `.gitignore:44`, an EMPTY line, and answers the same for a directory that has never existed --
+        which is what made the probe worthless. GitHub's Linux runner answers 1 for both. Asserting the exit
+        code pinned a git version, so the stage was green here and red there over a fact about git rather than
+        about this repository. What must hold on either runner is that the two queries cannot be told apart;
+        if they ever differ, a directory-shaped probe has become meaningful, and the call-site rule below
+        still forbids relying on one until it is re-measured.
+        """
+        fabricated = probe("totally-made-up-dir-8f2c/")
+        for tracked_dir in ("services/", "docs/current/", "tests/"):
+            tracked_rc = probe(tracked_dir)
+            self.assertEqual(fabricated, tracked_rc,
+                             f"{tracked_dir} read as {tracked_rc} while a fabricated directory read as "
+                             f"{fabricated}: the directory-shaped probe now discriminates, so re-measure the "
+                             "rule before trusting it -- and still do not use it as evidence")
 
     def test_a_file_shaped_probe_discriminates_tracked_from_ignored(self) -> None:
         self.assertNotEqual(0, probe("services/orchestration/sidecar.py"),

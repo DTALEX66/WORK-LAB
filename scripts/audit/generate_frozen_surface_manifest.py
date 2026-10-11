@@ -44,10 +44,27 @@ def tracked_files(root: str) -> list[str]:
     return sorted(p for p in out.split("\0") if p.strip())
 
 
+def git_bytes(*args: str) -> bytes | None:
+    result = subprocess.run(["git", *args], cwd=ROOT, capture_output=True)
+    return result.stdout if result.returncode == 0 else None
+
+
 def sha256_of(rel: str) -> tuple[str, int]:
-    path = ROOT / rel
-    data = path.read_bytes()
-    return hashlib.sha256(data).hexdigest(), len(data)
+    """The COMMITTED bytes, never the checkout's.
+
+    Measured on docs/history/archive/workflow-convergence-receipt-20261005.json: the Windows working tree
+    holds CRLF (44 pairs, sha256 b8262a28dc4b...) while the object stores LF (0 pairs, sha256
+    9646c7e452a3...) because `.gitattributes` says `* text=auto` and this box has core.autocrlf=true. A
+    manifest built from disk therefore recorded a digest that a Linux runner can never reproduce -- which is
+    how CI convicted a file nobody had touched. "Frozen" is a claim about what is in git, so the digest comes
+    from the index (the bytes the next commit carries) and falls back to HEAD; in a CI checkout they are the
+    same object.
+    """
+    for reference in (f":{rel}", f"HEAD:{rel}"):
+        data = git_bytes("show", reference)
+        if data is not None:
+            return hashlib.sha256(data).hexdigest(), len(data)
+    raise SystemExit(f"FROZEN_MANIFEST_FAIL no committed bytes for {rel}")
 
 
 def build(root: str, manifest_name: str = "FROZEN-MANIFEST.json") -> dict:

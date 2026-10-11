@@ -27,9 +27,34 @@ REGISTER = "taskpacks/current/OPEN-TASK-REGISTER.md"
 # the pre-cutover ledger, tracked byte-for-byte by the 2026-10-09 cutover record: 404,985 B, 65 pinned rows
 ARCHIVE_REGISTER = ("taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/"
                     "taskpacks/current/OPEN-TASK-REGISTER.md")
-# a commit that is on main, and one that exists locally but no ref contains it
+# a commit that is on main; every clone of this repo contains it, ref-carried, so it is portable
 ON_MAIN = "62f666ef36999b846ea1c9bcb075a0970be18933"
-ZERO_REFS = "0600d6f680dd"
+
+
+def scratch_repo(workdir: Path) -> tuple[Path, str, str]:
+    """Build (repo, ref-carried sha, dangling sha) so ZERO_REFS is made rather than inherited.
+
+    The fixture was `0600d6f680dd`, an object that exists in the author's clone and in no ref. On a fresh
+    runner the object is simply absent, so the checker answered UNRESOLVABLE -- a different state, and the
+    test asserted ZERO_REFS. `git commit-tree` produces an object that no ref contains on any machine that
+    has git, which is exactly the condition this guard exists for, and the ref-carried sibling proves the
+    other half without depending on this repository's history.
+    """
+    def run(*args: str) -> str:
+        result = subprocess.run(["git", *args], cwd=workdir, capture_output=True, text=True,
+                                encoding="utf-8", errors="replace")
+        assert result.returncode == 0, f"git {' '.join(args)}: {result.stdout}{result.stderr}"
+        return result.stdout.strip()
+
+    run("init", "-q", "-b", "main", ".")
+    run("config", "user.email", "guard@example.invalid")
+    run("config", "user.name", "guard")
+    (workdir / "a.txt").write_text("seed\n", encoding="utf-8", newline="\n")
+    run("add", "a.txt")
+    run("commit", "-q", "-m", "seed")
+    on_ref = run("rev-parse", "HEAD")
+    dangling = run("commit-tree", run("rev-parse", "HEAD^{tree}"), "-m", "unreachable guard fixture")
+    return workdir, on_ref, dangling
 
 
 def _runtime_root() -> Path:
@@ -45,12 +70,21 @@ class Classification(unittest.TestCase):
         self.assertEqual(40, len(full))
 
     def test_a_squashed_branch_head_is_caught_by_containment_not_existence(self) -> None:
-        state, full, refs = pins.classify(REPO, ZERO_REFS)
-        self.assertEqual("ZERO_REFS", state, f"{full} unexpectedly has refs {refs[:3]}")
-        self.assertEqual([], refs)
-        self.assertEqual(0, subprocess.run(["git", "cat-file", "-e", full + "^{commit}"],
-                                           cwd=REPO, capture_output=True).returncode,
-                         "the object exists; that is exactly why an existence test is not enough")
+        workdir = Path(tempfile.mkdtemp(prefix="pin-dangling-", dir=str(_runtime_root())))
+        try:
+            repo, on_ref, dangling = scratch_repo(workdir)
+            state, full, refs = pins.classify(repo, dangling[:12])
+            self.assertEqual("ZERO_REFS", state, f"{full} unexpectedly has refs {refs[:3]}")
+            self.assertEqual([], refs)
+            self.assertEqual(0, subprocess.run(["git", "cat-file", "-e", full + "^{commit}"],
+                                               cwd=repo, capture_output=True).returncode,
+                             "the object exists; that is exactly why an existence test is not enough")
+            carried, _, carried_refs = pins.classify(repo, on_ref[:12])
+            self.assertNotEqual("ZERO_REFS", carried,
+                                f"a commit carried by refs/heads/main read as having no refs: {carried_refs}")
+            self.assertTrue(any("refs/heads/main" in r for r in carried_refs), carried_refs)
+        finally:
+            shutil.rmtree(workdir, ignore_errors=True)
 
     def test_an_unresolvable_token_is_its_own_state(self) -> None:
         state, full, refs = pins.classify(REPO, "deadbee")
@@ -94,13 +128,16 @@ class TheRealRegister(unittest.TestCase):
     def test_a_planted_dead_pin_turns_the_check_red(self) -> None:
         workdir = Path(tempfile.mkdtemp(prefix="pin-reachability-", dir=str(_runtime_root())))
         try:
+            repo, _on_ref, dangling = scratch_repo(workdir)
             planted = workdir / "register.md"
             planted.write_text(f"| ID | Priority | Status | Work |\n|---|---|---|---|\n"
-                               f"| X | P1 | DONE@{ZERO_REFS} | planted dead pin |\n",
+                               f"| X | P1 | DONE@{dangling[:12]} | planted dead pin |\n",
                                encoding="utf-8", newline="\n")
-            code, out = self.run_tool("--register", str(planted), "--check")
+            code, out = self.run_tool("--register", str(planted), "--repo", str(repo), "--check")
             self.assertEqual(1, code, out)
-            self.assertIn("ZERO_REFS 0600d6f", out)
+            self.assertIn(f"ZERO_REFS {dangling[:12]}", out,
+                          "the planted dangling pin must be named with the state that made it dead, on a "
+                          "repo where that state was constructed rather than inherited from one box")
         finally:
             shutil.rmtree(workdir, ignore_errors=True)
 

@@ -2,11 +2,11 @@
   "schemaVersion": "work-lab/frozen-surface-manifest/v1",
   "root": "docs/history/archive",
   "normative": false,
-  "generatedFromCommit": "c4626784bf58809788e8616fc8f485b8910b6ce1",
-  "generatedFromTree": "cc6262b0d484bd11963ef447491d6fe1117255b3",
+  "generatedFromCommit": "7e2261a6f55d0cf5b704eee502a2d8f078ce5629",
+  "generatedFromTree": "2c988cea687176c5e4d684d00d044376e3a9e52e",
   "totals": {
     "files": 137,
-    "bytes": 38522249
+    "bytes": 1474077
   },
   "files": [
     {
@@ -41,8 +41,8 @@
     },
     {
       "path": "docs/history/archive/recovered-originals/RECORD-20261008/WORK-LAB_UI开发资料总包_按批次.zip",
-      "bytes": 37048117,
-      "sha256": "c94ff634dad3fa47cd843493c5f3b59c946fd987295085b8c821febba13eef48"
+      "bytes": 133,
+      "sha256": "24905a0513dd2287f76cfbaac1e5e278c7fe7bee3184fea8e72072a04ab42c7f"
     },
     {
       "path": "docs/history/archive/recovered-originals/RECORD-20261008/WORK-LAB_审计收敛报告_2026-10-01.html",
@@ -231,13 +231,13 @@
     },
     {
       "path": "docs/history/archive/scripts-history/model_catalog_builder.py",
-      "bytes": 4375,
-      "sha256": "609675e4917375abbd9f737a1a9f5f02b0e75dfe4e86d5b018407220ec3e5005"
+      "bytes": 4286,
+      "sha256": "babc86eb41dec801a5ba811af3f65d6527cf74b311bb3837aa4f511c92cbadc1"
     },
     {
       "path": "docs/history/archive/scripts-history/test_model_catalog_builder.py",
-      "bytes": 2429,
-      "sha256": "ab824ba4308afcc6985ef45e9418a91380df2f673f5de63ca3e46931c1e95d25"
+      "bytes": 2374,
+      "sha256": "d6bcd30eaf7fbfa765ad75904b2379e98c16749ef2c4e5b69834b9347b16cb3f"
     },
     {
       "path": "docs/history/archive/session-history/ArcheAxis-Knowledge-OS/ARCHEAXIS-TOTAL-SUMMARY.md",
@@ -691,8 +691,8 @@
     },
     {
       "path": "docs/history/archive/workflow-convergence-receipt-20261005.json",
-      "bytes": 1167,
-      "sha256": "b8262a28dc4bb38db45df4827034a07995687604c4e60438d9c38c7b4de32c46"
+      "bytes": 1123,
+      "sha256": "9646c7e452a3fc19bedf4d0828af2b47b4c5bec64c73c5ec7405fd2dcda68fac"
     }
   ]
 }
