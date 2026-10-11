@@ -8047,8 +8047,8 @@
       "lifecycle": {
         "introducedCommit": "a433cdf67bb63ce53caf3fa588a24137429cc421",
         "fixedCommit": "1d2412ee3ab316c0d1a3706811c4e2906e42ee77",
-        "verifiedCommit": "1d2412ee3ab316c0d1a3706811c4e2906e42ee77",
-        "note": "introducedCommit is `a433cdf6 feat(baseline): measure the entry chain instead of asserting it` (2026-10-08), found by `git log -S'encode(\"mbcs\"')` on the fixture. fixedCommit and verifiedCommit are both 1d2412ee: the runner at that exact SHA reported `modules_ran=44 modules_failed=1` with the single failing member `test_authority_index_paths_resolve.py` (a citation defect in the intake doc added by that same commit), and `test_entry_baseline_projection.py` is absent from the failure list and absent from the LookupError text -- so the module that could not run on Linux ran and passed there. The aggregate verdict at 1d2412ee was red for an unrelated reason; this row claims only the mbcs outcome, and the clean aggregate is owed at 335d0c6f."
+        "verifiedCommit": "3e3401a24c4d3e55cf18aca19ca6942b9ab8e7d8",
+        "note": "introducedCommit is `a433cdf6 feat(baseline): measure the entry chain instead of asserting it` (2026-10-08), found by `git log -S'encode(\"mbcs\"')` on the fixture. fixedCommit=1d2412ee is where the codec decision was single-sourced: the Linux runner there reported `CI_ROOT_GOVERNANCE_FAIL modules_ran=44 modules_failed=1` whose only failing member was `test_authority_index_paths_resolve.py` (a citation defect in the intake doc added by the same commit), and `test_entry_baseline_projection.py` was absent from the failure list -- the previously un-runnable module ran and passed. verifiedCommit=3e3401a2 is the first head where the whole verdict is green on the runner (`work-lab-gate` run 38135460866 and `wlr-060-production-gates` both `success`) and locally (canonical `verify`: GATE_FULL=yes gates=50, ran=50, GATE_SOURCE_DRIFT=no, GATE_EXIT=0)."
       },
       "intakeSource": "云端三项目审计包 AAOS-WORK-DESIGN-cloud-audit-20261011.zip finding W03 (SHA-256 b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72)",
       "regressionTestVerifiability": "RESOLVES",
