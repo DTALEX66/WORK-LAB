@@ -1,9 +1,9 @@
 {
   "schemaVersion": "work-lab/record-source-census/v1",
   "root": "D:/All projects/Record",
-  "snapshotDate": "2026-10-10",
-  "enumeratedFileCount": 184,
-  "archivedSourceFileCount": 48,
+  "snapshotDate": "2026-10-11",
+  "enumeratedFileCount": 185,
+  "archivedSourceFileCount": 49,
   "excludedForeignFileCount": 136,
   "unresolved": 0,
   "files": [
@@ -1110,6 +1110,12 @@
       "bytes": 9498896,
       "disposition": "ARCHIVED",
       "basis": "WORK-LAB identity in file name"
+    },
+    {
+      "sourceRelativePath": "AAOS-WORK-DESIGN-cloud-audit-20261011.zip",
+      "bytes": 8038362,
+      "disposition": "ARCHIVED",
+      "basis": "three-project cloud audit containing the WORK findings W01-W04 and the work-* evidence family"
     }
   ]
 }

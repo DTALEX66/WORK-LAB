@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-11T09:54:43Z",
+  "generatedAt": "2026-10-11T10:47:33Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -273,16 +273,17 @@
     },
     {
       "path": "scripts/audit/entry_baseline_readback.py",
-      "sha256": "cbdda2cbecc98669f23cc82c1da1b1493ea01bc861a7a90b369a88dda4c19102",
-      "bytes": 41476,
-      "lines": 808,
+      "sha256": "d2ed0538bc1e8df40d1957e42c18668e8263edf43845a225e8aed54f736bd94b",
+      "bytes": 42680,
+      "lines": 826,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
         "docs/audits/ENTRY_BASELINE_2026-10-08.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/CLOUD-AUDIT-INTAKE-2026-10-11.md",
         "taskpacks/current/error-ledger.json",
         "tests/ci/test_entry_baseline_projection.py"
       ]
@@ -849,14 +850,14 @@
       "lines": 178,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 10,
+      "citedByRecords": 13,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json"
+        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.html",
+        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.txt",
+        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/findings.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -1085,14 +1086,14 @@
       "lines": 301,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 7,
+      "citedByRecords": 8,
       "citedBy": [
         "AGENTS.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/CLOUD-AUDIT-INTAKE-2026-10-11.md",
         "docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md",
-        "docs/history/owner-inputs/HISTORICAL-KEY-POINTS.md",
-        "docs/history/owner-inputs/INDEX.md"
+        "docs/history/owner-inputs/HISTORICAL-KEY-POINTS.md"
       ]
     },
     {

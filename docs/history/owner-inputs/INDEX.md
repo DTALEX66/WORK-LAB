@@ -33,7 +33,7 @@
 ## 原文件及别名目录
 
 
-本次登记 **103 条资料**及 **2219 条包内成员**。下表链接指向规范存储；压缩资料的成员链在 JSON/CSV 和可搜索目录中完整列出。
+本次登记 **104 条资料**及 **2382 条包内成员**。下表链接指向规范存储；压缩资料的成员链在 JSON/CSV 和可搜索目录中完整列出。
 
 
 ### TASK_HANDOFF
@@ -81,6 +81,7 @@
 | WL-REC-0030 | WORK-LAB-FULL-AUDIT-AND-REPAIR-2026-09-15.zip | 项目历史 | [压缩包成员](<record-20261009/WORK-LAB-HISTORICAL-RECORDS-20261009.zip>) |
 | WL-REC-0039 | WORK-LAB_审计收敛报告_2026-10-01.html | 项目历史 | [原件](<../archive/recovered-originals/RECORD-20261008/WORK-LAB_审计收敛报告_2026-10-01.html>) |
 | WL-REC-0040 | WORK-LAB_审计裁决_2026-10-01.json | 项目历史 | [原件](<../archive/recovered-originals/RECORD-20261008/WORK-LAB_审计裁决_2026-10-01.json>) |
+| WL-REC-0104 | AAOS-WORK-DESIGN-cloud-audit-20261011.zip | 当前输入 | [原件](<record-20261011/originals/AAOS-WORK-DESIGN-cloud-audit-20261011.zip>) |
 
 ### BLUEPRINT_RESEARCH
 

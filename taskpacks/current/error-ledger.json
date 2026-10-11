@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 264,
+    "total": 265,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 81,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 4,
       "path_boundary": 15,
-      "ci_tooling": 21,
+      "ci_tooling": 22,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 2
@@ -8024,6 +8024,35 @@
         "bindingBasis": "fix-commit-introduction: the four root fixes land together and the verification head is the inventory re-read that carries them",
         "bindingNote": "bound 2026-10-11 against aaf39a5d and d8d43f4b read from git; `git cat-file -e` proved each named file exists in the fixing commit before this field was written; the residue reclaim it cites is recorded in .project-local\\artifacts\\wui-20261011\\temp-residue-reclaim.json (freed=97901098 B)"
       }
+    },
+    {
+      "error_id": "ERR-267",
+      "date": "2026-10-11",
+      "task_id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "tests/ci/test_entry_baseline_projection.py, scripts/audit/entry_baseline_readback.py",
+      "command": "python services/orchestration/run_quality_gate.py root-governance-suite",
+      "exit_code": 1,
+      "observed_error": "On the Linux runner, twice: run 38130943781 at head 33051db7 and run 38131270591 at 63d9a58c both printed `CI_ROOT_GOVERNANCE_FAIL modules_ran=44 modules_failed=1`, member `test_entry_baseline_projection.py (rc=1)`, message `LookupError: unknown encoding: mbcs`, `Ran 24 tests ... FAILED (errors=1)`. The same command on this Windows box reported the module green, and the 2026-10-11 cloud audit had already recorded it independently as finding W03 (`evidence/work-history-recheck.log`, `evidence/work-mbcs-isolated.log`) with the note that a Linux failure says nothing about whether the Windows parser works.",
+      "root_cause": "Two places spelled the codec `mbcs`: the instrument decoded ANSI shell-link fields with `raw[...].decode(\"mbcs\")` (four sites) and the test fixture built those bytes with `target.encode(\"mbcs\")` (two sites). `mbcs` is not a codec, it is Windows' name for the system ANSI codepage, and CPython only registers it on Windows -- so `codecs.lookup(\"mbcs\")` raises LookupError on any other host and the gate could not run there at all. Nothing about the .lnk parsing decision was platform-dependent; the harness's vocabulary was. The class of the defect is the same one ERR-266 recorded for the `Path` versus `PureWindowsPath` sites: a host-specific call reached into a pure decision surface, and the machine that could not fail was the one being used as proof.",
+      "fix": "One decision, one home. `entry_baseline_readback.ansi_codec()` returns `mbcs` on Windows and a declared `cp1252` elsewhere; all four instrument sites and both fixture sites now call it, and `parse_lnk` carries `ansiCodec` plus `ansiCodecBasis` (`assumed cp1252: this host has no system ANSI codepage...`) on the fallback host, so a reading that is not authoritative says so instead of looking like a verified decode. Four new guards in tests/ci/test_entry_baseline_projection.py::AnsiCodecPortabilityTests: an AST check that exactly one `mbcs` literal remains and that it is inside `ansi_codec` (plus a check that the fixture calls MODULE.ansi_codec(), with the forbidden spelling constructed at runtime so the assertion cannot convict its own source line); the ANSI fixture round-trips and names its codec; the non-Windows branch is exercised on EVERY host by swapping the module's `os` binding, so the fallback is proven before a push rather than read out of a CI log; and on Windows the result must NOT carry a basis warning. Falsified with four plants (`.project-local/runs/record-20261011/falsify_ansi_codec_fix.py`): bare mbcs back at a call site, platform decision inverted, codec no longer named in the result, fixture spelling it again -- each convicted its named test and every file restored byte-identical.",
+      "regression_test": "tests/ci/test_entry_baseline_projection.py::AnsiCodecPortabilityTests",
+      "regressionCommand": "python -m pytest tests/ci/test_entry_baseline_projection.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A codec, path flavour or API that exists on one operating system must be decided in exactly one place inside the module under test, and the test fixture must ask that module rather than repeat the spelling; any fallback must be named in the returned record. Never treat a green run on the author's own platform as evidence that a cross-platform gate works -- exercise the other branch by construction (swap the host binding) before pushing. 必须把平台专有名称收进被测模块的单点决定。",
+      "remaining_boundary": "The runner is now able to RUN the gate; that is not the same as reading a codepage-936 shortcut correctly on a Linux host, which cp1252 cannot represent (asserted directly: `\"应用\".encode(\"cp1252\")` raises while cp936 round-trips). The Linux reading is therefore an explicit assumption recorded in `ansiCodecBasis`, and authoritative ANSI readings remain Windows-machine evidence -- which `entry_baseline_readback.py` produces only on this machine, and no CI run substitutes for it.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "introducedCommit": "a433cdf67bb63ce53caf3fa588a24137429cc421",
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "note": "introducedCommit is `a433cdf6 feat(baseline): measure the entry chain instead of asserting it` (2026-10-08), found by `git log -S'encode(\"mbcs\"')` on the fixture; fixedCommit and verifiedCommit stay null until the repair commit exists and the runner reports root-governance-suite green at that exact SHA -- the local 29-passed/1-skipped run cannot certify a Linux outcome, which is the whole lesson of this row."
+      },
+      "intakeSource": "云端三项目审计包 AAOS-WORK-DESIGN-cloud-audit-20261011.zip finding W03 (SHA-256 b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72)",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     }
   ],
   "wlrReconciled": true,

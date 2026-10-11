@@ -2576,6 +2576,38 @@
       "contentId": "sha256:d7737c6804d56394051a8ee56dc3b623decfe22dffa7ed7b97faeaa597b253f9",
       "deduplication": "CANONICAL_ORIGINAL",
       "intakeNote": "v2 increment over WL-REC-0037 (its SOURCE_BASELINE.json names that ZIP and its bytes match). `current_repository_reaudited: false` in the pack, so every claim was re-checked against this checkout before adoption; intake analysis in docs/current/ui-priority-20261009/UI-V2-INTAKE-20261010.md"
+    },
+    {
+      "id": "WL-REC-0104",
+      "sourceRelativePath": "AAOS-WORK-DESIGN-cloud-audit-20261011.zip",
+      "sourceMember": null,
+      "archivePath": "docs/history/owner-inputs/record-20261011/originals/AAOS-WORK-DESIGN-cloud-audit-20261011.zip",
+      "archiveMemberChain": [],
+      "bytes": 8038362,
+      "sha256": "b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72",
+      "ownership": "SHARED_CONTEXT",
+      "classificationBasis": "three-project cloud audit (AAOS + WORK + DESIGN-LAB) in one container; the WORK-LAB content is addressed by member, not by the container's ownership",
+      "category": "AUDIT",
+      "status": "CURRENT_INPUT_NOT_IMPLEMENTATION",
+      "keywords": [
+        "AAOS-WORK-DESIGN-cloud-audit-20261011.zip",
+        "AAOS-WORK-DESIGN-cloud-audit-20261011.zip",
+        "WORK-LAB",
+        "AUDIT",
+        "W01",
+        "W02",
+        "W03",
+        "W04",
+        "cloud audit",
+        "50dab56",
+        "71b1ae8"
+      ],
+      "contentIdentity": "EXACT_BYTES",
+      "suppliedProgramsExecuted": false,
+      "storageKind": "FILE",
+      "contentId": "sha256:b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72",
+      "deduplication": "CANONICAL_ORIGINAL",
+      "intakeNote": "2026-10-11 independent cloud audit of the three projects at exact SHAs (WORK main cd4daa83, UI branch 71b1ae86, registered line 50dab560). Four WORK findings W01-W04; judged row by row in docs/current/ui-priority-20261009/CLOUD-AUDIT-INTAKE-2026-10-11.md. The package contains probes with hard-coded test ports and synthetic fixtures: source documents only, no execution authority, nothing from it was run."
     }
   ],
   "deduplicationReport": "docs/history/owner-inputs/RECORD-DEDUPLICATION.json",

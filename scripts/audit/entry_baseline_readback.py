@@ -94,6 +94,21 @@ def _u16(b: bytes, off: int) -> int:
     return struct.unpack_from("<H", b, off)[0]
 
 
+def ansi_codec() -> str:
+    """The codec a shell link's ANSI fields must be read with, chosen once for this whole file.
+
+    Windows stores those bytes in the system ANSI codepage, and `mbcs` is the only name that means
+    "whatever this machine's is". Off Windows there is no system ANSI codepage and looking `mbcs` up
+    raises LookupError -- which is how the cross-platform gate died on the Linux runner (finding W03 of
+    the 2026-10-11 cloud audit, `test_entry_baseline_projection.py:195`) while every Windows host stayed
+    green. cp1252 is the declared reading assumption there, so the synthetic fixture and any ASCII-only
+    real path round-trip identically on both hosts. The assumption is carried in the parse result rather
+    than hidden, because a genuinely codepage-936 shortcut read on a Linux runner is not something this
+    function can honestly resolve.
+    """
+    return "mbcs" if os.name == "nt" else "cp1252"
+
+
 def _cstr(raw: bytes, start: int, unicode_: bool) -> str:
     if start >= len(raw):
         return ""
@@ -109,7 +124,7 @@ def _cstr(raw: bytes, start: int, unicode_: bool) -> str:
     end = raw.find(b"\x00", start)
     if end < 0:
         return ""
-    return raw[start:end].decode("mbcs", errors="replace")
+    return raw[start:end].decode(ansi_codec(), errors="replace")
 
 
 _PATHISH = re.compile(r"^(?:[A-Za-z]:[\\/]|\\\\|%)")
@@ -119,7 +134,10 @@ def parse_lnk(raw: bytes) -> dict:
     """Hand-rolled [MS-SHLLINK] field reader for TargetPath / WorkingDirectory /
     IconLocation. Pure over bytes; returns dict(target_path, working_directory,
     icon_location, arguments, name, local_base_path, parse_ok, parse_error)."""
-    out: dict = {"parse_ok": False, "parse_error": None}
+    out: dict = {"parse_ok": False, "parse_error": None, "ansiCodec": ansi_codec()}
+    if os.name != "nt":
+        out["ansiCodecBasis"] = ("assumed cp1252: this host has no system ANSI codepage, so a"
+                                  " shortcut written in another codepage may decode wrongly")
     try:
         if len(raw) < 76 or _u32(raw, 0) != 0x4C:
             out["parse_error"] = "header size != 0x4C"
@@ -159,7 +177,7 @@ def parse_lnk(raw: bytes) -> dict:
                 strings.append(raw[p:p + cnt * 2].decode("utf-16-le", errors="replace"))
                 p += cnt * 2
             else:
-                strings.append(raw[p:p + cnt].decode("mbcs", errors="replace"))
+                strings.append(raw[p:p + cnt].decode(ansi_codec(), errors="replace"))
                 p += cnt
         out["name"], relpath, out["working_directory"], out["arguments"] = strings
         # ExtraData blocks: [u32 BlockSize][u32 BlockSignature][data]. The Icon Location
@@ -442,7 +460,7 @@ def wscript_fields(lnk_paths: list[str]) -> dict[str, dict]:
         lines.append(f'Set s = ws.CreateShortcut("{esc}")')
         lines.append(f'WScript.Echo "REC{i}|T|" & s.TargetPath & "|A|" & s.Arguments & "|W|" & s.WorkingDirectory & "|I|" & s.IconLocation')
     try:
-        vbs.write_bytes(("\r\n".join(lines) + "\r\n").encode("mbcs", errors="replace"))
+        vbs.write_bytes(("\r\n".join(lines) + "\r\n").encode(ansi_codec(), errors="replace"))
     except OSError:
         return {}
     out: dict[str, dict] = {}
@@ -451,7 +469,7 @@ def wscript_fields(lnk_paths: list[str]) -> dict[str, dict]:
                               capture_output=True, timeout=90)
         raw = proc.stdout
         text = (raw[2:].decode("utf-16-le", errors="replace") if raw[:2] == b"\xff\xfe"
-                else raw.decode("mbcs", errors="replace"))
+                else raw.decode(ansi_codec(), errors="replace"))
         for line in text.splitlines():
             m = re.match(r"REC(\d+)\|T\|(.*?)\|A\|(.*?)\|W\|(.*?)\|I\|(.*)$", line.strip())
             if m:

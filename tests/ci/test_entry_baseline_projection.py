@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import ast
 import importlib.util
+import os
 import struct
 import unittest
 from pathlib import Path, PureWindowsPath
@@ -192,7 +193,7 @@ def build_lnk(target: str, working_dir: str, arguments: str, uni: bool,
     if uni:
         lbp = target.encode("utf-16-le") + b"\x00\x00"
     else:
-        lbp = target.encode("mbcs", errors="replace") + b"\x00"
+        lbp = target.encode(MODULE.ansi_codec(), errors="replace") + b"\x00"
     volid = b"\x15\x00\x00\x00" + b"\x03\x00\x00\x00" + b"V" * 13
     lbp_off = 28 + len(volid)
     li_len = lbp_off + len(lbp)
@@ -204,7 +205,7 @@ def build_lnk(target: str, working_dir: str, arguments: str, uni: bool,
     def counted(s: str) -> bytes:
         if uni:
             return struct.pack("<H", len(s)) + s.encode("utf-16-le")
-        return struct.pack("<H", len(s)) + s.encode("mbcs", errors="replace")
+        return struct.pack("<H", len(s)) + s.encode(MODULE.ansi_codec(), errors="replace")
     body += counted("") + counted("") + counted(working_dir) + counted(arguments)
     if icon is not None:
         loc = icon.encode("utf-16-le") + b"\x00\x00"
@@ -293,6 +294,99 @@ class PlatformIndependenceTests(unittest.TestCase):
         self.assertEqual([], offenders,
                          f"these call sites in the pure decision surface use the platform Path and will "
                          f"diverge on a non-Windows runner: {offenders}; use PureWindowsPath")
+
+
+class AnsiCodecPortabilityTests(unittest.TestCase):
+    """The gate must run on the runner, not only on the machine that wrote it (cloud audit W03).
+
+    `mbcs` exists on Windows and raises LookupError on the Linux runner. The instrument and this fixture
+    now read one decision from `ansi_codec()`; these tests are what keeps it that way, and they name the
+    reading assumption on a non-Windows host instead of pretending the byte was decoded authoritatively.
+    """
+
+    def test_the_codec_is_decided_in_one_place_and_never_spelled_at_a_call_site(self) -> None:
+        source = SCRIPT.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        spelled = [node.lineno for node in ast.walk(tree)
+                   if isinstance(node, ast.Constant) and node.value == "mbcs"]
+        in_helper = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "ansi_codec":
+                in_helper = {n.lineno for n in ast.walk(node)
+                             if isinstance(n, ast.Constant) and n.value == "mbcs"}
+        self.assertEqual(sorted(spelled), sorted(in_helper),
+                         f"the codec is spelled outside ansi_codec() at lines {sorted(set(spelled) - in_helper)};"
+                         " a second spelling is the platform-specific bug coming back")
+        self.assertEqual(len(spelled), 1, f"expected exactly one `mbcs` literal, found {len(spelled)}")
+        # the fixture is the other half of the same decision: it must ask the instrument what the codec
+        # is, or the two sides agree only by luck on the host that wrote them
+        fixture = Path(__file__).read_text(encoding="utf-8")
+        self.assertIn('target.encode(MODULE.ansi_codec()', fixture,
+                      "build_lnk spells the ANSI codec itself again -- that is the W03 failure shape")
+        self.assertIn('s.encode(MODULE.ansi_codec()', fixture, "the counted-string half drifted")
+        # constructed, not written out: a literal needle would appear in this file's own source and the
+        # assertion would convict itself for containing the thing it forbids
+        bare = "encode(" + chr(34) + "mbcs" + chr(34)
+        self.assertEqual(0, fixture.count(bare), "a bare ANSI spelling came back into the fixture")
+
+    def test_the_ansi_fixture_round_trips_through_the_host_that_reads_it(self) -> None:
+        raw = build_lnk("C:\\Tools\\app.exe", "C:\\Tools", "--flag", uni=False)
+        out = MODULE.parse_lnk(raw)
+        self.assertTrue(out["parse_ok"], out["parse_error"])
+        self.assertEqual("C:\\Tools\\app.exe", out["target_path"])
+        self.assertEqual("--flag", out["arguments"])
+        self.assertEqual(MODULE.ansi_codec(), out["ansiCodec"],
+                         "the parse result must say which codec produced these strings")
+
+    def test_the_non_windows_reader_names_its_assumption(self) -> None:
+        if os.name == "nt":
+            self.skipTest("Windows has a system ANSI codepage; the fallback basis is a non-Windows claim")
+        self.assertEqual("cp1252", MODULE.ansi_codec())
+        out = MODULE.parse_lnk(build_lnk("C:\\a.exe", "C:\\", "", uni=False))
+        self.assertIn("assumed", out["ansiCodecBasis"], out)
+
+    @unittest.skipUnless(os.name == "nt", "the system codepage only exists on Windows")
+    def test_windows_uses_the_system_codepage_and_claims_no_assumption(self) -> None:
+        self.assertEqual("mbcs", MODULE.ansi_codec())
+        out = MODULE.parse_lnk(build_lnk("C:\\Tools\\app.exe", "C:\\Tools", "", uni=False))
+        self.assertTrue(out["parse_ok"], out["parse_error"])
+        self.assertNotIn("ansiCodecBasis", out,
+                         "a Windows read uses this machine's own ANSI codepage; calling that 'assumed' "
+                         "would understate it. Only the fallback host has to warn.")
+
+    def test_the_fallback_codec_cannot_read_a_codepage_936_path(self) -> None:
+        """Why `ansiCodecBasis` is a warning and not a nicety: cp1252 has no answer for a Chinese path.
+
+        Asserted against the codecs themselves rather than as a round trip of a non-ASCII shortcut,
+        because whether `应用` survives depends on the machine's ANSI codepage -- a fact about the box,
+        not a contract of this repository. A test that passed here and failed on an en-US host would be
+        measuring the keyboard layout instead of the code.
+        """
+        with self.assertRaises(UnicodeEncodeError):
+            "应用".encode("cp1252")
+        self.assertEqual("应用", "应用".encode("cp936").decode("cp936"))
+
+
+    def test_the_fallback_branch_is_exercisable_on_every_host(self) -> None:
+        """The Linux path is proven here, not deferred to the runner.
+
+        `os.name` is the whole decision, so swapping the module's `os` binding runs the non-Windows
+        branch on a Windows box -- which is what makes the W03 fix checkable before a push instead of
+        discovering the shape of the fallback from a CI log.
+        """
+        import types
+        original = MODULE.os
+        try:
+            MODULE.os = types.SimpleNamespace(name="posix")
+            self.assertEqual("cp1252", MODULE.ansi_codec())
+            out = MODULE.parse_lnk(build_lnk("C:\\a.exe", "C:\\", "", uni=False))
+            self.assertTrue(out["parse_ok"], out["parse_error"])
+            self.assertEqual("C:\\a.exe", out["target_path"])
+            self.assertIn("assumed", out["ansiCodecBasis"], out)
+        finally:
+            MODULE.os = original
+        self.assertEqual("mbcs" if os.name == "nt" else "cp1252", MODULE.ansi_codec(),
+                         "the swap must not outlive the test")
 
 
 if __name__ == "__main__":

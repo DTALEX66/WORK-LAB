@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-11T08:09:40Z",
+  "at": "2026-10-11T10:50:17Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 147,
+    "RESOLVES": 148,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
     "PATH_GONE": 36,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 180,
+    "RESOLVES": 181,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "PATH_GONE": 36,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 180,
-  "records": 264,
-  "stateDigest": "7fd261a0d613b0e86de9532cb910f2e03cbd011a483c129748dd413b8d0cfea9",
+  "resolvedAfterApply": 181,
+  "records": 265,
+  "stateDigest": "2bd42a6fa3e9e3e0a6a5e1904283d05771e14dc4f911ce32077e005386e0ab91",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -122,8 +122,8 @@
         "docs/history/owner-inputs/20261009/final-readable/MANIFEST.json",
         "docs/history/owner-inputs/20261009/ui-readable/MANIFEST.json",
         "docs/history/owner-inputs/record-20261010/ui-v2-readable/WORK-LAB_UI_深化_v2/MANIFEST.json",
-        "reports/audit-evidence/assets-20260930/MANIFEST.json",
-        "reports/audit-evidence/model-runtime-20260929/MANIFEST.json"
+        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/MANIFEST.json",
+        "reports/audit-evidence/assets-20260930/MANIFEST.json"
       ]
     }
   ],
@@ -1806,8 +1806,8 @@
             "docs/history/owner-inputs/20261009/final-readable/MANIFEST.json",
             "docs/history/owner-inputs/20261009/ui-readable/MANIFEST.json",
             "docs/history/owner-inputs/record-20261010/ui-v2-readable/WORK-LAB_UI_深化_v2/MANIFEST.json",
-            "reports/audit-evidence/assets-20260930/MANIFEST.json",
-            "reports/audit-evidence/model-runtime-20260929/MANIFEST.json"
+            "docs/history/owner-inputs/record-20261011/cloud-audit-readable/MANIFEST.json",
+            "reports/audit-evidence/assets-20260930/MANIFEST.json"
           ]
         }
       ],
@@ -5010,6 +5010,23 @@
           "category": "RESOLVES",
           "candidates": [
             "tests/ci/test_frozen_surfaces_are_intact.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-267",
+      "statusAfter": "PARTIAL",
+      "hasFixedCommit": false,
+      "command": "tests/ci/test_entry_baseline_projection.py::AnsiCodecPortabilityTests",
+      "operands": [
+        {
+          "operand": "tests/ci/test_entry_baseline_projection.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/ci/test_entry_baseline_projection.py"
           ]
         }
       ],
