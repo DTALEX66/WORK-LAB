@@ -8046,9 +8046,9 @@
       "status_after": "PARTIAL",
       "lifecycle": {
         "introducedCommit": "a433cdf67bb63ce53caf3fa588a24137429cc421",
-        "fixedCommit": null,
-        "verifiedCommit": null,
-        "note": "introducedCommit is `a433cdf6 feat(baseline): measure the entry chain instead of asserting it` (2026-10-08), found by `git log -S'encode(\"mbcs\"')` on the fixture; fixedCommit and verifiedCommit stay null until the repair commit exists and the runner reports root-governance-suite green at that exact SHA -- the local 29-passed/1-skipped run cannot certify a Linux outcome, which is the whole lesson of this row."
+        "fixedCommit": "1d2412ee3ab316c0d1a3706811c4e2906e42ee77",
+        "verifiedCommit": "1d2412ee3ab316c0d1a3706811c4e2906e42ee77",
+        "note": "introducedCommit is `a433cdf6 feat(baseline): measure the entry chain instead of asserting it` (2026-10-08), found by `git log -S'encode(\"mbcs\"')` on the fixture. fixedCommit and verifiedCommit are both 1d2412ee: the runner at that exact SHA reported `modules_ran=44 modules_failed=1` with the single failing member `test_authority_index_paths_resolve.py` (a citation defect in the intake doc added by that same commit), and `test_entry_baseline_projection.py` is absent from the failure list and absent from the LookupError text -- so the module that could not run on Linux ran and passed there. The aggregate verdict at 1d2412ee was red for an unrelated reason; this row claims only the mbcs outcome, and the clean aggregate is owed at 335d0c6f."
       },
       "intakeSource": "云端三项目审计包 AAOS-WORK-DESIGN-cloud-audit-20261011.zip finding W03 (SHA-256 b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72)",
       "regressionTestVerifiability": "RESOLVES",
