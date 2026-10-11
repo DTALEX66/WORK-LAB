@@ -11,6 +11,27 @@ const state = { descriptor: null, idempotencyKey: "", materializeKey: "" }
 
 const el = (id) => document.getElementById(id)
 
+// The operation identity travels in the URL and nowhere else: this page stores nothing, so a reload that
+// keeps `?operation=` can ask the service what that identity already did instead of minting a fresh key
+// and writing a second time.
+function operationFromUrl() {
+  return (new URLSearchParams(location.search).get("operation") || "").trim()
+}
+
+function carryOperationInUrl(taskId) {
+  const params = new URLSearchParams(location.search)
+  params.set("operation", taskId)
+  history.replaceState(null, "", `?${params.toString()}`)
+}
+
+function clearOperationInUrl() {
+  const params = new URLSearchParams(location.search)
+  if (!params.has("operation")) return
+  params.delete("operation")
+  const query = params.toString()
+  history.replaceState(null, "", query ? `?${query}` : location.pathname)
+}
+
 function newIdempotencyKey(taskId) {
   const random = (() => {
     const buffer = new Uint8Array(8)
@@ -214,6 +235,49 @@ function scopeFromForm() {
   }
 }
 
+// Three separated outcomes, read from the service, never inferred from one another: a write that landed
+// says nothing about a native client loading it, and neither says anything about the target behaving.
+function identityLines(answer) {
+  const lines = []
+  if (!answer.found) {
+    lines.push(`身份 ${answer.task_id}：${answer.reason_code} · ${answer.reason}`)
+  } else {
+    lines.push(`身份 ${answer.task_id}：账本状态 ${answer.status} · 项目 ${answer.project_id} · `
+      + `回执 ${(answer.receipts || []).length} 条 · 投影摘要 ${String(answer.record_digest).slice(0, 12)}`)
+    lines.push(answer.idempotency_key_present
+      ? `沿用账本里的幂等键 ${answer.idempotency_key}（重发同键只会重放，不会再写一条）`
+      : "读回：账本行存在但没有幂等键记录，本页不会自造一个")
+  }
+  for (const outcome of answer.outcomes || []) {
+    lines.push(`· ${outcome.label}：${outcome.state}（判据 ${outcome.basis}）${outcome.detail ? ` — ${outcome.detail}` : ""}`)
+  }
+  return lines
+}
+
+async function restoreOperation(taskId, view) {
+  const line = el(view.result)
+  line.textContent = `按身份读回中 · ${taskId}（只查询，不重发写）`
+  try {
+    const response = await fetch(`/api/control/operations/${encodeURIComponent(taskId)}`,
+                                 { headers: { Accept: "application/json" } })
+    const answer = await response.json().catch(() => null)
+    if (!answer || answer.schema_version !== "worklab/control-operation-identity/v1") {
+      line.textContent = `状态 UNKNOWN · 身份读回返回的不是身份合同（HTTP ${response.status}），`
+        + "不据此推断这条操作写过或没写过"
+      return
+    }
+    line.textContent = identityLines(answer).join("\n")
+    if (answer.found && answer.idempotency_key) {
+      state.idempotencyKey = answer.idempotency_key
+      el(view.idem).textContent = `idempotency ${state.idempotencyKey}（来自账本读回）`
+      el("task-id").value = answer.task_id
+    }
+  } catch (error) {
+    line.textContent = `状态 FAILED · 身份读回传输失败：${error.message}\n证据等级 NO_EVIDENCE\n`
+      + "下一步 确认控制服务仍在运行；本页不会因为没有读到就自造一个新键重写"
+  }
+}
+
 function buildRequest() {
   const taskId = el("task-id").value.trim()
   return {
@@ -271,6 +335,9 @@ async function submit(request, view) {
     const result = normalizeAnswer(answer)
     el(view.result).textContent = statusLine(result)
     renderReadback(result, view.readback)
+    // Whatever the service named as the operation's task_id becomes the page's address for that
+    // operation, so the next reload reads THIS one back instead of starting a fresh identity.
+    if (result.task_id) carryOperationInUrl(result.task_id)
     if (result.status === "ACCEPTED" && result.readback && !result.readback.replayed) {
       // one record keeps one identity: after a verified create, the same click must not silently replay
       const key = newIdempotencyKey(request.task_id)
@@ -306,17 +373,29 @@ function main() {
   const materializeView = { operation: "work-unit.materialize", button: "materialize",
     pending: "materialize-pending", result: "materialize-result", readback: "materialize-readback",
     idem: "materialize-idem", support: "materialize-support" }
-  state.idempotencyKey = newIdempotencyKey(el("task-id").value.trim())
-  el("idem").textContent = `idempotency ${state.idempotencyKey}`
+  const restored = operationFromUrl()
+  if (restored) {
+    // A page that arrives with an identity does not mint one: minting here is the shape of the mistake
+    // this path exists to prevent, because a new key on an existing task_id is a refused write, not a
+    // second look at the first one.
+    el("task-id").value = restored
+    state.idempotencyKey = ""
+    el("idem").textContent = `idempotency 待读回（URL 给了身份 ${restored}，先问账本）`
+  } else {
+    state.idempotencyKey = newIdempotencyKey(el("task-id").value.trim())
+    el("idem").textContent = `idempotency ${state.idempotencyKey}`
+  }
   state.materializeKey = newIdempotencyKey("")
   el("materialize-idem").textContent = `idempotency ${state.materializeKey}`
   el("regen").addEventListener("click", () => {
     state.idempotencyKey = newIdempotencyKey(el("task-id").value.trim())
     el("idem").textContent = `idempotency ${state.idempotencyKey}`
+    clearOperationInUrl()
   })
   el("task-id").addEventListener("input", () => {
     state.idempotencyKey = newIdempotencyKey(el("task-id").value.trim())
     el("idem").textContent = `idempotency ${state.idempotencyKey}`
+    clearOperationInUrl()
   })
   el("create-form").addEventListener("submit", (event) => {
     event.preventDefault()
@@ -337,6 +416,7 @@ function main() {
     void submit(buildMaterializeRequest(candidate), materializeView)
   })
   void loadDescriptor()
+  if (restored) void restoreOperation(restored, createView)
 }
 
 if (document.readyState === "loading") {

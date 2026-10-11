@@ -625,7 +625,7 @@ def connect_with_retry(port: int, attempts: int = 6):
 
 def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: str,
                    u19, shot: Path | None = None, viewport: tuple[int, int] | None = None,
-                   scale_factor: float = 1.0) -> dict:
+                   scale_factor: float = 1.0, serve_url: str | None = None) -> dict:
     """Serve the built `dist` and evaluate one expression in a headless Chrome.
 
     This is the browser bootstrap, not a topbar-specific step: a second instrument (the legibility
@@ -648,10 +648,17 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
     width=1706 (the CSS width the OS actually gives the window), not 2560 with a hopeful comment.
     """
     port = u19.pick_free_port()
-    url = f"http://127.0.0.1:{port}{path}"
-    srv = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"],
-                           cwd=str(root / "apps/observer/frontend/dist"),
-                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    srv = None
+    if serve_url is not None:
+        # The page comes from its own server. `path` is ignored: a caller that passes a full URL has
+        # already decided which origin renders, and pretending to serve `dist` beside it would leave a
+        # second, unused listener holding a port this instrument claims to have chosen.
+        url = serve_url
+    else:
+        url = f"http://127.0.0.1:{port}{path}"
+        srv = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1"],
+                               cwd=str(root / "apps/observer/frontend/dist"),
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     udf = OUT_DIR / f"udf-{int(time.time())}-{os.getpid()}"
     log_path = OUT_DIR / f"chrome-{int(time.time())}-{os.getpid()}.log"
     requested_cdp = u19.pick_free_port()
@@ -679,7 +686,8 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
                                    f"{log_path.read_text(encoding='utf-8', errors='replace')[:400]}")
         if cdp_port is None:
             proc.kill()
-            srv.kill()
+            if srv is not None:
+                srv.kill()
             raise RuntimeError("no `DevTools listening on` line in the chrome log")
         if cdp_port != requested_cdp:
             ANNOUNCED_MISMATCH.append(f"requested {requested_cdp}, announced {cdp_port}")
@@ -703,7 +711,8 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
                 cdp.close()
         finally:
             proc.kill()
-            srv.kill()
+            if srv is not None:
+                srv.kill()
             try:
                 proc.wait(timeout=10)
             except subprocess.TimeoutExpired:

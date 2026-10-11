@@ -34,7 +34,7 @@
       <label>目标<input id="goal" name="goal" placeholder="这条工作单元要完成什么" required></label>
       <label>边界（仓库内相对路径）<input id="boundary" name="boundary" value="services/control" required></label>
       <label>授权来源（谁授予这次操作，文本即可）<input id="granted-by" name="granted-by" value="owner 2026-10-08 批次 C 授权" required></label>
-      <p class="hint">幂等身份由本页生成，重放同一个值才会得到同一条记录；目标正文只进后端账本，不回显到只读投影。</p>
+      <p class="hint">幂等身份默认由本页生成；带 <code>?operation=</code> 重新打开时改为读回账本里已存在的那一个，绝不自造新键重写。重放同一个值才会得到同一条记录；目标正文只进后端账本，不回显到只读投影。</p>
       <div class="row">
         <span id="idem" class="mono">idempotency UNKNOWN</span>
         <button type="submit" id="submit">提交</button>

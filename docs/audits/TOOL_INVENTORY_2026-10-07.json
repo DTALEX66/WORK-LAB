@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-11T09:17:11Z",
+  "generatedAt": "2026-10-11T09:54:43Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 74,
+    "trackedTools": 75,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 74,
+    "referencedSomewhere": 75,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -240,6 +240,19 @@
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/control_shell_identity_via_cdp.py",
+      "sha256": "e9b9233f9bba9d67f72bbad550e997443a8b187829342eb3c480de5cd4ac6c43",
+      "bytes": 12097,
+      "lines": 233,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -865,9 +878,9 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "72dfd8b527d2e98226131c0007012a5bc0bce321c8666e51a4213b71f9a71d3f",
-      "bytes": 42120,
-      "lines": 798,
+      "sha256": "c6c2156f866ba22c467f808a3a1bb78a4476005b9ca6f08d86e8dde3944d22e1",
+      "bytes": 42609,
+      "lines": 807,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
       "citedByRecords": 18,

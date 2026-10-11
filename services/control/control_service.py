@@ -41,6 +41,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlsplit
 
 import sys
 
@@ -78,6 +79,18 @@ REQUEST_CONTRACT = _ROOT / "packages/contracts/schemas/workflow/control-operatio
 MAX_BODY_BYTES = 65_536
 DESCRIPTOR_PATH = "control-endpoint.json"
 RECEIPTS_PATH = "control-receipts.jsonl"
+# The identity read route (WUI-10): one operation, addressed by the task_id it already used.
+IDENTITY_SCHEMA = "worklab/control-operation-identity/v1"
+WRITE_RECEIPT_KINDS = ("WORK_UNIT_QUEUED", "REPLAY")
+# The append-only file is scanned from the end and stopped here, because `task_id` arrives from a caller
+# and a reader that walks an unbounded file is a denial of service waiting for a long receipts log.
+MAX_RECEIPT_SCAN = 400
+# The three outcomes the owner's constraints separate: a write landing is not a native load, and a native
+# load is not the target doing the work. Each is judged only from evidence of its own step.
+OUTCOME_STEPS = (("write", "写入唯一账本"),
+                 ("nativeLoad", "原生加载读回"),
+                 ("targetBehaviour", "目标行为确认"))
+
 # The local authorization record (see ControlPlane._trusted_grants). It is a DECISION record, not a
 # credential store: grant id -> scope text, signed out of band by the human gate. This service only ever
 # reads it, there is no API that writes it, and it holds no secret of any kind.
@@ -369,6 +382,121 @@ class ControlPlane:
                 for spec in OPERATIONS.values()
             ],
         }
+
+    # -- the lost-refresh path: re-query the operation an identity already names -------------------------
+    def receipts_for(self, task_id: str, *, limit: int = 20) -> list[dict[str, Any]]:
+        """The receipts this plane appended for one task identity, oldest first, bounded.
+
+        The append-only file is the only durable answer to "did that write already happen" once the page
+        that sent it is gone: this process keeps no in-memory operation table, and adding one would be a
+        second ledger for the same fact. Only the receipt's own handle fields are republished -- kind,
+        moment, digest -- never the record body that sits next to it in the same line.
+        """
+        if self.receipts_path is None or not self.receipts_path.is_file():
+            return []
+        try:
+            lines = self.receipts_path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            return []
+        found: list[dict[str, Any]] = []
+        for line in lines[-MAX_RECEIPT_SCAN:]:
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(entry, dict) or not isinstance(entry.get("receipt"), dict):
+                continue
+            record = entry.get("record")
+            if not isinstance(record, dict):
+                continue
+            # `_append_receipt` stores the OBSERVER projection next to the receipt, and that projection
+            # spells its identity `taskId`. Reading only `task_id` found nothing for every real write and
+            # the honest-looking answer was NO_RECEIPT_FOR_IDENTITY over a receipts file that did contain
+            # the line -- the two spellings are checked because this reader must not inherit a rename.
+            if record.get("taskId") != task_id and record.get("task_id") != task_id:
+                continue
+            receipt = entry["receipt"]
+            found.append({"receipt_id": self._bounded(receipt.get("receipt_id"), 120),
+                          "kind": self._bounded(receipt.get("kind"), 60),
+                          "observed_at": self._bounded(receipt.get("observed_at"), 40),
+                          "digest": self._bounded(receipt.get("digest"), 64)})
+        return found[-limit:]
+
+    def operation_identity(self, task_id: str) -> dict[str, Any]:
+        """What the ledger and the receipts say about one identity right now, step by separate step.
+
+        This exists because the acceptance separates three outcomes that a single "success" string would
+        fuse: the write reaching the唯一账本, a native client having loaded it, and the target behaving
+        accordingly. Only the first has evidence here; the other two report the support level of the
+        operation that would have to produce them, read live from OPERATIONS so this answer cannot rot
+        into a claim that outlives the gap.
+        """
+        rows = {row["task_id"]: row for row in self.store.list_tasks()}
+        row = rows.get(task_id)
+        answer: dict[str, Any] = {
+            "schema_version": IDENTITY_SCHEMA,
+            "task_id": self._bounded(task_id, 80),
+            "observed_at": _now(),
+            "found": row is not None,
+            "transport": "loopback-only",
+        }
+        if row is None:
+            answer["reason_code"] = "OPERATION_NOT_FOUND"
+            answer["reason"] = (f"唯一账本里没有 {task_id}。这不是一次失败的写，也不代表什么都没发生过；"
+                                "它只代表这个身份在本账本里没有记录。")
+            answer["outcomes"] = [{"id": step_id, "label": label, "state": "NO_RECORD",
+                                   "basis": "canonical store tasks 表",
+                                   "detail": "没有该身份的账本行，三步都无从判断。"}
+                                  for step_id, label in OUTCOME_STEPS]
+            answer["receipts"] = []
+            return answer
+
+        projected = project_task_record(row)
+        digest = hashlib.sha256(json.dumps(projected, ensure_ascii=False, sort_keys=True,
+                                          separators=(",", ":")).encode("utf-8")).hexdigest()
+        checkpoint = row.get("checkpoint") or {}
+        key = str(checkpoint.get("idempotency_key") or "")
+        receipts = self.receipts_for(task_id)
+        matched = [item for item in receipts if item["digest"] == digest and item["kind"] in WRITE_RECEIPT_KINDS]
+        if matched:
+            write_state = "CONFIRMED"
+        elif self.receipts_path is None:
+            write_state = "NO_RECEIPT_PUBLISHED"
+        elif receipts:
+            write_state = "RECEIPT_DIGEST_DIVERGED"
+        else:
+            write_state = "NO_RECEIPT_FOR_IDENTITY"
+        readback_spec = OPERATIONS.get("config.readback")
+        dispatch_spec = OPERATIONS.get("work-unit.dispatch")
+        answer.update({
+            "status": self._bounded(row.get("status"), 40),
+            "project_id": self._bounded(row.get("project_id"), 80),
+            # The key is the operation's identity, and the page that minted it is exactly the caller that
+            # has lost it; the Observer's projection deliberately does not publish checkpoint VALUES, this
+            # loopback route publishes only this one field plus the key NAMES the snapshot already lists.
+            "idempotency_key": self._bounded(key, 120) if key else None,
+            "idempotency_key_present": bool(key),
+            "record_digest": digest,
+            "checkpoint_fields": sorted(checkpoint),
+            "receipts": receipts,
+            "outcomes": [
+                {"id": "write", "label": "写入唯一账本", "state": write_state,
+                 "basis": "canonical store 行 + 本身份的回执摘要一致",
+                 "detail": (f"回执 {len(matched)} 条与当前投影摘要一致。" if matched else
+                            "有账本行，但没有与当前摘要一致的回执：写没有被证实，不写成成功。")},
+                {"id": "nativeLoad", "label": "原生加载读回", "state": "NOT_PROJECTED",
+                 "basis": f"config.readback support={getattr(readback_spec, 'implemented', False)}",
+                 "detail": (getattr(readback_spec, "reason", "没有该操作声明。")
+                            if readback_spec else "没有 config.readback 声明。"),
+                 "owner": "services/control/config.readback 的生产者"},
+                {"id": "targetBehaviour", "label": "目标行为确认", "state": "NOT_PROJECTED",
+                 "basis": f"work-unit.dispatch support={getattr(dispatch_spec, 'implemented', False)}",
+                 "detail": (getattr(dispatch_spec, "reason", "没有该操作声明。")
+                            if dispatch_spec else "没有 work-unit.dispatch 声明。"),
+                 "owner": "能给出 native receipt 的执行器"},
+            ],
+        })
+        return answer
 
     # -- the one entry point ------------------------------------------------
     def execute(self, request: dict[str, Any]) -> dict[str, Any]:
@@ -925,14 +1053,29 @@ class _Handler(BaseHTTPRequestHandler):
         if not self._loopback_ok():
             self._refused(403, "NOT_LOOPBACK", "控制服务只监听回环地址，只接受回环来源。")
             return
-        if self.path in self.SHELL_ASSETS:
-            self._serve_shell(self.path)
-        elif self.path == "/api/control/descriptor":
+        # The route is the path WITHOUT its query: the shell carries `?operation=<task_id>` so a reload can
+        # re-query one identity, and `/` with a query is still `/`. Matching the raw `self.path` here would
+        # make the page that just learned to survive a refresh unreachable the moment it used that ability.
+        route = urlsplit(self.path).path
+        if route in self.SHELL_ASSETS:
+            self._serve_shell(route)
+        elif route == "/api/control/descriptor":
             self._send(200, self.plane.descriptor())
-        elif self.path == "/health":
+        elif route.startswith("/api/control/operations/"):
+            # ONE identity per request, addressed by the id the caller already has. There is deliberately
+            # no list-all route: "which operations exist" is a question the Observer's read-only snapshot
+            # already answers, and repeating it here would widen what a loopback read can enumerate for no
+            # step of the lost-refresh path.
+            identity = unquote(route[len("/api/control/operations/"):])
+            if not identity or "/" in identity or "\\" in identity or len(identity) > 80:
+                self._refused(404, "UNKNOWN_READ", "身份读端点只接受 /api/control/operations/<task_id>。")
+                return
+            self._send(200, self.plane.operation_identity(identity))
+        elif route == "/health":
             self._send(200, {"schema_version": SCHEMA_VERSION, "status": "SERVING", "observed_at": _now()})
         else:
-            self._refused(404, "UNKNOWN_READ", "控制服务只暴露 descriptor 与 health 两个读端点。")
+            self._refused(404, "UNKNOWN_READ",
+                          "控制服务只暴露 descriptor、health 与单个身份的 operations/<task_id> 三个读端点。")
 
     def do_POST(self) -> None:  # noqa: N802 - http.server contract
         if not self._loopback_ok():
