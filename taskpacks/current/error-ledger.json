@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 263,
+    "total": 264,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 81,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 4,
       "path_boundary": 15,
-      "ci_tooling": 20,
+      "ci_tooling": 21,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 2
@@ -7991,6 +7991,38 @@
         "regressionCommand": "python -m pytest tests/ci/test_register_table_shape_is_uniform.py tests/ci/test_register_pins_name_checkable_commits.py",
         "bindingBasis": "fix-commit-introduction: the re-attached floors and their falsification numbers land in one commit",
         "bindingNote": "bound 2026-10-11 against 1928fa8a read from git (`git rev-parse HEAD` after the commit carrying both test edits); `git cat-file -e` proved both named test files and the archived ledger path exist in it before this field was written"
+      }
+    },
+    {
+      "error_id": "ERR-266",
+      "date": "2026-10-11",
+      "task_id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/audit/generate_frozen_surface_manifest.py, tests/ci/test_frozen_surfaces_are_intact.py, scripts/audit/register_pin_reachability.py, tests/ci/test_register_pins_name_checkable_commits.py, tests/ci/test_ignore_probe_shape_is_file_shaped.py, scripts/audit/entry_baseline_readback.py, tests/ci/test_entry_baseline_projection.py",
+      "command": "python services/orchestration/run_quality_gate.py root-governance-suite",
+      "exit_code": 1,
+      "observed_error": "Invoking `root-governance-suite` from CI (the previous commit) turned four guards red on the runner while all four were green on this Windows box: `CI_ROOT_GOVERNANCE_FAIL modules_ran=44 modules_failed=4`, whose members and verbatim messages are (a) `test_frozen_surfaces_are_intact.py` -- `docs/history/archive: CHANGED docs/history/archive/workflow-convergence-receipt-20261005.json manifest=b8262a28dc4b now=9646c7e452a3`; (b) `test_register_pins_name_checkable_commits.py` -- `AssertionError: 'ZERO_REFS 0600d6f' not found in 'PIN_REACHABILITY_FAIL pins=1 distinct_tokens=1 rows_with_pins=1 UNRESOLVABLE=1\\n  UNRESOLVABLE 0600d6f680dd -- no such commit object'`; (c) `test_ignore_probe_shape_is_file_shaped.py` -- `AssertionError: 0 != 1 : services/ is tracked, yet the directory-shaped probe still says 'ignored'`; (d) `test_entry_baseline_projection.py` -- `Ran 22 tests` / `FAILED (failures=2, errors=1)`.",
+      "root_cause": "Four claims about the machine had been written as claims about the repository. (a) The frozen-surface manifest hashed the WORKING TREE: measured on that file, disk sha256 b8262a28dc4b with 44 CRLF pairs versus committed blob sha256 9646c7e452a3 with 0, because `.gitattributes` says `* text=auto` and this box has core.autocrlf=true -- the CI value equalled the blob exactly, so the mismatch was the checkout flavour and nothing else. (b) The dangling-pin fixture `0600d6f680dd` was an object present in the author's clone and absent from a fresh one, so the checker answered its other state, UNRESOLVABLE, and the test asserted ZERO_REFS. (c) The probe test asserted `git check-ignore services/` exits 0 -- a git-version behaviour (this git matches the empty `.gitignore:44` line, the runner's does not), not a property of this tree. (d) `entry_baseline_readback`'s pure decision surface folded Windows-shaped strings through the platform Path: `Path('C:\\\\a\\\\b.exe').parent` is `C:\\\\a` on Windows and `.` on Linux, and `Path('C:\\\\dir') / 'x.exe'` becomes `C:\\\\dir/x.exe`, so the verdict moved with the runner while `_norm()` was already domain-correct.",
+      "fix": "(a) `sha256_of()` now reads the object git will ship (index, then HEAD) and the test's `derive()` delegates to it; all three manifests were re-sealed from committed bytes -- knowledge-staging 225 files / 3,041,157 B, docs/history/archive 137 / 1,474,077 B, reports/audit-archive 480 / 4,991,463 B. (b) The dangling case is CONSTRUCTED: `scratch_repo()` runs `git commit-tree` so an object that no ref contains exists on any machine, the ref-carried sibling proves the opposite half, and the checker gained `--repo` so a planted register row is judged against that repository. (c) The probe test now asserts the indiscrimination that is the actual rule -- a tracked directory and a fabricated one must read the same, whichever way a given git answers -- and the file-shaped invariants, which hold on both runners and are what the repo relies on, are untouched. (d) Three platform-Path sites became `PureWindowsPath`, and the module gained a spelling invariant plus an AST rule forbidding `Path(` inside decide/_norm/_in_temp/parse_lnk; the AST rule paid for itself at once, catching parse_lnk:177 that the first pass missed. Controls were falsified by planting a regression: removing `_norm`'s casefold gave PLANTED rc=1 with the spelling test convicted, and the restore was byte-identical (sha256_identical=True, 24 passed after). Measured after all four: the four modules 44 passed, `root-governance-suite CI_ROOT_GOVERNANCE_PASS modules=44 excluded_post_merge=1 discovered=45` GATE_EXIT=0, and `governance QUALITY_GATE_GOVERNANCE_PASS modules=247 ran=2677` GATE_EXIT=0.",
+      "regression_test": "tests/ci/test_frozen_surfaces_are_intact.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "A guard must digest what the repository holds, not what this checkout materialised: any manifest or receipt that claims immutability must hash the git object (`git show :path` / `HEAD:path`), because `* text=auto` + core.autocrlf means disk bytes and committed bytes differ on the very box that sealed them. A test fixture that requires a machine-local condition (an object with no ref, a file left by a previous run) must BUILD that condition inside the test, never inherit it from the author's clone. And an assertion must state the rule it defends, not one git version's exit code -- if the assertion can flip when the tool upgrades, it was measuring the tool. Finally: wiring an unexercised stage into CI is itself a verification step; ERR-261/263/264 each asked for local coverage of a CI-only surface and this is what the reverse looked like.",
+      "remaining_boundary": "One reclaim is blocked and stayed blocked: `.project-local/runs/ci-repro` -- the shallow clone this session made to reproduce the Linux verdicts -- cannot be fully deleted, `PermissionError: [WinError 5]` on `.git/objects/pack/pack-99aca43e….idx` across three retries with waits; the rule is that a lock denial remains a blocker, so nothing was taken ownership of and no process was killed. It is git-ignored, holds no work that is not elsewhere (measured: 0 commits on its branches that no remote of its own has; its only remote is this repository on this disk), and the residue guard does not convict it. The convicted residue, `.project-local/runs/tmp/node-compile-cache` (1,321,972 B), WAS reclaimed with its manifest written first (`.project-local/artifacts/wui-20261011/temp-residue-reclaim.json`) and the guard reads 5 passed. Also open: the live register still carries 1 pinned row of 25, so most PASS claims there are bound by commit message rather than by the register; and the CI surface now runs `root-governance-suite`, which means a future local-only assumption in any of its 44 modules will fail a push instead of hiding -- which is the point, and is why the exact-SHA readback at this head is quoted in the delivery report rather than assumed here.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "the named test, the manifest generator, the re-sealed manifests and the pin checker all resolve against git ls-files at the fixing commit",
+      "lifecycle": {
+        "introducedCommit": "53dbfb367d35181bd716b28ffc8442820f9c4174",
+        "introducedCommitNote": "the worktree-byte manifest and the inherited dangling fixture date from the 2026-10-08 governance batch (53dbfb36 wrote the register guards, the pin checker sealed its manifest from disk); the platform-Path sites came with d22d21eb's entry-baseline work and the git-version assertion with the probe rule that first measured this box",
+        "fixedCommit": "aaf39a5d5116a6b65172fe01c3afd8a184c0a5bc",
+        "verifiedCommit": "d8d43f4b110fa8f097afb7c04c1edefd2b88f36c",
+        "verifiedCommitNote": "the four fixes land in aaf39a5d; d8d43f4b re-reads the tool inventory those edits changed and is the head at which `governance` (modules=247, ran=2677) and `root-governance-suite` (modules=44) were both measured GATE_EXIT=0 on a clean tree",
+        "affectedCapability": "Frozen-surface integrity, register pin reachability, ignore-rule probing, entry-baseline projection -- and the CI surface's ability to see them",
+        "regressionCommand": "python -m pytest tests/ci/test_frozen_surfaces_are_intact.py tests/ci/test_register_pins_name_checkable_commits.py tests/ci/test_ignore_probe_shape_is_file_shaped.py tests/ci/test_entry_baseline_projection.py",
+        "bindingBasis": "fix-commit-introduction: the four root fixes land together and the verification head is the inventory re-read that carries them",
+        "bindingNote": "bound 2026-10-11 against aaf39a5d and d8d43f4b read from git; `git cat-file -e` proved each named file exists in the fixing commit before this field was written; the residue reclaim it cites is recorded in .project-local\\artifacts\\wui-20261011\\temp-residue-reclaim.json (freed=97901098 B)"
       }
     }
   ],
