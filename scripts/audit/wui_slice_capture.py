@@ -56,6 +56,42 @@ READBACK = """JSON.stringify({
   offNavNote: !!document.querySelector('[data-testid="off-nav-entry-note"]'),
   unknownCount: (document.body.innerText.match(/UNKNOWN/g) || []).length,
   collaborationSummary: document.body.innerText.indexOf('协作摘要') >= 0,
+  // WUI-08's six-step chain: presence alone proved nothing when a lane rendered the header and no
+  // stages, so this reads the per-stage state attributes, then scrolls the card into view and
+  // hit-tests its centre -- the screenshot has to show the block the receipt claims, not a card
+  // parked below the fold.
+  wui08Chain: (function(){
+    var heads = Array.prototype.slice.call(document.querySelectorAll('[data-migration-chain]'));
+    var stages = Array.prototype.slice.call(document.querySelectorAll('[data-migration-stage]'));
+    var first = heads.length ? heads[0] : null;
+    var card = first ? (first.closest('.card') || first.parentElement) : null;
+    var before = window.scrollY;
+    if (card) {
+      document.documentElement.style.scrollBehavior = 'auto';
+      card.scrollIntoView({block: 'start'});
+    }
+    var r = card ? card.getBoundingClientRect() : null;
+    var hit = null;
+    if (r && r.width > 0 && r.height > 0) {
+      var px = Math.round(r.left + r.width / 2);
+      var py = Math.round(Math.max(1, Math.min(r.top + r.height / 2, window.innerHeight - 1)));
+      var el = document.elementFromPoint(px, py);
+      hit = el ? (el.closest('[data-migration-stage]') ? 'stage' : (el.closest('.card') === card ? 'own-card' : el.tagName)) : null;
+    }
+    return {
+      groups: heads.length,
+      subjects: heads.map(function(e){return e.getAttribute('data-migration-chain');}),
+      stageIds: stages.map(function(e){return e.getAttribute('data-migration-stage');}),
+      stageStates: stages.map(function(e){return e.getAttribute('data-stage-state');}),
+      projected: stages.filter(function(e){return e.getAttribute('data-stage-state') === 'PROJECTED';}).length,
+      notProjected: stages.filter(function(e){return e.getAttribute('data-stage-state') === 'NOT_PROJECTED';}).length,
+      cardHeadline: card ? (card.innerText || '').slice(0, 160) : null,
+      rect: r ? {x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height)} : null,
+      scrollMoved: before !== window.scrollY,
+      centreHit: hit,
+      controlsInsideCard: card ? card.querySelectorAll('button, input, select, textarea').length : null
+    };
+  })(),
   disabledButtons: Array.from(document.querySelectorAll('button:disabled')).map(function(b){return b.textContent.trim();}),
   smallestText: (function(){
     var min = 999, sample = null;
@@ -148,6 +184,9 @@ def main() -> int:
         print(f"SHOT {label} {record['status']} lanes={dom.get('railLanes')} daily={dom.get('dailyLanes')} "
               f"inner={dom.get('innerWidth')}x{dom.get('innerHeight')} palette={dom.get('palette')} "
               f"bg={dom.get('bodyBackground')} rail={dom.get('railBackground')} "
+              f"chain={(dom.get('wui08Chain') or {}).get('stageIds')} "
+              f"chainState={(dom.get('wui08Chain') or {}).get('stageStates')} "
+              f"chainHit={(dom.get('wui08Chain') or {}).get('centreHit')} "
               f"bytes={record.get('screenshotBytes')} {record.get('reason', '')}", flush=True)
 
     moved = bundle_provenance.describe(ROOT)

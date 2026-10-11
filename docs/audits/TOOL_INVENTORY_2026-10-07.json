@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-11T07:55:19Z",
+  "generatedAt": "2026-10-11T09:17:11Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -265,11 +265,12 @@
       "lines": 808,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 5,
       "citedBy": [
         "docs/audits/ENTRY_BASELINE_2026-10-08.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/error-ledger.json",
         "tests/ci/test_entry_baseline_projection.py"
       ]
     },
@@ -1004,9 +1005,9 @@
     },
     {
       "path": "scripts/audit/wui_slice_capture.py",
-      "sha256": "9e1b71afe8fc685ec7606050e307a7060c638c88c0ca5832172261f73163334f",
-      "bytes": 9432,
-      "lines": 182,
+      "sha256": "d82c16fcc1df5ad4343bac7612c37f28643e0155e2ea0bb23979f8dcde646369",
+      "bytes": 11854,
+      "lines": 221,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,

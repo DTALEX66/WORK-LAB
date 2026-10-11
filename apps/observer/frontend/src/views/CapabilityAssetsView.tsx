@@ -28,6 +28,7 @@ import {
   groupAssetsByProvenance, workspaceSourceFacts,
   type EstablishedFacts, type WorkspaceSourceFacts,
 } from '@/lib/capabilityAssets'
+import { chainCounts, migrationChain } from '@/lib/capabilityMigration'
 import type {
   AdapterCapabilityCard, AdapterVerbEvidenceRow, CapabilityLayerState, SnapshotV3,
 } from '@/types'
@@ -472,6 +473,48 @@ function GapBlock() {
   )
 }
 
+/** WUI-08：六步迁移链 —— 投影出来的两步说依据，未投影的四步点名属主，整块零可写控件。 */
+function MigrationChainBlock({ cards }: { cards: AdapterCapabilityCard[] | undefined }) {
+  const chains = (cards && cards.length > 0)
+    ? cards.map((card) => ({ name: card.displayName, stages: migrationChain(card) }))
+    : [{ name: null as string | null, stages: migrationChain(null) }]
+  return (
+    <Card>
+      <CardHeader>
+        <span>能力迁移与目标验证（WUI-08 六步链）</span>
+        <span className="text-[12px] text-muted">源评价不代替目标验证</span>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {chains.map(({ name, stages }) => {
+          const counts = chainCounts(stages)
+          return (
+            <div key={name ?? 'no-cards'} className="flex flex-col gap-2">
+              <div className="text-[12px] text-muted" data-migration-chain={name ?? 'absent'}>
+                {name === null
+                  ? '没有能力卡可判：整条链按「未投影」呈现，不写成未开始'
+                  : `客户端「${name}」——本链只描述该客户端；已投影 ${counts.projected} 步，未投影 ${counts.notProjected} 步`}
+              </div>
+              <div className="list">
+                {stages.map((stage) => (
+                  <div key={stage.id} className="list-item" data-migration-stage={stage.id}
+                       data-stage-state={stage.state}>
+                    <span>{stage.label}</span>
+                    <Badge variant={stage.state === 'PROJECTED' ? 'muted' : 'warning'}>
+                      {stage.state === 'PROJECTED' ? '已投影' : '未投影'}
+                    </Badge>
+                    <div className="text-[12px] text-muted">{stage.detail}</div>
+                    <div className="text-[12px] text-muted">判据：{stage.basis} · 属主：{stage.owner}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </CardContent>
+    </Card>
+  )
+}
+
 export function CapabilityAssetsView({
   snap, focus = EMPTY_FOCUS, focusRejected = [],
 }: CapabilityAssetsViewProps) {
@@ -581,6 +624,7 @@ export function CapabilityAssetsView({
       {snap !== null && <DeclaredSourcesCard facts={workspaceSourceFacts(snap)} />}
 
       <GapBlock />
+      <MigrationChainBlock cards={cards} />
 
       <Card>
         <CardHeader><span>只读边界</span></CardHeader>
