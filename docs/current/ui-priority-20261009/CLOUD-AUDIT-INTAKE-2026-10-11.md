@@ -4,7 +4,7 @@
 8,038,362 B，SHA-256 `b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72`，包内 163 个文件成员。
 原件按只读入站根规则未改动、未写回；仓内归档在
 `docs/history/owner-inputs/record-20261011/originals/AAOS-WORK-DESIGN-cloud-audit-20261011.zip`（字节一致，
-`SOURCE-INTEGRITY.json` 逐成员记 name/bytes/crc32/sha256），WORK-LAB 相关可读成员 51 个解到同记录目录的
+`docs/history/owner-inputs/record-20261011/SOURCE-INTEGRITY.json` 逐成员记 name/bytes/crc32/sha256），WORK-LAB 相关可读成员 51 个解到同记录目录的
 `cloud-audit-readable/`。登记核对：`owner_material_catalog.py verify` = PASS（104 材料 / 2382 成员 / 0 errors），
 `find <sha>` 命中本条。**包内脚本与提示词没有执行权**：本文件只做判定，未运行其探针，未采信其对其它项目的结论。
 
@@ -27,6 +27,25 @@ contracts），同批 wlr060 run38125141147/38125138416 success。本仓 2026-10
 `33051db7`（run 38130943781）与 `63d9a58c`（run 38131270591）均为 failure，唯一失败成员
 `test_entry_baseline_projection.py (rc=1)` → `LookupError: unknown encoding: mbcs`，即 W03。
 `wlr-060-production-gates` 在两个 SHA 均 success。**同一 SHA 两条流水线结论不同**，所以引用 CI 必须点名作业。
+
+## 计数核对：封面说 25 项，正文只有 21 项——差额是四条 WORK 条目
+
+`docs/history/owner-inputs/record-20261011/cloud-audit-readable/00-START-HERE.txt` 写"实测报告列25项问题"，而 `docs/history/owner-inputs/record-20261011/cloud-audit-readable/findings.json` 与 `docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.txt` 的问题清单只有
+A01–A04（4）+ W01–W04（4）+ D01–D13（13）= **21**。剩下的 4 项是 WORK 的，写在补测附录
+`docs/history/owner-inputs/record-20261011/cloud-audit-readable/LINUX-REPORT.txt`「WORK50新增确认问题」一节里，编号 `WL-L01…WL-L04`，**未进 findings.json、
+未进 REPORT.txt 的编号清单**。本文件把它们从附录提出来逐条对现行码位复核，四条全部成立：
+
+| 条目 | 审计断言 | 现行码位复核（本仓实测） | 判定 |
+|---|---|---|---|
+| WL-L01 / P1 | 项目 Git 错归属：B 没有自己的 git 时显示 A 的 SHA/branch | `packages/client-neutral-core/scripts/snapshot_api.py` 的 `_project_projection` 里 `effective_git = (git_map or {}).get(project_id) or git_state`；`services/orchestration/composition_root.py` 又传 `git_state=git_states.get("work-lab") or next(iter(git_states.values()), None)`。两处 `or` 串起来就是"没有自己的 git 就顶上前一个仓库的" | OPEN，未修 |
+| WL-L02 / P2 | 项目 CI 归属丢失 → 投影里 `ci=[]` | `services/orchestration/composition_root.py` 的 `_ci_rows` 输出键只有 runId/workflow/headSha/status/conclusion/sourceRef，**没有 projectId**；`snapshot_api.py` 却按 `r.get("projectId") == project_id` 筛选。空列表不是"没有 CI"，是筛选条件永不成立 | OPEN，未修 |
+| WL-L03 / P2 | 部分估计被提升为精确 | `snapshot_api.py` 的 `_rollup_usage`：任一样本 `costQuality == "EXACT"` 即把整项目记为 EXACT（`elif ESTIMATED and != EXACT` 只做降级不做保留），而全局 `_token_summary` 在同一数据上给 ESTIMATED。两处精度规则不同源 | OPEN，未修 |
+| WL-L04 / P2 | 存储失败仍称"已自动保存" | `apps/observer/frontend/src/views/WorkflowEditorView.tsx`：`localStorage.setItem(...)` 的异常被 `catch { /* quota — non-fatal */ }` 吞掉，而页头无条件渲染 `已自动保存`（tooltip `本地编辑已自动持久化`）。宣称与写入结果无因果关系 | OPEN，未修 |
+
+这四条比 W01/W02 更要紧：它们落在**当前登记开发线**（审计标 WORK50），且都是本仓自己的读模型；
+其中 WL-L01 是 P1，WL-L02 与 WL-L04 是"沉默空值/无据宣称"，正对本仓的真值纪律三条（未知不补 0、
+absent ≠ 空列表 ≠ 实测为 0、一条事实一个名字）。处置去向：WL-L01/L02/L03 属 WUI-15 与 WUI-04 的读模型
+接缝，WL-L04 属 WUI-11/WUI-12 的状态真值；本批只判定与登记，未改产品代码。
 
 ## 逐条判定
 
