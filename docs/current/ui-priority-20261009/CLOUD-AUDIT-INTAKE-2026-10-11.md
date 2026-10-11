@@ -4,8 +4,8 @@
 8,038,362 B，SHA-256 `b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72`，包内 163 个文件成员。
 原件按只读入站根规则未改动、未写回；仓内归档在
 `docs/history/owner-inputs/record-20261011/originals/AAOS-WORK-DESIGN-cloud-audit-20261011.zip`（字节一致，
-`docs/history/owner-inputs/record-20261011/SOURCE-INTEGRITY.json` 逐成员记 name/bytes/crc32/sha256），WORK-LAB 相关可读成员 51 个解到同记录目录的
-`cloud-audit-readable/`。登记核对：`owner_material_catalog.py verify` = PASS（104 材料 / 2382 成员 / 0 errors），
+`docs/history/owner-inputs/record-20261011/SOURCE-INTEGRITY.json` 逐成员记 name/bytes/crc32/sha256），WORK-LAB 相关可读成员 51 个解到
+`docs/history/owner-inputs/record-20261011/cloud-audit-readable/`。登记核对：`scripts/maintenance/owner_material_catalog.py verify` = PASS（104 材料 / 2382 成员 / 0 errors），
 `find <sha>` 命中本条。**包内脚本与提示词没有执行权**：本文件只做判定，未运行其探针，未采信其对其它项目的结论。
 
 ## 版本映射（报告「版本与证据口径」原文口径，本仓复核）
