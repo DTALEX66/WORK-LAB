@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-10T15:12:18Z",
+  "generatedAt": "2026-10-11T07:55:19Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -260,8 +260,8 @@
     },
     {
       "path": "scripts/audit/entry_baseline_readback.py",
-      "sha256": "a26856d0c3487e3141f34a1598d5b1a62b1f9fac7370967df1252f54c1bcc411",
-      "bytes": 41426,
+      "sha256": "cbdda2cbecc98669f23cc82c1da1b1493ea01bc861a7a90b369a88dda4c19102",
+      "bytes": 41476,
       "lines": 808,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
@@ -353,9 +353,9 @@
     },
     {
       "path": "scripts/audit/generate_frozen_surface_manifest.py",
-      "sha256": "40fb4b26350205404159fd52241b85deccdfda70e7a074a39627c8fa06bebfbf",
-      "bytes": 5085,
-      "lines": 111,
+      "sha256": "27229ee806e9048983e8846c4db4fd49a8c135c2e7fb8c97a26e1a03003a1551",
+      "bytes": 6128,
+      "lines": 128,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 9,
@@ -669,9 +669,9 @@
     },
     {
       "path": "scripts/audit/register_pin_reachability.py",
-      "sha256": "9bb64fe04f2932bcb3327dbb2939a660cbe71e72a8a0a433ebe7290fe6e2499e",
-      "bytes": 5655,
-      "lines": 136,
+      "sha256": "9c583773466d3906bf95201453e4b1109ea436a91a1acc3a9dd14c18385e4a5d",
+      "bytes": 6063,
+      "lines": 140,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,
