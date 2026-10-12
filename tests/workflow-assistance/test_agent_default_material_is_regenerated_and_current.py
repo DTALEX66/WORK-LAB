@@ -67,6 +67,20 @@ def tracked_files() -> set[str]:
     return {name.decode("utf-8", "replace") for name in raw if name}
 
 
+def repository_bytes(rel: str) -> bytes | None:
+    """The bytes git holds for `rel`, or None when it is not tracked.
+
+    `.gitattributes` sets `* text=auto`, so a Windows checkout of this generated projection is CRLF
+    while the generator emits LF. Comparing the checkout against the generator makes the gate answer
+    "drifted" on Windows and "clean" on Linux for one unchanged file. The index is the repository's own
+    answer and is identical on every platform -- the same rule the material catalog now uses (ERR-275).
+    """
+    proc = subprocess.run(["git", "show", ":" + rel], cwd=ROOT, capture_output=True, check=False)
+    if proc.returncode != 0:
+        return None
+    return proc.stdout
+
+
 class AgentDefaultMaterialTests(unittest.TestCase):
     def test_the_projection_exists_and_is_marked_generated(self) -> None:
         self.assertTrue(PROJECTION.is_file(), f"{PROJECTION} is missing -- run projections/agents/generate.py")
@@ -75,7 +89,10 @@ class AgentDefaultMaterialTests(unittest.TestCase):
                       "the projection lost its generated marker, so an editor will hand-fix derived bytes")
 
     def test_two_generations_produce_the_same_bytes(self) -> None:
-        before = PROJECTION.read_bytes()
+        # The committed projection is read from the index: on Windows the working copy is CRLF while
+        # the generator emits LF, so a working-tree read would report drift for an unchanged file.
+        before = repository_bytes(PROJECTION.relative_to(ROOT).as_posix())
+        assert before is not None, f"{PROJECTION} is not tracked"
         generator = load_generator()
         try:
             generator.generate()

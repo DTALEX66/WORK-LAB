@@ -45,7 +45,11 @@ def generate():
         out_dir = TARGET / "skills" / skill_dir.name
         out_dir.mkdir(parents=True, exist_ok=True)
         out_file = out_dir / "SKILL.md"
-        out_file.write_text(out, encoding="utf-8")
+        # Bytes, not text mode: on Windows write_text translates "\n" to CRLF, so the projection's
+        # bytes -- and therefore the content hash a reader checks -- came out different on every
+        # platform for one unchanged source. That is what test_two_generations_produce_the_same_bytes
+        # was reporting as drift (same class as ERR-275, on the producing side this time).
+        out_file.write_bytes(out.encode("utf-8"))
         generated.append(str(out_file))
 
     print(f"Generated {len(generated)} projection(s):")
