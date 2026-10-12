@@ -8074,8 +8074,8 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "intakeSource": "云端三项目审计包 AAOS-WORK-DESIGN-cloud-audit-20261011.zip (WL-REC-0104, SHA-256 b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72)",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "fixedCommit": null,
         "note": "本条修复已在本工作集落地并有守门与伪证，但 commit 未获 owner 授权，因此 fixedCommit 暂无；在取得提交前不得读成 PASS。"
@@ -8101,8 +8101,8 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "intakeSource": "云端三项目审计包 AAOS-WORK-DESIGN-cloud-audit-20261011.zip (WL-REC-0104, SHA-256 b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72)",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "fixedCommit": null,
         "note": "本条修复已在本工作集落地并有守门与伪证，但 commit 未获 owner 授权，因此 fixedCommit 暂无；在取得提交前不得读成 PASS。"
@@ -8128,8 +8128,8 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "intakeSource": "云端三项目审计包 AAOS-WORK-DESIGN-cloud-audit-20261011.zip (WL-REC-0104, SHA-256 b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72)",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "fixedCommit": null,
         "note": "本条修复已在本工作集落地并有守门与伪证，但 commit 未获 owner 授权，因此 fixedCommit 暂无；在取得提交前不得读成 PASS。"
@@ -8155,8 +8155,8 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "intakeSource": "云端三项目审计包 AAOS-WORK-DESIGN-cloud-audit-20261011.zip (WL-REC-0104, SHA-256 b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72)",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "fixedCommit": null,
         "note": "本条修复已在本工作集落地并有守门与伪证，但 commit 未获 owner 授权，因此 fixedCommit 暂无；在取得提交前不得读成 PASS。"
@@ -8182,8 +8182,8 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "intakeSource": "云端三项目审计包 AAOS-WORK-DESIGN-cloud-audit-20261011.zip (WL-REC-0104, SHA-256 b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72)",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "fixedCommit": null,
         "note": "本条修复已在本工作集落地并有守门与伪证，但 commit 未获 owner 授权，因此 fixedCommit 暂无；在取得提交前不得读成 PASS。"
@@ -8209,8 +8209,8 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "intakeSource": "云端三项目审计包 AAOS-WORK-DESIGN-cloud-audit-20261011.zip (WL-REC-0104, SHA-256 b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72)",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "fixedCommit": null,
         "note": "本条修复已在本工作集落地并有守门与伪证，但 commit 未获 owner 授权，因此 fixedCommit 暂无；在取得提交前不得读成 PASS。"
@@ -8236,8 +8236,8 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "intakeSource": "入册材料 WL-REC-0103（UI 深化 v2）§5 + docs/current/ui-priority-20261009/UI-V2-INTAKE-20261010.md",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "fixedCommit": null,
         "note": "fixed in the uncommitted working set; commit is a separate owner authorization"
