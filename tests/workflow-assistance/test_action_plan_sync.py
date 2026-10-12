@@ -188,6 +188,14 @@ class ActionPlanSyncTests(unittest.TestCase):
                 os.symlink(external, skills, target_is_directory=True)
             except OSError as exc:
                 self.skipTest(f"symlink creation unavailable on this Windows host: {exc}")
+            # A creation call that SUCCEEDS is not proof of a link. Measured on this host (2026-07-12):
+            # symlink creation returned without raising on both NTFS volumes and left a plain directory
+            # behind -- lstat reports FILE_ATTRIBUTE_DIRECTORY (0x10) and no FILE_ATTRIBUTE_REPARSE_POINT
+            # (0x400). Skipping states that the premise could not be built; it does not excuse the check,
+            # which runs everywhere a real link can be made.
+            if not skills.is_symlink() and not (getattr(skills.lstat(), "st_file_attributes", 0) & 0x0400):
+                self.skipTest("this filesystem downgrades symlink creation to a plain directory, "
+                              "so a symlinked managed parent cannot be constructed here")
 
             with self.assertRaisesRegex(ValueError, "symlink or junction"):
                 module.build_action_plan(repo, home)

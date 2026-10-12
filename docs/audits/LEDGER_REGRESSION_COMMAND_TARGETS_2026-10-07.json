@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-12T15:37:09Z",
+  "at": "2026-10-12T17:15:29Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 156,
+    "RESOLVES": 157,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
-    "PATH_GONE": 37,
+    "PATH_GONE": 36,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 189,
+    "RESOLVES": 190,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
-    "PATH_GONE": 37,
+    "PATH_GONE": 36,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 189,
+  "resolvedAfterApply": 190,
   "records": 274,
-  "stateDigest": "25c9f147be023e1f5d2db898bc541f508f7aaeee53b5cbeaca0963f65c040eff",
+  "stateDigest": "4fc45f593db477f437a3423277e55693af94ef8a91301572d261886cd758f034",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -412,11 +412,6 @@
       "errorId": "ERR-250",
       "operand": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
       "statusAfter": "BLOCKED"
-    },
-    {
-      "errorId": "ERR-275",
-      "operand": "tests/workflow-assistance/test_material_catalog_uses_repository_bytes.py",
-      "statusAfter": "PARTIAL"
     }
   ],
   "external": [
@@ -5224,12 +5219,14 @@
       "operands": [
         {
           "operand": "tests/workflow-assistance/test_material_catalog_uses_repository_bytes.py",
-          "category": "GONE",
-          "candidates": []
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_material_catalog_uses_repository_bytes.py"
+          ]
         }
       ],
-      "state": "PATH_GONE",
-      "reason": "no tracked file carries this basename"
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
     }
   ],
   "notClaimed": [

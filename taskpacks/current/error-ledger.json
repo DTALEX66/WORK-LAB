@@ -8287,8 +8287,8 @@
       "status_before": "FAIL",
       "status_after": "PARTIAL",
       "intakeSource": "本轮授权索引面复核（2026-10-12 防漂移批次）",
-      "regressionTestVerifiability": "PATH_GONE",
-      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
       "lifecycle": {
         "fixedCommit": null,
         "note": "fixed in the uncommitted working set; commit is a separate owner authorization"

@@ -37,6 +37,7 @@
 - `docs/current/workflow-assistance/workflow/managed-software-and-assets.md`：受管软件/资产清单，引用字段权威。
 - `docs/current/workflow-assistance/workflow/examples/governance.yml.example`：documented example，非活跃 CI（WLG-080）。
 
+- **规划/研究层（非执行权威）**：`docs/future/`。当前唯一 OPEN 的未来规划是 `docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md`（超级入口 / Command Center / LAB Router）。2026-10-12 并入 §10「统一目标入口」、§11「外部多智能体能力吸收的候选池判据」；2026-10-13 并入 §12「Agent Studio — Visual Collaboration Experience」、§13 后续任务分解（A–G 非活动候选工作包）、§14 未来阶段与验收、 §15 与 AAOS/DESIGN-LAB 的长期边界。**不另立第二份路线图**。 同目录另两份按其自身抬头执行：`docs/future/WORK-LAB-BLUEPRINT-20261006.md` 已标 `FROZEN_ARCHIVED / NO_EXECUTION_AUTHORITY`；`docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md` 是 `scripts/ci/verify_blueprint_coverage.py --write` 的生成投影，勿手改。 登记在此是为了让换会话、换软件的读者能从索引直接找到它—— `docs/future/` 此前不在任何默认加载链上，内容在却找不到，与丢失无异。
 ## 3. 已取代/历史（Superseded / Archive）
 
 - 历史 handoff 与审计：`docs/history/archive/workflow-assistance/handoffs/`、

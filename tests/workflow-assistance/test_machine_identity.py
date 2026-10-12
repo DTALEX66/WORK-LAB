@@ -159,6 +159,14 @@ class MachineIdentityTests(unittest.TestCase):
             link.symlink_to(project, target_is_directory=True)
         except OSError as exc:
             self.skipTest(f"symlink creation unavailable: {exc}")
+        # A creation call that SUCCEEDS is not proof of a link. Measured on this host (2026-07-12):
+        # symlink creation returned without raising on both NTFS volumes and left a plain directory
+        # behind -- lstat reports FILE_ATTRIBUTE_DIRECTORY (0x10) and no FILE_ATTRIBUTE_REPARSE_POINT
+        # (0x400). Skipping states that the premise could not be built; it does not excuse the check,
+        # which runs everywhere a real link can be made.
+        if not link.is_symlink() and not (getattr(link.lstat(), "st_file_attributes", 0) & 0x0400):
+            self.skipTest("this filesystem downgrades symlink creation to a plain directory, "
+                          "so a linked ancestor cannot be constructed here")
         with self.assertRaises(ValueError):
             module.status(project, registry_path=Path("link") / "registry.json")
 

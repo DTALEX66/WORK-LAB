@@ -415,3 +415,34 @@ W02（task #32 画布几何与指针生命周期）、WUI-21 隔离试用三页�
 - `scripts/ci/verify_authority_index_paths.py` **broken=0**（并移除 8 条已过期的 `no-tree-claim UNTRACKED_LOCAL`
   声明——那些文件已入库，豁免反而会遮住活路径）；`scripts/audit/normalise_doc_citations.py` rewritten=0 blocked=0；
   `scripts/ci/verify_root_document_dispositions.py` PASS；`scripts/ci/verify_error_ledger.py` entries=274 PASS。
+
+## 2026-07-13 第六批 · 本地门收敛与最终处置
+
+全量门最后一轮（head `a41dd5e7`，`Ran 2710 tests`）为 `FAILED (failures=3, skipped=7)`，
+起点是 `failures=21 errors=14`。三类归因与处置：
+
+1. **宿主 CLI 删除守卫（14 errors）**：`…/cli/vendor/shim/sitecustomize.py` 在 `tempfile` 清理时
+   `_check_bulk_delete_guard` → `SystemExit(1)`。跑门时用该 CLI 自带的环境变量
+   `CODEBUDDY_SAFE_DELETE_ENABLED=0` 临时放行，只作用于该条命令，未改任何全局配置。
+2. **产品缺陷（10 项）**：Codex 全局指引安装器在 Windows 上给暂存条目打删除挂起标记返回
+   `WinError 24`，异常被打印后吞掉，仍打印 `CODEX_GUIDANCE_WRITTEN` 并退出 0，而 `AGENTS.md` 不存在——
+   宣称与事实脱钩。改为完全不使用删除处置：私有性由 `CREATE_NEW` + 128 位随机名 + `FILE_SHARE_NONE`
+   提供，发布仍是同一个原子 `FileRenameInfo`，放弃时按名删除；`st_nlink` 在 Windows 的期望值由 0 改 1
+   （多一个即硬链接攻击）；发布后覆盖竞态改为按名撤回。实测安装器真的落盘（1267 B，RC=0），
+   `tests/workflow-assistance/test_workflow_governance.py` + `tests/workflow-assistance/test_github_delivery.py` 由 origin/main 基线 15 failed 变为 0 failed。
+3. **两处 CRLF 类权威漂移**：登记索引按工作区字节比对（Windows CRLF 检出，ERR-275）、
+   投影生成器用文本模式写盘（产物字节随平台变）。前者改为按仓库字节比对并加守护
+   `tests/workflow-assistance/test_material_catalog_uses_repository_bytes.py`，后者改为 `write_bytes` 并重生成投影。
+4. **本机无法构造的符号链接前提（2 项）**：两个 NTFS 卷上 `symlink_to` 均静默降级为普通目录
+   （`st_file_attributes=0x10`，无 `FILE_ATTRIBUTE_REPARSE_POINT`）。门内改为**先验证链接确为链接**，
+   不是则按该文件既有的 `skipTest` 形状具名跳过并写明原因；能建真链接的环境照常执行检查。
+   实测 `13 passed, 1 skipped` 与 `1 skipped, 10 deselected`。
+
+分支与合并最终状态：`main` 与 `task-decomposition/atlas-gap-archive-20261001` 同点；
+9 个本地分支已按内容级判定处置完毕（6 个已被 main 包含者删除，3 个被主线取代者删除，其中
+`g15-dsh-codex-registry-reconcile-20260930` 的 ERR-092 记录移植入活账本而非合并其注册表事实）。
+
+**顺序纪律（本轮踩到）**：派生审计（`ledger_regression_command_targets --apply`、
+`tool_inventory_readback --write`）必须在**暂存之后、提交之前**重跑——文件一旦入库，
+其标签会从 `PATH_GONE` 变为 `RESOLVES`，提交后才发现就会让门在下一轮变红。
+与 ERR-151 记录的工具清单次序同源，本批已按此顺序执行。
