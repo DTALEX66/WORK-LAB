@@ -13,6 +13,7 @@ import html
 import io
 import json
 import os
+import subprocess
 from pathlib import Path, PurePosixPath
 import sys
 from urllib.parse import quote
@@ -37,11 +38,42 @@ def inside(path: str) -> Path:
     return candidate
 
 
+def repository_bytes(path: str) -> bytes | None:
+    """The bytes git holds for `path`, or None when it is not tracked.
+
+    A Windows checkout of a text file is CRLF while the blob is LF, so hashing the
+    working copy on Windows produces a digest that is true of no repository anywhere.
+    The index is the repository's own answer and is identical on every platform.
+    """
+    try:
+        completed = subprocess.run(
+            ["git", "show", ":" + path],
+            cwd=ROOT,
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return None
+    if completed.returncode != 0:
+        return None
+    body = completed.stdout
+    # A file stored through git LFS is a POINTER in the index, not its content. Reading
+    # the index there would hand back the pointer text and every zip member would look
+    # corrupt, so those fall back to the working file, which holds the real bytes.
+    if body.startswith(b"version https://git-lfs.github.com/spec/v1"):
+        return None
+    return body
+
+
 def read_locator(path: str, chain: list[str], cache=None) -> bytes:
     if cache is not None and path in cache:
         body = cache[path]
     else:
-        body = inside(path).read_bytes()
+        body = None
+        if not chain:
+            body = repository_bytes(path)
+        if body is None:
+            body = inside(path).read_bytes()
         if cache is not None:
             cache[path] = body
     for name in chain:

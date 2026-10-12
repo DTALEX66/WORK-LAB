@@ -9,10 +9,10 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 272,
+    "total": 274,
     "by_classification": {
       "entrypoint": 7,
-      "contract_drift": 82,
+      "contract_drift": 84,
       "test_behavior_alignment": 37,
       "working_directory_recovery": 2,
       "evidence_state": 54,
@@ -2786,6 +2786,30 @@
       },
       "regressionTestVerifiability": "NO_FILE_OPERAND_IN_COMMAND",
       "regressionTestVerifiabilityReason": "the command names no file operand to check"
+    },
+    {
+      "error_id": "ERR-092",
+      "date": "2026-09-30",
+      "task_id": "DSH-CODEX-REGISTRY-RECONCILE-20260930",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "config/client-evidence.json (codex entry) + config/adapter-registry.json (codex + dsh provenance)",
+      "command": "python .project-local/runs/dsh_codex_probe.py (read-only live probe)",
+      "exit_code": 1,
+      "observed_error": "client-evidence.json codex entry carried install_method='wrapper (bin/codex)' (path removed by the 2026-09 directory convergence) and version='UNVERIFIED', while a live wrapper readback returned version 0.158.0-alpha.2.1 from packages/client-neutral-core/bin/codex; adapter-registry dsh provenance.version was still the 0.1.0-rc.5 governance pin while live desktop is 2.0.13 and upstream v2.0.16 is available-not-applied.",
+      "root_cause": "G15 client-version drift: live client installations and registry records were not re-reconciled after the 2026-09 directory convergence moved the codex wrapper and after the 2026-09-29 upstream releases (deepseek-harness-desktop v2.0.16, openai codex 0.159.0).",
+      "fix": "Reconciled both registries to the 2026-09-30 read-only live readback: codex wrapper path + version 0.158.0-alpha.2.1 (upstream 0.159.0 available, not installed), dsh provenance.version 2.0.13 with v2.0.16 recorded in version_historical as available-not-applied; no install, upgrade, or global-config write performed. Carried into the live ledger on 2026-10-12 rather than by merging the branch: the registry files it reconciles have since been corrected twice (the 2026-10-07 Hermes install-stamp readback and AG-07's DSH reinstall), so merging it would have reverted newer measured facts.",
+      "regression_test": "python packages/client-neutral-core/scripts/verify_adapter_registry.py --registry config/adapter-registry.json --schema packages/contracts/schemas/workflow/adapter-registry.schema.json --root . plus python -m pytest tests/workflow-assistance/test_adapter_registry.py tests/workflow-assistance/test_core_schemas.py tests/workflow-assistance/test_policy_projection.py -x -q",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Client-lifecycle changes (wrapper moves, upstream releases) must re-reconcile config/adapter-registry.json and config/client-evidence.json in the same change that discovers them; registry version fields carry native readback only, and upgrades remain a separately authorized act.",
+      "remaining_boundary": "Superseded in part by later measurement, and the difference is deliberate. The 2026-09-30 probe read dsh 2.0.13 as the community desktop install; AG-07 (2026-10-01) records that the user reinstalled the OFFICIAL DSH at the vendor default per-user path and that the community distribution directory is gone, so the live registry now marks 2.0.13 SUPERSEDED and resolves the root from the uninstall entry rather than a drive letter. The codex wrapper facts from this entry are still current. Upstream 0.159.0 and v2.0.16 remain recorded as available-not-applied; no install, upgrade or global-config write was ever authorised here.",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "lifecycle": {
+        "note": "Ported from g15-dsh-codex-registry-reconcile-20260930 on 2026-10-12 with the registry files deliberately NOT taken; the branch is deleted as superseded by AG-07 and the 2026-10-07 readback."
+      },
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "every operand resolves against git ls-files"
     },
     {
       "error_id": "ERR-093",
@@ -8238,6 +8262,33 @@
       "intakeSource": "入册材料 WL-REC-0103（UI 深化 v2）§5 + docs/current/ui-priority-20261009/UI-V2-INTAKE-20261010.md",
       "regressionTestVerifiability": "RESOLVES",
       "regressionTestVerifiabilityReason": "every operand resolves against git ls-files",
+      "lifecycle": {
+        "fixedCommit": null,
+        "note": "fixed in the uncommitted working set; commit is a separate owner authorization"
+      }
+    },
+    {
+      "error_id": "ERR-275",
+      "date": "2026-10-12",
+      "task_id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "scripts/maintenance/owner_material_catalog.py::read_locator",
+      "command": "python scripts/maintenance/owner_material_catalog.py verify",
+      "exit_code": 1,
+      "observed_error": "登记索引面在 Windows 上整体误报：WL-REC-0006 与 WL-REC-0039 被判 `archive bytes/hash mismatch`。逐字节核对后登记是对的、树也是对的——工作区那份文本被 git 以 CRLF 检出（58 处 CRLF），磁盘 13,732 B / 6896bb7e…，而 git blob 与登记都是 13,674 B / 8d4a4818…。",
+      "root_cause": "校验器哈希工作区副本而不是仓库字节。Windows 检出的文本是 CRLF、blob 是 LF，因此这个结论在任何其它平台上都不成立。若照着它「修」登记，就会把一个 Windows 专属哈希写进权威记录，之后 Linux/macOS 会看到真漂移——把幻影修成真漂移。与 ERR-094 同类。",
+      "fix": "受跟踪且无嵌套成员链的归档改为从索引读取（`git show :<path>`），这是仓库自己对任何平台都会给出的答案；LFS 文件在索引里是指针文本，识别后回退工作区文件，否则每个 zip 成员都会被判损坏。登记与树都不需要改动——`OWNER_MATERIAL_CATALOG status=PASS registeredMaterials=104 indexedArchiveMembersIncludingNested=2382 errors=[]`。新守护 `tests/workflow-assistance/test_material_catalog_uses_repository_bytes.py` 三例，含反向对照：真被改过一个字节的归档仍须被判出来。",
+      "regression_test": "tests/workflow-assistance/test_material_catalog_uses_repository_bytes.py",
+      "regressionCommand": "python -m pytest tests/workflow-assistance/test_material_catalog_uses_repository_bytes.py",
+      "evidence_level": "local-full",
+      "repeat_prevention": "权威记录的哈希必须以仓库字节为准，不得以检出副本为准；换操作系统重跑校验器必须得到同一个答案。若某条登记只在某个平台成立，它不是登记，是快照。",
+      "remaining_boundary": "尚未在 Linux runner 上复跑本守护；该结论目前只在本机（Windows + CRLF 检出）验证成立，反向断言证明了它不会变成橡皮图章。",
+      "status_before": "FAIL",
+      "status_after": "PARTIAL",
+      "intakeSource": "本轮授权索引面复核（2026-10-12 防漂移批次）",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
       "lifecycle": {
         "fixedCommit": null,
         "note": "fixed in the uncommitted working set; commit is a separate owner authorization"

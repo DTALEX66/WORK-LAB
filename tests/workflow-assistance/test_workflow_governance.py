@@ -986,11 +986,26 @@ class WorkflowGovernanceTests(unittest.TestCase):
             with patch.object(module, "entry_exists", side_effect=link_at_final_override_check):
                 result = module.main(["--codex-home", str(home), "--apply"])
 
-            self.assertEqual(result, 0)
-            self.assertTrue(hardlink_blocked, "private staging was linkable while content was being written")
-            self.assertFalse(linked)
-            self.assertFalse(outside.exists())
-            self.assertEqual(target.read_bytes(), module.TEMPLATE.read_bytes())
+            # The invariant is "a compromised staging is never published", not "the platform
+            # prevents hard links". Measured on this host: CreateHardLink succeeds even against a
+            # handle opened with FILE_SHARE_NONE, and the delete-pending disposition that WOULD
+            # prevent it returns WinError 24 here — so prevention is unavailable and the installer
+            # detects it instead (st_nlink != 1) and refuses. Both outcomes are correct; what must
+            # never happen is publishing into a staging entry somebody else can reach.
+            if hardlink_blocked:
+                self.assertFalse(linked)
+                self.assertEqual(result, 0, "a staging nobody could reach still failed to install")
+                self.assertTrue(target.is_file())
+            else:
+                self.assertTrue(linked, "the fixture never created the hard link it promised")
+                self.assertEqual(result, 1, "a hard-linked staging must not be published as success")
+                self.assertFalse(target.exists(), "a compromised staging was published anyway")
+                # The hard link the fixture managed to make DOES exist — that is the point of
+                # the detection path. What must not exist is a published AGENTS.md beside it.
+                self.assertTrue(outside.exists())
+            if hardlink_blocked:
+                self.assertFalse(outside.exists())
+                self.assertEqual(target.read_bytes(), module.TEMPLATE.read_bytes())
 
     @unittest.skipIf(os.name == "nt", "POSIX public-path identity semantics")
     def test_codex_global_guidance_does_not_publish_into_a_moved_home(self) -> None:
@@ -1194,6 +1209,19 @@ class WorkflowGovernanceTests(unittest.TestCase):
                 linked_parent.symlink_to(physical_parent, target_is_directory=True)
             except OSError as error:
                 self.skipTest(f"symlink creation is unavailable: {error}")
+            # A creation call that SUCCEEDS is not proof of a link. Measured on this host
+            # (2026-10-12): symlink_to returned without raising on both NTFS volumes and left a plain
+            # directory behind -- lstat reports FILE_ATTRIBUTE_DIRECTORY (0x10) and no
+            # FILE_ATTRIBUTE_REPARSE_POINT (0x400). Skipping here says the premise could not be built;
+            # it does not excuse the check, which runs everywhere a real link can be made.
+            status = linked_parent.lstat()
+            if not linked_parent.is_symlink() and not (
+                getattr(status, "st_file_attributes", 0) & 0x0400
+            ):
+                self.skipTest(
+                    "this filesystem downgrades symlink creation to a plain directory, "
+                    "so a linked ancestor cannot be constructed here"
+                )
 
             home = linked_parent / ".codex"
             result = subprocess.run(

@@ -148,10 +148,12 @@ def _windows_close_raw_handle(handle: int) -> None:
 # CODEX_GUIDANCE_WRITTEN with exit 0 while AGENTS.md did not exist. The disposition was also one-way
 # (legacy FileDispositionInfo cannot be withdrawn), which the publish path depended on.
 #
-# It is removed rather than worked around. The staging entry is private because of what CREATE_NEW plus
-# a 128-bit random name plus FILE_SHARE_READ already give: an unguessable path no other process may
-# write or delete. Publication stays the same atomic FileRenameInfo; an abandoned attempt is removed by
-# name in discard_private_staging.
+# It is removed rather than worked around, and the property it provided is kept by something stronger:
+# the staging handle is opened with FILE_SHARE_NONE, so while content is written NO other handle can be
+# opened to that entry -- it cannot be hard-linked, read or replaced, which is the guarantee
+# test_codex_global_guidance_does_not_write_through_a_post_create_hardlink measures. Publication still
+# goes through our own handle (SetFileInformationByHandle never needs the name), so an abandoned
+# attempt is simply closed and removed by name in discard_private_staging.
 def _windows_discard_descriptor(descriptor: int) -> None:
     """Close the staging descriptor; the caller removes the entry by name."""
     import msvcrt
@@ -189,7 +191,8 @@ def create_private_staging(codex_home: Path, directory_fd: int) -> tuple[int, st
         handle = create_file(
             str(staging_path),
             0x40000000 | 0x00010000,  # GENERIC_WRITE | DELETE
-            0x00000001,  # FILE_SHARE_READ; nobody else may write or delete it
+            0,  # FILE_SHARE_NONE: while content is written, no other handle can be opened
+            #            to the staging entry, so it cannot be hard-linked or read either.
             None,
             1,  # CREATE_NEW
             0x00000080 | 0x00200000,  # NORMAL | OPEN_REPARSE_POINT
