@@ -136,7 +136,12 @@ describe('U03 step 2 — render_v3 truth contracts mounted on the production tre
     }
     render(<Harness />)
 
-    await waitFor(() => expect(screen.getAllByText('LIVE').length).toBeGreaterThanOrEqual(1))
+    // The first LIVE claim has to clear the subscription before the test can fail the transport, so it
+    // waits on rendering. Measured 2026-07-12: with the default 1s patience this assertion failed under
+    // full-suite load (63 files, vitest reporting ~348s of environment time) while passing standalone --
+    // a timing artefact, not a truth-contract failure. The OFFLINE wait below already names 2000ms;
+    // this one now states the same budget instead of relying on the default.
+    await waitFor(() => expect(screen.getAllByText('LIVE').length).toBeGreaterThanOrEqual(1), { timeout: 2000 })
     expect(screen.getByText('覆盖 3/4')).toBeTruthy()
     expect(screen.getByText('2')).toBeTruthy() // the retained project count is real data
 

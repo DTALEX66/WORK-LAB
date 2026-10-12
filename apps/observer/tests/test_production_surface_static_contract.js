@@ -240,8 +240,14 @@ function run() {
     // collectors is absent-only by the same rule: composition_root._collector_delivery_rows returns None when
     // the health table cannot be read (its `except` branch exists precisely so an unreadable source is not
     // reported as "no collectors"), and snapshot_api.py:121 spreads the key only when it is not None.
+    // operationProgress / isolatedTrials (WUI-21, 2026-07-12) are absent-only for a different reason: they
+    // carry the worklab/operation-progress/v1 and worklab/isolated-trial/v1 contracts verbatim, and the
+    // producer omits the whole section when it could not read its source. An empty array there would claim
+    // "the section was read and it is empty" -- the false negative the WUI-19 audit turned up -- so the key
+    // is optional in the type AND omitted from the spread when its source was unreadable.
     const OPTIONAL = ["software", "taskRecords", "adapterCapabilities",
-                      "artifactHandles", "artifactHandlesSummary", "collectors"];
+                      "artifactHandles", "artifactHandlesSummary", "collectors",
+                      "operationProgress", "isolatedTrials"];
     const optional = declared.filter((d) => d.optional).map((d) => d.name).sort();
     assert(JSON.stringify(optional) === JSON.stringify([...OPTIONAL].sort()),
       "optional keys must be exactly " + OPTIONAL.join("/") + ", got " + (optional.join(", ") || "none"));
