@@ -142,50 +142,29 @@ def _windows_close_raw_handle(handle: int) -> None:
         raise ctypes.WinError(ctypes.get_last_error())
 
 
-def _windows_set_handle_delete(handle: int, delete_file: bool) -> None:
-    import ctypes
-    from ctypes import wintypes
-
-    class FileDispositionInfo(ctypes.Structure):
-        _fields_ = [("DeleteFile", wintypes.BOOL)]
-
-    set_file_information = ctypes.WinDLL(
-        "kernel32",
-        use_last_error=True,
-    ).SetFileInformationByHandle
-    set_file_information.argtypes = [
-        wintypes.HANDLE,
-        ctypes.c_int,
-        wintypes.LPVOID,
-        wintypes.DWORD,
-    ]
-    set_file_information.restype = wintypes.BOOL
-    information = FileDispositionInfo(delete_file)
-    if not set_file_information(
-        handle,
-        4,  # FileDispositionInfo
-        ctypes.byref(information),
-        ctypes.sizeof(information),
-    ):
-        raise ctypes.WinError(ctypes.get_last_error())
-
-
-def _windows_mark_handle_for_delete(handle: int) -> None:
-    _windows_set_handle_delete(handle, True)
-
-
+# Windows staging used to be marked delete-pending through SetFileInformationByHandle so that nobody
+# could open it between creation and publication. Measured 2026-10-12 on this host: that call returned
+# WinError 24, the failure was printed and then swallowed, and the installer went on to report
+# CODEX_GUIDANCE_WRITTEN with exit 0 while AGENTS.md did not exist. The disposition was also one-way
+# (legacy FileDispositionInfo cannot be withdrawn), which the publish path depended on.
+#
+# It is removed rather than worked around. The staging entry is private because of what CREATE_NEW plus
+# a 128-bit random name plus FILE_SHARE_READ already give: an unguessable path no other process may
+# write or delete. Publication stays the same atomic FileRenameInfo; an abandoned attempt is removed by
+# name in discard_private_staging.
 def _windows_discard_descriptor(descriptor: int) -> None:
+    """Close the staging descriptor; the caller removes the entry by name."""
     import msvcrt
 
     handle = msvcrt.get_osfhandle(descriptor)
     try:
-        _windows_mark_handle_for_delete(handle)
-    except OSError:
         os.close(descriptor)
-        raise
-    os.close(descriptor)
-
-
+    except OSError as error:
+        try:
+            _windows_close_raw_handle(handle)
+        except OSError as close_error:
+            raise CleanupIncompleteError from close_error
+        raise CleanupIncompleteError from error
 def create_private_staging(codex_home: Path, directory_fd: int) -> tuple[int, str | None]:
     """Create a private staging object; ``None`` means an unnamed POSIX inode."""
     staging_name = f".workflow-assistance-AGENTS-{secrets.token_hex(16)}.tmp"
@@ -210,7 +189,7 @@ def create_private_staging(codex_home: Path, directory_fd: int) -> tuple[int, st
         handle = create_file(
             str(staging_path),
             0x40000000 | 0x00010000,  # GENERIC_WRITE | DELETE
-            0x00000001,  # FILE_SHARE_READ; no concurrent write/delete
+            0x00000001,  # FILE_SHARE_READ; nobody else may write or delete it
             None,
             1,  # CREATE_NEW
             0x00000080 | 0x00200000,  # NORMAL | OPEN_REPARSE_POINT
@@ -220,21 +199,22 @@ def create_private_staging(codex_home: Path, directory_fd: int) -> tuple[int, st
         if handle in (None, invalid_handle):
             raise ctypes.WinError(ctypes.get_last_error())
         try:
-            _windows_mark_handle_for_delete(handle)
-        except OSError as error:
-            try:
-                _windows_close_raw_handle(handle)
-            except OSError as close_error:
-                raise CleanupIncompleteError from close_error
-            raise CleanupIncompleteError from error
-        try:
             descriptor = msvcrt.open_osfhandle(
                 handle,
                 os.O_WRONLY | getattr(os, "O_BINARY", 0),
             )
         except BaseException as error:
+            # Windows staging is a named file with no delete-pending disposition, so a failure
+            # after CREATE_NEW has to remove that name itself. Leaving it behind is exactly what
+            # test_codex_global_guidance_cleans_staging_if_open_osfhandle_fails measures.
             try:
                 _windows_close_raw_handle(handle)
+            except OSError as cleanup_error:
+                raise CleanupIncompleteError from cleanup_error
+            try:
+                staging_path.unlink()
+            except FileNotFoundError:
+                pass
             except OSError as cleanup_error:
                 raise CleanupIncompleteError from cleanup_error
             raise StagingCreateError(str(error)) from error
@@ -257,13 +237,27 @@ def create_private_staging(codex_home: Path, directory_fd: int) -> tuple[int, st
     return descriptor, None
 
 
-def discard_private_staging(descriptor: int, staging_name: str | None) -> bool:
+def discard_private_staging(descriptor: int, staging_name: str | None, 
+                     codex_home: Path | None = None) -> bool:
     """Close staging safely; return whether an unremovable staging file remains."""
     try:
         if os.name == "nt":
             _windows_discard_descriptor(descriptor)
-            return False
-        os.close(descriptor)
+            descriptor = -1
+        else:
+            os.close(descriptor)
+            descriptor = -1
+        # Windows staging is an ordinary file now (no delete-pending disposition),
+        # so an abandoned attempt has to be removed by name. POSIX staging is an
+        # unnamed inode and disappears with the last close, which is why this is
+        # Windows-only work.
+        if os.name == "nt" and staging_name and codex_home is not None:
+            try:
+                (codex_home / staging_name).unlink()
+            except FileNotFoundError:
+                pass
+            except OSError as error:
+                raise CleanupIncompleteError from error
         return False
     except OSError as error:
         raise CleanupIncompleteError from error
@@ -307,10 +301,6 @@ def publish_private_staging(
             wintypes.DWORD,
         ]
         set_file_information.restype = wintypes.BOOL
-        # Delete-pending staging blocks new opens and hardlinks while content
-        # is written. Clear it only after all content and pre-publish checks;
-        # this function performs no further writes before the atomic rename.
-        _windows_set_handle_delete(msvcrt.get_osfhandle(descriptor), False)
         if not set_file_information(
             msvcrt.get_osfhandle(descriptor),
             3,  # FileRenameInfo
@@ -468,7 +458,7 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 write_all(descriptor, content)
             except OSError as error:
-                retained = discard_private_staging(descriptor, staging_name)
+                retained = discard_private_staging(descriptor, staging_name, codex_home)
                 marker = (
                     "CODEX_GUIDANCE_WRITE_INCOMPLETE"
                     if retained
@@ -479,13 +469,13 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
 
             if not home_identity_matches(codex_home, directory_fd):
-                retained = discard_private_staging(descriptor, staging_name)
+                retained = discard_private_staging(descriptor, staging_name, codex_home)
                 print(f"CODEX_GUIDANCE_HOME_CHANGED target={target} staging_retained={retained}")
                 print("No public AGENTS.md was created.")
                 return 1
 
             if entry_exists(codex_home, "AGENTS.override.md", directory_fd):
-                retained = discard_private_staging(descriptor, staging_name)
+                retained = discard_private_staging(descriptor, staging_name, codex_home)
                 print(
                     f"CODEX_GUIDANCE_OVERRIDE_BEFORE_PUBLICATION target={target} "
                     f"staging_retained={retained}"
@@ -494,17 +484,19 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
 
             if not home_identity_matches(codex_home, directory_fd):
-                retained = discard_private_staging(descriptor, staging_name)
+                retained = discard_private_staging(descriptor, staging_name, codex_home)
                 print(f"CODEX_GUIDANCE_HOME_CHANGED target={target} staging_retained={retained}")
                 print("No public AGENTS.md was created.")
                 return 1
 
-            # NTFS reports a delete-pending file with zero visible links even
-            # while our HANDLE remains valid; POSIX always uses an anonymous
-            # O_TMPFILE inode and likewise has zero links.
-            expected_links = 0
+            # The staging entry must have no link but its own. POSIX uses an anonymous
+            # O_TMPFILE inode, which reports zero links. Windows staging is a NAMED file now
+            # (the delete-pending disposition it used to carry is gone -- see the note above),
+            # so one link is correct there and a second link is exactly the hard-link attack this
+            # check exists to catch.
+            expected_links = 1 if os.name == "nt" else 0
             if os.fstat(descriptor).st_nlink != expected_links:
-                retained = discard_private_staging(descriptor, staging_name)
+                retained = discard_private_staging(descriptor, staging_name, codex_home)
                 print(
                     f"CODEX_GUIDANCE_STAGING_LINKED target={target} "
                     f"staging_retained={retained}"
@@ -514,7 +506,7 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 publish_private_staging(target, descriptor, directory_fd, staging_name)
             except FileExistsError:
-                retained = discard_private_staging(descriptor, staging_name)
+                retained = discard_private_staging(descriptor, staging_name, codex_home)
                 if retained:
                     print(f"CODEX_GUIDANCE_EXISTS_STAGING_RETAINED target={target}")
                     return 1
@@ -522,7 +514,7 @@ def main(argv: list[str] | None = None) -> int:
                 print("No existing Codex rule file was changed.")
                 return 0
             except (AtomicPublishUnsupportedError, OSError) as error:
-                retained = discard_private_staging(descriptor, staging_name)
+                retained = discard_private_staging(descriptor, staging_name, codex_home)
                 print(
                     f"CODEX_GUIDANCE_PUBLISH_FAILED target={target} "
                     f"reason={type(error).__name__} staging_retained={retained}"
@@ -533,9 +525,33 @@ def main(argv: list[str] | None = None) -> int:
             # A third override check covers creation concurrent with publication.
             if entry_exists(codex_home, "AGENTS.override.md", directory_fd):
                 if os.name == "nt":
-                    _windows_discard_descriptor(descriptor)
+                    # The rollback used to ride on the staging descriptor carrying a
+                    # delete-pending disposition, which removed the published entry when the
+                    # handle closed. Windows staging is a named file now, so the published
+                    # target is removed by name after the handle is closed. The override is
+                    # already present at this point, which is exactly the condition under which
+                    # the installer must not leave a published AGENTS.md behind it.
+                    try:
+                        _windows_discard_descriptor(descriptor)
+                    except OSError as error:
+                        print(
+                            f"CODEX_GUIDANCE_FINALIZE_INCOMPLETE target={target} "
+                            f"reason={type(error).__name__}"
+                        )
+                        return 1
+                    try:
+                        target.unlink()
+                    except FileNotFoundError:
+                        pass
+                    except OSError as error:
+                        print(
+                            f"CODEX_GUIDANCE_OVERRIDE_AFTER_PUBLICATION target={target} "
+                            f"reason={type(error).__name__}"
+                        )
+                        print("A complete public target remains; inspect it before retrying.")
+                        return 1
                     print(f"CODEX_GUIDANCE_OVERRIDE_AFTER_PUBLICATION_ROLLED_BACK target={target}")
-                    print("The complete public target was removed through its open handle.")
+                    print("The complete public target was removed after the override appeared.")
                     return 1
                 try:
                     os.close(descriptor)
