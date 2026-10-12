@@ -49,7 +49,7 @@ function mkProject(over: Partial<Project> = {}): Project {
     attentionState: 'NONE', activeExecutionCount: 0, workingAreas: [],
     visibility: 'UNKNOWN', quality: 'UNKNOWN', lastStrongEvidenceAt: null,
     repositories: [],
-    git: { localSha: null, remoteSha: null, matchState: 'NO_LOCAL_CLAIM', branch: null, dirtyCount: null, observedAt: null, quality: null, freshness: null, sourceRef: null },
+    git: { localSha: null, remoteSha: null, matchState: 'NO_LOCAL_CLAIM', branch: null, dirtyCount: null, observedAt: null, quality: null, freshness: null, sourceRef: null, sourceProjectId: null },
     token: { inputTokens: null, outputTokens: null, totalTokens: null, costQuality: 'UNKNOWN' },
     ci: [], executionIds: [], sourceRefs: [],
     ...over,

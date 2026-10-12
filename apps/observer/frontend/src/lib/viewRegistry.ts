@@ -14,6 +14,8 @@ import {
   Workflow, Network, GitBranch, FileSearch, FolderOpen,
   // WUI-05/06/07/09 destination lanes
   Layers, BarChart3, Boxes, SlidersHorizontal,
+  // WUI-21: the three isolated-trial surfaces
+  FlaskConical, ShieldAlert, RotateCcw,
 } from 'lucide-react'
 import {
   AgentsView, ExecutionsView, ModelsView, MemoryView, ToolsView,
@@ -39,6 +41,8 @@ import { WorkView } from '@/views/WorkView'
 // REQ-RANGE-20261007: the evidence slice lane — three columns per artifact (identity / slice / verdict),
 // reading the sidecar's typed `worklab/evidence-range-result/v1` body instead of an opaque reference.
 import { EvidenceView } from '@/views/EvidenceView'
+// WUI-21: one component, three lanes — 方案 / 失败 / 读回.
+import { TrialPlanView, TrialFailureView, TrialReadbackView } from '@/views/IsolatedTrialView'
 // UI_VIEWS (20260921): five L7-aligned governance lanes (honest projections).
 import { RulesPolicyView } from '@/views/RulesPolicyView'
 import { AuditTrailView } from '@/views/AuditTrailView'
@@ -77,6 +81,8 @@ export interface ViewEntry {
     | 'usage' | 'environment' | 'capabilities' | 'rules-adaptation'
     // WUI-12 (20261009): privacy and the collection lifecycle
     | 'privacy'
+    // WUI-21 (20261012): isolated trial — 方案 / 失败 / 读回
+    | 'trial-plan' | 'trial-failure' | 'trial-readback'
 }
 
 // TaskPack U04 lanes: Overview, Projects, Agents, Executions, Models/Usage,
@@ -142,6 +148,11 @@ export const VIEW_REGISTRY: ViewEntry[] = [
   // REQ-RANGE-20261007: the evidence lane rides the same registry so the per-lane truth sweeps cover it
   // the moment it exists — a lane that only its own test file can reach is the lane that regresses.
   { id: 'evidence',          label: '证据区间', icon: FileSearch,  component: EvidenceView,          lane: 'evidence' },
+  // WUI-21: the isolated-trial surfaces — 方案 / 失败 / 读回 — registered as three lanes over ONE
+  // component rather than three files, so a future change to the read model cannot land in two of them.
+  { id: 'trial-plan',        label: '试用方案', icon: FlaskConical, component: TrialPlanView,     lane: 'trial-plan' },
+  { id: 'trial-failure',     label: '试用失败', icon: ShieldAlert,  component: TrialFailureView,  lane: 'trial-failure' },
+  { id: 'trial-readback',    label: '试用读回', icon: RotateCcw,    component: TrialReadbackView, lane: 'trial-readback' },
 ]
 
 export const VIEW_BY_ID: Record<string, ViewEntry> = Object.fromEntries(

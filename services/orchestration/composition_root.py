@@ -333,12 +333,20 @@ def _usage_rows(store: CanonicalStore) -> list[dict[str, Any]]:
 
 
 def _ci_rows(store: CanonicalStore) -> list[dict[str, Any]]:
-    """ci_runs 行 → v3 ci projection。"""
+    """ci_runs 行 → v3 ci projection。
+
+    WL-L02 (2026-10-11): ``projectId`` used to be dropped here. Downstream, snapshot_api filters
+    per-project with ``[r for r in ci_runs if r.get("projectId") == project_id]``, so a dropped key made
+    the predicate false for every row and every project's ``ci`` list came out empty — which a reader
+    takes as "this project has no CI", not as "the predicate never held". The column exists in the store
+    (``ci_runs.project_id``), so the fix is to carry it.
+    """
     runs: list[dict[str, Any]] = []
     for row in store.list_ci_runs():
         runs.append(
             {
                 "runId": row.get("run_id"),
+                "projectId": row.get("project_id"),
                 "workflow": row.get("workflow"),
                 "headSha": row.get("head_sha"),
                 "status": row.get("status"),
@@ -468,8 +476,69 @@ def _git_states(store: CanonicalStore) -> dict[str, dict[str, Any]]:
 
 
 def _git_state(store: CanonicalStore) -> dict[str, Any] | None:
-    """Backward-compatible single-project helper (WORK-LAB only)."""
-    return _git_states(store).get("work-lab") or next(iter(_git_states(store).values()), None)
+    """Backward-compatible single-project helper (WORK-LAB only).
+
+    WL-L01 (2026-10-11): the second half of the old ``or next(iter(...))`` returned *some* other
+    approved project's Git observation and the caller published it under WORK-LAB's name at the top
+    level of the snapshot. WORK-LAB either has its own observation or the answer is None — the
+    top-level "git" block then reads as nulls/NO_LOCAL_CLAIM, which is unknown, not someone else's.
+    """
+    return _git_states(store).get("work-lab")
+
+
+def _task_ledger_read_models(
+    store: CanonicalStore,
+    *,
+    transport_state: str | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """WUI-21: the isolated-trial read models, built from the real Task Ledger or honestly absent.
+
+    The ledger lives in a project-local file (`<project>/.hermes/task-runtime/task-ledger/ledger.json`).
+    If it is not there, this returns two lists whose every item answers UNKNOWN / NO_PRODUCER — it does
+    NOT create an empty ledger to make the section look populated, and it does not omit the sections
+    either: an absent key would read as "the producer was never wired", which is a different claim.
+    """
+    from pathlib import Path
+
+    from operation_progress import build_isolated_trial, build_operation_progress
+    from task_ledger import TaskLedger
+
+    # The ledger path is the one the ledger's own CLI documents (task_ledger.py:585), not a guessed one.
+    repo_root = Path(__file__).resolve().parents[2]
+    ledger_dir = repo_root / ".hermes" / "task-runtime" / "task-ledger"
+    ledger_path = ledger_dir if (ledger_dir / "ledger.json").is_file() else None
+
+    class _Unreadable:
+        """A ledger that cannot answer. Every question becomes an UNKNOWN record, not a crash."""
+
+        def get(self, *_a: Any, **_k: Any) -> Any:
+            raise OSError("task ledger is not readable from here")
+
+        def detect_zombie(self, *_a: Any, **_k: Any) -> Any:
+            raise OSError("task ledger is not readable from here")
+
+    try:
+        ledger: Any = TaskLedger(ledger_path) if ledger_path is not None else _Unreadable()
+    except Exception:  # noqa: BLE001
+        ledger = _Unreadable()
+
+    task_ids: list[str] = []
+    try:
+        for row in store.list_tasks():
+            tid = str(row.get("task_id") or "")
+            if tid:
+                task_ids.append(tid)
+    except Exception:  # noqa: BLE001
+        task_ids = []
+
+    # With no ledger there is no task list to answer for; carry one honest placeholder record so the
+    # page can say "本仓没有可核对的账本记录" instead of rendering an empty success panel.
+    if not task_ids:
+        task_ids = ["UNRESOLVED"]
+
+    progress = [build_operation_progress(ledger, tid, transport_state=transport_state) for tid in task_ids]
+    trials = [build_isolated_trial(ledger, tid) for tid in task_ids]
+    return progress, trials
 
 
 def build_v3_snapshot(
@@ -498,6 +567,8 @@ def build_v3_snapshot(
     software_rows = _build_software_projection()
     artifact_handle_rows, artifact_handles_summary, _artifact_handles_reason = (
         _build_artifact_handles_projection())
+    operation_progress_rows, isolated_trial_rows = _task_ledger_read_models(
+        store, transport_state=transport_state)
     return build_snapshot(
         revision=revision,
         generated_at=generated_at,
@@ -516,8 +587,10 @@ def build_v3_snapshot(
             "coverageScope": coverage["scope"],
         },
         # Keep the top-level Git summary for legacy consumers, but pass the
-        # project map so each card is sourced from its own repository.
-        git_state=git_states.get("work-lab") or next(iter(git_states.values()), None),
+        # project map so each card is sourced from its own repository. The summary is WORK-LAB's own
+        # observation or nothing (WL-L01): borrowing another project's row here put a foreign SHA under
+        # our name, and per-project cards now never fall back either.
+        git_state=git_states.get("work-lab"),
         git_map=git_states,
         workspace=workspace_evidence,
         platform_map=platform_map,
@@ -528,6 +601,8 @@ def build_v3_snapshot(
         artifact_handles=artifact_handle_rows,
         artifact_handles_summary=artifact_handles_summary,
         collector_delivery=_collector_delivery_rows(store),
+        operation_progress=operation_progress_rows,
+        isolated_trials=isolated_trial_rows,
     )
 
 

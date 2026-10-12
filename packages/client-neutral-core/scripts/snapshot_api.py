@@ -54,6 +54,8 @@ def build_snapshot(
     artifact_handles: list[dict[str, Any]] | None = None,
     artifact_handles_summary: dict[str, Any] | None = None,
     collector_delivery: list[dict[str, Any]] | None = None,
+    operation_progress: list[dict[str, Any]] | None = None,
+    isolated_trials: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Build the v3 snapshot from canonical facts (all fields optional for tests)."""
     generated_at = generated_at or _now()
@@ -119,6 +121,12 @@ def build_snapshot(
         # Per-collector delivery and refusal counts (ERR-256 made them durable). Same absent-never-empty rule
         # as the sections above: the presence of the key is the statement that health was read at all.
         **({"collectors": collector_delivery} if collector_delivery is not None else {}),
+        # WUI-21: the two read models the isolated-trial pages need. Each item is a CONTRACT DOCUMENT
+        # verbatim — `worklab/operation-progress/v1` / `worklab/isolated-trial/v1` — so the shape is owned by
+        # one place (the schema file) instead of being restated here and drifting. Absent stays absent: a
+        # reader must be able to tell "the producer was never wired" from "there is nothing to report".
+        **({"operationProgress": operation_progress} if operation_progress is not None else {}),
+        **({"isolatedTrials": isolated_trials} if isolated_trials is not None else {}),
     }
 
 
@@ -229,8 +237,19 @@ def _project_projection(
     git_map: dict[str, dict[str, Any]] | None = None,
     agent_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
+    # ``git_state`` is the top-level legacy single-project summary (see build_snapshot's "git" block).
+    # It is deliberately NOT consumed here: reading it as a per-project fallback was WL-L01, which put
+    # one repository's SHA under another project's name whenever that project had no Git row of its own.
+    del git_state  # documented non-use, not a forgotten argument
     project_id = project.get("projectId")
-    effective_git = (git_map or {}).get(project_id) or git_state
+    # WL-L01 (2026-10-11): this line used to read ``(git_map or {}).get(project_id) or git_state``.
+    # The ``or git_state`` half meant a project with no Git observation of its own was printed with
+    # somebody else's SHA/branch — and composition_root built that fallback with
+    # ``next(iter(git_states.values()))``, so the borrower was whichever project happened to be first.
+    # A missing observation is now UNKNOWN, and ``sourceProjectId`` names whose observation a row is
+    # showing (null = nobody's), so a reader can tell "this project has no Git row" from "Git says X".
+    effective_git = (git_map or {}).get(project_id)
+    git_source_project_id = project_id if effective_git is not None else None
     project_executions = [e for e in executions if e.get("anchorProjectId") == project_id]
     active = sum(
         1 for e in project_executions if e.get("state") in {"RUNNING", "STARTING", "WAITING_USER", "WAITING_APPROVAL", "BLOCKED"}
@@ -277,6 +296,10 @@ def _project_projection(
             "quality": (effective_git or {}).get("quality"),
             "freshness": (effective_git or {}).get("freshness"),
             "sourceRef": (effective_git or {}).get("sourceRef"),
+            # Whose Git observation these values are. Equal to this row's projectId for an own
+            # observation, null when this project has none — never another project's id, because
+            # borrowing one was WL-L01.
+            "sourceProjectId": git_source_project_id,
         },
         "token": {
             "inputTokens": usage.get("inputTokens"),
@@ -325,6 +348,27 @@ def _governance_projection(governance: dict[str, Any] | None) -> dict[str, Any]:
     return {"state": governance.get("state") or "UNKNOWN", "families": families}
 
 
+def _merge_cost_quality(qualities: list[Any]) -> str:
+    """One precision rule, used by both the per-project rollup and the global token summary.
+
+    WL-L03 (2026-10-11): the rollup used to promote a project to EXACT as soon as *one* sample said
+    EXACT, while the summary over the very same samples demanded *all* of them. The same data therefore
+    read EXACT on the project card and ESTIMATED in the total, and the optimistic one was the one shown
+    per project. Sharing this predicate (not the token lists — they are different aggregations) is what
+    keeps the two surfaces from disagreeing again.
+
+    Empty input is UNKNOWN, never EXACT: ``all([])`` is True, and "no samples declared a precision" is
+    not the same claim as "every sample was exact".
+    """
+    if not qualities:
+        return "UNKNOWN"
+    if all(q == "EXACT" for q in qualities):
+        return "EXACT"
+    if any(q == "ESTIMATED" for q in qualities):
+        return "ESTIMATED"
+    return "UNKNOWN"
+
+
 def _rollup_usage(usage: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     rolled: dict[str, dict[str, Any]] = {}
     for sample in usage:
@@ -334,11 +378,9 @@ def _rollup_usage(usage: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
             value = sample.get(field)
             if isinstance(value, int) and not isinstance(value, bool):
                 entry[field] = (entry[field] or 0) + value
-        quality = sample.get("costQuality")
-        if quality == "EXACT":
-            entry["costQuality"] = "EXACT"
-        elif quality == "ESTIMATED" and entry["costQuality"] != "EXACT":
-            entry["costQuality"] = "ESTIMATED"
+        entry["_qualities"] = (entry.get("_qualities") or []) + [sample.get("costQuality")]
+    for entry in rolled.values():
+        entry["costQuality"] = _merge_cost_quality(entry.pop("_qualities"))
     return rolled
 
 
@@ -356,13 +398,8 @@ def _token_summary(usage: list[dict[str, Any]]) -> dict[str, Any]:
         values = [u.get(field) for u in usage if isinstance(u.get(field), int) and not isinstance(u.get(field), bool)]
         return sum(values) if values else None
 
-    qualities = [u.get("costQuality") for u in usage]
-    if all(q == "EXACT" for q in qualities):
-        cost_quality = "EXACT"
-    elif any(q == "ESTIMATED" for q in qualities):
-        cost_quality = "ESTIMATED"
-    else:
-        cost_quality = "UNKNOWN"
+    # Same predicate as the per-project rollup (WL-L03); an empty usage list is answered above.
+    cost_quality = _merge_cost_quality([u.get("costQuality") for u in usage])
     return {
         "inputTokens": _sum("inputTokens"),
         "outputTokens": _sum("outputTokens"),

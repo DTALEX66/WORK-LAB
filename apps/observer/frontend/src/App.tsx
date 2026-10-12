@@ -442,6 +442,7 @@ export default function App() {
             snap={snap}
             source={source}
             live={live}
+            error={error}
             theme={theme}
             layout={layout}
             onCycleTheme={toggleTheme}
@@ -487,6 +488,7 @@ export default function App() {
           snap={snap}
           source={source}
           live={live}
+          error={error}
           theme={theme}
           layout={layout}
           onCycleTheme={toggleTheme}

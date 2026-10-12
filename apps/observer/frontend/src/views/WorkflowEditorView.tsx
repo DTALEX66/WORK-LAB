@@ -24,6 +24,24 @@ interface EditorModel {
   edges: FlowEdge[]
 }
 
+// WL-L04 (2026-10-11): the header used to print 「已自动保存」 unconditionally while the write itself
+// sat in `try { setItem(...) } catch { /* quota — non-fatal */ }`. The claim was therefore made by the
+// code path, not by the write: a quota error, a disabled storage setting or a private-mode throw all
+// still produced "saved". The claim now comes from the write's own result, and a failed write says so.
+export type PersistOutcome = {
+  status: 'SAVED' | 'NOT_SAVED'
+  reason: string | null
+}
+
+export function writeModel(model: EditorModel): PersistOutcome {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(model))
+    return { status: 'SAVED', reason: null }
+  } catch (err) {
+    return { status: 'NOT_SAVED', reason: err instanceof Error ? err.message : String(err) }
+  }
+}
+
 function loadModel(): EditorModel {
   try {
     const raw = localStorage.getItem(LS_KEY)
@@ -50,14 +68,17 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
   void snap
   const [model, setModel] = React.useState<EditorModel>(loadModel)
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
+  const [persist, setPersist] = React.useState<PersistOutcome | null>(null)
   const selected = model.nodes.find((n) => n.id === selectedId) ?? null
 
   const setNodes = (nodes: FlowNode[]) => setModel((m) => ({ ...m, nodes }))
   const setEdges = (edges: FlowEdge[]) => setModel((m) => ({ ...m, edges }))
 
+  // Null before the first write result is known: "not claimed yet" is not the same as "saved".
   React.useEffect(() => {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(model)) } catch { /* quota — non-fatal */ }
+    setPersist(writeModel(model))
   }, [model])
+  const retrySave = () => setPersist(writeModel(model))
 
   const addNode = (kind: NodeKind) => {
     const id = `n-${Date.now().toString(36)}`
@@ -79,12 +100,21 @@ export function WorkflowEditorView({ snap }: { snap: unknown }) {
         title="Workflow Editor / 工作流编辑器"
         description="交互式节点画布：拖动 / 缩放 / 平移 / 选择 / 连线 / 删除。本地编辑模型（localStorage 持久化）；发布与运行在真实 workflow-schema 契约接入前保持禁用。"
         actions={
-          <Tooltip text="本地编辑已自动持久化">
-            {/* This had no onClick: a button that looks pressable and does
-                nothing is exactly the fake affordance the read-only rule is
-                about, so it is a status label instead. */}
-            <span className="tag info" role="status">已自动保存</span>
-          </Tooltip>
+          /* WL-L04: what the header claims is decided by the write result above, not by this render. */
+          persist?.status === 'SAVED' ? (
+            <Tooltip text="本地编辑已自动持久化">
+              {/* This had no onClick: a button that looks pressable and does
+                  nothing is exactly the fake affordance the read-only rule is
+                  about, so it is a status label instead. */}
+              <span className="tag info" role="status" data-persist-state="SAVED">已自动保存</span>
+            </Tooltip>
+          ) : persist?.status === 'NOT_SAVED' ? (
+            <div className="flex items-center gap-2" role="status" data-persist-state="NOT_SAVED">
+              <span className="tag bad">未保存</span>
+              <Button size="sm" onClick={retrySave} data-persist-retry>重试保存</Button>
+              {persist.reason ? <span className="text-[12px] text-muted">{persist.reason}</span> : null}
+            </div>
+          ) : null
         }
       />
 

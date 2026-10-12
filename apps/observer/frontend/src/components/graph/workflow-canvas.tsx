@@ -89,6 +89,11 @@ export function WorkflowCanvas({
   const [pan, setPan] = React.useState({ x: 0, y: 0 })
   const [dragId, setDragId] = React.useState<string | null>(null)
   const [connecting, setConnecting] = React.useState<{ from: string; x: number; y: number } | null>(null)
+  // W02: the live gesture, mirrored in a ref. `onPointerUp` is attached to the handle, to the node and to
+  // the canvas, so one release bubbles through all three; with state alone the gesture was still "open" at
+  // the second and third handler (React batches the clear), and one drag produced three identical edges.
+  // The ref is read and cleared synchronously, so a gesture resolves exactly once.
+  const connectingRef = React.useRef<{ from: string; x: number; y: number } | null>(null)
   const canvasRef = React.useRef<HTMLDivElement>(null)
   const [canvasSize, setCanvasSize] = React.useState({ w: 800, h: 520 })
   void canvasSize
@@ -109,62 +114,111 @@ export function WorkflowCanvas({
     return m
   }, [nodes])
 
+  /**
+   * W02: client pixel -> model coordinate. The old expression dropped `pan`, so every drag and every
+   * connection was resolved against a canvas origin that was only correct while pan was {0,0} — drag a
+   * node, press 适应画布, drag again and the node jumps. Both the rect origin and the pan are subtracted
+   * before the zoom division, and this is the ONLY place that conversion is written.
+   */
+  const toModel = (clientX: number, clientY: number) => {
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const rect = canvas.getBoundingClientRect()
+    return { x: (clientX - rect.left - pan.x) / zoom, y: (clientY - rect.top - pan.y) / zoom }
+  }
+
+  /**
+   * W02: the drop target is resolved in model space, not by `document.elementFromPoint`.
+   * The screen point the old code handed to elementFromPoint was built from `offsetLeft/offsetTop`
+   * (offset-parent relative) while the drag coordinates came from `getBoundingClientRect`
+   * (viewport relative), so the two never agreed; it also needs a laid-out DOM, which a jsdom
+   * measurement has none of. The node rects are the model, so ask the model.
+   */
+  const nodeAt = (x: number, y: number): FlowNode | undefined => {
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const n = nodes[i]
+      if (x >= n.x && x <= n.x + NODE_W && y >= n.y && y <= n.y + NODE_H) return n
+    }
+    return undefined
+  }
+
   // ---- node dragging (pointer) ----
   const onPointerMove = (e: React.PointerEvent) => {
     if (!dragId && !connecting) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const px = (e.clientX - rect.left) / zoom
-    const py = (e.clientY - rect.top) / zoom
+    const point = toModel(e.clientX, e.clientY)
+    if (!point) return
+    const px = point.x
+    const py = point.y
     if (dragId) {
       onNodesChange(nodes.map((n) => (n.id === dragId ? { ...n, x: px - NODE_W / 2, y: py - NODE_H / 2 } : n)))
     } else if (connecting) {
-      setConnecting({ ...connecting, x: px, y: py })
+      const next = { ...connecting, x: px, y: py }
+      connectingRef.current = next
+      setConnecting(next)
     }
   }
 
   const onPointerUp = () => {
-    if (connecting && canvasRef.current) {
-      // drop on a node completes a connection
-      const canvas = canvasRef.current
-      const el = document.elementFromPoint(
-        (connecting.x * zoom + pan.x) + canvas.offsetLeft,
-        (connecting.y * zoom + pan.y) + canvas.offsetTop,
-      )
-      const target = el?.closest?.('[data-node-id]') as HTMLElement | null
-      if (target) {
-        const tid = target.dataset.nodeId
-        if (tid && tid !== connecting.from) {
-          onEdgesChange([...edges, { id: `e-${connecting.from}-${tid}`, from: connecting.from, to: tid }])
-        }
+    // Read-and-clear before anything else: this handler runs once per bubbling level.
+    const active = connectingRef.current
+    connectingRef.current = null
+    if (active) {
+      // drop on a node completes a connection (model-space hit test — see nodeAt)
+      const target = nodeAt(active.x, active.y)
+      if (target && target.id !== active.from) {
+        onEdgesChange([...edges, { id: `e-${active.from}-${target.id}`, from: active.from, to: target.id }])
       }
       setConnecting(null)
     }
     setDragId(null)
   }
 
+  /**
+   * W02: `setPointerCapture` is an optimisation (it keeps moves coming to the element that started the
+   * gesture), not a precondition. Calling it with an id the browser does not consider active throws
+   * NotFoundError — "No active pointer with the given id" — which was the audit's measured symptom, and
+   * an unguarded throw here aborts the whole gesture before any state is set. A failed capture must
+   * never break the drag.
+   */
+  const capturePointer = (e: React.PointerEvent) => {
+    try {
+      (e.currentTarget as Element).setPointerCapture?.(e.pointerId)
+    } catch {
+      /* no active pointer to capture: the gesture still works through bubbling */
+    }
+  }
+
   const startDrag = (e: React.PointerEvent, id: string) => {
     e.stopPropagation()
-    ;(e.target as Element).setPointerCapture?.(e.pointerId)
+    capturePointer(e)
     setDragId(id)
     onSelect?.(id)
   }
 
+  /**
+   * W02: this used to be wired to `onClick` and cast to a PointerEvent. A click carries no pointerId, so
+   * `setPointerCapture(undefined)` threw "No active pointer with the given id" and — worse — the click
+   * fires only AFTER the press is released, so there was never a pointer *session* to drag inside.
+   * Connecting now starts on pointerdown, where a real pointer id exists.
+   */
   const startConnect = (e: React.PointerEvent, from: string) => {
     e.stopPropagation()
-    ;(e.target as Element).setPointerCapture?.(e.pointerId)
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    setConnecting({ from, x: (e.clientX - rect.left) / zoom, y: (e.clientY - rect.top) / zoom })
+    capturePointer(e)
+    const point = toModel(e.clientX, e.clientY)
+    if (!point) return
+    const next = { from, x: point.x, y: point.y }
+    connectingRef.current = next
+    setConnecting(next)
   }
 
   // ---- pan (background drag) ----
   const panStart = React.useRef<{ x: number; y: number; panX: number; panY: number } | null>(null)
   const onBgPointerDown = (e: React.PointerEvent) => {
-    if (e.target !== canvasRef.current) return
-    ;(e.target as Element).setPointerCapture?.(e.pointerId)
+    // W02: the old guard was `e.target !== canvasRef.current`, but a full-size content layer
+    // (.absolute.inset-0) sits over the canvas, so the background was never the event target and
+    // panning could never start. Background is now "anything that is not a node".
+    if ((e.target as Element)?.closest?.('[data-node-id]')) return
+    capturePointer(e)
     panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y }
   }
   const onBgPointerMove = (e: React.PointerEvent) => {
@@ -208,7 +262,9 @@ export function WorkflowCanvas({
         </div>
         <div className="ml-auto flex items-center gap-2">
           <button type="button" className="ghost-btn" onClick={() => setZoom((z) => Math.max(0.4, z - 0.1))} aria-label="缩小"><ZoomOut size={14} /></button>
-          <button type="button" className="ghost-btn" onClick={() => setZoom(1)} aria-label="适应画布" title="重置缩放与平移"><Maximize size={14} /></button>
+          {/* W02: 适应画布 used to reset zoom only, so a panned canvas stayed panned and the button
+              lied about what it had adapted. Both axes of the view transform are reset. */}
+          <button type="button" className="ghost-btn" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }) }} aria-label="适应画布" title="重置缩放与平移"><Maximize size={14} /></button>
           <button type="button" className="ghost-btn" onClick={() => setZoom((z) => Math.min(2.4, z + 0.1))} aria-label="放大"><ZoomIn size={14} /></button>
           <button type="button" className="ghost-btn" onClick={deleteSelected} disabled={!selectedId} aria-label="删除所选节点" title="删除所选节点"><Trash2 size={14} /></button>
         </div>
@@ -272,8 +328,7 @@ export function WorkflowCanvas({
                   </div>
                   <button
                     type="button"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => { e.stopPropagation(); startConnect(e as unknown as React.PointerEvent, n.id) }}
+                    onPointerDown={(e) => { e.stopPropagation(); startConnect(e, n.id) }}
                     onPointerMove={onPointerMove}
                     onPointerUp={onPointerUp}
                     title="拖出连线"

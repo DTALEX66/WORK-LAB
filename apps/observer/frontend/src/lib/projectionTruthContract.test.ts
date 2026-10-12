@@ -65,7 +65,7 @@ function mkProject(over: Partial<Project> = {}): Project {
     attentionState: 'NONE', activeExecutionCount: 1, workingAreas: ['apps/observer'],
     visibility: 'LOCAL', quality: 'EXACT', lastStrongEvidenceAt: '2026-10-07T08:59:59Z',
     repositories: [],
-    git: { localSha: 'abc1234', remoteSha: 'abc1234', matchState: 'MATCH', branch: 'main', dirtyCount: 0, observedAt: '2026-10-07T09:00:00Z', quality: 'EXACT', freshness: 'FRESH', sourceRef: null },
+    git: { localSha: 'abc1234', remoteSha: 'abc1234', matchState: 'MATCH', branch: 'main', dirtyCount: 0, observedAt: '2026-10-07T09:00:00Z', quality: 'EXACT', freshness: 'FRESH', sourceRef: null, sourceProjectId: 'work-lab' },
     token: mkToken({ inputTokens: 64391, outputTokens: 26821, totalTokens: 91212, costQuality: 'ESTIMATED' }),
     ci: [], executionIds: ['e1'], sourceRefs: [],
     ...over,

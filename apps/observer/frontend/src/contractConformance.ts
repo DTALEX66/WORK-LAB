@@ -30,6 +30,11 @@ export const GENERATED_CONTRACT_MODULE = 'packages/client-neutral-core/generated
  * test compares this list against the generated text, so adding a richer front type here without the schema
  * gaining the fields is impossible.
  */
+// WUI-21 (20261012): the isolated-trial sections. `isolation` is a deliberately free-form object in the
+// contract, so the generator collapses it and it is exempted here. The three separated stages are NOT
+// on this list: they were first declared through $defs, the generator cannot follow a $ref and emitted
+// `unknown` for every stage, and the honest fix was to inline the stage shape in the schema so the
+// projection names it. Four exemptions became one.
 export const GENERATED_COLLAPSED_PATHS = [
   'governance.families',
   'workspace',
@@ -38,6 +43,7 @@ export const GENERATED_COLLAPSED_PATHS = [
   'projects[].repositories',
   'projects[].ci',
   'artifactHandlesSummary.refused',
+  'isolatedTrials[].isolation',
 ] as const
 
 export type CollapsedPath = typeof GENERATED_COLLAPSED_PATHS[number]

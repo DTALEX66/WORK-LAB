@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-11T11:37:41Z",
+  "at": "2026-10-11T22:22:44Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -48,19 +48,19 @@
     "RESOLVES": 148,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
-    "PATH_GONE": 36,
+    "PATH_GONE": 43,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
     "RESOLVES": 181,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
-    "PATH_GONE": 36,
+    "PATH_GONE": 43,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
   "resolvedAfterApply": 181,
-  "records": 265,
-  "stateDigest": "2bd42a6fa3e9e3e0a6a5e1904283d05771e14dc4f911ce32077e005386e0ab91",
+  "records": 272,
+  "stateDigest": "0d209172d78fb4a249440d24e0b08c83a6abc1060f06fddc043f9e7b006e3176",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -412,6 +412,46 @@
       "errorId": "ERR-250",
       "operand": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
       "statusAfter": "BLOCKED"
+    },
+    {
+      "errorId": "ERR-268",
+      "operand": "tests/workflow-assistance/test_snapshot_project_git_ci_and_usage_precision.py",
+      "statusAfter": "PARTIAL"
+    },
+    {
+      "errorId": "ERR-269",
+      "operand": "tests/workflow-assistance/test_snapshot_project_git_ci_and_usage_precision.py",
+      "statusAfter": "PARTIAL"
+    },
+    {
+      "errorId": "ERR-270",
+      "operand": "tests/workflow-assistance/test_snapshot_project_git_ci_and_usage_precision.py",
+      "statusAfter": "PARTIAL"
+    },
+    {
+      "errorId": "ERR-271",
+      "operand": "apps/observer/frontend/src/workflowEditorPersist.contract.test.tsx",
+      "statusAfter": "PARTIAL"
+    },
+    {
+      "errorId": "ERR-272",
+      "operand": "apps/observer/frontend/src/topbarTransportTruth.contract.test.tsx",
+      "statusAfter": "PARTIAL"
+    },
+    {
+      "errorId": "ERR-273",
+      "operand": "apps/observer/frontend/src/components/graph/workflowCanvas.geometry.test.tsx",
+      "statusAfter": "PARTIAL"
+    },
+    {
+      "errorId": "ERR-274",
+      "operand": "tests/workflow-assistance/test_isolated_trial_snapshot_surface.py",
+      "statusAfter": "PARTIAL"
+    },
+    {
+      "errorId": "ERR-274",
+      "operand": "apps/observer/frontend/src/isolatedTrial.contract.test.tsx",
+      "statusAfter": "PARTIAL"
     }
   ],
   "external": [
@@ -5032,6 +5072,116 @@
       ],
       "state": "RESOLVES",
       "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-268",
+      "statusAfter": "PARTIAL",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_snapshot_project_git_ci_and_usage_precision.py::ProjectGitAttributionTests",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_snapshot_project_git_ci_and_usage_precision.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-269",
+      "statusAfter": "PARTIAL",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_snapshot_project_git_ci_and_usage_precision.py::ProjectCiAttributionTests",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_snapshot_project_git_ci_and_usage_precision.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-270",
+      "statusAfter": "PARTIAL",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_snapshot_project_git_ci_and_usage_precision.py::UsagePrecisionTests",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_snapshot_project_git_ci_and_usage_precision.py",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-271",
+      "statusAfter": "PARTIAL",
+      "hasFixedCommit": false,
+      "command": "apps/observer/frontend/src/workflowEditorPersist.contract.test.tsx",
+      "operands": [
+        {
+          "operand": "apps/observer/frontend/src/workflowEditorPersist.contract.test.tsx",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-272",
+      "statusAfter": "PARTIAL",
+      "hasFixedCommit": false,
+      "command": "apps/observer/frontend/src/topbarTransportTruth.contract.test.tsx",
+      "operands": [
+        {
+          "operand": "apps/observer/frontend/src/topbarTransportTruth.contract.test.tsx",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-273",
+      "statusAfter": "PARTIAL",
+      "hasFixedCommit": false,
+      "command": "apps/observer/frontend/src/components/graph/workflowCanvas.geometry.test.tsx",
+      "operands": [
+        {
+          "operand": "apps/observer/frontend/src/components/graph/workflowCanvas.geometry.test.tsx",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-274",
+      "statusAfter": "PARTIAL",
+      "hasFixedCommit": false,
+      "command": "tests/workflow-assistance/test_isolated_trial_snapshot_surface.py; apps/observer/frontend/src/isolatedTrial.contract.test.tsx",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_isolated_trial_snapshot_surface.py",
+          "category": "GONE",
+          "candidates": []
+        },
+        {
+          "operand": "apps/observer/frontend/src/isolatedTrial.contract.test.tsx",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
     }
   ],
   "notClaimed": [

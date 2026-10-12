@@ -396,6 +396,49 @@ export function frontTransportState(snap: SnapshotV3 | null, live: boolean, erro
   return snap.transport?.transportState ?? 'UNKNOWN'
 }
 
+/**
+ * W01 / task #31 (2026-10-11, source WL-REC-0104): the ONE derivation a badge may print.
+ *
+ * The top bar used to compute its own word as `live ? 'LIVE' : (ts || 'UNKNOWN')`, so a local boolean
+ * outranked the backend's verdict — and a snapshot that says LIVE keeps saying it forever, after the
+ * read path has stopped delivering. Two facts were needed and neither was shown: whether this surface
+ * is still sampling (live/error), and WHEN the payload was sampled (`sourceWatermark`). A payload word
+ * without those is a claim about a connection the browser may no longer have.
+ *
+ * Rules, in order:
+ *  - no snapshot at all            -> UNKNOWN (never a zero, never OFFLINE-by-default)
+ *  - the read path failed          -> OFFLINE (the last payload's own word is not ours to repeat)
+ *  - we are not reading            -> UNVERIFIED (we hold a projection, not a verdict)
+ *  - otherwise                     -> the payload's word
+ *
+ * `samplingStale` is reported separately instead of being folded into the word: transport health and
+ * sampling freshness are two axes, and collapsing them is what made the old sweep unable to construct
+ * "the payload claims LIVE but the sampling has expired".
+ */
+export interface FrontTransportTruth {
+  state: string
+  freshness: string | null
+  /** When the facts were sampled upstream (snapshot.sourceWatermark), not when we rendered them. */
+  watermark: string | null
+  samplingStale: boolean
+}
+
+const FRESHNESS_NOT_FRESH = new Set(['STALE', 'UNKNOWN'])
+
+export function transportTruth(
+  snap: SnapshotV3 | null,
+  live: boolean,
+  error: string | null,
+): FrontTransportTruth {
+  const freshness = snap?.transport?.freshnessState ?? null
+  const watermark = snap?.sourceWatermark ?? null
+  const samplingStale = freshness === null || FRESHNESS_NOT_FRESH.has(freshness)
+  if (!snap) return { state: 'UNKNOWN', freshness, watermark, samplingStale }
+  if (error) return { state: 'OFFLINE', freshness, watermark, samplingStale }
+  if (!live) return { state: 'UNVERIFIED', freshness, watermark, samplingStale }
+  return { state: snap.transport?.transportState ?? 'UNKNOWN', freshness, watermark, samplingStale }
+}
+
 // Per-project token rows (for the token/cost panel; costQuality only, no $).
 export interface ProjectTokenRow {
   projectId: string

@@ -1172,7 +1172,8 @@ export type WorkflowSnapshotV3 = {
     observedAt?: string | null,
     quality?: string | null,
     freshness?: string | null,
-    sourceRef?: string | null
+    sourceRef?: string | null,
+    sourceProjectId?: string | null
   },
     token: {
     inputTokens?: number | null,
@@ -1251,6 +1252,47 @@ export type WorkflowSnapshotV3 = {
     orderingKey: string,
     refused?: Record<string, unknown>
   },
+    operationProgress?: ({
+    schema_version: "worklab/operation-progress/v1",
+    task_id: string | null,
+    observed_at: string,
+    state: string,
+    ledger_status: string | null,
+    last_trusted_progress: {
+    state: string | null,
+    at: string | null,
+    basis: string
+  },
+    transport_state: string | null,
+    producer_gaps: string[],
+    target_behaviour?: Record<string, unknown> | null
+  })[],
+    isolatedTrials?: ({
+    schema_version: "worklab/isolated-trial/v1",
+    trial_id: string | null,
+    parent_task_id: string | null,
+    child_task_id: string | null,
+    observed_at: string,
+    isolation: Record<string, unknown>,
+    separated_results: {
+    write: {
+    status: string,
+    basis: string,
+    note: string
+  },
+    native_readback: {
+    status: string,
+    basis: string,
+    note: string
+  },
+    target_behaviour: {
+    status: string,
+    basis: string,
+    note: string
+  }
+  },
+    producer_gaps: string[]
+  })[],
     collectors?: ({
     collector: string,
     totalRuns: number,

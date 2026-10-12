@@ -3,7 +3,7 @@ import { ActionRow } from '@/components/layout/ActionOverflow'
 import { WindowControls } from '@/components/layout/WindowControls'
 import { THEMES } from '@/theme/tokens'
 import type { SnapshotV3 } from '@/types'
-import type { ThemeMode, LayoutMode, LiveSnapshotState } from '@/lib/api'
+import { transportTruth, type ThemeMode, type LayoutMode, type LiveSnapshotState } from '@/lib/api'
 
 /**
  * L10b (2026-09-27): B10 top bar — the verbatim B10 structure:
@@ -30,6 +30,7 @@ export function TopStatusBar({
   snap,
   source,
   live,
+  error = null,
   theme,
   layout,
   onCycleTheme,
@@ -41,6 +42,8 @@ export function TopStatusBar({
   snap: SnapshotV3 | null
   source: LiveSnapshotState['source']
   live: boolean
+  /** The last read-path failure, or null. W01: the badge cannot be derived without it. */
+  error?: string | null
   theme: ThemeMode
   layout: LayoutMode
   onCycleTheme: () => void
@@ -52,16 +55,21 @@ export function TopStatusBar({
   /** B10 `.toast` notification (1800ms auto-hide) */
   onNotify?: () => void
 }) {
-  const ts = snap?.transport.transportState
-  const freshness = snap?.transport.freshnessState
+  // W01: ONE derivation feeds the dot, the word and the qualifier. The old line was
+  // `live ? 'LIVE' : (ts || 'UNKNOWN')` — a local flag overriding the backend verdict, so a snapshot
+  // that claimed LIVE kept claiming it after the read path died. `samplingStale` is now visible too:
+  // a LIVE transport whose sampling went stale is "LIVE · 采样已过期", not a plain green LIVE.
+  const truth = transportTruth(snap, live, error)
+  const freshness = truth.freshness
   const cov = snap?.coverage
   const palette = THEMES[theme].colors
   const dotHex =
-    live || ts === 'LIVE' ? palette.successHex :
-    ts === 'OFFLINE' ? palette.errorHex :
-    ts ? palette.warningHex : palette.muted
+    truth.state === 'LIVE' && !truth.samplingStale ? palette.successHex :
+    truth.state === 'LIVE' ? palette.warningHex :
+    truth.state === 'OFFLINE' ? palette.errorHex :
+    truth.state === 'UNKNOWN' ? palette.muted : palette.warningHex
   const dotStyle = { width: 8, height: 8, borderRadius: '50%', background: dotHex }
-  const stateText = live ? 'LIVE' : (ts || 'UNKNOWN')
+  const stateText = truth.state === 'LIVE' && truth.samplingStale ? 'LIVE · 采样已过期' : truth.state
   const coverageText =
     cov && cov.numerator != null
       ? cov.numerator + '/' + (cov.denominator ?? '?') + (cov.scope ? ' · ' + cov.scope : '')
@@ -107,8 +115,12 @@ export function TopStatusBar({
       <div className="truth-strip hidden items-center gap-3 text-[12px] text-muted lg:flex">
         <span className="flex items-center gap-2">
           <span className="status-pulse shrink-0" style={dotStyle} aria-hidden="true" />
-          <span className="font-medium text-ink">{stateText}</span>
+          <span className="font-medium text-ink" data-transport-state={truth.state}>{stateText}</span>
           <span>{freshness ? '新鲜度 ' + freshness : '未知新鲜度'} · {source}</span>
+          {/* W01: the sampling moment, so a reader can see how old the LIVE claim is. */}
+          <span data-transport-watermark={truth.watermark ?? 'none'}>
+            {truth.watermark ? '采样 ' + truth.watermark : '采样时刻未投影'}
+          </span>
         </span>
         <span className="flex items-center gap-1.5">
           <span>覆盖</span>

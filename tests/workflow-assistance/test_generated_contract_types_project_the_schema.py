@@ -297,9 +297,16 @@ class FrontModelConsumesGeneratedContractTests(unittest.TestCase):
         """
         block = self._block()
         measured = sorted(match.group(1) for match in self.COLLAPSE_LINE.finditer(block))
-        self.assertEqual(7, len(measured),
-                         f"the scan found {measured}; a collapse set this small or this different means the "
-                         "scan stopped reading the block, not that the contract got clean")
+        # The floor is a "the scan is still reading" tripwire, not an inventory: it was 7 before
+        # WUI-21 (2026-10-11) added `operationProgress` / `isolatedTrials`, whose `isolation` object is
+        # free-form in the contract and therefore one more measured collapse. (Four more appeared first,
+        # because the stages were declared through $defs and the generator cannot follow a $ref; inlining
+        # the stage shape in the schema named them and the count went back down to 8.) Pinning the old 7
+        # would make the gate red on a correct contract; the real invariant is the equality with
+        # GENERATED_COLLAPSED_PATHS checked immediately below, which fails on ANY difference either way.
+        self.assertGreaterEqual(len(measured), 8,
+                                f"the scan found {measured}; a collapse set this small means the "
+                                "scan stopped reading the block, not that the contract got clean")
         source = (FRONTEND / "src/contractConformance.ts").read_text(encoding="utf-8")
         listed = re.search(r"GENERATED_COLLAPSED_PATHS = \[([\s\S]*?)\] as const", source)
         self.assertIsNotNone(listed, "contractConformance.ts no longer declares GENERATED_COLLAPSED_PATHS")

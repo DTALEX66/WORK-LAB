@@ -72,6 +72,9 @@ export interface ProjectGit {
   quality: string | null
   freshness: string | null
   sourceRef: string | null
+  /** WL-L01: whose Git observation this block shows. Own project id, or null when the project has
+   *  no Git row of its own. Never another project's id — that fallback was the defect. */
+  sourceProjectId: string | null
 }
 
 export interface ProjectToken {
@@ -386,4 +389,44 @@ export interface SnapshotV3 {
   // read; an empty list means it was read and no collector is registered. The diagnostics lane renders the
   // first as a source gap and only the second as "no collectors" — never a padded zero.
   collectors?: CollectorDelivery[]
+  // WUI-21: the isolated-trial read models, carried verbatim as their contract documents
+  // (`worklab/operation-progress/v1`, `worklab/isolated-trial/v1`). ABSENT means the producer was not
+  // wired; an empty array would mean it was wired and there is nothing — a different statement, so the
+  // trial pages render the two differently and never pad either to a zero.
+  operationProgress?: OperationProgressRecord[]
+  isolatedTrials?: IsolatedTrialRecord[]
+}
+
+/** One separated trial stage. `basis` is the evidence; `status` without it is a claim. */
+export interface IsolatedTrialStage {
+  status: string
+  basis: 'LEDGER_STATE' | 'EXTERNAL_EFFECT_RECONCILED' | 'WORKTREE_ID' | 'SESSION_ID' | 'NONE' | 'NO_PRODUCER' | string
+  note: string
+}
+
+export interface IsolatedTrialRecord {
+  schema_version: 'worklab/isolated-trial/v1'
+  trial_id: string | null
+  parent_task_id: string | null
+  child_task_id: string | null
+  observed_at: string
+  isolation: { basis: string; value: string | null }
+  separated_results: {
+    write: IsolatedTrialStage
+    native_readback: IsolatedTrialStage
+    target_behaviour: IsolatedTrialStage
+  }
+  producer_gaps: string[]
+}
+
+export interface OperationProgressRecord {
+  schema_version: 'worklab/operation-progress/v1'
+  task_id: string | null
+  observed_at: string
+  state: string
+  ledger_status: string | null
+  last_trusted_progress: { state: string | null; at: string | null; basis: string }
+  transport_state: string | null
+  producer_gaps: string[]
+  target_behaviour: unknown
 }

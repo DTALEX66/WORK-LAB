@@ -68,6 +68,10 @@ export const NAV_GROUPS: NavGroup[] = [
     ids: ['capabilities', 'tools', 'workflows', 'integrations', 'memory'] },
   { key: 'metering', label: '计量', ids: ['usage', 'models'] },
   { key: 'rules', label: '规则', ids: ['rules-adaptation', 'rules-policy', 'approvals', 'task-packs'] },
+  // WUI-21 (20261012): the isolated-trial surfaces. Three read-only lanes over one component, and they
+  // are NOT in 记录 because they are not compatibility surfaces: they report work this repository can answer
+  // about a trial, with every stage carrying the basis it was read from.
+  { key: 'trial', label: '隔离试用', ids: ['trial-plan', 'trial-failure', 'trial-readback'] },
   { key: 'records', label: '按需记录（兼容只读）',
     ids: ['work', 'executions', 'execution-detail', 'evidence', 'delivery', 'audit', 'trust'] },
   { key: 'preferences', label: '设置', ids: ['settings'] },

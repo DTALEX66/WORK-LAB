@@ -295,6 +295,13 @@
                   "string",
                   "null"
                 ]
+              },
+              "sourceProjectId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "WL-L01 (2026-10-11): whose Git observation this block is showing. Equal to the row's own projectId for an own observation, null when the project has none — and never another project's id, because the old code fell back to whatever repository came first and printed its SHA/branch under this project's name. Null is the honest 'no Git row for this project'; it is not a licence to borrow."
               }
             },
             "additionalProperties": false
@@ -733,6 +740,223 @@
         }
       },
       "description": "The enumeration scope of that exact list. An enumeration can be capped; it can never be quietly capped, which is why a truncated list without its ordering key is refused by the validator."
+    },
+    "operationProgress": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "task_id",
+          "observed_at",
+          "state",
+          "ledger_status",
+          "last_trusted_progress",
+          "transport_state",
+          "producer_gaps"
+        ],
+        "properties": {
+          "schema_version": {
+            "const": "worklab/operation-progress/v1"
+          },
+          "task_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observed_at": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "description": "The contract's own stage enum, restated as a string so a ledger spelling this repository cannot map stays readable as UNKNOWN instead of failing validation. COMPLETED is the only ledger status that maps to PASSED; an expired lease answers UNKNOWN_OR_TIMEOUT, which is not a failure."
+          },
+          "ledger_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_trusted_progress": {
+            "type": "object",
+            "required": [
+              "state",
+              "at",
+              "basis"
+            ],
+            "properties": {
+              "state": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "at": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "basis": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "transport_state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "producer_gaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "target_behaviour": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "description": "WUI-21: one `worklab/operation-progress/v1` document per task, embedded verbatim. The shape is owned by packages/contracts/schemas/workflow/operation-progress.schema.json; it is restated here only because the snapshot validator is closed (additionalProperties:false at the top level since ERR-225), not because a second definition was wanted."
+      }
+    },
+    "isolatedTrials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "trial_id",
+          "parent_task_id",
+          "child_task_id",
+          "observed_at",
+          "isolation",
+          "separated_results",
+          "producer_gaps"
+        ],
+        "properties": {
+          "schema_version": {
+            "const": "worklab/isolated-trial/v1"
+          },
+          "trial_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_task_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "child_task_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observed_at": {
+            "type": "string"
+          },
+          "isolation": {
+            "type": "object"
+          },
+          "separated_results": {
+            "type": "object",
+            "description": "Three named stages, NOT an array and not one aggregate verdict: write / native_readback / target_behaviour. Each carries its own status AND basis, so a stage with basis NO_PRODUCER can never be summarised as PASSED.",
+            "required": [
+              "write",
+              "native_readback",
+              "target_behaviour"
+            ],
+            "properties": {
+              "write": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "basis",
+                  "note"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "description": "Never null: an unanswered stage reads UNKNOWN, so 'not observed' cannot be mistaken for 'observed and fine'."
+                  },
+                  "basis": {
+                    "type": "string",
+                    "description": "LEDGER_STATE / EXTERNAL_EFFECT_RECONCILED / WORKTREE_ID / SESSION_ID / NONE / NO_PRODUCER. The basis, not the status, is the evidence."
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "native_readback": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "basis",
+                  "note"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "description": "Never null: an unanswered stage reads UNKNOWN, so 'not observed' cannot be mistaken for 'observed and fine'."
+                  },
+                  "basis": {
+                    "type": "string",
+                    "description": "LEDGER_STATE / EXTERNAL_EFFECT_RECONCILED / WORKTREE_ID / SESSION_ID / NONE / NO_PRODUCER. The basis, not the status, is the evidence."
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "target_behaviour": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "basis",
+                  "note"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "description": "Never null: an unanswered stage reads UNKNOWN, so 'not observed' cannot be mistaken for 'observed and fine'."
+                  },
+                  "basis": {
+                    "type": "string",
+                    "description": "LEDGER_STATE / EXTERNAL_EFFECT_RECONCILED / WORKTREE_ID / SESSION_ID / NONE / NO_PRODUCER. The basis, not the status, is the evidence."
+                  },
+                  "note": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "producer_gaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "description": "WUI-21: one `worklab/isolated-trial/v1` document per trial, embedded verbatim. There is no aggregate success field on purpose — each separated result carries its own status AND basis, so a trial cannot be summarised into one verdict it never earned."
+      }
     },
     "collectors": {
       "type": "array",

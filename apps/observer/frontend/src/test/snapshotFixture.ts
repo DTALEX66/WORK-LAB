@@ -44,6 +44,7 @@ export function mkProject(over: Partial<Project> = {}): Project {
       localSha: 'abc1234def5678', remoteSha: 'abc1234def5678', matchState: 'MATCH',
       branch: 'main', dirtyCount: 3, observedAt: '2026-10-07T09:00:00Z',
       quality: 'EXACT', freshness: 'FRESH', sourceRef: null,
+      sourceProjectId: 'work-lab',
     },
     token: { inputTokens: 64391, outputTokens: 26821, totalTokens: 91212, costQuality: 'ESTIMATED' },
     ci: [], executionIds: ['e1'], sourceRefs: [],
