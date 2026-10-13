@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-12T16:06:49Z",
+  "generatedAt": "2026-10-13T11:36:18Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -435,7 +435,7 @@
       "lines": 386,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 14,
+      "citedByRecords": 13,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
@@ -520,14 +520,14 @@
       "lines": 241,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 7,
+      "citedByRecords": 6,
       "citedBy": [
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
-        "docs/current/ui-priority-20261009/WUI-19-FINAL-ACCEPTANCE-20261012.md",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json"
+        "taskpacks/current/error-ledger.json",
+        "tests/workflow-assistance/test_default_load_doc_citations_resolve.py"
       ]
     },
     {
@@ -950,14 +950,14 @@
       "lines": 182,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 9,
+      "citedByRecords": 8,
       "citedBy": [
         "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "docs/current/ui-priority-20261009/WUI-19-FINAL-ACCEPTANCE-20261012.md",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json"
+        "taskpacks/current/error-ledger.json",
+        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -1087,14 +1087,14 @@
       "lines": 333,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 11,
+      "citedByRecords": 12,
       "citedBy": [
         "AGENTS.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/CLOUD-AUDIT-INTAKE-2026-10-11.md",
         "docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md",
-        "docs/history/owner-inputs/HISTORICAL-KEY-POINTS.md"
+        "docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md"
       ]
     },
     {
