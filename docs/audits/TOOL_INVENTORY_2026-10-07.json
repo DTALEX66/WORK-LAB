@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-13T11:36:18Z",
+  "generatedAt": "2026-10-13T12:08:44Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -435,14 +435,14 @@
       "lines": 386,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 13,
+      "citedByRecords": 14,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.csv",
-        "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json"
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
+        "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.csv"
       ]
     },
     {
@@ -851,14 +851,14 @@
       "lines": 178,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 13,
+      "citedByRecords": 14,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.html",
         "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.txt",
-        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/findings.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/findings.json"
       ]
     },
     {
@@ -950,14 +950,14 @@
       "lines": 182,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 8,
+      "citedByRecords": 9,
       "citedBy": [
         "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md"
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -1087,14 +1087,14 @@
       "lines": 333,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 12,
+      "citedByRecords": 13,
       "citedBy": [
         "AGENTS.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/CLOUD-AUDIT-INTAKE-2026-10-11.md",
-        "docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md",
-        "docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md"
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
+        "docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md"
       ]
     },
     {

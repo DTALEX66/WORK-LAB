@@ -7,17 +7,17 @@
   "whyItMatters": "a PASS record without fixedCommit claims an outcome with no pinned cause; this splits that debt into what a commit can actually answer for and what it cannot",
   "clearWindowDays": 3,
   "counts": {
-    "unboundPassRecords": 94,
+    "unboundPassRecords": 96,
     "byState": {
       "RESOLVES": 36,
       "NO_FILE_OPERAND_IN_COMMAND": 42,
-      "PATH_GONE": 15,
+      "PATH_GONE": 17,
       "OUT_OF_REPO_TARGET": 1
     },
     "clearCandidates": 0,
     "resolvesGuardUndatedRecord": 32,
     "resolvesGuardDistant": 4,
-    "noResolvableOperand": 58,
+    "noResolvableOperand": 60,
     "bindableByBirthCommit": 0,
     "inWindowButUncommittedRecord": 0,
     "bornInAnImportCommit": 86
@@ -1504,6 +1504,22 @@
       "birthAddedRecords": 1,
       "birthTouchesNamedPath": [],
       "birthContainsPromisedScript": true
+    },
+    {
+      "errorId": "ERR-276",
+      "date": "2026-10-13",
+      "state": "PATH_GONE",
+      "operand": "scripts/ci/verify_error_ledger.py",
+      "command": "scripts/ci/verify_error_ledger.py must read back ERR-276; the live state it records: user-scope DSH_HOME absent; C:\\User",
+      "birthCommit": null
+    },
+    {
+      "errorId": "ERR-277",
+      "date": "2026-10-13",
+      "state": "PATH_GONE",
+      "operand": "scripts/ci/verify_error_ledger.py",
+      "command": "scripts/ci/verify_error_ledger.py must read back ERR-277; and a live readback must still show: %LOCALAPPDATA%/hermes/her",
+      "birthCommit": null
     }
   ]
 }

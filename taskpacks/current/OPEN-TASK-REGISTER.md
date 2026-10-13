@@ -446,3 +446,24 @@ W02（task #32 画布几何与指针生命周期）、WUI-21 隔离试用三页�
 `tool_inventory_readback --write`）必须在**暂存之后、提交之前**重跑——文件一旦入库，
 其标签会从 `PATH_GONE` 变为 `RESOLVES`，提交后才发现就会让门在下一轮变红。
 与 ERR-151 记录的工具清单次序同源，本批已按此顺序执行。
+
+## 2026-07-13 第七批 · 合并入main + CI 全绿 + 交接归档
+
+`main` 已快进到 `1eedf2e0` 并推送，`origin/main` 同步。CI run 38392301427（push 触发）**success**：
+gate-plan / integration / token-monitor / workflow-assistance / supply-chain-security / observer 全绿；
+`wlr-060-production-gates`（push 与 PR 两条）亦 success。
+
+CI 唯一红项（`test_shipped_projections_are_current` 报工具清单与树不同步）已按 ERR-151 次序重发
+`docs/audits/TOOL_INVENTORY_2026-10-07.json`（trackedTools=75 withLedgerPromise=19 unclaimed=0）。
+
+**并行写者提示**：工作区现有 4 个已修改文件（`AGENTS.md`、`config/adapter-registry.json`、
+`config/client-evidence.json`、`taskpacks/current/error-ledger.json`）属于另一个写者（ERR-276，
+DSH 与 Hermes 官方标准复核，intakeSource 记为用户 2026-07-13 指令）。本轮推送前已 stash 隔离、
+推送后 pop 恢复，**未进入 main**。不要代为提交，也不要 restore 丢弃。
+
+`scripts/ci/push_permit.py` 对该 head 仍判 `NO_RECEIPT`（该 head 从未在本机跑完全量门——
+本机沙箱反复杀死全量门，本轮 5 次）。真实收据来自 CI。
+
+本轮完整交接：`docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md`
+（含分支处置表、三个产品缺陷的机理与修法、本机三条硬限制、未来规划 §10–§15 的位置、
+派生投影的「暂存后提交前」次序纪律、下一步启动顺序）。

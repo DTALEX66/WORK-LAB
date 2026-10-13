@@ -1,5 +1,10 @@
 # 可直接交给下一个Agent的完整提示词
 
+> **先读本轮的交接**：`docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md`
+> （对应 `main` = `1eedf2e0`，CI 全绿）。它记录本轮修掉的三个缺陷、本机环境的硬限制、
+> 未来规划归档位置、以及工作区里属于另一个并行写者的 4 个文件（不要提交或丢弃）。
+> 本文件只讲 **UI 任务线本身怎么执行**，两者不重复。
+
 补充资料已完整登记、内容去重与无损归档。先按下文读取当前权威与任务，不把历史资料通读作为UI开工前置。
 需要具体素材时读`docs/history/owner-inputs/INDEX.md`，用`scripts/maintenance/owner_material_catalog.py find "关键词"`定位，按资料ID用`extract`校验提取到项目本地产物目录；`docs/history/owner-inputs/HISTORICAL-KEY-POINTS.md`只在指定历史问题需要时读取。
 原文件名、别名、版本和完整嵌套成员链均保留。不要再去Record反复盲找，也不要将历史包提示词重新当CURRENT。

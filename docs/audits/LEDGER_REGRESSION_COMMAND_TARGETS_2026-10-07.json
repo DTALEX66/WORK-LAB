@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-12T18:03:24Z",
+  "at": "2026-10-13T12:08:50Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -48,19 +48,19 @@
     "RESOLVES": 157,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
-    "PATH_GONE": 36,
+    "PATH_GONE": 38,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
     "RESOLVES": 190,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
-    "PATH_GONE": 36,
+    "PATH_GONE": 38,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
   "resolvedAfterApply": 190,
-  "records": 274,
-  "stateDigest": "4fc45f593db477f437a3423277e55693af94ef8a91301572d261886cd758f034",
+  "records": 276,
+  "stateDigest": "4dc25201a9bb45142f0009d9e11258c7538983279e38b399fb70d48e26114353",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -412,6 +412,21 @@
       "errorId": "ERR-250",
       "operand": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
       "statusAfter": "BLOCKED"
+    },
+    {
+      "errorId": "ERR-276",
+      "operand": "nightly.yml",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-277",
+      "operand": "%LOCALAPPDATA%/hermes/hermes-agent",
+      "statusAfter": "PASS"
+    },
+    {
+      "errorId": "ERR-277",
+      "operand": "install-stamp.json",
+      "statusAfter": "PASS"
     }
   ],
   "external": [
@@ -5227,6 +5242,55 @@
       ],
       "state": "RESOLVES",
       "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-276",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "scripts/ci/verify_error_ledger.py must read back ERR-276; the live state it records: user-scope DSH_HOME absent; C:\\Users\\ALEX\\.dsh\\sessions holding 15 session.v4.jsonl.zstd and advancing; D:\\All proj",
+      "operands": [
+        {
+          "operand": "scripts/ci/verify_error_ledger.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "scripts/ci/verify_error_ledger.py"
+          ]
+        },
+        {
+          "operand": "nightly.yml",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-277",
+      "statusAfter": "PASS",
+      "hasFixedCommit": false,
+      "command": "scripts/ci/verify_error_ledger.py must read back ERR-277; and a live readback must still show: %LOCALAPPDATA%/hermes/hermes-agent exists as a git checkout with a commit, hermes --version resolving fro",
+      "operands": [
+        {
+          "operand": "scripts/ci/verify_error_ledger.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "scripts/ci/verify_error_ledger.py"
+          ]
+        },
+        {
+          "operand": "%LOCALAPPDATA%/hermes/hermes-agent",
+          "category": "GONE",
+          "candidates": []
+        },
+        {
+          "operand": "install-stamp.json",
+          "category": "GONE",
+          "candidates": []
+        }
+      ],
+      "state": "PATH_GONE",
+      "reason": "no tracked file carries this basename"
     }
   ],
   "notClaimed": [
@@ -5236,5 +5300,5 @@
     "OUT_OF_REPO_TARGET claims are re-checkable only on the machine holding the live client home, which is why they are labelled instead of counted as resolved",
     "no record's status_after was changed by this tool"
   ],
-  "whyItMatters": "the ledger carries 238 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
+  "whyItMatters": "the ledger carries 240 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
 }
