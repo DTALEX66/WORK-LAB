@@ -127,7 +127,7 @@
 
 **来源纪律**：§12 的 `marvis.qq.com` 与 `github.com/Drok1015/marvis-office` **本轮均未联网访问**，
 一律标待核验；后者按用户说明是第三方复刻示例、非腾讯官方源码，不得据其推断原版技术栈或复制代码素材。
-云端三项目审计包（`docs/history/owner-inputs/record-20261011/cloud-audit-readable/` 及 `originals/` 同名 ZIP）
+云端三项目审计包（`docs/history/owner-inputs/record-20261011/cloud-audit-readable/`，以及 `docs/history/owner-inputs/record-20261011/originals/AAOS-WORK-DESIGN-cloud-audit-20261011.zip`）
 检索 `多智能体|multi-agent|subagent` **0 命中**，所以 §11 只登记判据、不补写候选条目。
 这两份用户提示词**尚未作为资料登记**进 `owner_material_catalog`——需长期留存时按 §11.2 第 1 项口径正式登记。
 
