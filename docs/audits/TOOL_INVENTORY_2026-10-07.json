@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-13T17:01:06Z",
+  "generatedAt": "2026-10-14T15:19:59Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -257,19 +257,19 @@
     },
     {
       "path": "scripts/audit/display_scaling_via_cdp.py",
-      "sha256": "73dc88a4fa378d8488f111f5391e434ae70637292747fbe0c897eb01684e4251",
+      "sha256": "d20a35f40d8772213503185cda5cd9a0530c1f05a78c422b117d9cead3fdeb94",
       "bytes": 12106,
       "lines": 245,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 7,
       "citedBy": [
+        ".workbuddy/memory/2026-10-13.md",
         "apps/observer/frontend/DESIGN.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
-        "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv"
       ]
     },
     {
@@ -436,14 +436,14 @@
       "lines": 386,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 14,
+      "citedByRecords": 15,
       "citedBy": [
+        ".workbuddy/memory/2026-10-13.md",
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
-        "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.csv"
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md"
       ]
     },
     {
@@ -733,19 +733,19 @@
     },
     {
       "path": "scripts/audit/reseal_wui_evidence.py",
-      "sha256": "df328680a18479d0263e49cd7409908d34dc171a80c09797cf796ee933c2d220",
-      "bytes": 7730,
-      "lines": 152,
+      "sha256": "31bfc15b1a825ba04c9a74207f2b8052e662abcca71bb8280ee6b92f77f36e22",
+      "bytes": 7855,
+      "lines": 153,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 7,
+      "citedByRecords": 9,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
+        ".workbuddy/memory/2026-10-13.md",
+        ".workbuddy/memory/2026-10-14.md",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
-        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
       ]
     },
     {
@@ -784,14 +784,14 @@
       "lines": 218,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 8,
+      "citedByRecords": 10,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
+        ".workbuddy/memory/2026-10-13.md",
+        ".workbuddy/memory/2026-10-14.md",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
-        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
       ]
     },
     {
@@ -852,14 +852,14 @@
       "lines": 178,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 14,
+      "citedByRecords": 15,
       "citedBy": [
+        ".workbuddy/memory/2026-10-13.md",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.html",
-        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.txt",
-        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/findings.json"
+        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.txt"
       ]
     },
     {
@@ -881,36 +881,36 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "c6c2156f866ba22c467f808a3a1bb78a4476005b9ca6f08d86e8dde3944d22e1",
-      "bytes": 42609,
-      "lines": 807,
+      "sha256": "124e09f92df59ea49649d7ee3012fd74de7194613a7b97d340b8271e092a967b",
+      "bytes": 42961,
+      "lines": 811,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 21,
+      "citedByRecords": 22,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
+        ".workbuddy/memory/2026-10-13.md",
         "UI_IMPLEMENTATION_REPORT.md",
         "apps/observer/frontend/DESIGN.md",
         "apps/observer/frontend/SCREEN_SPEC.md",
-        "apps/observer/scripts/window_state_readback.py",
-        "design.qa.yaml"
+        "apps/observer/scripts/window_state_readback.py"
       ]
     },
     {
       "path": "scripts/audit/topbar_geometry_via_dump_dom.py",
-      "sha256": "3fa3cfda7b3b9a370fd378ae35d89adcaaecb10eb5d1585ca1b7f901328a07e8",
+      "sha256": "d01391a2635e9acbdd3c6765c615f4566c5eb42b808bcbafd7b30be4674e8b73",
       "bytes": 7010,
       "lines": 160,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 8,
+      "citedByRecords": 9,
       "citedBy": [
+        ".workbuddy/memory/2026-10-13.md",
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -951,14 +951,14 @@
       "lines": 182,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 9,
+      "citedByRecords": 10,
       "citedBy": [
+        ".workbuddy/memory/2026-10-13.md",
         "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -1021,13 +1021,14 @@
     },
     {
       "path": "scripts/audit/wui_slice_capture.py",
-      "sha256": "d82c16fcc1df5ad4343bac7612c37f28643e0155e2ea0bb23979f8dcde646369",
+      "sha256": "d1576071a03e2d65c68579cea7865ced9a06f52b4c37258a347cce92186e75b1",
       "bytes": 11854,
       "lines": 221,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
+        ".workbuddy/memory/2026-10-13.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
@@ -1208,14 +1209,14 @@
       "lines": 149,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 10,
+      "citedByRecords": 11,
       "citedBy": [
+        ".workbuddy/memory/2026-10-13.md",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "packages/client-neutral-core/scripts/project_temp.py",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     }
   ]
