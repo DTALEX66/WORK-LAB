@@ -1,7 +1,11 @@
 name: wlr-060-production-gates
 
 on:
+  # W01 (2026-10-14): same reasoning as work-lab-gate.yml -- a branch push and its PR run are one change, so
+  # the push trigger is limited to main and branches are covered by the pull_request run.
   push:
+    branches:
+      - main
     paths:
       - 'services/**'
       - 'packages/**'

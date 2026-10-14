@@ -1,7 +1,19 @@
 name: work-lab-gate
 
 on:
+  # W01 (2026-10-14, refined after measuring PR #164): the duplicate is removed at its SOURCE rather than
+  # cancelled. A branch push and its PR run are the SAME change and GitHub cannot see that (different
+  # `github.ref`s), so the branch push used to start a second full set of heavy jobs. Cancelling it instead
+  # is not equivalent: the cancelled run's jobs keep their check names on the same commit, so PR #164 showed
+  # `integration`/`observer` red while the surviving run was healthy -- the dedupe worked and the report lied.
+  # Push therefore triggers the heavy jobs on main only; branches get their evidence from the pull_request
+  # run, over the same tree. `workflow_dispatch` stays as the manual entry point.
+  # Deviation, stated rather than hidden: a developer push to a branch with NO pull request now gets no run
+  # until the PR exists. That is the price of removing the duplicate without touching the plan/aggregate
+  # contract in the same batch, and it is recorded as remaining work.
   push:
+    branches:
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -12,15 +24,23 @@ permissions:
 # different `github.ref`s (`refs/heads/x` vs `refs/pull/N/merge`) but the same SOURCE branch, which is why
 # GitHub's default per-ref grouping cannot see the duplicate: measured 16m39s on the push run and 15m30s on
 # the PR run for the same tree. Grouping by the source branch is what makes the pair collide.
-# `cancel-in-progress` is false on main on purpose: a cancelled run's aggregate never reports, and main is
-# where the strict aggregate is the merge evidence. Members of the same group queue instead, so main is
-# serialised without losing a verdict. Different PRs and different branches never share a group.
+# With push restricted to main this group only ever holds same-ref runs (a branch and its PR share a group,
+# so a superseded PR update is dropped; main queues instead of cancelling). `cancel-in-progress` stays false
+# on main on purpose: a cancelled run's aggregate never reports, and main is where the strict aggregate is
+# the merge evidence. Different PRs and different branches never share a group.
 concurrency:
   group: >-
     ${{ github.workflow }}-${{
       github.event.pull_request.head.repo.full_name || github.repository }}-${{
       github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# W01 refinement (2026-10-14, measured on PR #164): cancelling the duplicate run is not free. The cancelled
+# run's jobs keep their check names attached to the same commit, so a PR showed `integration`/`observer`
+# cancelled-and-red while the surviving run was still healthy -- the dedupe worked and the report lied.
+# The duplicate is now removed at its SOURCE instead of cancelled: a branch push runs the light plan only,
+# and the heavy jobs run for pull requests or for main. Main still gates itself; a branch without a PR
+# still gets the plan; and nothing is cancelled across event types, so no red is manufactured.
 
 jobs:
   plan:
