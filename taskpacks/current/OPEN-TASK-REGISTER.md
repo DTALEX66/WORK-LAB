@@ -749,3 +749,39 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
 **本批教训（写给下一次）**：「改一处声明要同步几处镜像」不能靠数出来的清单，要靠能跑的门。
 本机全量门被杀时，**不能省掉前端合同这一组**——它正是唯一抓到这两处漏网的地方；
 `apps/observer/frontend/dist` 不入库，所以界面文案与 JS 断言的漂移在别的组里都不出声。
+
+## 2026-10-14 第十六批 · 本对话的 CI/观测优化方案入账（W01–W12），第一批已执行
+
+用户本轮带来一份《WORK-LAB GitHub 与项目优化方案》（观察 main = `14ba8d56`），含 W01–W12 十二条
+与"第一批 W01～W03、W05"的执行口径。按本仓规矩：**任务状态仍只有本表一本账**，
+方案不另立派工账本；下表是本批的落点与实测。
+
+**第一批（本批已执行）**：
+
+- **W01 消除同源重复重运行**——两个 workflow 都同时响应 push 与 pull_request，同一源提交因此跑两套重检查。
+  首版按源分支分组 + 取消旧运行，**在 PR #164 上实测到副作用**：被取消那次运行的作业仍以同名 check 挂在同一提交上，
+  于是 PR 显示 integration/observer 红而存活运行是健康的——去重成功、报告撒谎。改为**结构性去重**：
+  push 触发限定 main，分支由 pull_request 覆盖，`workflow_dispatch` 作手动入口。**如实登记的偏差**：
+  没有 PR 的分支 push 不会有运行（要等 PR 存在），这是不动 plan/aggregate 合同前提下的代价。
+- **W02 分段计时 + 真实缓存**——`observer-frontend-typecheck` 原先把 `npm ci`+typecheck+build+test 挤在一步，
+  job 名报的是四者之和；拆成四个具名组（命令与 fail-fast 语义一字未改，其漂移断言与工具链声明同步）。
+  新增两个 `actions/cache`（40 位 SHA 钉住）：`~/.cargo/registry` 与 `~/.cargo/git` 按 `Cargo.lock` 取键，
+  crate 的 `target` 目录额外带 commit —— 源码变更不可能被整份旧构建冒充成本次构建。
+  **未做**：token-monitor 的同类缓存；`cargo check` 的冗余判定（方案要求先核对覆盖范围）。
+- **W03 投影错误提前失败**——把合同目录、SSOT 与工具清单三件 shape 检查提到 2712 例治理批**之前**。
+  依据是 PR #163 的实测：过期清单要等 2m11s / 251 个模块跑完才被报出来，真正的缺陷披着"governance failed"到达。
+- **W05 快照读超时**——`apps/observer/frontend/src/lib/api.ts` 的 GET 无超时，一次悬挂会让 `inFlight` 永真、
+  界面停在最后一份良好投影却仍宣称在轮询。加 8 秒读截止并**真正 abort**（外部 `Promise.race` 只会让底层请求继续挂着），
+  卸载时 abort 同一 controller；保留 `inFlight` 合并、低 revision 拒绝与 UNKNOWN 语义。新增 2 例测试。
+
+**仍未开始（逐条点名）**：W04（桌面验收环境分层——方案要求先交独立探针与分层设计，不新建服务器）、
+W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W07（impact planner 与本地/CI job 映射）、
+W08（context pack 的必填区不可前缀截断、digest 口径）、W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）、
+W10（CI artifacts 与摘要的可追溯小结果文件）、W11（阶段→子命令→测试 ID 的调用链记录）、
+W12（历史归档与客户端索引的忽略清单）。
+
+**本批证据**：`DISPLAY_SCALING_GATE_PASS`（要求基线含第十一批的 780→680，故本分支堆叠在 PR #163 之上）、
+`GEOMETRY_GATE_PASS`、切片 12/12、可读性四变体 PASS、`SSE_REVISION_GATE_PASS`、`EVIDENCE_SEAL_PASS`、
+前端合同 `js=0 vitest=0`（739 例）、`SUPPLY_CHAIN_PASS workflows=2 actions=16`、fail-fast 组漂移门 PASS、
+工具链声明 8 passed、引用 workflow 的四组门全 PASS。新 bundle `24db480fc0c8ed18`、`24db480f` 之后的
+`a362a0ac…` 为 CURRENT_STATE 源摘要（提交钩子再生）。
