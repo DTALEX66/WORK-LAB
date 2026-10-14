@@ -130,7 +130,7 @@ def render(dist: Path, port: int, width: int, height: int, extra_query: str,
 def main() -> int:
     report: dict = {"startedAt": time.strftime("%Y-%m-%dT%H:%M:%S"), "cases": []}
     for (w, h, label, view) in ((1280, 820, "main-window", "full"),
-                                (440, 780, "panel-window", "compact")):
+                                (440, 680, "panel-window", "compact")):
         dist, port = build_probe_dist()
         data = render(dist, port, w, h, "", view)
         report["cases"].append({"case": label, "cssViewport": f"{w}x{h}", **data})

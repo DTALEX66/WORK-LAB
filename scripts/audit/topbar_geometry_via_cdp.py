@@ -215,15 +215,19 @@ EXPR = """JSON.stringify((()=>{
 
 TOPBAR_MAX_HEIGHT = 140.0
 # The two windows are different surfaces with different sizes, so each is measured at its own
-# declared shape: the main window at its default 1280x820, the floating panel at the 440x780
+# declared shape: the main window at its default 1280x820, the floating panel at the 440x680
 # non-resizable size tauri.conf.json gives it. Measuring the compact layout at desktop width would
 # have proved nothing about the panel — the first PASS this script produced did exactly that, and
 # the per-view height bound below is what a 440px bar actually needs.
-WIN_SIZE = {"full": "1280,820", "compact": "440,780", "floor": "1280,820"}
+# 680, not the 780 this mirror carried until 2026-10-13: a non-resizable window's declared size IS
+# its physical demand, so 780 logical needed 1560 physical at 200% scaling and did not fit a
+# 2560x1392 work area. 680 needs 1360. The mirror follows the declaration; measuring the old shape
+# would have measured a surface the product no longer ships.
+WIN_SIZE = {"full": "1280,820", "compact": "440,680", "floor": "1280,820"}
 MAX_HEIGHT = {"full": 140.0, "compact": 260.0, "floor": 140.0}
 RAIL_MIN_WIDTH = 200.0
 # `floor` is the MAIN shell at the smallest size the shipped product can be resized into. tauri.conf.json
-# gives that window minWidth 900 / minHeight 600 and the 440x780 surface is the rail-less HUD, so there
+# gives that window minWidth 900 / minHeight 600 and the 440x680 surface is the rail-less HUD, so there
 # is no narrow rail state to design for: SCREEN_SPEC's old "< 760px: icon rail or drawer" row described
 # a phone shape the owner deleted on 2026-10-07, and tests/ci/test_desktop_only_shell.py pins the floor.
 SHELL_VIEW = {"full": "full", "compact": "compact", "floor": "full"}

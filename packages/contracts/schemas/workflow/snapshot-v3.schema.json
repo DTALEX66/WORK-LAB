@@ -816,6 +816,12 @@
               "type": "string"
             }
           },
+          "sourceTimes": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "target_behaviour": {
             "type": [
               "object",

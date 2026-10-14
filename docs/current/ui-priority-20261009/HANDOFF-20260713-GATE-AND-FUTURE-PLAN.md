@@ -13,11 +13,11 @@
 
 | 项 | 值 |
 |---|---|
-| `main` / `origin/main` | **`1eedf2e0`**（已同步，已推送） |
-| CI（run 38392301427，push 触发） | **success** — gate-plan / integration / token-monitor / workflow-assistance / supply-chain-security / observer 全绿 |
-| CI（`wlr-060-production-gates`，push 与 PR 两条） | **success** |
-| 本地分支 | `main`、`task-decomposition/atlas-gap-archive-20261001`（均指向 `1eedf2e0`，功能分支已并入 main） |
-| 工作区 | **有 4 个已修改文件，不是本轮产物，见 §6.1 —— 不要提交、不要丢弃** |
+| `main` / `origin/main` | **`14ba8d56`**（已同步，已推送；`1eedf2e0` 之后又落 3 个提交，见 §10） |
+| CI（run 38392301427，push 触发） | **success**（对应 `1eedf2e0`）— gate-plan / integration / token-monitor / workflow-assistance / supply-chain-security / observer 全绿 |
+| CI（`wlr-060-production-gates`，push 与 PR 两条） | **success**（对应 `1eedf2e0`） |
+| 本地分支 | 只剩 `main`（六个远端分支已在 §10.6 逐个留 SHA 后删除） |
+| 工作区 | **有 4 个已修改文件，不是本轮产物，见 §6.1 —— 不要提交、不要丢弃**（账本实为 274→276 两条，见 §10.2） |
 | 本仓 `push_permit.py` | 仍判 `NO_RECEIPT`，但推送已完成且 CI 全绿，见 §6.2 |
 
 ---
@@ -193,7 +193,7 @@ PUSH_PERMIT_REFUSE NO_RECEIPT head=1eedf2e0 receipts=2075 heads_with_receipts=35
 - **运行时 canary 未执行**（`RUNTIME_CANARY_PENDING=yes`，缺 `WORKLAB_CANARY_PROJECT_ROOTS`）。
 - **Agent Studio / 统一目标入口 / 外部多智能体吸收：全部是未来目标，实现延后**，未授权任何实施。
 - **`docs/future/` 里两份用户提示词尚未登记进资料目录**（见 §4）。
-- **远端三个已合并分支未删**（删远端分支是破坏性动作，需另行决定）。
+- **远端已合并分支已删**（2026-10-13，见 §10.6）：实际是**六个**而非三个，删前逐个留 SHA。
 - **WUI-21 剩余项**：`sequence` / `sourceTimes` / 各 revision 字段仍无生产者；依赖 WUI-08/WUI-10 的迁移差异；
   三页因此展示不出一次真实的端到端试用。账本 ERR-274 记为 PARTIAL。
 
@@ -258,4 +258,139 @@ git add -A && git commit                # 再提交
 
 ---
 
+## 10. 增补 · 2026-10-13 会话（本文件成文之后的增量）
+
+本文件主体成文于 `main` = `1eedf2e0`。此后主线又落 **3 个提交**，故 §0 的 SHA 与 §6 的部分结论按本节更新。
+本节的读数全部是本会话实测，不是继承措辞。
+
+| 提交 | 内容 |
+|---|---|
+| `c175a572` | 本轮交接归档 + 派生投影按 ERR-151 次序重发 |
+| `205f616b` | 展开简写目录名为仓库根相对路径，使交接文档自身通过索引路径门 |
+| `14ba8d56` | **派生审计必须按「将要推送的账本」计算，而不是按工作区**（本批主题） |
+
+### 10.1 `14ba8d56` 修的缺陷：比 §7.3 的次序纪律更严格一条
+
+CI run **38395516714** 在 `c175a572`／`205f616b` 两个**文档**提交上红了 5 项，全部同源——
+两件派生审计投影是按**工作区**账本算的（276 条），而随该次推送进入树的是 **274** 条：
+`PATH_GONE` 38 vs 36、unbound 96 vs 94、两次状态摘要互不一致。根因是**输入错**而非脚本错。
+
+修法：先隔离并行写者的未提交改动，再按**将要推送的**账本重发派生投影，最后还原隔离。
+§7.3 的「先暂存、后重发、再提交」仍成立，但要再加一条：**必须按将要提交的那份状态算**——
+工作区里任何未提交的他人改动都会污染投影，§6.1 的那四个文件正是这个污染的来源。
+受影响的派生产物是 `docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json`、
+`docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json`、`docs/audits/TOOL_INVENTORY_2026-10-07.json`。
+
+### 10.2 §6.1 更正：并行写者实际动了**两个**账本条目
+
+§6.1 只点名 ERR-276。实测：`taskpacks/current/error-ledger.json` 在 HEAD 是 **274** 条，工作区是 **276** 条，
+新增恰为 **ERR-276** 与 **ERR-277**。随行的另外三个已修改文件（`AGENTS.md`、
+`config/adapter-registry.json`、`config/client-evidence.json`）与 §6.1 一致。处置不变：
+**不代提交、不丢弃、不与其并发写同一文件。**
+
+### 10.3 本会话未做的事（如实）
+
+- **不新增 ERR 条目**：`14ba8d56` 的缺陷值得入活账本，但新增条目必须写
+  `taskpacks/current/error-ledger.json`，而该文件正被上述写者持有未提交改动；按单写者规则不并发写同一文件，
+  如实记为**待入账**，等该写者按派生审计次序推送后再补（补时须同样按「将要推送的账本」计算）。
+- **§6.2 的结论不因新提交改变**：`push_permit.py` 判 `NO_RECEIPT` 是因为该 head 从未在本机跑完一次全量门，
+  与本次新增的三个提交无关；真实收据仍来自 CI。
+- **HUD 200% 显示缩放已解除**（2026-10-13，见 §10.7）：panel 声明 780→680，`DISPLAY_SCALING_GATE_PASS`。
+- **§6.3 与 WUI-19 §7 的其余遗留项本来一项未动**（移动端、Tauri Windows E2E、运行时 canary、`docs/future/` 两份提示词的资料登记、
+  `config.apply` 目标授权、隔离试用写入面等）——
+  **例外**：WUI-19 §7.9 的卫生项**整项已执行完毕**（临时根回收见 §10.5，远端分支与散落文件见 §10.6），
+  §7.1 的 HUD 项已实施（§10.7）。
+
+### 10.4 本会话机器读回（`main` = `14ba8d56`，工作区含上述他人改动）
+
+- `AUTHORITY_REFERENCE_PASS`（`top` / `current` / `register` 三项均解析到受跟踪文件）
+- `AUTHORITY_INDEX_PATHS_TOTAL targets=50 broken=0 declared_in_row=13 no_tree_claims=10 failed_targets=0`
+- `DOC_CITATIONS CHECKED docs=9 rewritten=0 blocked=0 stale_allowances=0`
+- `REGISTER_TABLE_SHAPE_PASS tables=1 rows=25 wrong_width=0`（§10 只加散文，未给登记册加第二张表）
+- 读回里**只记断言性字段，不记 `refs=` 与 `citations=` 的具体数值**：它们随文档增删而变，抄进正文下一轮就是假读数。
+- 本地分支：只有 `main` 与同点的 `task-decomposition/atlas-gap-archive-20261001`。
+- 交接与登记册的分歧已收口：`taskpacks/current/OPEN-TASK-REGISTER.md` 新增第八批，记录本节的缺陷、修法与实测读数。
+- 已确认 WUI-19/21 的工作集**已入库**在 main，不在未提交工作集里：
+  `apps/observer/frontend/src/views/IsolatedTrialView.tsx`、
+  `apps/observer/frontend/src/isolatedTrial.contract.test.tsx`、
+  `tests/workflow-assistance/test_isolated_trial_snapshot_surface.py`。
+- **一个自查教训（与读数同等重要）**：§10 首稿把机器读回里的裸文件名与简写目录名直接抄进正文，两处门随即判红
+  （`DOC_CITATIONS` 的 `rewritten=1`；`AUTHORITY_INDEX_PATHS` 的 `broken=1`）。引用机器输出时同样要按仓库根相对路径落笔——
+  这与 WUI-17 记的「可解析」不等于「读者能从仓库根打开」是同一件事。
+
+### 10.5 本机全量门的**第三个**红因：临时根孤儿 fixture（WUI-19 §2.1 的收敛表缺这一条）
+
+上一条遗留项的例外。WUI-19 §7.9 把临时根残留的处置门槛写成「需先证明无人引用」，这一步本会话做完了，
+并**在 owner 当场授权后执行了回收**：
+
+- 边界门 `tests/workflow-assistance/test_temp_fixture_residue_is_bounded.py` 在本会话开始时为红——
+  `test_no_orphaned_fixture_is_older_than_the_floor` 报 **61 个超过 6 小时地板的孤儿 fixture 根**（该文件 5 例中 4 例绿）；
+  回收后复跑 **5 例全绿**。
+- 检查模式（不删）读数：`TEMP_RESIDUE_CENSUS dirs=61 bytes=217774100 mib=207.7 nested_git=0 older_than_hours=6.0`；
+  临时根目录级为 61 个目录 + 14 个散落文件（后者不在该工具的目录管辖内）。
+- 占有量最大的两个是整份仓库副本（188 MiB 与 18 MiB，mtime `2026-10-13 00:40` 与 `01:12`）。
+- 生产者已定位：`tests/workflow-assistance/test_action_plan_sync.py` 的隔离夹具把整仓复制到 `<夹具根>/repo`，
+  夹具根却是**标准库** `tempfile.TemporaryDirectory()`；容器不带生产者前缀，而
+  `services/orchestration/run_quality_gate.py` 把 `TMP` 改写到本仓临时根，于是它们以裸名落进临时根。
+- 「无人引用」用的是该工具既有的 6 小时地板（两半各有一个植入用例证明），**不是自造判据**；
+  真实原因是 §5 第 3 条那个已知问题——沙箱杀死全量门，at-exit 清理永不执行。`nested_git=0`，无需只读对象特判。
+
+**执行（owner 已授权）**：`python scripts/maintenance/release_temp_fixture_residue.py --apply`
+→ `applied=1 dirs=59 freed_mib=207.7 failures=0`，退出码 0；清单在 `.project-local/artifacts/temp-residue-reclaim/`。
+占用 **215 MiB → 737 KiB**，复跑检查模式 `dirs=0 bytes=0`，边界门 `5 passed`（回收前 `1 failed, 4 passed`）：
+**由红转绿，未改门、未加 skip。**
+
+### 10.6 卫生项收口（2026-10-13，owner 授权后执行）
+
+**① 远端分支：删 6 个，本地只剩 `main`。** 删前逐个留 SHA：`audit/client-asset-inventory-20260930`
+=`ec275a39cf1d078691bfb6ced640ddae7ba4841c`、`ui-commercial-polish-20261007`
+=`71b1ae86bc2f9b1a756d5367bb149a7263604c9f`、`task-decomposition/atlas-gap-archive-20261001`
+=`14ba8d5650b98caef047b0b9cf2dbd70b6a603e0`、`codex/github-delivery-incident-20260929`
+=`5d13fc2598b1594d83ab93113c0dfd3eebc1cb17`、`codex/github-delivery-repair-20260929`
+=`72b988c419f160d386093759addb43bb6fe41f78`、`g15-dsh-codex-registry-reconcile-20260930`
+=`6c944fb56824f8714b1d4df588ec26c9a0bbc6ca`。
+先判后删：前三个 `git rev-list --count origin/main..origin/<b>` 实测**独有提交 0**；后三个是 §1 已判定「被取代」
+并删掉本地副本者的**远端残留**（§1 只处理了本地侧，§6.3 只点了前三个——**实际六个**，此处收口）。
+删后 `git branch -a` 只剩 `main` 与 `origin/main`。
+
+**② 临时根散落文件：14 个全删，占用归零。** 删前逐个核对受跟踪文本引用，命中**全为子串**
+（短名会命中 `agent.log` 一类文本），无一处指向临时根下的这个文件。
+其中 `outside-context.txt` 值得点名：它来自 `tests/workflow-assistance/test_workflow_governance.py`
+的越界读取用例，该用例把夹具写在**仓库副本的父目录**（即临时根）且不回收——**一个具名的真实泄漏源**，
+22 字节量级故从未触发任何地板。结果：目录 61→0、文件 14→0、占用 737 KiB → **0**。
+
+**未做**：§7.9 点名的那个 `upload-verify` 可再生 scratch 目录未动——不在临时根下、也不受 6 小时地板管辖，
+删它需另判是否仍被引用。
+
+**未做**：未改夹具创建方式。**并撤回本会话首稿提出的一个「可选加固」**（原话：边界门只拒绝没有 `dir=` 的
+`mkdtemp`，不问名字可否归属）。实测后不成立：不带 `prefix=` 的 `TemporaryDirectory(` 全仓 **374 处**，其中
+**333 处**是裸调用，收紧即成 333 处改写；而**归因并非回收工具的前提**——`scripts/maintenance/release_temp_fixture_residue.py`
+按**年龄**（6 小时地板）判定，名字只用于读数。故此处没有缺陷可修，闭环就是地板 + 定期回收。
+撤回理由写在这里，免得下一轮照着首稿去追一个 333 处的扫荡。
+
+### 10.7 HUD 200% 显示缩放阻断项已解除（2026-10-13）
+
+WUI-19 §7.1 把这一项列为唯一的生产阻断项且「需 owner 定夺」。本轮定夺并实施：**panel 声明高度 780 → 680**，
+`width` 440 与 `resizable=false` 都不变。理由是**非可缩放窗口的声明尺寸就是它的物理需求**：
+780 logical × 2 = 1560 physical > 工作区 1392；680 × 2 = **1360** ≤ 1392。
+不改成可缩放，是因为 `tests/ci/test_window_state_claim.py` 写明「标签回退解析依赖 panel 是唯一的非可缩放声明窗口」。
+
+改动面 **10 个文件**（一处声明 + 九处镜像/钉住）：`apps/observer/src-tauri/tauri.conf.json`；
+`scripts/audit/topbar_geometry_via_cdp.py`、`scripts/audit/topbar_geometry_via_dump_dom.py`、`scripts/audit/wui_slice_capture.py`、
+`scripts/audit/display_scaling_via_cdp.py`、`scripts/audit/reseal_wui_evidence.py`；
+`apps/observer/scripts/window_state_readback.py`；`tests/ci/test_desktop_only_shell.py`、`tests/ci/test_topbar_geometry_gate.py`、
+`tests/ci/test_window_state_claim.py`。
+
+**实测**：`DISPLAY_SCALING_GATE_PASS`（四档全绿）、`GEOMETRY_GATE_PASS`、切片 `12/12`、
+`EVIDENCE_SEAL_PASS ... BOUND=21 UNBOUND=4 STALE=3`（与改前同一分级）、三处钉住测试 83 例绿、
+三件派生投影按「将要推送的账本」重发后 `tests/ci/test_shipped_projections_are_current.py` **11 passed**（隔离账本跑，217.52s）。
+**改完立刻红了一条而红得对**：`window_state_readback` 报 `binary/config drift: the built shell declares 440x780 but
+tauri.conf.json on disk declares 440x680`——门抓住的正是「二进制不是从这棵树构建的」。
+
+**仍未做**：legibility 与 SSE 收据未重跑（不引用面板高度，digest 同属一个 bundle）；原生窗口读回仍 `NOT_RUN`（需 release app.exe）；
+Tauri 真机 E2E 仍未执行；本批不含 commit/push。详见 `taskpacks/current/OPEN-TASK-REGISTER.md` 第十一批。
+
+---
+
 *生成于 2026-07-13；对应 `main` = `1eedf2e0`；CI run 38392301427 全绿。*
+*增补 §10 于 2026-10-13，对应 `main` = `14ba8d56`。*

@@ -57,17 +57,34 @@ function run() {
     assert.strictEqual(query(windows.panel.url).get("mode"), "UNKNOWN");
     assert.strictEqual(query(windows.panel.url).get("view"), "compact");
     assert.strictEqual(windows.panel.width, 440);
-    assert.strictEqual(windows.panel.height, 780);
+    // 680, not 780 (changed 2026-10-13, WUI-19 §7.1): a non-resizable window's declared size IS its
+    // physical demand, so 780 logical needed 1560 physical at 200% display scaling and did not fit a
+    // 2560x1392 work area. 680 needs 1360. The height and its floor move together -- a window whose
+    // minHeight exceeded its height would be a different defect, not a tolerant one.
+    assert.strictEqual(windows.panel.height, 680);
     assert.strictEqual(windows.panel.minWidth, 440);
-    assert.strictEqual(windows.panel.minHeight, 780);
+    assert.strictEqual(windows.panel.minHeight, 680);
     assert.strictEqual(windows.panel.resizable, false);
     assert.strictEqual(windows.panel.alwaysOnTop, true);
     assert.strictEqual(windows.panel.skipTaskbar, true);
     assert.strictEqual(windows.panel.visible, false);
   });
 
-  test("portable bundle remains active without updater or mutation capability", () => {
-    assert.strictEqual(config.bundle.active, true);
+  test("the settings page quotes the panel size the shell actually declares", () => {
+    // Measured 2026-10-13: the HUD's declared height moved 780 -> 680 for 200% display scaling, and this
+    // user-visible label still said 440×780. A number on the production surface is a claim, and a claim
+    // about a declared window belongs to the declaration -- so the label is compared with tauri.conf.json
+    // instead of being trusted.
+    const view = fs.readFileSync(path.join(ROOT, "frontend", "src", "views", "SettingsPrivacyView.tsx"), "utf8");
+    const quoted = windows.panel.width + "×" + windows.panel.height;
+    assert.ok(view.includes(quoted),
+      "the settings page must state the declared panel size " + quoted +
+      "; a stale one is a false claim on the production surface");
+    assert.ok(!/44[0-9]×7[0-9]0/.test(view),
+      "a second, older panel size is still written on the production surface");
+  });
+
+  test("portable bundle remains active without updater or mutation capability", () => {    assert.strictEqual(config.bundle.active, true);
     assert(!JSON.stringify(config).match(/updater|createUpdaterArtifacts/i));
     const permissions = JSON.stringify(caps.permissions || []);
     assert(!permissions.match(/shell|process|fs:allow|http:allow|os:allow/i));

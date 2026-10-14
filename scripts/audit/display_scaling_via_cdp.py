@@ -10,7 +10,7 @@ instrument reports them separately because they are provable by different means:
     with deviceScaleFactor set so the raster and `window.devicePixelRatio` follow. `__dpr` is asserted
     against the asked scale: a sweep whose four runs all report dpr 1 measured one DPI four times.
   * the PHYSICAL half is arithmetic on what the shell declares. `minWidth`/`minHeight` and the HUD's fixed
-    440x780 are logical pixels, so their physical footprint is the declared size times the scale, and
+    440x680 are logical pixels, so their physical footprint is the declared size times the scale, and
     whether that fits the screen is a property of the window the OS makes, not of the page. It is reported
     as derived-from-declaration, and the consequence is stated, because "fits at 100%" is not evidence
     about 200%.
