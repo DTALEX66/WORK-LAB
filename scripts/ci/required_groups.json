@@ -25,12 +25,27 @@
         ["node", "tests/run_all_tests.js"]
       ]
     },
+    "observer-frontend-install": {
+      "working_dir": "apps/observer/frontend",
+      "commands": [
+        ["npm", "ci"]
+      ]
+    },
     "observer-frontend-typecheck": {
       "working_dir": "apps/observer/frontend",
       "commands": [
-        ["npm", "ci"],
-        ["npm", "run", "typecheck"],
-        ["npm", "run", "build"],
+        ["npm", "run", "typecheck"]
+      ]
+    },
+    "observer-frontend-build": {
+      "working_dir": "apps/observer/frontend",
+      "commands": [
+        ["npm", "run", "build"]
+      ]
+    },
+    "observer-frontend-test": {
+      "working_dir": "apps/observer/frontend",
+      "commands": [
         ["npm", "run", "test"]
       ]
     },

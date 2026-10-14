@@ -2,11 +2,12 @@
 // UNKNOWN as UNKNOWN and never fabricate 0 / a monetary amount / a false
 // "success". These are the pure functions that carry the whole front's truth
 // discipline, so they are the highest-value behavior tests.
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   fmtTokens, fmtCostQuality,
   stateTone, activityTone,
   executionsToRows, snapshotToTransportTruth,
+  fetchSnapshot, SNAPSHOT_TIMEOUT_MS,
 } from '@/lib/api'
 import type { SnapshotV3, Execution, Project } from '@/types'
 
@@ -127,5 +128,66 @@ describe('U07 projections keep the real v3 shape honest', () => {
     const t = snapshotToTransportTruth(snap)
     expect(t?.transportState).toBe('LIVE')
     expect(t?.coverageNumerator).toBe(3)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// W05 (2026-10-14): a snapshot GET that never answers must not freeze the read loop.
+//
+// The recorded defect is structural, not cosmetic: `useLiveSnapshot` already coalesces bursts with
+// `inFlight`/`followUp`, so one hung request does not stampede — it freezes. `inFlight` stays true, every
+// later tick only sets `followUp`, and the surface keeps its last good snapshot while still claiming to
+// poll. These two cases pin the two halves of the fix at the function that owns the socket.
+// ---------------------------------------------------------------------------
+describe('W05 · a hung snapshot read is aborted, not merely awaited', () => {
+  const ok = (body: unknown) => ({ ok: true, json: async () => body }) as Response
+
+  it('aborts the GET at the deadline, answers null, and the next read still succeeds', async () => {
+    vi.useFakeTimers()
+    let aborts = 0
+    const fetchMock = vi.fn((_url: RequestInfo | URL, init?: RequestInit) => {
+      if (fetchMock.mock.calls.length === 1) {
+        return new Promise<Response>((_res, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            aborts += 1
+            reject(new DOMException('aborted', 'AbortError'))
+          })
+        })
+      }
+      return Promise.resolve(ok(mkSnap({ revision: 7 })))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      const hung = fetchSnapshot()
+      await vi.advanceTimersByTimeAsync(SNAPSHOT_TIMEOUT_MS + 1)
+      await expect(hung).resolves.toBeNull()
+      expect(aborts).toBe(1)
+      const next = await fetchSnapshot()
+      expect(next?.revision).toBe(7)
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.unstubAllGlobals()
+      vi.useRealTimers()
+    }
+  })
+
+  it('forwards an outer abort, so tearing the surface down releases the socket', async () => {
+    let aborts = 0
+    vi.stubGlobal('fetch', vi.fn((_url: RequestInfo | URL, init?: RequestInit) =>
+      new Promise<Response>((_res, reject) => {
+        init?.signal?.addEventListener('abort', () => {
+          aborts += 1
+          reject(new DOMException('aborted', 'AbortError'))
+        })
+      })))
+    try {
+      const outer = new AbortController()
+      const pending = fetchSnapshot(outer.signal)
+      outer.abort()
+      await expect(pending).resolves.toBeNull()
+      expect(aborts).toBe(1)
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })

@@ -142,18 +142,38 @@ export function parseSnapshotPayload(value: unknown): SnapshotV3 | null {
   return value as SnapshotV3
 }
 
-export async function fetchSnapshot(): Promise<SnapshotV3 | null> {
+// W05 (2026-10-14): a GET that never answers used to hold the caller's `inFlight` flag true forever, so
+// every later poll only set `followUp` and waited — the surface froze on its last good snapshot while still
+// claiming to poll. The abort has to reach the SOCKET: racing the promise from outside would leave the
+// underlying request open and let the next tick pile another one on top of it. This bound is a read
+// deadline, not a freshness claim — a timed-out read reports UNKNOWN, never a stale value presented as live.
+export const SNAPSHOT_TIMEOUT_MS = 8000
+
+export async function fetchSnapshot(signal?: AbortSignal): Promise<SnapshotV3 | null> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), SNAPSHOT_TIMEOUT_MS)
+  const forward = () => controller.abort()
+  if (signal) {
+    if (signal.aborted) controller.abort()
+    else signal.addEventListener('abort', forward, { once: true })
+  }
   try {
     const res = await fetch(SNAPSHOT_URL, {
       method: 'GET',
       // A cached snapshot must never be presented as the current one.
       cache: 'no-store',
       headers: { Origin: SNAPSHOT_URL.replace(/https?:\/\/([^/]+)/, 'http://$1') },
+      signal: controller.signal,
     })
     if (!res.ok) return null
     return parseSnapshotPayload(await res.json())
   } catch {
     return null
+  } finally {
+    // Both ends are released on every path: the deadline timer and the forwarded listener would otherwise
+    // keep a closed surface's closure alive.
+    clearTimeout(timer)
+    signal?.removeEventListener('abort', forward)
   }
 }
 
@@ -513,6 +533,10 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
     const descriptor = loadRuntimeDescriptor()
     setSource(descriptor.authoritative ? (descriptor.source === 'static-preview' ? 'static-preview' : 'stale') : 'static-preview')
     let closed = false
+    // W05: one controller per effect. Aborting it on unmount is what releases a hung read — without it the
+    // request outlives the surface and the `finally` that clears `inFlight` only runs when the socket
+    // eventually gives up.
+    const readAbort = new AbortController()
 
     let lastRevision: number | null = null
     let inFlight = false
@@ -551,7 +575,7 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
       try {
         do {
           followUp = false
-          const s = await fetchSnapshot()
+          const s = await fetchSnapshot(readAbort.signal)
           if (closed) break
           if (s === null) reportReadFailure('快照获取失败（数据源离线或端点不可达）— 保持 UNKNOWN，不伪造数据')
           else apply(s)
@@ -604,6 +628,9 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
 
     return () => {
       closed = true
+      // Order matters: mark closed first so the abort's rejection is not reported as a read failure on a
+      // surface that is being torn down, then abort so the socket is actually released.
+      readAbort.abort()
       if (pollRef.current) clearInterval(pollRef.current)
       if (closeSse) closeSse()
     }
