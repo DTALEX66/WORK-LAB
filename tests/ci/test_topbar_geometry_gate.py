@@ -252,7 +252,7 @@ class InstrumentTests(unittest.TestCase):
     def test_each_surface_is_measured_at_its_own_declared_shape(self) -> None:
         # Measuring the compact layout at desktop width proved nothing about the panel.
         self.assertEqual(geometry.WIN_SIZE["full"], "1280,820")
-        self.assertEqual(geometry.WIN_SIZE["compact"], "440,780")
+        self.assertEqual(geometry.WIN_SIZE["compact"], "440,680")
         self.assertGreater(geometry.MAX_HEIGHT["compact"], geometry.MAX_HEIGHT["full"],
                            "the 440px panel wraps its bar into more rows than the desktop shell")
 
@@ -420,7 +420,7 @@ class WindowFloorTests(unittest.TestCase):
     """The third pass measures the smallest window the shipped product can be resized into.
 
     It exists because the standard once promised a "< 760px: icon rail or drawer" band. That band is
-    unreachable: tauri.conf.json floors the main window at 900x600 and the 440x780 surface renders no
+    unreachable: tauri.conf.json floors the main window at 900x600 and the 440x680 surface renders no
     rail at all. Building for the invented row produced first an icon rail whose 23 lanes measured as
     23 identical dots, then a drawer — both of which the owner decision of 2026-10-07 had already
     deleted. So the gate now measures the real floor and refuses any phone surface.

@@ -1265,6 +1265,7 @@ export type WorkflowSnapshotV3 = {
   },
     transport_state: string | null,
     producer_gaps: string[],
+    sourceTimes?: Record<string, unknown> | null,
     target_behaviour?: Record<string, unknown> | null
   })[],
     isolatedTrials?: ({
@@ -1322,7 +1323,12 @@ export type WorkflowOperationProgressV1 = {
     basis: "LEDGER_UPDATED_AT" | "LEDGER_HEARTBEAT" | "NONE"
   },
     transport_state: string | null,
-    producer_gaps: ("SUBMITTING_STAGE" | "TARGET_BEHAVIOUR_CONFIRMATION" | "TRIAL_ISOLATION" | "DURATION")[],
+    producer_gaps: ("SUBMITTING_STAGE" | "TARGET_BEHAVIOUR_CONFIRMATION" | "TRIAL_ISOLATION" | "DURATION" | "PROGRESS_SEQUENCE")[],
+    sourceTimes: {
+    createdAt: string | null,
+    updatedAt: string | null,
+    heartbeatAt: string | null
+  },
     target_behaviour?: "CONFIRMED" | "PENDING" | "ABSENT" | "CONFLICT" | null | null
   };
 

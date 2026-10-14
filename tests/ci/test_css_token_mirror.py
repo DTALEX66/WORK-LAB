@@ -136,6 +136,24 @@ class Normalisation(unittest.TestCase):
         self.assertNotEqual(checker.normalise("rgba(0,0,0,.35)"), checker.normalise("rgba(0,0,0,0.5)"))
         self.assertEqual("#4a6172", checker.normalise("#4A6172"))
 
+    def test_a_hex_colour_is_a_literal_and_is_never_rewritten(self) -> None:
+        """Measured 2026-10-14: the number rewrite ate leading zeros inside hex, so `#050d16` normalised to
+        `#50d16`. That is not a cosmetic bug in a debug string — it makes a VALID colour compare EQUAL to an
+        invalid one, so a genuine collision between those two spellings would have been published as
+        agreement by the very guard whose job is to catch it. The two must stay distinct.
+        """
+        self.assertEqual("#050d16", checker.normalise("#050d16"))
+        self.assertNotEqual(checker.normalise("#050d16"), checker.normalise("#50d16"),
+                            "a valid hex colour and an invalid one must never normalise together")
+        self.assertNotEqual(checker.normalise("#081420"), checker.normalise("#81420"))
+        self.assertNotEqual(checker.normalise("#07111c"), checker.normalise("#7111c"))
+        self.assertEqual("#050d16", checker.normalise("#050D16"), "case is still folded")
+        # The colours the shipped sheets really carry must survive, including the ones with leading zeros.
+        for literal in ("#0b1018", "#f3f6fa", "#eaf0f6", "#cbd5e1", "#ff9aab"):
+            self.assertEqual(literal, checker.normalise(literal), literal)
+        # And the re-spelling this function exists to equate still equates.
+        self.assertEqual(checker.normalise("rgba(5,13,22,0.35)"), checker.normalise("rgba(5, 13, 22, .35)"))
+
 
 if __name__ == "__main__":
     unittest.main()

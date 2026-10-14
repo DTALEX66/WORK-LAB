@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-13T12:23:02Z",
+  "generatedAt": "2026-10-13T17:01:06Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -262,11 +262,12 @@
       "lines": 245,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
         "apps/observer/frontend/DESIGN.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
@@ -737,14 +738,14 @@
       "lines": 152,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 7,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json"
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -783,14 +784,14 @@
       "lines": 218,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 7,
+      "citedByRecords": 8,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json"
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -885,7 +886,7 @@
       "lines": 807,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 18,
+      "citedByRecords": 21,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "UI_IMPLEMENTATION_REPORT.md",
@@ -902,14 +903,14 @@
       "lines": 160,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 8,
       "citedBy": [
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "taskpacks/current/error-ledger.json",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json"
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -1025,10 +1026,11 @@
       "lines": 221,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 5,
       "citedBy": [
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/error-ledger.json"
       ]
@@ -1206,14 +1208,14 @@
       "lines": 149,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 9,
+      "citedByRecords": 10,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "packages/client-neutral-core/scripts/project_temp.py",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md"
+        "taskpacks/current/error-ledger.json"
       ]
     }
   ]

@@ -87,7 +87,7 @@ class DesktopOnlyShellGate(unittest.TestCase):
         self.assertGreaterEqual(windows["main"]["minWidth"], 900,
                                 "a 320px main window is the phone shape this round removed")
         self.assertGreaterEqual(windows["main"]["minHeight"], 600)
-        self.assertEqual(windows["panel"], {**windows["panel"], "width": 440, "height": 780,
+        self.assertEqual(windows["panel"], {**windows["panel"], "width": 440, "height": 680,
                                            "resizable": False})
 
     def test_the_palette_lives_in_one_module(self) -> None:

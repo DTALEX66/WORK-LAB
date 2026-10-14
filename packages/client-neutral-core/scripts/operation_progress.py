@@ -42,6 +42,11 @@ LEDGER_TO_STATE: dict[str, str] = {
 }
 # Stages the pack names that this repository cannot answer, and the gap token each becomes.
 UNANSWERED_STAGES = {"SUBMITTING": "SUBMITTING_STAGE"}
+# Fields the pack's read model names that no producer here answers, carried as named gaps so a reader
+# sees why they are absent. `sequence` (2026-10-13): nothing names a per-operation progress counter.
+# The snapshot's `revision` is the STORE's cursor — borrowing it would make two different monotonic
+# things look like one, which is the error ERR-225 keeps recording under other names.
+UNANSWERED_FIELDS: tuple[str, ...] = ("PROGRESS_SEQUENCE",)
 EXTERNAL_TO_BEHAVIOUR = {"CONFIRMED": "PASSED", "PENDING": "PENDING", "ABSENT": "ABSENT", "CONFLICT": "CONFLICT"}
 _NO_PRODUCER = "NO_PRODUCER"
 
@@ -60,7 +65,7 @@ def build_operation_progress(ledger: Any, task_id: str, *, now: str | None = Non
                             child_task_id: str | None = None) -> dict[str, Any]:
     """One progress record for one operation, or an honest UNKNOWN record when the ledger cannot answer."""
     observed = now or _now()
-    gaps: list[str] = sorted(set(UNANSWERED_STAGES.values()))
+    gaps: list[str] = sorted(set(UNANSWERED_STAGES.values()) | set(UNANSWERED_FIELDS))
     try:
         task = ledger.get(task_id)
     except (KeyError, ValueError, OSError):
@@ -70,6 +75,7 @@ def build_operation_progress(ledger: Any, task_id: str, *, now: str | None = Non
             "state": "UNKNOWN", "ledger_status": None,
             "last_trusted_progress": {"state": None, "at": None, "basis": "NONE"},
             "transport_state": transport_state,
+            "sourceTimes": {"createdAt": None, "updatedAt": None, "heartbeatAt": None},
             "producer_gaps": sorted(set(gaps) | {"TARGET_BEHAVIOUR_CONFIRMATION"}),
             "target_behaviour": None,
         }
@@ -111,6 +117,14 @@ def build_operation_progress(ledger: Any, task_id: str, *, now: str | None = Non
         "schema_version": PROGRESS_SCHEMA, "task_id": task_id, "observed_at": observed,
         "state": state, "ledger_status": status or None,
         "last_trusted_progress": trusted, "transport_state": transport_state,
+        # The three stamps are read separately from the record we just read: `observed_at` is when WE
+        # looked, these are when the SOURCE attested. A missing one stays null rather than borrowing
+        # its neighbour — `updated_at` is not a heartbeat, and a lease stamp is not an update.
+        "sourceTimes": {
+            "createdAt": task.get("created_at"),
+            "updatedAt": updated_at,
+            "heartbeatAt": heartbeat,
+        },
         "producer_gaps": sorted(set(gaps)),
     }
     if behaviour is not None:

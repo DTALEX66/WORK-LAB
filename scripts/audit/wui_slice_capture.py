@@ -143,7 +143,7 @@ def main() -> int:
          query(api, view="overview", theme="light", palette="master")),
         ("05-floor-900x600", "1280,820", (900, 600), query(api, view="overview", theme="dark")),
         ("06-demoted-lane", "1280,820", None, query(api, view="workflow-editor", theme="dark")),
-        ("08-compact-hud", "440,780", None, query(api, layout="compact", theme="dark")),
+        ("08-compact-hud", "440,680", None, query(api, layout="compact", theme="dark")),
         # WUI-05/06/07/09: the four destination pages against the same live projection.
         ("09-usage-cache", "1280,820", None, query(api, view="usage", theme="dark")),
         ("10-software-environment", "1280,820", None, query(api, view="environment", theme="dark")),
