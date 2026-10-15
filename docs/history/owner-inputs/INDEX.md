@@ -30,6 +30,21 @@
 后续增量材料先核对已有摘要，再追加源别名/版本和包内成员登记，运行 `build-index` 与 `verify`。
 不要另建第二个资料目录或任务账本；没有找到文件时报告具体 ID/路径/摘要缺口，不用新摘要冒充原件。
 
+## 默认忽略范围（W12，2026-10-16 补）
+
+这一节写给**查询者**，不是写给登记流程：它声明本仓哪一部分是历史证据、哪一部分是当前合同。
+
+- **历史与归档默认不进入工作流查询与上下文包**：`docs/history/**`（含 `docs/history/archive/**`、各
+  `record-*/originals/**`）、`90-archive/**`、`taskpacks/history/**` 都只作**来源**。需要时按资料 ID 显式提取
+  （`scripts/maintenance/owner_material_catalog.py extract WL-REC-00xx`），不要整目录扫。
+- **大产物只登记、不逐行引用**：`docs/history/**` 下的 `*.zip`、`*.otf`、`*.png` 等批量二进制
+  （实测少数几个文件即占受跟踪体积的绝大部分：最大单个 35.3 MB，前 15 个合计约 130 MB）保留原件与摘要，
+  检索走目录与登记，不参与行号引用。
+- **当前合同优先于旧手册**：任何冲突时以下列顺序为准——`WORK-LAB-AUTHORITY.md` →
+  `.project/governance/project-authority-index.json` → `taskpacks/current/OPEN-TASK-REGISTER.md`；
+  旧的 Hermes / CC Switch 手册即使与本页同名列在目录里，也**不得**覆盖当前合同。
+- 本节只声明范围，不删除、不搬迁 Git 历史与归档资产（W12 明确要求保留）。
+
 ## 原文件及别名目录
 
 
