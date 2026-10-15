@@ -2,7 +2,8 @@ r"""Gate: the window-state claim is a verdict, not a printout.
 
 Project law this file exists to enforce: a UI claim is real only when it is
 MEASURED, not emulated. The recorded defect — a CI geometry step that reported a
-500x629 viewport while `tauri.conf.json` declares the panel at 440x780 — happened
+500x629 viewport while `tauri.conf.json` declared the panel at 440x780 (440x680 since
+2026-10-13) — happened
 because the number came from a Chrome `--headless=new` window, and nothing on the
 Rust side ever read the real window back. Every check here runs on the PURE
 decision function in apps/observer/scripts/window_state_readback.py, so the
@@ -74,7 +75,7 @@ def _outside_repo(name: str) -> Path:
 # Payload builders. `metrics()` is the shape `window_metrics` returns: serde
 # camelCase, with the verdict carried next to the raw numbers it was computed from.
 # ---------------------------------------------------------------------------
-def declared(width=440.0, height=780.0, label="panel") -> dict:
+def declared(width=440.0, height=680.0, label="panel") -> dict:
     return {"label": label, "width": width, "height": height,
             "minWidth": width, "minHeight": height, "resizable": False,
             "unit": "logical pixels, inner content area",
@@ -86,7 +87,7 @@ def verdict(status="match", deviation=None, tolerance=wsr.TOLERANCE_LOGICAL_PX) 
             "basis": "inner_size_logical vs declared width/height", "reason": None}
 
 
-def metrics(width=440.0, height=780.0, scale=1.0, status=None, dec=None, label="panel",
+def metrics(width=440.0, height=680.0, scale=1.0, status=None, dec=None, label="panel",
             **overrides) -> dict:
     """A coherent readback by default: deviation recomputed from the same numbers
     the Rust side would have used, so a PASS here is a fixture, not a wish."""
@@ -121,34 +122,34 @@ class HappyPath(unittest.TestCase):
     def test_a_measured_window_that_equals_its_declared_size_is_green(self):
         out = decide(metrics())
         self.assertEqual(out["status"], "PASS", out)
-        self.assertEqual(out["declared"], "440x780")
-        self.assertEqual(out["measured"], "440.0x780.0")
+        self.assertEqual(out["declared"], "440x680")
+        self.assertEqual(out["measured"], "440.0x680.0")
         self.assertEqual(out["scale"], 1.0)
 
     def test_the_same_window_at_125_percent_scale_is_still_green(self):
-        # 550x975 physical at scale 1.25 IS the declared 440x780. A gate that
+        # 550x850 physical at scale 1.25 IS the declared 440x680. A gate that
         # compares raw physical pixels against a logical config would call this
         # a mismatch — this is the exact unit bug behind the original confusion.
-        out = decide(metrics(width=440.0, height=780.0, scale=1.25))
+        out = decide(metrics(width=440.0, height=680.0, scale=1.25))
         self.assertEqual(out["status"], "PASS", out)
 
 
 class GeometryMustGoRedWhenItIsWrong(unittest.TestCase):
     def test_the_recorded_cdp_numbers_convict_the_claim(self):
-        # 500x629 measured against a declared 440x780: the run nobody could
+        # 500x629 measured against a declared 440x680: the run nobody could
         # explain. If this ever goes green, the emulation-vs-measurement gap is
         # back in the gate.
         out = decide(metrics(width=500.0, height=629.0,
                              status="mismatch",
                              dec=declared()))
         self.assertEqual(out["status"], "FAIL", out)
-        self.assertEqual(out["deviation"], "+60.0x-151.0")
+        self.assertEqual(out["deviation"], "+60.0x-51.0")
         self.assertIn("beyond +/-2.0 logical px", out["reason"])
 
     def test_one_pixel_past_the_tolerance_is_red(self):
-        self.assertEqual(decide(metrics(width=442.0, height=780.0))["status"], "PASS",
+        self.assertEqual(decide(metrics(width=442.0, height=680.0))["status"], "PASS",
                          "the tolerance boundary itself is inclusive")
-        self.assertEqual(decide(metrics(width=442.01, height=780.0))["status"], "FAIL")
+        self.assertEqual(decide(metrics(width=442.01, height=680.0))["status"], "FAIL")
 
     def test_one_axis_right_and_one_wrong_is_red(self):
         # The rule is an AND over the axes, never an average: a panel that is the
@@ -159,7 +160,7 @@ class GeometryMustGoRedWhenItIsWrong(unittest.TestCase):
     def test_a_window_that_is_smaller_than_declared_is_red_too(self):
         out = decide(metrics(width=400.0, height=700.0, status="mismatch"))
         self.assertEqual(out["status"], "FAIL")
-        self.assertTrue(out["deviation"].startswith("-40.0x-80.0"), out["deviation"])
+        self.assertTrue(out["deviation"].startswith("-40.0x+20.0"), out["deviation"])
 
 
 class MissingReadbackIsNeverGreen(unittest.TestCase):
@@ -211,7 +212,7 @@ class TheGateDoesNotTrustThePayloadItReads(unittest.TestCase):
         self.assertIn("verdict disagreement", out["reason"])
 
     def test_tolerance_drift_between_the_two_layers_is_red(self):
-        # 440x900 would pass a 150px tolerance; the payload carrying a different
+        # 440x900 needs a 220px tolerance; the payload carrying a different
         # slack than the probe means one rule lives in two places.
         payload = metrics(width=440.0, height=900.0,
                           verdict=verdict(status="match",
@@ -233,7 +234,7 @@ class TheGateDoesNotTrustThePayloadItReads(unittest.TestCase):
 
     def test_a_matching_tree_config_is_accepted(self):
         self.assertEqual(decide(metrics(),
-                                tree_declared={"width": 440.0, "height": 780.0})
+                                tree_declared={"width": 440.0, "height": 680.0})
                          ["status"], "PASS")
 
 
@@ -254,7 +255,9 @@ class CrossLanguageRulesAgree(unittest.TestCase):
         # tauri.conf.json is where the declared side of the comparison lives.
         conf = json.loads(TAURI_CONF.read_text(encoding="utf-8"))
         panel = next(w for w in conf["app"]["windows"] if w["label"] == "panel")
-        self.assertEqual((panel["width"], panel["height"]), (440, 780))
+        # 680, not 780: a non-resizable window's declared size is its physical demand, and 780 logical
+        # needs 1560 physical at 200% scaling, which does not fit a 2560x1392 work area (WUI-19 §7.1).
+        self.assertEqual((panel["width"], panel["height"]), (440, 680))
         self.assertFalse(panel["resizable"],
                          "the fallback label resolution rule depends on the panel "
                          "being the only non-resizable declared window")
@@ -265,7 +268,7 @@ class CrossLanguageRulesAgree(unittest.TestCase):
 
     def test_declared_panel_size_from_disk_matches_the_payload_builder(self):
         self.assertEqual(wsr.declared_from_conf(TAURI_CONF, "panel"),
-                         {"width": 440, "height": 780})
+                         {"width": 440, "height": 680})
 
     def test_declared_from_conf_never_invents_a_number(self):
         self.assertIsNone(wsr.declared_from_conf(TAURI_CONF, "nonexistent-window"))
@@ -344,7 +347,7 @@ class ProbeWiringIsFailClosed(unittest.TestCase):
     def test_a_matching_readback_exits_0(self):
         code, _ = self._run({"status": "OK", "metrics": metrics(), "attempts": [],
                              "page": {}, "pageViewport": {"innerWidth": 440,
-                                                           "innerHeight": 780}})
+                                                           "innerHeight": 680}})
         self.assertEqual(code, 0)
 
     def test_an_extra_failing_label_cannot_hide_behind_the_primary_pass(self):

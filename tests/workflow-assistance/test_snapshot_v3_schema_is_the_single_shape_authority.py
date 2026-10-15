@@ -44,7 +44,17 @@ CATALOG_PATH = ROOT / ".project/governance/contracts/contract-catalog.json"
 
 MIN_PRODUCER_KEYS = 20  # measured floor; a parse that sees fewer keys has not parsed the payload
 OPTIONAL_KEYS = {"software", "taskRecords", "adapterCapabilities",
-                 "artifactHandles", "artifactHandlesSummary", "collectors"}
+                 "artifactHandles", "artifactHandlesSummary", "collectors",
+                 # Added 2026-10-13. Both are optional for the same reason as the five above and it has to
+                 # be said explicitly rather than inherited: absent means nothing read the source, and the
+                 # snapshot_api builder only emits each section when a producer handed it rows
+                 # (`**({"operationProgress": operation_progress} if operation_progress is not None else {})`).
+                 # An empty array would claim "read it, there was nothing"; the key being absent says
+                 # "nobody read it", which is the honest one. This gate was RED at HEAD before this line and
+                 # nothing could see it: the module is pytest-style (module-level `def test_*()` with bare
+                 # asserts) while the canonical gate discovers unittest classes, so the runner never
+                 # collected it. Found by running the module directly.
+                 "operationProgress", "isolatedTrials"}
 
 
 def schema() -> dict:

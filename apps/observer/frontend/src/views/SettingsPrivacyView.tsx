@@ -29,7 +29,7 @@ export interface SettingsPrivacyViewProps {
 
 const APPEARANCE_VALUE: Record<'theme' | 'palette' | 'layout', (props: SettingsPrivacyViewProps) => string> = {
   theme: (p) => (p.theme === 'light' ? '浅色' : p.theme === 'dark' ? '深色' : '未由壳传入（按地址解析）'),
-  layout: (p) => (p.layout === 'compact' ? '紧凑 HUD（440×780 桌面浮窗）'
+  layout: (p) => (p.layout === 'compact' ? '紧凑 HUD（440×680 桌面浮窗）'
     : p.layout === 'full' ? '主窗（默认 1280×820，下限 900×600）' : '未由壳传入（按地址解析）'),
   palette: (p) => (p.palette ? PALETTE_LABELS[p.palette] : PALETTE_LABELS[DEFAULT_PALETTE_ID]),
 }

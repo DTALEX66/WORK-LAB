@@ -131,6 +131,54 @@ class ProducerAgainstRealLedgerTests(unittest.TestCase):
         self.assertEqual(record["last_trusted_progress"]["basis"], "NONE")
         self.assertIsNone(record["last_trusted_progress"]["at"],
                          "an empty timestamp would read as 'observed at the epoch'")
+        self.assertEqual({"createdAt": None, "updatedAt": None, "heartbeatAt": None},
+                         record["sourceTimes"],
+                         "an unreadable operation attests no times; borrowing observed_at here would "
+                         "present our own read clock as the source's word")
+
+    def test_source_times_come_from_the_record_and_never_borrow_a_neighbour(self) -> None:
+        """Measured 2026-10-13: the pack's `sourceTimes` had no producer at all.
+
+        The point of the field is that `observed_at` (when WE read) and the source's own stamps are
+        different claims. The failure mode to guard is a fallback: filling a missing heartbeat from
+        `updated_at` would report a lease renewal that never happened.
+        """
+        self.ledger.create("t-4", "key-4")
+        self.ledger.transition("t-4", "PLANNING")
+        record = build_operation_progress(self.ledger, "t-4", now="2026-10-13T00:00:00Z")
+        validate(record, PROGRESS_SCHEMA)
+        task = self.ledger.get("t-4")
+        self.assertEqual(record["sourceTimes"]["createdAt"], task["created_at"])
+        self.assertEqual(record["sourceTimes"]["updatedAt"], task["updated_at"])
+        self.assertIsNone(record["sourceTimes"]["heartbeatAt"],
+                          "no lease has been taken yet, so there is no heartbeat to report")
+        self.assertNotEqual(record["sourceTimes"]["heartbeatAt"], record["sourceTimes"]["updatedAt"],
+                            "a missing heartbeat filled from updated_at is a lease renewal that never happened")
+        self.ledger.acquire_lease("t-4", "worker-a", ttl_seconds=60, now="2026-10-13T00:00:30Z")
+        leased = build_operation_progress(self.ledger, "t-4", now="2026-10-13T00:00:40Z")
+        validate(leased, PROGRESS_SCHEMA)
+        self.assertEqual(leased["sourceTimes"]["heartbeatAt"],
+                         self.ledger.get("t-4")["lease"]["heartbeat_at"],
+                         "once a lease exists its stamp is the heartbeat this field is for")
+
+    def test_the_packs_sequence_is_a_named_gap_and_not_the_stores_revision(self) -> None:
+        """`sequence` is named in the pack's read model; nothing here counts per-operation progress.
+
+        The tempting substitute is the snapshot's `revision`, which is the STORE's cursor. Two different
+        monotonic things made to look like one is the defect ERR-225 keeps recording under other names,
+        so the field is carried as a declared gap and the record has no `sequence` key to misread.
+        """
+        self.ledger.create("t-5", "key-5")
+        record = build_operation_progress(self.ledger, "t-5")
+        validate(record, PROGRESS_SCHEMA)
+        self.assertIn("PROGRESS_SEQUENCE", record["producer_gaps"])
+        self.assertNotIn("sequence", record,
+                         "a `sequence` key answered from the store's revision would be a different number "
+                         "wearing this field's name")
+        enum = json.loads((ROOT / "packages/contracts/schemas/workflow/operation-progress.schema.json")
+                          .read_text(encoding="utf-8"))["properties"]["producer_gaps"]["items"]["enum"]
+        self.assertIn("PROGRESS_SEQUENCE", enum,
+                      "the gap must be declared in the contract, not only emitted by code")
 
     def test_completed_is_the_only_ledger_state_that_answers_passed(self) -> None:
         self.ledger.create("t-3", "key-3")

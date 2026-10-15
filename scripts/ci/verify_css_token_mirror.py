@@ -26,6 +26,10 @@ SHEETS = ("apps/observer/frontend/src/index.css",
 DECL = re.compile(r"(--[a-z0-9]+(?:-[a-z0-9]+)*)\s*:\s*([^;{}]+)")
 COMMENT = re.compile(r"/\*.*?\*/", re.S)
 NUMBER = re.compile(r"(-?\d*\.?\d+)")
+# A hex colour has to survive `normalise` verbatim: it is a literal, not arithmetic. Lowercasing happens
+# before this runs, so only lowercase digits matter here. The negative lookahead keeps `#ff` from matching
+# inside a longer run like `#fff0`.
+HEX_LITERAL = re.compile(r"#[0-9a-f]{3,8}(?![0-9a-f])")
 # a declaration belongs to a theme scope only when its enclosing selector says so; anything else (a component
 # rule that happens to set a variable) is judged in the "local" bucket, because a component override is a
 # different claim from a theme token and must not be compared against :root
@@ -41,10 +45,26 @@ def normalise(value: str) -> str:
     Numbers are rewritten where they stand rather than by splitting on commas: a comma split leaves the
     leading `rgba(0` and the trailing `0.35)` glued to punctuation, which is exactly the pair this function
     has to equate (measured on the shipped sheets, --shadow and --shadow-soft differ only this way).
+
+    Hex colours are literals, not numbers, and are hidden before the rewrite. Measured 2026-10-14: the
+    rewrite turned `#050d16` into `#50d16` — a leading zero is its own digit run — so a VALID colour would
+    have compared EQUAL to an invalid one, and a real collision between `#050d16` and `#50d16` would have
+    been published as agreement. The placeholders are private-use characters: no digits, so the number
+    rewrite cannot reach them either.
     """
     text = " ".join(value.split()).lower()
     text = re.sub(r"\s*([(),])\s*", r"\1", text)
-    return NUMBER.sub(lambda match: f"{float(match.group(1)):g}", text)
+    hidden: list[str] = []
+
+    def hide(match: re.Match[str]) -> str:
+        hidden.append(match.group(0))
+        return chr(0xE000 + len(hidden) - 1)
+
+    text = HEX_LITERAL.sub(hide, text)
+    text = NUMBER.sub(lambda match: f"{float(match.group(1)):g}", text)
+    for index, original in enumerate(hidden):
+        text = text.replace(chr(0xE000 + index), original)
+    return text
 
 
 def selector_of(stack: list[str]) -> str:

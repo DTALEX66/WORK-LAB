@@ -9,9 +9,10 @@ commit, with the same boundary rules, or it will be done partially and quoted as
 Rules this script obeys:
   * it reports each step's own exit code and never rewrites a red into a pass; the SSE falsification step
     EXPECTS exit 1 -- that is its control running, not a failure -- and any other exit there is a failure;
-  * the display-scaling step is known to end red on this machine: the shipped HUD (440x780, not resizable)
-    needs 880x1560 physical at 200% DPI and the measured work area is 2560x1392. That is an open owner
-    decision, so the step is recorded as measured-and-red, never as skipped;
+  * the display-scaling step used to end red on this machine: the shipped HUD (440x780, not resizable)
+    needed 880x1560 physical at 200% DPI against a measured work area of 2560x1392. That owner decision was
+    settled on 2026-10-13 by shrinking the declared panel to 440x680 (1360 physical at 200%), so the step is
+    now expected to PASS; if it goes red again, that is a new finding, not the known limit;
   * a step that cannot run (no browser) is reported as NOT_RUN with its exit code, not swallowed;
   * everything stays inside the repository: the store the capture reads is a fresh one under
     `.project-local/runs/`, and the receipts land in `.project-local/artifacts/wui-20261009/`.

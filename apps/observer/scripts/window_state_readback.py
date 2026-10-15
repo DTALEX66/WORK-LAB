@@ -5,8 +5,8 @@ Why this exists (the gap it closes)
 -----------------------------------
 `scripts/audit/topbar_geometry_via_cdp.py` is a required CI step, and in one
 recorded run it reported a 500x629 viewport while `tauri.conf.json` declares the
-panel window at 440x780. Reproduced here rather than argued: that script's
-`measure()` starts **Chrome with `--headless=new --window-size=440,780`** and
+panel window at 440x680. Reproduced here rather than argued: that script's
+`measure()` starts **Chrome with `--headless=new --window-size=440,680`** and
 reads `innerWidth/innerHeight` out of the page (topbar_geometry_via_cdp.py:381
 -433). It never launches `app.exe` and never touches the Tauri window at all, so
 the two numbers describe two different objects measured by two different
@@ -30,7 +30,7 @@ instead of trusted.
 
 Verdicts
 --------
-    WINDOW_STATE_READBACK_PASS declared=440x780 measured=440x780 scale=1.0   exit 0
+    WINDOW_STATE_READBACK_PASS declared=440x680 measured=440x680 scale=1.0   exit 0
     WINDOW_STATE_READBACK_FAIL reason=...                                    exit 1
     WINDOW_STATE_READBACK_NOT_RUN reason=...                                 exit 3
 
@@ -88,8 +88,8 @@ TOLERANCE_LOGICAL_PX = 2.0
 # line. The authoritative declared numbers are carried by the payload (which
 # reads the Config embedded in the binary) and cross-checked against
 # tauri.conf.json on disk by `declared_from_conf`.
-DECLARED_PANEL = (440, 780)
-EMULATION_WINDOW_SIZE = "440,780"
+DECLARED_PANEL = (440, 680)
+EMULATION_WINDOW_SIZE = "440,680"
 
 
 # ---------------------------------------------------------------------------
@@ -464,7 +464,7 @@ def _serve_dist(dist: Path, u19) -> tuple[subprocess.Popen, int]:
 
 
 def measure_chrome_emulation(u19, browser: str, evidence_dir: Path) -> dict:
-    """Launch Chrome `--headless=new --window-size=440,780` on the built dist and
+    """Launch Chrome `--headless=new --window-size=440,680` on the built dist and
     read innerWidth/innerHeight. This is the number the geometry gate records;
     measuring it here turns 'nobody can explain 500x629' into one line of data.
 
