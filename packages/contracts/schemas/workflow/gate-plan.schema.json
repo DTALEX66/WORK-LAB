@@ -10,6 +10,20 @@
     "plan_id": {"type": "string", "minLength": 1},
     "source_identity": {"$ref": "#/$defs/sourceIdentity"},
     "changed_paths": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "unclassified_paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "reason", "needs"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "needs": {"type": "string", "minLength": 1}
+        }
+      },
+      "description": "W07 (2026-10-15): paths the profile does not classify. The planner always escalated to every gate when one appeared, but the plan never SAID which paths caused it -- so a reader saw 'required_gates: all' with no way to learn why, and the cheapest fix (name the path in the profile) was not discoverable from the artifact."
+    },
     "required_gates": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "skipped_gates": {
       "type": "array",

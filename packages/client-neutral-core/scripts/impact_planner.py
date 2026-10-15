@@ -139,6 +139,17 @@ def build_plan(
             "tree": {"algorithm": "repository-default", "object_type": "tree", "oid": tree},
         },
         "changed_paths": sorted(set(path.replace("\\", "/") for path in changed_paths)),
+        # W07: an escalation to every gate is a decision, and a decision has to name its cause. Without this
+        # the plan read as "run everything" with nothing to act on; the fix (declare the path under a module
+        # root, or under risk_zones.critical if it is genuinely sensitive) was not discoverable from the plan.
+        "unclassified_paths": [
+            {"path": path,
+             "reason": "no module root and no gate pattern in .project/governance/work-lab.project-profile.yaml "
+                       "selects this path",
+             "needs": "declare it under the owning module's roots, or under risk_zones.critical when it is a "
+                      "sensitive surface; until then every gate runs, which is correct but expensive"}
+            for path in sorted(set(unknown_paths))
+        ],
         "required_gates": required,
         "skipped_gates": skipped,
         "risk": "critical" if critical else ("low" if not changed_paths else "medium"),
