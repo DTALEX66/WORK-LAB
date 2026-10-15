@@ -467,6 +467,11 @@ export type GatePlan = {
     plan_id: string,
     source_identity: unknown,
     changed_paths: string[],
+    unclassified_paths?: {
+    path: string,
+    reason: string,
+    needs: string
+  }[],
     required_gates: string[],
     skipped_gates: {
     gate_id: string,
