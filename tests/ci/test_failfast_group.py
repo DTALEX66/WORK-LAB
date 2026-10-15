@@ -109,10 +109,20 @@ def main() -> int:
         "observer-web-contracts": [
             ["node", "tests/run_all_tests.js"],
         ],
-        "observer-frontend-typecheck": [
+        # W02 (2026-10-14): this one group used to hold npm ci + typecheck + build + test, so the job's
+        # name reported their SUM and a regression in the build could not be told apart from a slow install.
+        # Four named groups cost nothing extra (same commands, same fail-fast semantics) and make the step
+        # durations the diagnosis. Splitting is the change; dropping a command would be a different one.
+        "observer-frontend-install": [
             ["npm", "ci"],
+        ],
+        "observer-frontend-typecheck": [
             ["npm", "run", "typecheck"],
+        ],
+        "observer-frontend-build": [
             ["npm", "run", "build"],
+        ],
+        "observer-frontend-test": [
             ["npm", "run", "test"],
         ],
         "observer-desktop-crate": [

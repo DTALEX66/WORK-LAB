@@ -32,7 +32,7 @@
         "version": null
       },
       "knownGap": "No actions/setup-node step exists, so the Node version is whatever windows-latest ships. Measured on this machine only for local runs: v22.11.0 at C:/Users/ALEX/AppData/Local/OpenHuman/node-runtime. Recorded as UNKNOWN for CI rather than guessed from the local number.",
-      "tests": "npm run test (vitest) inside the observer-frontend-typecheck group"
+      "tests": "npm run test (vitest) inside the observer-frontend-test group (W02 split it out of observer-frontend-typecheck, which now runs tsc only)"
     },
     {
       "id": "node-token-monitor",
