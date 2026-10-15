@@ -679,7 +679,11 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
              f"--remote-debugging-port={requested_cdp}", "--remote-allow-origins=*", url],
             stdout=log, stderr=subprocess.STDOUT)
         cdp_port = None
-        deadline = time.time() + 25
+        # 90 seconds, not 25 (measured 2026-10-16 on GitHub's windows-latest via PRs #166/#167): on a cold
+        # runner Chrome can stay alive without ever announcing its line inside 25s, which made the gate report
+        # MEASURE_FAILED on a tree that was fine -- and the operator's only recourse was re-running CI by hand.
+        # The wait is bounded and the failure still names itself; what changed is the budget and the evidence.
+        deadline = time.time() + 90
         while time.time() < deadline and cdp_port is None:
             time.sleep(0.5)
             match = LISTEN_RE.search(log_path.read_text(encoding="utf-8", errors="replace"))
@@ -689,10 +693,14 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
                 raise RuntimeError(f"chrome exited rc={proc.returncode}: "
                                    f"{log_path.read_text(encoding='utf-8', errors='replace')[:400]}")
         if cdp_port is None:
+            # The old message carried no log content at all, so "Chrome never announced" and "Chrome announced
+            # something we did not parse" were indistinguishable from the outside. The tail is the difference.
+            tail = log_path.read_text(encoding="utf-8", errors="replace")[-600:]
             proc.kill()
             if srv is not None:
                 srv.kill()
-            raise RuntimeError("no `DevTools listening on` line in the chrome log")
+            raise RuntimeError(f"no `DevTools listening on` line within 90s; "
+                               f"chrome rc={proc.returncode}; log tail: {tail!r}")
         if cdp_port != requested_cdp:
             ANNOUNCED_MISMATCH.append(f"requested {requested_cdp}, announced {cdp_port}")
         time.sleep(2.0)  # the page target appears once the document has loaded
