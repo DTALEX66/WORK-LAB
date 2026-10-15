@@ -197,3 +197,112 @@ class SkillCountLiveTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BudgetDisciplineTests(unittest.TestCase):
+    """W08 (2026-10-15): the budget removes WHOLE sections and names them, or it refuses.
+
+    The defect this class pins: the pack used to cut the rendered string at the budget, so the tail of the
+    text disappeared and the digest had been computed before that cut -- a pack could quote a SHA for a text
+    nobody would ever read, and the recovery checklist (the section that says what a receiver must NOT assume)
+    could be the part that vanished.
+    """
+
+    def _fixture(self) -> tuple[object, Path]:
+        module = load_module()
+        tmp = _make_tmp_repo()
+        index = {
+            "topHumanAuthority": "WORK-LAB-AUTHORITY.md",
+            "topMachineAuthority": ".project/governance/project-authority-index.json",
+            "currentTaskpack": "taskpacks/current/CURRENT-TASKPACK.md",
+            "currentOpenTaskRegister": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        }
+        _write(tmp / ".project/governance/project-authority-index.json", json.dumps(index))
+        # Enough excerpt material that a budget cut has something to drop.
+        _write(tmp / "WORK-LAB-AUTHORITY.md", "# top authority\n" + "authority line\n" * 200)
+        _write(tmp / "taskpacks/current/CURRENT-TASKPACK.md", "# taskpack\n" + "task line\n" * 100)
+        _write(tmp / "taskpacks/current/OPEN-TASK-REGISTER.md", "# register\n" + "register line\n" * 100)
+        _git(tmp, "add", ".")
+        _git(tmp, "commit", "-q", "-m", "seed")
+        return module, tmp
+
+    def test_sections_are_dropped_whole_and_named_never_cut(self) -> None:
+        module, tmp = self._fixture()
+        try:
+            full = module.build_context_pack(tmp, max_chars=module.HARD_MAX_CHARS)
+            pack = module.build_context_pack(tmp, max_chars=len(full) - 400)
+            self.assertNotIn("[context pack truncated", pack, "a prefix cut is not an omission")
+            self.assertIn("## Omitted Sections", pack, "dropped sections must be declared by name")
+            # Only the sections this fixture actually produces: the tmp repo has no module-ownership or
+            # boundary contract, so `Critical Constraints` is legitimately absent here. Asserting a section
+            # the fixture cannot build would be a test of the fixture, not of the budget.
+            for sentinel in ("## Safety Boundary", "## Current Task State (live register head)",
+                             "## Recovery Checklist"):
+                self.assertIn(sentinel, pack, f"required section must survive the budget: {sentinel}")
+            self.assertLessEqual(len(pack), len(full) - 400)
+        finally:
+            project_temp.force_release(tmp)
+
+    def test_a_budget_too_small_for_the_names_still_declares_the_count(self) -> None:
+        """The detail may degrade; the fact of the omission may not.
+
+        The tightest renderable budget is found by bisection instead of a guessed offset: the two tiers differ
+        by how much room the omission list has, so a fixed `len(full) - N` lands in whichever tier the fixture
+        happens to fall into, and then the test measures the fixture rather than the rule.
+        """
+        module, tmp = self._fixture()
+        try:
+            full = module.build_context_pack(tmp, max_chars=module.HARD_MAX_CHARS)
+
+            def renders(budget: int) -> bool:
+                try:
+                    module.build_context_pack(tmp, max_chars=budget)
+                    return True
+                except SystemExit:
+                    return False
+
+            low, high = 300, len(full)
+            while low < high:
+                mid = (low + high) // 2
+                if renders(mid):
+                    high = mid
+                else:
+                    low = mid + 1
+            pack = module.build_context_pack(tmp, max_chars=low)
+            self.assertTrue(renders(low) and not renders(low - 1), "bisection must land on the boundary")
+            self.assertIn("omitted", pack, "the omission must still be declared at the tightest budget")
+            self.assertNotIn("[context pack truncated", pack)
+        finally:
+            project_temp.force_release(tmp)
+
+    def test_a_budget_below_the_required_set_refuses_by_name(self) -> None:
+        module, tmp = self._fixture()
+        try:
+            with self.assertRaises(SystemExit) as caught:
+                module.build_context_pack(tmp, max_chars=300)
+            self.assertIn("CONTEXT_PACK_REQUIRED_EXCEEDS_BUDGET", str(caught.exception))
+        finally:
+            project_temp.force_release(tmp)
+
+    def test_the_two_digests_are_different_identities(self) -> None:
+        """The rendered digest must recompute from what was rendered; the candidate names the full set."""
+        import hashlib
+        import re
+
+        module, tmp = self._fixture()
+        try:
+            full = module.build_context_pack(tmp, max_chars=module.HARD_MAX_CHARS)
+            pack = module.build_context_pack(tmp, max_chars=len(full) - 600)
+            rendered = re.search(r"rendered\): `([0-9a-f]{16})`", pack)
+            candidate = re.search(r"before declared omission\): `([0-9a-f]{16})`", pack)
+            self.assertIsNotNone(rendered)
+            self.assertIsNotNone(candidate)
+            blanked = "\n".join(line for line in pack.splitlines()
+                                if not line.startswith("- Generated UTC:"))
+            blanked = blanked.replace(rendered.group(1), "").replace(candidate.group(1), "")
+            self.assertEqual(hashlib.sha256(blanked.encode()).hexdigest()[:16], rendered.group(1),
+                             "the rendered digest must describe the rendered text")
+            self.assertNotEqual(rendered.group(1), candidate.group(1),
+                                "a pack that dropped sections has two different texts and needs two digests")
+        finally:
+            project_temp.force_release(tmp)

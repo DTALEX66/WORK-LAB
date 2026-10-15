@@ -444,7 +444,12 @@ def build_context_pack(
     # Authority material set resolved from the index (C1: no second path list).
     materials = authority_materials(root) + list(SELECTED_WORKFLOW_DOCS) + list(SELECTED_CONFIG)
 
+    # W08: two lists, because the pack has two kinds of content. `sections` is required -- constraints, the
+    # live register head, open failures, the recovery checklist. Everything that merely helps (git status,
+    # inventories, reminders, file excerpts) goes to `optional_sections` and is dropped WHOLE and BY NAME
+    # when the budget runs out, instead of the old prefix cut, which could land inside the checklist.
     sections: list[str] = []
+    optional_sections: list[str] = []
     sections.append(
         "# Workflow-assistance Context Pack\n\n"
         "Generated for a new Hermes Agent / CC Switch / Codex handoff. "
@@ -453,7 +458,12 @@ def build_context_pack(
         f"- Project root: `{root}`\n"
         f"- Branch: `{branch}`\n"
         f"- HEAD: `{head}`\n"
-        f"- Content SHA-256: `filled-after-render`\n"
+        # W08 (2026-10-15): two identities, because there are two different texts. The rendered digest covers
+        # what the reader actually got; the candidate digest covers every section the pack WOULD have carried.
+        # One number could not answer both questions, and the old single digest was computed before the final
+        # prefix cut -- so it named a text nobody would ever read.
+        f"- Content SHA-256 (rendered): `filled-after-render`\n"
+        f"- Candidate SHA-256 (all sections, before declared omission): `candidate-digest-placeholder`\n"
     )
     sections.append(
         "## Safety Boundary\n\n"
@@ -472,8 +482,8 @@ def build_context_pack(
         project_id = context_project_id or root.name
         safe_lines = normalize_context_lines(context_lines, project_id=project_id)
         sections.append(render_context_lines(safe_lines))
-    sections.append(f"## Git Status\n\n```text\n{status}\n```\n")
-    sections.append(f"## Recent Commits\n\n```text\n{recent}\n```\n")
+    optional_sections.append(f"## Git Status\n\n```text\n{status}\n```\n")
+    optional_sections.append(f"## Recent Commits\n\n```text\n{recent}\n```\n")
 
     # C1: explicit missing-material markers — a generation success is NOT proof
     # of a complete recovery; whatever the index declares but the tree lacks is
@@ -496,13 +506,13 @@ def build_context_pack(
         sections.append(f"## Current Task State (live register head)\n\n```text\n{register_head.rstrip()}\n```\n")
     if ledger_head:
         sections.append(f"## Known Failures (open error-ledger head)\n\n```text\n{ledger_head.rstrip()}\n```\n")
-    sections.append(
+    optional_sections.append(
         "## Portable Asset Inventory\n\n"
         + "\n".join(f"- `{item}`" for item in inventory)
         + ("\n- ... truncated ..." if len(inventory) >= 300 else "")
         + "\n"
     )
-    sections.append(
+    optional_sections.append(
         "## Skill Inventory (from module-ownership machine truth; count is live, not historical)\n\n"
         + ("\n".join(f"- `{item}`" for item in skills) if skills else "_No skills found._")
         + f"\n- total: {len(skills)}\n"
@@ -515,7 +525,7 @@ def build_context_pack(
         "- After a session or executor change, re-resolve the critical constraints section (owner, forbidden roots, single-writer) from the machine authorities.\n"
         "- Acceptance: `python services/orchestration/run_quality_gate.py verify`; rollback = revert the last merge to the frozen pre-convergence anchor in WORK-LAB-AUTHORITY.md §13.\n"
     )
-    sections.append(
+    optional_sections.append(
         "## Handoff Reminders\n\n"
         "- Distinguish repo updated, live Hermes Home synced, and current session loaded.\n"
         "- Use `/reload-skills` or `/reset` after live skill/config changes when needed.\n"
@@ -523,27 +533,75 @@ def build_context_pack(
         "- Keep one writer per checkout; context-pack generation is evidence/handoff, not completed product work by itself.\n"
         "- If output is used in another project, regenerate inside that project so paths and git evidence match.\n"
     )
+    # W08: the excerpts are the pack's bulk, and they are the ONLY part allowed to disappear. Everything
+    # appended above them (constraints, live register head, open failures, recovery checklist) is required;
+    # the old code cut the RENDERED STRING at the budget, which could land inside the recovery checklist --
+    # the section that exists precisely to say what a receiver must not assume.
+    excerpts: list[tuple[str, str]] = []
     for relative in present:
         text = read_safe_text(root, relative)
         if text is None:
             continue
-        sections.append(
-            f"## Excerpt: `{relative}`\n\n"
-            f"```text\n{text.rstrip()}\n```\n"
-        )
+        excerpts.append((relative, f"## Excerpt: `{relative}`\n\n```text\n{text.rstrip()}\n```\n"))
 
-    content = "\n".join(sections).rstrip() + "\n"
+    droppable: list[tuple[str, str]] = [(s.split("\n", 1)[0].removeprefix("## "), s)
+                                        for s in optional_sections]
+    droppable += excerpts
+    required = "\n".join(sections).rstrip() + "\n"
+    candidate = required + "".join(text + "\n" for _, text in droppable)
     # The digest is the pack's *content* identity, so it must not cover the generation stamp: hashing the stamp
     # in made every render produce a new digest, which turned "quote the pack by its content SHA" into a claim
     # that only held while two renders happened inside the same second. A slower pack (more sections to read)
     # crossed that boundary and the drift gate went red on two consecutive renders in one batch.
-    stable = "\n".join(line for line in content.splitlines()
-                       if not line.startswith("- Generated UTC:"))
-    digest = sha256_text(stable.replace("filled-after-render", ""))[:16]
-    content = content.replace("filled-after-render", digest)
+    def _stable(text: str) -> str:
+        return "\n".join(line for line in text.splitlines() if not line.startswith("- Generated UTC:"))
+
+    def _blank_placeholders(text: str) -> str:
+        return (text.replace("filled-after-render", "")
+                    .replace("candidate-digest-placeholder", ""))
+
+    candidate_digest = sha256_text(_blank_placeholders(_stable(candidate)))[:16]
+
+    def _omitted_block(names: list[str], *, detailed: bool) -> str:
+        if not names:
+            return ""
+        head = "## Omitted Sections (declared — whole sections dropped, never cut mid-section)\n\n"
+        if detailed:
+            return (head + "- " + ", ".join(f"`{name}`" for name in names)
+                    + f"\n- total omitted: {len(names)}; regenerate with a larger `--max-chars` to read them\n")
+        # Second tier, for a budget too small even for the list of names. The omission is still declared and
+        # counted -- what degrades is the detail, never the fact.
+        return head + f"- {len(names)} section(s) omitted; this budget could not hold even their names\n"
+
+    def _render(included: list[tuple[str, str]], names: list[str], *, detailed: bool = True) -> str:
+        body = required + "".join(text + "\n" for _, text in included)
+        if names:
+            body = body + _omitted_block(names, detailed=detailed) + "\n"
+        return body
+
+    kept: list[tuple[str, str]] = list(droppable)
+    dropped: list[str] = []
+    # Fit by dropping whole sections, then RE-CHECK: the omitted block grows with every name added, so a
+    # single forward pass can overshoot by exactly the lines it later appends. Measured 2026-10-15: reserving
+    # the worst case up front made the pack refuse at its own 12000-character default, which would have turned
+    # a truncation defect into an outage.
+    while len(_render(kept, dropped)) > max_chars and kept:
+        dropped.insert(0, kept.pop()[0])
+    content = _render(kept, dropped)
     if len(content) > max_chars:
-        marker = f"\n\n[context pack truncated at {max_chars} characters]\n"
-        content = content[: max_chars - len(marker)] + marker
+        # The detail of the omission list is the next thing to give; the required sections and the fact of the
+        # omission are not.
+        content = _render(kept, dropped, detailed=False)
+    if len(content) > max_chars:
+        # Required material alone does not fit. Refusing is the honest answer: emitting a prefix would ship a
+        # pack that looks complete and is not, which is the failure this budget exists to prevent.
+        raise SystemExit(
+            f"CONTEXT_PACK_REQUIRED_EXCEEDS_BUDGET required_sections={len(required)} chars "
+            f"budget={max_chars}: every section above the droppable list is required, so there is nothing "
+            f"left to drop; raise --max-chars or shorten the live register/ledger heads.")
+    rendered_digest = sha256_text(_blank_placeholders(_stable(content)))[:16]
+    content = (content.replace("filled-after-render", rendered_digest)
+                      .replace("candidate-digest-placeholder", candidate_digest))
     return content
 
 

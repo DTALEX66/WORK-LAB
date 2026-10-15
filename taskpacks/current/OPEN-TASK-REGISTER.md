@@ -774,9 +774,20 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
   界面停在最后一份良好投影却仍宣称在轮询。加 8 秒读截止并**真正 abort**（外部 `Promise.race` 只会让底层请求继续挂着），
   卸载时 abort 同一 controller；保留 `inFlight` 合并、低 revision 拒绝与 UNKNOWN 语义。新增 2 例测试。
 
-**仍未开始（逐条点名）**：W04（桌面验收环境分层——方案要求先交独立探针与分层设计，不新建服务器）、
+**第二批已执行（2026-10-15）**：
+
+- **W08 context pack 的预算纪律**（`packages/client-neutral-core/scripts/build_context_pack.py`）——
+  实测缺陷有二：预算用尽时按**前缀**切字符串（可能切掉结尾的恢复检查表），而 digest 在那次切**之前**算，
+  于是一个 digest 指的是一份没人会读到的文本。现改为：必需段（安全边界、当前任务/登记册头、未完成项、
+  恢复检查表）**永不切**；可丢段（git 段、库存、技能、提醒、文件摘录）**整段丢弃并按名声明**
+  `## Omitted Sections`；预算小到连名字都放不下时降为**只报数量**（事实仍声明，降级的只是细节）；
+  连必需段都放不下就**具名拒绝** `CONTEXT_PACK_REQUIRED_EXCEEDS_BUDGET`（默认 12000 下必需段约 9.2k，
+  实测 30000/12000 整篇渲染、11000 丢一段并具名、9400 走数量档、8000 拒绝）。
+  摘要改为**两个身份**：`rendered` 覆盖实际渲染文本、`candidate` 覆盖丢弃前的全部段落（实测 rendered 可重算一致、
+  且两者在发生丢弃时必然不同）。新增 4 例测试（含用**二分**找出最紧预算来测档位边界，而不是猜偏移量）。
+- **仍未开始（逐条点名）**：W04（桌面验收环境分层——方案要求先交独立探针与分层设计，不新建服务器）、
 W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W07（impact planner 与本地/CI job 映射）、
-W08（context pack 的必填区不可前缀截断、digest 口径）、W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）、
+W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）、
 W10（CI artifacts 与摘要的可追溯小结果文件）、W11（阶段→子命令→测试 ID 的调用链记录）、
 W12（历史归档与客户端索引的忽略清单）。
 
