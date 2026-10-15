@@ -774,6 +774,15 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
   界面停在最后一份良好投影却仍宣称在轮询。加 8 秒读截止并**真正 abort**（外部 `Promise.race` 只会让底层请求继续挂着），
   卸载时 abort 同一 controller；保留 `inFlight` 合并、低 revision 拒绝与 UNKNOWN 语义。新增 2 例测试。
 
+**2026-10-15 · W07 只完成一半（如实登记）**：实测 `packages/client-neutral-core/scripts/impact_planner.py`
+把未分类路径收进 `unknown_paths` 后升风险并要求跑全部门，**却从不把它写进 plan**——读者看到「全部要跑」，
+却无从知道是哪几条路径、为什么、需要什么分类，最省的修法在产物里不可发现。现新增
+`unclassified_paths{path,reason,needs}`（schema `packages/contracts/schemas/workflow/gate-plan.schema.json` 同步），
+**fail-closed 行为一字未改**（实测未分类路径仍 critical、仍要求全部 5 个门，且已分类路径不会被点名）；
+新增 3 例测试（19 passed）、合同门 45/45 + SSOT PASS。
+**未做的那一半**：profile 的 `ci` 段只有 workflow 名与 aggregate 名，**没有 gate→CI job 的逐条映射**（job 名只存在于 workflow YAML）——
+把两侧对齐需要新增 profile 字段与 plan 字段，留待下一批。故下表仍把 W07 列为未完成。
+
 **第二批已执行（2026-10-15）**：
 
 - **W08 context pack 的预算纪律**（`packages/client-neutral-core/scripts/build_context_pack.py`）——
@@ -788,6 +797,12 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
 - **仍未开始（逐条点名）**：W04（桌面验收环境分层——方案要求先交独立探针与分层设计，不新建服务器）、
 W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W07（impact planner 与本地/CI job 映射）、
 W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）、
+
+**仍未开始（逐条点名）**：W04（桌面验收环境分层——方案要求先交独立探针与分层设计，不新建服务器）、
+W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W07（上面已说明：未分类路径已具名，仍差 profile 的 gate→CI job 逐条映射）、W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）、
+W10（CI artifacts 与摘要的可追溯小结果文件）、W11（阶段→子命令→测试 ID 的调用链记录）、
+W12（历史归档与客户端索引的忽略清单）。
+W08 已完成（PR #165，见上一段），故从本清单移除。
 W10（CI artifacts 与摘要的可追溯小结果文件）、W11（阶段→子命令→测试 ID 的调用链记录）、
 W12（历史归档与客户端索引的忽略清单）。
 

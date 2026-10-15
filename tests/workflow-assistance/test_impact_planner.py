@@ -257,3 +257,41 @@ class UnselectedChangeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class UnclassifiedPathReportingTests(unittest.TestCase):
+    """W07 (2026-10-15): an escalation to every gate must name its cause.
+
+    Measured before this: `build_plan` collected the unmapped paths and then escalated risk to critical and
+    required every gate WITHOUT writing the paths into the plan -- so a reader saw "run everything" with
+    nothing to act on, and the cheapest fix (declare the path under a module root) was not discoverable from
+    the artifact. Fail-closed behaviour is unchanged; what changed is that the reason is now readable.
+    """
+
+    def _plan(self, *paths: str) -> dict:
+        module = load_module()
+        profile = module.load_profile(LIVE_PROFILE)
+        return module.build_plan(profile=profile, repository="DTALEX66/WORK-LAB",
+                                 commit="a" * 40, tree="b" * 40, changed_paths=list(paths))
+
+    def test_an_unmapped_path_is_named_with_reason_and_required_classification(self) -> None:
+        plan = self._plan("some/unmapped/surface.txt")
+        entries = {entry["path"]: entry for entry in plan["unclassified_paths"]}
+        self.assertIn("some/unmapped/surface.txt", entries)
+        self.assertIn("no module root", entries["some/unmapped/surface.txt"]["reason"])
+        self.assertTrue(entries["some/unmapped/surface.txt"]["needs"].strip(),
+                        "an unclassified path must say what classification it requires")
+        self.assertEqual("critical", plan["risk"], "an unmapped path still escalates: fail-closed is unchanged")
+        self.assertEqual(sorted(plan["required_gates"]),
+                         plan["required_gates"], "required gates stay a sorted list")
+
+    def test_a_mapped_path_is_not_reported_as_unclassified(self) -> None:
+        plan = self._plan("services/orchestration/sidecar.py", "apps/observer/frontend/src/lib/api.ts")
+        self.assertEqual([], plan["unclassified_paths"],
+                         "a path a module root or gate pattern selects is classified, not unknown")
+
+    def test_the_plan_still_validates_against_its_own_schema(self) -> None:
+        """build_plan validates internally; this pins that the new key is in the schema, not merely emitted."""
+        plan = self._plan("some/unmapped/surface.txt")
+        self.assertIn("unclassified_paths", plan)
+        self.assertTrue(plan["plan_digest"]["value"], "the digest must cover the new field")
