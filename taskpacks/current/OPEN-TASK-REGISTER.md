@@ -780,6 +780,14 @@ W08（context pack 的必填区不可前缀截断、digest 口径）、W09（Qod
 W10（CI artifacts 与摘要的可追溯小结果文件）、W11（阶段→子命令→测试 ID 的调用链记录）、
 W12（历史归档与客户端索引的忽略清单）。
 
+**本批第二次被同一类漂移咬到（如实登记）**：W05 在 `apps/observer/frontend/src/lib/api.ts` 里插行
+（`fetchSnapshot` 的超时/abort 与 effect 里的 controller），使该文件既有行号整体下移，
+`docs/current/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv` 的 B04 指针（`setDataUpdatedAt(Date.now())`）
+因此落到一处**空行**上；本机没跑那组门所以漏了，是 CI 的 governance 批抓到的。修法按被引文本反查**实测**行号
+（531 → 555）——我第一次凭估算写成 541，仍然错，说明这类指针只能量不能猜。复测指针门 8 passed、
+默认加载引用门同批 17 passed。**规律**：凡在 `apps/observer/frontend/src/lib/api.ts` 这类被逐行引用的文件里插行，
+必须复跑指针门；这条规矩已经记在 WUI-18 的教训里，本批是它第二次生效。
+
 **本批证据**：`DISPLAY_SCALING_GATE_PASS`（要求基线含第十一批的 780→680，故本分支堆叠在 PR #163 之上）、
 `GEOMETRY_GATE_PASS`、切片 12/12、可读性四变体 PASS、`SSE_REVISION_GATE_PASS`、`EVIDENCE_SEAL_PASS`、
 前端合同 `js=0 vitest=0`（739 例）、`SUPPLY_CHAIN_PASS workflows=2 actions=16`、fail-fast 组漂移门 PASS、
