@@ -472,6 +472,7 @@ export type GatePlan = {
     reason: string,
     needs: string
   }[],
+    ci_jobs?: Record<string, unknown>,
     required_gates: string[],
     skipped_gates: {
     gate_id: string,

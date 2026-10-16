@@ -24,6 +24,11 @@
       },
       "description": "W07 (2026-10-15): paths the profile does not classify. The planner always escalated to every gate when one appeared, but the plan never SAID which paths caused it -- so a reader saw 'required_gates: all' with no way to learn why, and the cheapest fix (name the path in the profile) was not discoverable from the artifact."
     },
+    "ci_jobs": {
+      "type": "object",
+      "description": "W07 (2026-10-17): gate id -> CI job id for the gates this plan requires. The job id is the one branch protection aggregates; the display name is deliberately not used.",
+      "additionalProperties": {"type": ["string", "null"]}
+    },
     "required_gates": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "skipped_gates": {
       "type": "array",
