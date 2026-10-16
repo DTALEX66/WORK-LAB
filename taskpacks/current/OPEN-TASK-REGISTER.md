@@ -812,10 +812,21 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
   测试模块即为它的本地路径，实测 `CI_CHECK_REACHABILITY_PASS operands=66 ci_only=0`。
 - 顺带修正：上一轮解决冲突时本册留下了**两份重复的「仍未开始」块**，此处合并为一份。
 
+**2026-10-17 · W07 后半条已完成（gate ↔ CI job 的双向映射）**：
+
+- profile 里每个 gate 现在写明 `ci_job`（**按 job ID，不按显示名**——`workflow` 这个 job 显示成
+  "workflow-assistance"，按显示名写的映射看着对、其实一条也匹配不上）；plan 随之输出 `ci_jobs`，
+  于是「这次改动要求什么」有了同时命名两侧的答案。schema 与 run-summary 白名单同步（改 schema 同批重生成 `contracts.ts`）。
+- 新增 `scripts/ci/verify_gate_ci_job_mapping.py` 做**双向**不变量：每个 gate 指的 job 必须存在；
+  **两个 workflow 里每个 job 都必须被认领或声明**；声明不得陈旧、`local_route` 必须指向受跟踪文件。
+- 该验证器**首次运行就抓到真缺口**：`wlr060-aggregate` 无人认领（属结构性，已具名声明）；
+  并暴露一条**只在 CI 存在**的检查——`capsule-verify` 的 export/verify/redact 往返与两条负控**没有本地模块**，
+  现以 `local_route: null` + 理由**显式声明**（W07 要的是可见，不是无缺口）。
+- 5 例测试（含三条伪证：gate 指不存在的 job、无人认领的新 job、CI-only 却沉默），可达性门 `ci_only=0`。
+
 **仍未开始（逐条点名）**：W04（桌面验收环境分层——先交独立探针与分层设计，不新建服务器）、
-W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W07 的 gate→CI job 逐条映射半条
-（未分类路径已具名，见上）、W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）。
-W08 与 W12 已完成（分别为 PR #165 / #167），故不在本清单内。
+W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）。
+W07 / W08 / W12 已完成（PR #166·#170 的续作 / #165 / #167），故不在本清单内。
 
 
 **本批第二次被同一类漂移咬到（如实登记）**：W05 在 `apps/observer/frontend/src/lib/api.ts` 里插行
