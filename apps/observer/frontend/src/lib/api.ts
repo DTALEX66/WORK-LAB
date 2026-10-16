@@ -149,6 +149,14 @@ export function parseSnapshotPayload(value: unknown): SnapshotV3 | null {
 // deadline, not a freshness claim — a timed-out read reports UNKNOWN, never a stale value presented as live.
 export const SNAPSHOT_TIMEOUT_MS = 8000
 
+// W06 (2026-10-17): with a healthy SSE stream the poll is a SAFETY NET, not the primary read. It used to run
+// every 5s regardless -- the same cadence as a fallback that has nothing to fall back to, which is 12x the
+// reads the stream already delivers. One number does the job: the timer keeps its period, and the read is
+// skipped while the last read is newer than this cap. That keeps "fewer requests" from becoming "a stale
+// screen" -- a silent stream failure costs at most this much freshness -- and it is bounded and named rather
+// than traded away silently.
+export const MAX_STALENESS_MS = 45000
+
 export async function fetchSnapshot(signal?: AbortSignal): Promise<SnapshotV3 | null> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), SNAPSHOT_TIMEOUT_MS)
@@ -539,8 +547,13 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
     const readAbort = new AbortController()
 
     let lastRevision: number | null = null
+    let lastSignature: string | null = null
     let inFlight = false
     let followUp = false
+    // W06: whether the stream is currently believed healthy, and when we last actually read. Both are
+    // in-effect state, not React state: they must not trigger a render by themselves.
+    let streamHealthy = false
+    let lastReadAt = 0
 
     const apply = (next: SnapshotV3 | null) => {
       if (closed || !next) return
@@ -551,8 +564,25 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
         return
       }
       lastRevision = next.revision
-      setSnap(next)
-      setDataUpdatedAt(Date.now())
+      // W06: an unchanged signature means nothing a reader can see has moved, so re-rendering and bumping
+      // "updated at" would be a claim about freshness that the read does not support. The signature includes
+      // the transport and coverage verdicts, so a stream that goes LIVE -> STALE is never swallowed by a
+      // revision cache -- the case the plan explicitly warns about.
+      const signature = [
+        next.revision,
+        next.transport.transportState,
+        next.transport.freshnessState,
+        next.coverage.numerator,
+        next.coverage.denominator,
+        next.coverage.scope,
+        next.sourceWatermark,
+      ].join('|')
+      const unchanged = lastSignature !== null && signature === lastSignature
+      lastSignature = signature
+      if (!unchanged) {
+        setSnap(next)
+        setDataUpdatedAt(Date.now())
+      }
       // The payload's own verdict only makes THIS surface live when it came from
       // an authoritative endpoint; a non-authoritative source is never LIVE.
       setLive(descriptor.authoritative && next.transport.transportState === 'LIVE')
@@ -566,7 +596,13 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
       setError(message)
     }
 
-    const tick = async () => {
+    const tick = async (force = false) => {
+      // W06: the timer's tick is a safety net once the stream is healthy. An EVENT (open/reconnect/resync)
+      // passes force=true, because an event is a reason to read; a timer is only a reason to check staleness.
+      if (!force && streamHealthy && lastReadAt !== 0
+          && Date.now() - lastReadAt < MAX_STALENESS_MS) {
+        return
+      }
       // Coalesce bursts: one read in flight at a time; a request that arrives
       // while one is running is noted and done once after it — never a stampede,
       // and never a dropped latest read.
@@ -576,6 +612,7 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
         do {
           followUp = false
           const s = await fetchSnapshot(readAbort.signal)
+          lastReadAt = Date.now()
           if (closed) break
           if (s === null) reportReadFailure('快照获取失败（数据源离线或端点不可达）— 保持 UNKNOWN，不伪造数据')
           else apply(s)
@@ -588,9 +625,10 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
     }
 
     // first poll
-    void tick()
-    // periodic fallback
-    pollRef.current = setInterval(tick, pollMs)
+    void tick(true)
+    // periodic fallback: the period follows the stream's health, so a healthy stream is checked for staleness
+    // rather than re-read (W06). Re-armed when health changes, because `setInterval` cannot be retimed.
+    pollRef.current = setInterval(() => { void tick() }, pollMs)
 
     // SSE primary transport when available
     let closeSse: (() => void) | null = null
@@ -607,21 +645,21 @@ export function useLiveSnapshot(pollMs = 5000): LiveSnapshotState {
             }
           },
           // First open: the stream may be behind us and nothing has been read yet, so read once.
-          onOpen: () => { setSource(descriptor.authoritative ? 'live' : 'static-preview'); void tick() },
+          onOpen: () => { streamHealthy = true; setSource(descriptor.authoritative ? 'live' : 'static-preview'); void tick(true) },
           // A resumed stream: the server replays the gap or sends `resync_required` (handled below), and
           // this surface still re-reads, because claiming LIVE through a connection that just came back is
           // a stronger statement than a replayed tail alone can support. One read per open, never two —
           // `onOpen` and `onReconnect` are mutually exclusive by construction.
-          onReconnect: () => { setSource(descriptor.authoritative ? 'live' : 'static-preview'); void tick() },
+          onReconnect: () => { streamHealthy = true; setSource(descriptor.authoritative ? 'live' : 'static-preview'); void tick(true) },
           // A stream error stops the LIVE claim immediately (the legacy contract
           // demanded this of the EventSource transport, not of the poll). The next
           // successful read clears it; nothing is wiped and nothing is invented.
-          onError: () => reportReadFailure('事件流中断 — 已停止 LIVE 宣称，等待下一次读取恢复'),
+          onError: () => { streamHealthy = false; reportReadFailure('事件流中断 — 已停止 LIVE 宣称，等待下一次读取恢复') },
           // A heartbeat is proof that the stream is alive: it never costs a
           // snapshot GET and it never manufactures a LIVE data claim.
-          onHeartbeat: () => { /* no read, no verdict change */ },
+          onHeartbeat: () => { streamHealthy = true /* proof of life; still no read, no verdict change */ },
           // observed / resync_required: re-read the canonical snapshot.
-          onResync: () => { void tick() },
+          onResync: () => { void tick(true) },
         })
       } catch { closeSse = null }
     }

@@ -838,9 +838,27 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
 - 两个新验证器一并接进 CI 的**前置检查**（否则它们只是本机门，推上去无人跑——ERR-261/263/264 那类缺口），
   可达性门 `operands=68 ci_only=0`。
 
-**仍未开始（逐条点名）**：W04（桌面验收环境分层——先交独立探针与分层设计，不新建服务器）、
-W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）。
-W07 / W08 / W09 / W12 已完成，故不在本清单内。
+**2026-10-17 · W04 已完成（PR #173）**：新增 `scripts/audit/desktop_capability_probe.py` —— 六层、**不启动产品**：
+`session`（SESSIONNAME，**证据里标注它是启发式**）、`display`（GetSystemMetrics）、**`draw`（真画一个像素并
+读回来，证据是两个值而不是布尔）**、`webview2`（注册表版本）、`loopback`（绑定→释放→重绑）、`cleanup`（建树并删）。
+判定算术：存在 FAIL → FAIL；否则有必需层未解决（NOT_AVAILABLE/NOT_RUN/SKIPPED/NOT_APPLICABLE）→ **INCOMPLETE**；
+未解决**永不进 PASS**；CLI 退出码 0/1/3。分层设计文档
+`docs/current/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md`；本机实测六层全 PASS（draw 读回 0xff00 == expected、
+webview2 155.0.4283.45）。接线在 U19 之前跑并进 artifact。**CI runner 上的读数尚未采集**（该探针的价值正是让 runner 先说话）。
+
+**2026-10-17 · W06 已完成（前端部分，PR 见下）**：实测 `apps/observer/frontend/src/lib/api.ts` 的轮询固定 5 秒、
+且**同 revision 也无条件 `setSnap` 并推进"更新时间"**。改为：
+①流健康时定时器**不再读**而是查陈旧度 —— 一次读在 `MAX_STALENESS_MS`（45s）内跳过，过了**恰好补一次**
+（"少请求"不会变成"陈旧屏幕"）；事件（open/reconnect/resync）仍强制读，且 `onError` 立即把定时器重新派上用场；
+②同**签名**（revision + transport 状态 + freshness + coverage + sourceWatermark）不重渲染、不推进更新时间 ——
+**transport 在同一 revision 上变化不会被 revision 缓存吞掉**（方案点名的反例）。
+新增 3 例测试：十个定时周期零请求、流断开后立刻恢复、同签名不推进而 transport 变化推进。
+**仍未做的那一半**：方案要求"测请求数、CPU 与数据延迟"——请求数已由测试断言，**CPU 与端到端延迟未测**（需长跑观测）；
+后端"按版本复用纯投影"未动。
+
+**仍未开始（逐条点名）**：**W01–W12 的独立条目已全部落地或收口**。仍欠的是**各自的测量/取舍半条**：
+W02 的 token-monitor 缓存与 `cargo check` 冗余判定、W04 的 CI runner 读数、W06 的 CPU 与数据延迟测量。
+
 
 
 **本批第二次被同一类漂移咬到（如实登记）**：W05 在 `apps/observer/frontend/src/lib/api.ts` 里插行
