@@ -151,6 +151,10 @@ def build_plan(
             for path in sorted(set(unknown_paths))
         ],
         "required_gates": required,
+        # W07: the CI jobs these gates correspond to, so "what does this change require" has one answer
+        # that names both sides. The mapping comes from the profile, which `verify_gate_ci_job_mapping.py`
+        # checks against the workflows in both directions -- a suggestion here cannot silently miss a job.
+        "ci_jobs": {gate_id: (gates.get(gate_id) or {}).get("ci_job") for gate_id in required},
         "skipped_gates": skipped,
         "risk": "critical" if critical else ("low" if not changed_paths else "medium"),
         "delivery_effect": delivery_effect,

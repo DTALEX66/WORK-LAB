@@ -42,6 +42,8 @@ risk_zones:
 gates:
   workflow:
     command: python services/orchestration/run_quality_gate.py governance
+    # W07: the CI job this gate corresponds to, by job ID (not by its display `name:`).
+    ci_job: workflow
     # A schema change is consumed by generated types and by code that reads them, so it runs the job
     # that owns the governance batch — not only the aggregate/catalog check.
     paths:
@@ -53,6 +55,8 @@ gates:
     platform: discovered
   observer:
     command: python apps/observer/scripts/verify_observer_skeleton.py
+    # W07: the CI job this gate corresponds to, by job ID (not by its display `name:`).
+    ci_job: observer
     tiers:
       - module
       - full
@@ -60,6 +64,8 @@ gates:
     platform: discovered
   integration:
     command: python tests/ci/test_governance_gate.py
+    # W07: the CI job this gate corresponds to, by job ID (not by its display `name:`).
+    ci_job: integration
     paths:
       - packages/contracts/
     tiers:
@@ -68,6 +74,8 @@ gates:
     platform: discovered
   token-monitor:
     command: npm ci && npm run build && cargo test --locked && cargo check --locked
+    # W07: the CI job this gate corresponds to, by job ID (not by its display `name:`).
+    ci_job: token-monitor
     paths:
       - apps/token-monitor/**
     tiers:
@@ -77,6 +85,8 @@ gates:
     platform: windows
   supply-chain-security:
     command: python scripts/ci/verify_supply_chain_tools.py
+    # W07: the CI job this gate corresponds to, by job ID (not by its display `name:`).
+    ci_job: supply-chain-security
     tiers:
       - full
       - release
@@ -86,6 +96,32 @@ ci:
   workflow_name: work-lab-gate
   stable_aggregate_check: aggregate
   stable_aggregate_job: aggregate
+  # W07 (2026-10-17): the mapping between the CI jobs and the local gates, written down so it can be
+  # checked. `verify_gate_ci_job_mapping.py` enforces both directions: every job in either workflow is either
+  # claimed by a gate, or declared here with a reason, and every gate names a job that exists.
+  #
+  # `structural_jobs` are not product checks: `plan` computes the plan and `aggregate` IS the CI verdict, so
+  # neither has (or should have) a local product-gate counterpart.
+  structural_jobs:
+    plan: "computes the gate plan from changed paths; there is no product check to run locally"
+    aggregate: "compares the required jobs against the plan; it is the CI verdict itself, not a gate"
+    wlr060-aggregate: "the aggregate of the wlr-060 workflow's own jobs; same reasoning as `aggregate` -- it is that workflow's verdict, not a product check"
+  # `additional_required_jobs` are required CI jobs with no profile gate. `local_route` names the command a
+  # writer can run here; `local_route: null` is an honest declaration of a CI-only check, not an omission --
+  # it is the value W07 asks to be visible instead of implied.
+  additional_required_jobs:
+    schema-fixtures:
+      local_route: "python scripts/ci/verify_contract_ssot.py"
+      note: "the CI job json-parses every schema; the SSOT check reads the same files and also proves they are declared"
+    observer-readonly:
+      local_route: "python scripts/ci/verify_observer_readonly.py"
+      note: "same script, same working directory as the job"
+    config-compiler:
+      local_route: "python tests/ci/test_config_compiler_conforms_to_its_contract.py"
+      note: "the job drives create/plan/approve on a temp fixture; the local test pins the contract it must satisfy"
+    capsule-verify:
+      local_route: null
+      note: "CI-only: the job's export/verify/redact round-trip and its two negative controls have no local test module. Declared rather than implied so the gap is visible."
   exact_sha_required_for:
     - critical
     - release

@@ -39,7 +39,7 @@ GATE_STAGES_FILE = CI_DIR / "gate-stages.json"
 SCHEMA_VERSION = "work-lab/ci-run-summary/v1"
 
 # Whitelists: a field that is not named here does not reach the artifact. Adding one is a deliberate act.
-PLAN_KEYS = ("plan_id", "required_gates", "skipped_gates", "risk", "delivery_effect",
+PLAN_KEYS = ("plan_id", "required_gates", "ci_jobs", "skipped_gates", "risk", "delivery_effect",
              "platform_scope", "unclassified_paths", "plan_digest", "changed_paths", "source_identity")
 GATE_KEYS = ("schemaVersion", "source", "requested_gates", "full", "stages", "failed_gate", "exit")
 
