@@ -794,17 +794,29 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
   实测 30000/12000 整篇渲染、11000 丢一段并具名、9400 走数量档、8000 拒绝）。
   摘要改为**两个身份**：`rendered` 覆盖实际渲染文本、`candidate` 覆盖丢弃前的全部段落（实测 rendered 可重算一致、
   且两者在发生丢弃时必然不同）。新增 4 例测试（含用**二分**找出最紧预算来测档位边界，而不是猜偏移量）。
-- **仍未开始（逐条点名）**：W04（桌面验收环境分层——方案要求先交独立探针与分层设计，不新建服务器）、
-W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W07（impact planner 与本地/CI job 映射）、
-W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）、
+**2026-10-17 · W10 + W11 已执行（本批）**：
 
-**仍未开始（逐条点名）**：W04（桌面验收环境分层——方案要求先交独立探针与分层设计，不新建服务器）、
-W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W07（上面已说明：未分类路径已具名，仍差 profile 的 gate→CI job 逐条映射）、W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）、
-W10（CI artifacts 与摘要的可追溯小结果文件）、W11（阶段→子命令→测试 ID 的调用链记录）、
-W12（历史归档与客户端索引的忽略清单）。
-W08 已完成（PR #165，见上一段），故从本清单移除。
-W10（CI artifacts 与摘要的可追溯小结果文件）、W11（阶段→子命令→测试 ID 的调用链记录）、
-W12（历史归档与客户端索引的忽略清单）。
+- **W10 可追溯的小结果文件**——实测：本仓此前**任何运行都不产出 artifact**，审计一次红运行要先打开日志 URL 再
+  grep 几千行，而审计最先要的三个事实（哪个阶段红、退出码、这次到底有没有 plan）恰好是最难找的。现新增
+  `scripts/ci/ci_run_summary.py`：装配一份**白名单脱敏**的 `ci-summary-<job>.json`（身份 SHA/tree/ref/event/job、
+  各步 outcome、plan、阶段记录），由 `actions/upload-artifact`（钉 40 位 SHA）在两个重作业里 `if: always()` 上传；
+  plan 也首次落盘（此前只活在 `$GITHUB_OUTPUT` 里，随运行消失）。**缺输入永不渲染成通过**：缺失一律写
+  `{"status":"MISSING"}` 并进顶层 `incomplete` 列表——这正是方案点名的「缺JSON不能默认为通过」。
+- **W11 调用链记录**——`services/orchestration/run_quality_gate.py` 现在写
+  `.project-local/runs/ci/gate-stages.json`：逐阶段的 `gate/exit/seconds/description` 外加 **chain**
+  （治理批的 `member_count` 与成员模块清单、红时的 `failing_members` 测试 ID）。没有记录能力的阶段写
+  `"not-reported"`——「缺席的记录」与「记录为零」是两件不同的事实。写文件失败只报 `GATE_STAGE_RECORD_FAIL`
+  且**不改判决**（判决仍是 GATE_EXIT），因为该文件是辅助而非权威。
+- 新增 4 例测试（缺失即 MISSING、白名单裁剪、`main` 落盘、畸形 step 具名拒绝）。它同时补上一条**本地路径**：
+  `scripts/ci/` 里的新脚本会被可达性门判为「只在 CI 存在」，而一条只在 CI 存在的规则是写者看不见的规则——
+  测试模块即为它的本地路径，实测 `CI_CHECK_REACHABILITY_PASS operands=66 ci_only=0`。
+- 顺带修正：上一轮解决冲突时本册留下了**两份重复的「仍未开始」块**，此处合并为一份。
+
+**仍未开始（逐条点名）**：W04（桌面验收环境分层——先交独立探针与分层设计，不新建服务器）、
+W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W07 的 gate→CI job 逐条映射半条
+（未分类路径已具名，见上）、W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）。
+W08 与 W12 已完成（分别为 PR #165 / #167），故不在本清单内。
+
 
 **本批第二次被同一类漂移咬到（如实登记）**：W05 在 `apps/observer/frontend/src/lib/api.ts` 里插行
 （`fetchSnapshot` 的超时/abort 与 effect 里的 controller），使该文件既有行号整体下移，
