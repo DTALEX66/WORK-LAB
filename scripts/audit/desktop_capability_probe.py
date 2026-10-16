@@ -26,9 +26,9 @@ import argparse
 import ctypes
 import json
 import os
+import shutil
 import socket
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -147,18 +147,27 @@ def probe_loopback() -> tuple[str, dict]:
 
 
 def probe_cleanup() -> tuple[str, dict]:
-    """Create and remove a temp tree. A runner that leaves what it creates is how a gate survives on residue
-    from the last run; the project has met that failure more than once."""
+    """Create and remove a tree INSIDE the project boundary.
+
+    Deliberately NOT the self-deleting temp-dir helper: production source is held to zero of those, and the
+    rule records why (`tests/workflow-assistance/test_worker_runtime_roots_stay_inside_the_project.py`) -- on
+    Windows its cleanup fails while a handle is still open, and this machine has measured the residue. The
+    layer's question is unchanged, and answering it inside the declared temp root is the honest reading of
+    "does this runner clean up what it creates".
+    """
+    root = Path(__file__).resolve().parents[2] / ".project-local" / "runs" / "tmp"
+    target = root / f"desktop-probe-{os.getpid()}"
     try:
-        with tempfile.TemporaryDirectory(prefix="wl-desktop-probe-") as tmp:
-            probe = Path(tmp) / "child" / "marker.txt"
-            probe.parent.mkdir(parents=True, exist_ok=True)
-            probe.write_text("probe", encoding="utf-8")
-            created = probe.is_file()
-        gone = not probe.exists()
+        (target / "child").mkdir(parents=True, exist_ok=True)
+        marker = target / "child" / "marker.txt"
+        marker.write_text("probe", encoding="utf-8")
+        created = marker.is_file()
+        shutil.rmtree(target)
+        gone = not target.exists()
     except OSError as exc:
-        return "FAIL", {"error": f"{type(exc).__name__}: {exc}"}
-    return ("PASS" if created and gone else "FAIL"), {"created": created, "removed": gone}
+        return "FAIL", {"error": f"{type(exc).__name__}: {exc}", "path": str(target)}
+    return ("PASS" if created and gone else "FAIL"), {"created": created, "removed": gone,
+                                                      "root": ".project-local/runs/tmp"}
 
 
 PROBES = {

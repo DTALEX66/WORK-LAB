@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-16T18:01:29Z",
+  "generatedAt": "2026-10-16T18:32:47Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -257,14 +257,15 @@
     },
     {
       "path": "scripts/audit/desktop_capability_probe.py",
-      "sha256": "19be387a74737a3ab62fd39e9716bc5b141bb1a6297f2fd5a0a9a682a91c3a1c",
-      "bytes": 11674,
-      "lines": 241,
+      "sha256": "411e192fbb004db8deae1f7492665ecd2529a0a169020a86811930711bddde15",
+      "bytes": 12227,
+      "lines": 250,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 3,
+      "citedByRecords": 4,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md",
         "tests/ci/test_desktop_capability_probe.py"
       ]

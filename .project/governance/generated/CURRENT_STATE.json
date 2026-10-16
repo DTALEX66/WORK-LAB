@@ -1,6 +1,6 @@
 {
   "schema_version": "work-lab-current-state/v1",
-  "generated_at": "2026-10-16T18:07:04.390971Z",
+  "generated_at": "2026-10-16T18:33:44.340308Z",
   "source_digest": "faacf1d9f80f4b97c0aaf3c8ff20198bc63226a2c881e7fa6b5f9ea805177cad",
   "checkout_attestation": {
     "status": "RUNTIME_REQUIRED",
