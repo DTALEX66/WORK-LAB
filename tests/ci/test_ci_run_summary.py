@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -109,6 +110,56 @@ class RunSummaryTests(unittest.TestCase):
                 sys.argv = argv
         finally:
             project_temp.force_release(tmp)
+
+
+class PlanHandoffTests(unittest.TestCase):
+    """The plan is produced in a different job on a different runner, so its file cannot reach the summary.
+
+    Measured on the first CI run with artifacts (2026-10-16, run 38937961649): the observer job reported
+    `plan: MISSING` while its plan was fine. An `incomplete` list that is always non-empty is worse than no
+    list, because it teaches readers to skip it -- so the workflow hands the plan over explicitly and this
+    class pins both halves: the hand-off wins, and a broken hand-off is NAMED rather than silently ignored.
+    """
+
+    def _isolate(self, module):
+        tmp = project_temp.fixture_dir(prefix="wl-ci-summary-handoff-")
+        module.CI_DIR = tmp
+        module.PLAN_FILE = tmp / "plan.json"
+        module.GATE_STAGES_FILE = tmp / "gate-stages.json"
+        return tmp
+
+    def test_the_handoff_wins_over_a_missing_file(self) -> None:
+        module = load_module()
+        tmp = self._isolate(module)
+        previous = os.environ.get("PLAN_JSON")
+        try:
+            os.environ["PLAN_JSON"] = json.dumps({"plan_id": "handoff", "risk": "medium"})
+            summary = module.build_summary("probe", [])
+            self.assertEqual("handoff", summary["plan"]["plan_id"])
+            self.assertEqual([], [entry for entry in summary["incomplete"] if "plan" in entry])
+        finally:
+            project_temp.force_release(tmp)
+            if previous is None:
+                os.environ.pop("PLAN_JSON", None)
+            else:
+                os.environ["PLAN_JSON"] = previous
+
+    def test_a_malformed_handoff_is_named_not_ignored(self) -> None:
+        module = load_module()
+        tmp = self._isolate(module)
+        previous = os.environ.get("PLAN_JSON")
+        try:
+            os.environ["PLAN_JSON"] = "{not json"
+            summary = module.build_summary("probe", [])
+            self.assertEqual({"status": "MISSING"}, summary["plan"])
+            self.assertTrue(any("PLAN_JSON" in entry for entry in summary["incomplete"]),
+                            "a hand-off that did not parse must be named, not silently dropped")
+        finally:
+            project_temp.force_release(tmp)
+            if previous is None:
+                os.environ.pop("PLAN_JSON", None)
+            else:
+                os.environ["PLAN_JSON"] = previous
 
 
 if __name__ == "__main__":
