@@ -816,7 +816,7 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
 
 - profile 里每个 gate 现在写明 `ci_job`（**按 job ID，不按显示名**——`workflow` 这个 job 显示成
   "workflow-assistance"，按显示名写的映射看着对、其实一条也匹配不上）；plan 随之输出 `ci_jobs`，
-  于是「这次改动要求什么」有了同时命名两侧的答案。schema 与 run-summary 白名单同步（改 schema 同批重生成 `contracts.ts`）。
+  于是「这次改动要求什么」有了同时命名两侧的答案。schema 与 run-summary 白名单同步（改 schema 同批重生成 `packages/client-neutral-core/generated/contracts.ts`）。
 - 新增 `scripts/ci/verify_gate_ci_job_mapping.py` 做**双向**不变量：每个 gate 指的 job 必须存在；
   **两个 workflow 里每个 job 都必须被认领或声明**；声明不得陈旧、`local_route` 必须指向受跟踪文件。
 - 该验证器**首次运行就抓到真缺口**：`wlr060-aggregate` 无人认领（属结构性，已具名声明）；
