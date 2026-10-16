@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-15T17:59:46Z",
+  "generatedAt": "2026-10-16T18:01:29Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 75,
+    "trackedTools": 76,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 75,
+    "referencedSomewhere": 76,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -253,6 +253,20 @@
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
+      ]
+    },
+    {
+      "path": "scripts/audit/desktop_capability_probe.py",
+      "sha256": "19be387a74737a3ab62fd39e9716bc5b141bb1a6297f2fd5a0a9a682a91c3a1c",
+      "bytes": 11674,
+      "lines": 241,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
+        "docs/current/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md",
+        "tests/ci/test_desktop_capability_probe.py"
       ]
     },
     {

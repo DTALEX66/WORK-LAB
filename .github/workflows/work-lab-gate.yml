@@ -341,6 +341,15 @@ jobs:
         # evidence and says so in its own report.
         working-directory: .
         run: python apps/observer/scripts/write_artifact_receipt.py
+      # W04: does this environment have a desktop at all? Runs BEFORE the readback and never gates it
+      # directly -- the readback refuses on its own if the layers did not resolve. What this adds is the
+      # ability to tell "the product did not render" apart from "there was nothing to render on", which is
+      # the distinction the SKIPPED_HEADLESS incident destroyed.
+      - name: Desktop capability probe (layered, product-independent)
+        if: always()
+        working-directory: .
+        run: python scripts/audit/desktop_capability_probe.py --json-out .project-local/runs/ci/desktop_capability.json
+        continue-on-error: true
       - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
         working-directory: apps/observer
         run: python scripts/u19_webview_e2e.py
@@ -380,6 +389,7 @@ jobs:
             .project-local/runs/ci/ci-summary-*.json
             .project-local/runs/ci/gate-stages.json
             .project-local/runs/ci/geometry_gate.json
+            .project-local/runs/ci/desktop_capability.json
           if-no-files-found: warn
           retention-days: 14
 
