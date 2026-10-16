@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.util
+import json
 import os
 import platform
 import re
@@ -346,6 +347,22 @@ def _governance_failure_markers(output: str) -> list[str]:
     return out[:60]
 
 
+# W11 (2026-10-17): the machine-readable chain a stage has to carry. Before this, triage started with "which
+# module failed?", and the answer existed only inside a ~2500-line stdout that CI keeps behind a log URL --
+# so the first step of every diagnosis was fetching and grepping that log. Gates OPT IN by recording here; a
+# gate that records nothing is written as `chain: not-reported`, never as "nothing to report", because the
+# absence of a record and a record of absence are different facts.
+STAGE_CHAIN: dict[str, dict[str, object]] = {}
+CURRENT_GATE: str = ""
+
+
+def record_stage_chain(**fields: object) -> None:
+    """Attach machine-readable detail to the stage currently running (no-op outside a stage)."""
+    if not CURRENT_GATE:
+        return
+    STAGE_CHAIN.setdefault(CURRENT_GATE, {}).update(fields)
+
+
 def _report_governance_failure(members: list[str], exit_code: int, output: str) -> None:
     """A3: make a governance-batch failure diagnosable without leaking secrets.
 
@@ -364,6 +381,9 @@ def _report_governance_failure(members: list[str], exit_code: int, output: str) 
     except Exception:
         log_rel = "(could not write log)"
     markers = _governance_failure_markers(output)
+    # W11: the failing members ARE the triage answer; record them instead of leaving them in the log only.
+    record_stage_chain(exit=exit_code, member_count=len(members),
+                       failing_members=markers, full_log=log_rel)
     print(f"QUALITY_GATE_GOVERNANCE_FAIL exit={exit_code}")
     print(f"  failing_members=[{'; '.join(markers) if markers else 'unknown-see-log'}]")
     print(f"  modules_run={len(members)}")
@@ -435,6 +455,8 @@ def gate_governance() -> int:
     cancelled/failed != PASS (non-zero batch exit; subcommand failures presented)
     """
     members = mandatory_discovery_modules()
+    # W11: the batch's subcommands are its member modules; the test ids come from the failure markers above.
+    record_stage_chain(member_count=len(members), members=list(members[:300]))
     if not members:
         print("QUALITY_GATE_GOVERNANCE_FAIL empty-mandatory-set")
         return 1
@@ -1469,6 +1491,11 @@ def run_gate_sequence(names: tuple[str, ...], command: str = "") -> int:
     # not be readable as "the head was verified". Derived, never passed in, so a new call site cannot
     # forget to set it.
     full = "yes" if set(names) == set(VERIFY_ORDER) else "no"
+    # W11: one process, one sequence. Clearing means a second call in the same process cannot inherit the
+    # first call's chain -- a stale chain would attribute one stage's members to another.
+    global CURRENT_GATE
+    STAGE_CHAIN.clear()
+    stage_records: list[dict[str, object]] = []
     print(f"GATE_HEAD={start_commit} GATE_TREE={start_tree} GATE_FULL={full} gates={len(names)}")
     print(f"GATE_DIRTY={start_dirty} dirty_paths={start_paths}")
     print(_tool_versions())
@@ -1484,6 +1511,27 @@ def run_gate_sequence(names: tuple[str, ...], command: str = "") -> int:
         """
         end_commit, end_tree, end_dirty, end_paths = _source_binding()
         drift = (end_commit, end_tree, end_dirty) != (start_commit, start_tree, start_dirty)
+        # W10/W11 (2026-10-17): the per-stage record, written on BOTH paths. It exists because the run
+        # produced no artifacts at all, so auditing a red run meant reading the log -- and the two facts an
+        # auditor needs first (which stage failed, with what exit and how long) were the two hardest to find.
+        # A failure to write it is reported by name and does NOT change the verdict: this file is auxiliary,
+        # and the verdict is GATE_EXIT.
+        try:
+            record_path = ROOT / ".project-local" / "runs" / "ci" / "gate-stages.json"
+            record_path.parent.mkdir(parents=True, exist_ok=True)
+            record_path.write_text(json.dumps({
+                "schemaVersion": "work-lab/gate-stages/v1",
+                "source": {"commit": end_commit, "tree": end_tree},
+                "requested_gates": list(names),
+                "full": full == "yes",
+                "stages": stage_records,
+                "failed_gate": failed_gate or None,
+                "exit": code,
+            }, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8", newline="\n")
+            print(f"GATE_STAGE_RECORD={record_path.relative_to(ROOT).as_posix()} stages={len(stage_records)}")
+        except Exception as exc:  # noqa: BLE001 - named, not swallowed
+            print(f"GATE_STAGE_RECORD_FAIL {type(exc).__name__}: {exc} "
+                  f"(the verdict below is unaffected; the record is auxiliary)")
         print(f"GATE_HEAD_END={end_commit} GATE_TREE_END={end_tree} "
               f"GATE_DIRTY_END={end_dirty} dirty_paths_end={end_paths}")
         print(f"GATE_STAGES ran={ran} planned={len(names)} full={full}"
@@ -1504,10 +1552,23 @@ def run_gate_sequence(names: tuple[str, ...], command: str = "") -> int:
         gate = GATES[name]
         print(f"\n### gate: {gate.name} — {gate.description}")
         started = time.monotonic()
+        CURRENT_GATE = gate.name
         exit_code = gate.runner()
+        elapsed = time.monotonic() - started
         # Per-stage seconds and exit code: the tier split below is only defensible if the receipt says what
         # each stage cost, and a red receipt that names no failing stage cannot be triaged without a rerun.
-        print(f"GATE_STAGE gate={gate.name} exit={exit_code} seconds={time.monotonic() - started:.1f}")
+        print(f"GATE_STAGE gate={gate.name} exit={exit_code} seconds={elapsed:.1f}")
+        stage_records.append({
+            "index": index,
+            "gate": gate.name,
+            "exit": exit_code,
+            "seconds": round(elapsed, 1),
+            "description": gate.description,
+            # `not-reported` is the honest value for a gate that records nothing: it says the chain was not
+            # captured, which is different from "this stage has no members".
+            "chain": STAGE_CHAIN.get(gate.name, "not-reported"),
+        })
+        CURRENT_GATE = ""
         if exit_code != 0:
             print("")
             return finish(exit_code, ran=index + 1, failed_gate=gate.name)

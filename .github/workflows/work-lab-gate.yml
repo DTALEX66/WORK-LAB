@@ -92,6 +92,17 @@ jobs:
             --commit "$HEAD_SHA" \
             --changed-path-file .project-local/runs/ci/changed-paths.txt \
             --github-output "$GITHUB_OUTPUT"
+      # W10: the plan only ever lived in $GITHUB_OUTPUT, so it vanished with the run. Written to disk here so
+      # the summary artifact can carry it; `if: always()` because a plan that was computed is worth keeping
+      # even when a later step fails.
+      - name: Publish the plan for the run summary
+        if: always()
+        env:
+          PLAN_JSON: ${{ steps.plan.outputs.plan_json }}
+        run: |
+          mkdir -p .project-local/runs/ci
+          printf '%s' "$PLAN_JSON" > .project-local/runs/ci/plan.json
+          echo "PLAN_PUBLISHED bytes=$(wc -c < .project-local/runs/ci/plan.json)"
 
   workflow:
     name: workflow-assistance
@@ -106,6 +117,7 @@ jobs:
       - name: Install workflow validator dependencies
         run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r packages/client-neutral-core/requirements.lock
       - name: Fast projection and contract-shape preflight
+        id: preflight
         run: |
           # W03 (2026-10-14): measured on PR #163 -- a stale tool inventory was only reported AFTER the
           # 2712-test governance batch had run (2m11s in, 251 modules), so the real defect (a projection
@@ -117,6 +129,7 @@ jobs:
           python scripts/ci/verify_contract_ssot.py
           python tests/workflow-assistance/test_tool_inventory_coverage.py
       - name: Run workflow structural and contract gates
+        id: contract-gates
         run: |
           # portable-install-runtime requires an explicitly provisioned Hermes binary;
           # it remains a separate runtime/readback gate, not a fabricated CI success.
@@ -182,6 +195,24 @@ jobs:
           python services/orchestration/run_quality_gate.py mcp-audit
           python services/orchestration/run_quality_gate.py shell
           python services/orchestration/run_quality_gate.py powershell
+      # W10: a small redacted summary + the per-stage record, uploaded even when the gates above failed.
+      # An auditor reads this file first; the log stays the place you go when the summary is not enough.
+      - name: Assemble the run summary
+        if: always()
+        run: |
+          python scripts/ci/ci_run_summary.py --job workflow-assistance \
+            --step "preflight=${{ steps.preflight.outcome }}" \
+            --step "contract-gates=${{ steps['contract-gates'].outcome }}"
+      - name: Upload the run summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.4.3
+        with:
+          name: ci-summary-workflow-assistance
+          path: |
+            .project-local/runs/ci/ci-summary-*.json
+            .project-local/runs/ci/gate-stages.json
+          if-no-files-found: warn
+          retention-days: 14
 
   token-monitor:
     name: token-monitor
@@ -244,15 +275,19 @@ jobs:
       # 2026-10-14: observer 16m02s with the build unnamed inside it). One step each makes the durations the
       # diagnosis instead of a total, and the fail-fast runner still owns the failure semantics.
       - name: Install observer frontend dependencies
+        id: fe-install
         working-directory: .
         run: python scripts/ci/failfast_group.py --group observer-frontend-install
       - name: Typecheck observer frontend (tsc, production chain)
+        id: fe-typecheck
         working-directory: .
         run: python scripts/ci/failfast_group.py --group observer-frontend-typecheck
       - name: Build observer frontend (vite)
+        id: fe-build
         working-directory: .
         run: python scripts/ci/failfast_group.py --group observer-frontend-build
       - name: Test observer frontend (vitest)
+        id: fe-test
         working-directory: .
         run: python scripts/ci/failfast_group.py --group observer-frontend-test
       # W02: the Rust dependency sources and the crate's target directory are the two things this job pays
@@ -311,6 +346,32 @@ jobs:
       - name: Desktop geometry gate (CDP measurement of the built shell)
         working-directory: .
         run: python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json
+      # W10: the four frontend stages exist because W02 split one combined step; the artifact is what makes
+      # that split readable after the run, without opening the log.
+      - name: Assemble the run summary
+        if: always()
+        # `shell: bash` is not decoration: this job's default shell on windows-latest is NOT bash, and bash's
+        # backslash line continuation is a PARSER ERROR there (measured on PR #169: "Missing expression after
+        # unary operator '--'"), which turned a working geometry gate into a red job for a reason that had
+        # nothing to do with the product. The shell is named here so the next editor cannot re-introduce it.
+        shell: bash
+        run: |
+          python scripts/ci/ci_run_summary.py --job observer \
+            --step "frontend-install=${{ steps['fe-install'].outcome }}" \
+            --step "frontend-typecheck=${{ steps['fe-typecheck'].outcome }}" \
+            --step "frontend-build=${{ steps['fe-build'].outcome }}" \
+            --step "frontend-test=${{ steps['fe-test'].outcome }}"
+      - name: Upload the run summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.4.3
+        with:
+          name: ci-summary-observer
+          path: |
+            .project-local/runs/ci/ci-summary-*.json
+            .project-local/runs/ci/gate-stages.json
+            .project-local/runs/ci/geometry_gate.json
+          if-no-files-found: warn
+          retention-days: 14
 
   supply-chain-security:
     name: supply-chain-security
