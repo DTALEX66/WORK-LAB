@@ -127,6 +127,8 @@ jobs:
           # governance batch still runs the same checks later, unweakened.
           python scripts/ci/verify_contract_catalog.py
           python scripts/ci/verify_contract_ssot.py
+          python scripts/ci/verify_gate_ci_job_mapping.py
+          python scripts/ci/verify_adapter_support_levels.py
           python tests/workflow-assistance/test_tool_inventory_coverage.py
       - name: Run workflow structural and contract gates
         id: contract-gates
