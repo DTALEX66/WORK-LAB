@@ -350,6 +350,11 @@ jobs:
       # that split readable after the run, without opening the log.
       - name: Assemble the run summary
         if: always()
+        # `shell: bash` is not decoration: this job's default shell on windows-latest is NOT bash, and bash's
+        # backslash line continuation is a PARSER ERROR there (measured on PR #169: "Missing expression after
+        # unary operator '--'"), which turned a working geometry gate into a red job for a reason that had
+        # nothing to do with the product. The shell is named here so the next editor cannot re-introduce it.
+        shell: bash
         run: |
           python scripts/ci/ci_run_summary.py --job observer \
             --step "frontend-install=${{ steps['fe-install'].outcome }}" \
