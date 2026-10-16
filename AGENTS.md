@@ -157,14 +157,8 @@ following baseline, owned by the enhancement module:
    vendor default per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness\DeepSeek Harness.exe`;
    the install root is RESOLVED from the uninstall registry entry or the shortcut
    TargetPath, never hardcoded — the earlier community DSH Desktop 2.0.13 build and its
-   `D:\All projects\DSH` path are SUPERSEDED). DSH's DATA ROOT is a separate, measured
-   layer: the live root is the official default `%USERPROFILE%\.dsh` (2026-10-13:
-   `C:\Users\ALEX\.dsh`, 15 session files), and `D:\All projects\DSH\.dsh` is a retired
-   archive no process reads. Never re-point that layer by assertion: compare session
-   counts and mtimes first, then set the env var — a stale `DSH_HOME` pointing at the
-   archive is the ERR-088/ERR-276 trap (one layer, both directions), and no logon session
-   inherits a user-scope change until the next logon, so recording which root is live is
-   part of the change, not a follow-up;
+   `D:\All projects\DSH` path are SUPERSEDED; if a launch ever falls back to an empty C:
+   skeleton while data sits elsewhere, check the `DSH_HOME` user env var layer first, ERR-088);
    CC Switch / OpenHuman / Open Design: single desktop shortcut to
    their installed official executables. No duplicate or conflicting launchers;
    entries are the official standard formats — WORK-LAB never invents custom
