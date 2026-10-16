@@ -824,9 +824,23 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
   现以 `local_route: null` + 理由**显式声明**（W07 要的是可见，不是无缺口）。
 - 5 例测试（含三条伪证：gate 指不存在的 job、无人认领的新 job、CI-only 却沉默），可达性门 `ci_only=0`。
 
+**2026-10-17 · W09 已执行（能力不得大于证据）**：
+
+- 现状核对（读 `config/adapter-registry.json`）：10 个条目 —— `deep` 4 / `experimental` 3 / **`manifest-only` 3**
+  （`workbuddy`、`cursor`、`claude-code`）；**`qoder` 未登记**（与方案"未发现Qoder登记"一致）；
+  全部条目 `evidence_state=UNVERIFIED`，即没有任何一条把"有安装/有 manifest"写成"集成已完成"。
+- 但这些**此前只是"看起来对"**，没有任何东西强制。新增 `scripts/ci/verify_adapter_support_levels.py` 把四条规则
+  变成门：①`manifest-only` 不得声明任何写操作或 apply/readback/rollback 标志；②`detection.mode=static`
+  不得 `apply_supported`；③`apply_supported` 必须同时有 `integrations/executors/<id>/` 受跟踪适配器**且**版本非 UNVERIFIED；
+  ④版本 `UNVERIFIED` 不得升到 `manifest-only` 以上。
+- **明确不做的**：不规定客户端数量、不判定谁该被管理、不替 owner 决定 `qoder` 是否登记；
+  本门只拒绝"记录的能力跑在证据前面"。实测 10 条全过、7 例测试（其中 6 例是伪证）全过。
+- 两个新验证器一并接进 CI 的**前置检查**（否则它们只是本机门，推上去无人跑——ERR-261/263/264 那类缺口），
+  可达性门 `operands=68 ci_only=0`。
+
 **仍未开始（逐条点名）**：W04（桌面验收环境分层——先交独立探针与分层设计，不新建服务器）、
-W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）、W09（Qoder/WorkBuddy 以用户实际入口核对；仅 native-only/observe）。
-W07 / W08 / W12 已完成（PR #166·#170 的续作 / #165 / #167），故不在本清单内。
+W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）。
+W07 / W08 / W09 / W12 已完成，故不在本清单内。
 
 
 **本批第二次被同一类漂移咬到（如实登记）**：W05 在 `apps/observer/frontend/src/lib/api.ts` 里插行
