@@ -67,9 +67,26 @@ def _slice(data: dict, keys: tuple[str, ...]) -> dict:
 def build_summary(job: str, steps: list[tuple[str, str]]) -> dict:
     incomplete: list[str] = []
 
-    plan = _read_json(PLAN_FILE)
+    # The plan is produced in a DIFFERENT job, on a different runner, so its file never reaches this one:
+    # measured on the first CI run with artifacts (2026-10-16, run 38937961649), where `plan: MISSING`
+    # appeared in a job whose plan was fine. An `incomplete` list that is always non-empty teaches readers to
+    # ignore it, so the plan is taken from the workflow's own hand-off first (`needs.plan.outputs.plan_json`)
+    # and only then from the file, which is what a single-job or local run has.
+    plan = None
+    handoff = os.environ.get("PLAN_JSON", "").strip()
+    if handoff:
+        try:
+            parsed = json.loads(handoff)
+            plan = parsed if isinstance(parsed, dict) else None
+            if plan is None:
+                incomplete.append("PLAN_JSON: the plan hand-off parsed to a non-object; treated as absent")
+        except json.JSONDecodeError as exc:
+            incomplete.append(f"PLAN_JSON: the plan hand-off is not JSON ({exc.msg}); treated as absent")
     if plan is None:
-        incomplete.append("plan.json: the plan stage did not publish its plan to .project-local/runs/ci/")
+        plan = _read_json(PLAN_FILE)
+    if plan is None:
+        incomplete.append("plan.json: neither the plan hand-off (PLAN_JSON) nor "
+                           ".project-local/runs/ci/plan.json carried a plan")
     gate_stages = _read_json(GATE_STAGES_FILE)
     if gate_stages is None:
         incomplete.append("gate-stages.json: no gate sequence wrote a stage record in this job")

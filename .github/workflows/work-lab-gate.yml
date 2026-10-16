@@ -199,6 +199,11 @@ jobs:
       # An auditor reads this file first; the log stays the place you go when the summary is not enough.
       - name: Assemble the run summary
         if: always()
+        env:
+          # W10: the plan is computed in another job, on another runner, so its file cannot reach this
+          # one; hand it over explicitly instead of letting the summary report a plan that only looks missing.
+          # (Same reasoning as the line below it; kept short on purpose.)
+          PLAN_JSON: ${{ needs.plan.outputs.plan_json }}
         run: |
           python scripts/ci/ci_run_summary.py --job workflow-assistance \
             --step "preflight=${{ steps.preflight.outcome }}" \
@@ -350,6 +355,11 @@ jobs:
       # that split readable after the run, without opening the log.
       - name: Assemble the run summary
         if: always()
+        env:
+          # W10: the plan is computed in another job, on another runner, so its file cannot reach this
+          # one; hand it over explicitly instead of letting the summary report a plan that only looks missing.
+          # (Same reasoning as the line below it; kept short on purpose.)
+          PLAN_JSON: ${{ needs.plan.outputs.plan_json }}
         # `shell: bash` is not decoration: this job's default shell on windows-latest is NOT bash, and bash's
         # backslash line continuation is a PARSER ERROR there (measured on PR #169: "Missing expression after
         # unary operator '--'"), which turned a working geometry gate into a red job for a reason that had
