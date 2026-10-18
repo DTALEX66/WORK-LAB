@@ -1,0 +1,180 @@
+# WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019
+
+**Status:** CURRENT / MINIMAL_LOOP_DELIVERED (authority convergence + first real loop delivered; other tasks remain frozen)
+**Date:** 2026-10-19
+**Owner:** DTALEX66
+**Authority source:** user directive 2026-10-19 + `WORK-LAB-AUTHORITY.md` + `.project/governance/project-authority-index.json`
+**Source package:** `docs/history/owner-inputs/20261019/WORK-LAB_权威收敛任务包_20261019.zip` (`WL-REC-0105`)
+**Product implementation:** DELIVERED under the 2026-10-19 user grant (“执行所有未完成的任务，按照最新发你的任务包”):
+one product fix for `WORK-LAB-MINIMAL-LOOP-001` (`services/execution-federation/hermes_adapter.py`),
+verified at the adapter layer and recorded as `SOLUTION-001`. No other product feature is implemented;
+documentation update alone is still not feature completion.
+
+## 1. Purpose
+
+The owner directive of 2026-10-19 freezes other tasks and makes this package the current
+authority and closed-loop target: verify the current authority/index/ledger/Git state,
+converge the formal positioning and roadmap, and establish one real minimal problem loop
+as the first current work item. It is not a new Agent, not a rewrite of WORK-LAB, and not
+implementation of historical proposals.
+
+The formal positioning is the one recorded in `WORK-LAB-AUTHORITY.md` §2:
+WORK-LAB is a client-neutral, personal-AI-environment workflow management, governance,
+runtime monitoring and problem closed-loop system. It is not an Agent, a generic Agent
+Runtime, a model gateway, a generic chat client, or a universal professional auditor.
+
+## 2. Baseline recorded before any edit
+
+| Item | Value |
+| --- | --- |
+| Branch | docs/handoff-20261018-qoder（分支名，非仓库路径） |
+| HEAD | `0369d349d46b75c7048b884331bb40a0f42d4e34` |
+| `origin/main` | `f6077d18cfc76d588d9315ec0ac82769c3009d9a` |
+| `origin/main` tree | `6dcb2094ffa5fdb693e959de5aaa870eea8b1f78` |
+| HEAD vs `origin/main` | 1 commit ahead (`0369d349` is a descendant of `f6077d18`) |
+| Worktree | 59 porcelain entries before this task; 4 are the protected parallel-writer files (`AGENTS.md`, `config/adapter-registry.json`, `config/client-evidence.json`, `taskpacks/current/error-ledger.json`) |
+| Top human authority | `WORK-LAB-AUTHORITY.md` |
+| Top machine authority | `.project/governance/project-authority-index.json` |
+| Scoped taskpack authority | `.project/governance/taskpack-authority-index.json` |
+| Single open-task register | `taskpacks/current/OPEN-TASK-REGISTER.md` |
+
+The dirty worktree contains prior WUI/HUD work. This task does not revert, overwrite or
+commit it. Only the files listed in §7 and the new files created for this convergence are
+edited.
+
+## 3. Scope
+
+Allowed:
+
+- Authority and roadmap convergence: `WORK-LAB-AUTHORITY.md`, the two governance indexes,
+  the new CURRENT taskpack, the convergence report/roadmap, and the index/handoff surfaces
+  that would otherwise misdirect the next reader to the superseded UI-first current.
+- Registration of this owner package in the existing owner-material catalog.
+- Read-only inspection of the repository to build the conflict matrix and capability map.
+
+Not allowed:
+
+- Product feature implementation, Agent/Runtime framework work, model gateway work, or
+  rewriting historical proposals into code. **Amended 2026-10-19:** the user directive
+  “执行所有未完成的任务，按照最新发你的任务包” is the concrete Task Grant for the minimal
+  loop only (one product fix, ML-001); it does not authorize any other feature work.
+- Modifying `DESIGN-LAB` or `AAOS` repositories, or writing their internal state.
+- Overwriting the dirty worktree; reverting or committing protected parallel-writer files.
+- Creating a second task truth, a second open register, or closing tasks without evidence.
+- Claiming tests, live runtime verification, solution solidification or AAOS acceptance that
+  did not happen.
+
+## 4. Problem loop and first real minimal loop
+
+The tracked problem loop is:
+
+`发现 → 去重/关联 → 问题摘要 → 匹配历史方案 → 建议或 Agent 修复任务包 → 用户/授权策略交接 → Agent 实际修复 → 测试与运行读回 → 关闭或继续 → 方案固化 → 必要时 AAOS 知识候选`
+
+The stages are recorded separately. Agent self-report, HTTP 200, a single exit code, a
+document edit or a submitted candidate is never by itself a verified repair or an AAOS
+acceptance.
+
+The first real minimal loop was delivered on 2026-10-19 under the user grant.
+`WORK-LAB-MINIMAL-LOOP-001` started from a real, reproducible, locally observable problem
+(the tracked AG-06 capability verifier failing on the live tree), produced an issue summary
+and a manual repair handback (no live handoff interface exists), was repaired in the product
+(`services/execution-federation/hermes_adapter.py`), verified by re-running the exact gate,
+12+49 regression tests and an adapter-level readback, and recorded as
+`docs/current/authority-convergence-20261019/solutions/SOLUTION-001-ACP-HERMES-RESUME.md`.
+No simulated data stood in for the real source. Details and receipts:
+`docs/current/authority-convergence-20261019/implementation/WORK-LAB-MINIMAL-LOOP-001-ACP-HERMES-RESUME.md`.
+
+## 5. Deliverables and acceptance
+
+| Deliverable | Where | State after this task |
+| --- | --- | --- |
+| Repository baseline | this file §2 + convergence report | RECORDED |
+| Positioning conflict matrix | `docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md` | DELIVERED |
+| Updated formal authority | `WORK-LAB-AUTHORITY.md` | DELIVERED (documentation) |
+| Updated machine authority | `.project/governance/project-authority-index.json`, `.project/governance/taskpack-authority-index.json` | DELIVERED (documentation) |
+| Converged roadmap | `docs/current/authority-convergence-20261019/ROADMAP.md` | DELIVERED |
+| Current capability map | convergence report §capability map | DELIVERED with measured evidence and gaps |
+| Future capability list | roadmap CURRENT/NEXT/FROZEN/DEFERRED/RETIRED + unfreeze conditions | DELIVERED |
+| Test report | convergence report §test report | DELIVERED with commands, exit codes, exact HEAD |
+| Source package registration | `docs/history/owner-inputs/RECORD-ARCHIVE-REGISTER.json` (`WL-REC-0105`) + member register | DELIVERED |
+| One real minimal loop | `WORK-LAB-MINIMAL-LOOP-001` + `SOLUTION-001` | DELIVERED (implementation card; verifier + 12/49 tests + adapter readback; AAOS NOT_SUBMITTED; CI not run) |
+
+Acceptance follows the owner package: positioning is workflow management/governance/
+runtime monitoring/problem closed loop; the non-goals are explicit; the loop and its
+separate states are recorded; UNKNOWN/STALE are honest; Observer is read-only and writes
+only through separately authorized Control; AAOS keeps formal knowledge review and
+acceptance; cross-project memory/session federation/autonomous Agent collaboration are
+frozen or deferred; no parallel ledger; no dirty work overwritten; no test or feature
+overclaim.
+
+## 6. Freeze of other tasks
+
+| Scope | State | Effect |
+| --- | --- | --- |
+| WUI-00..WUI-21 and all rows in the open register other than this convergence task | FROZEN_20261019 | No dispatch, no status rewrite, no evidence-free closure. Recorded statuses stay as they were. |
+| Prior UI taskpack `WORK-LAB-UI-PRIORITY-TASKPACK-20261009` | SUPERSEDED_20261019 / FROZEN | Kept for history; no longer CURRENT. |
+| Historical taskpacks, handoffs and blueprints | FROZEN_HISTORY | Non-normative; do not reopen by name alone. |
+| Future capabilities in the roadmap | FROZEN or DEFERRED per roadmap | Unfreeze only through the roadmap gate and a new explicit user decision. |
+| Product implementation of the minimal loop | DELIVERED (2026-10-19 user grant) | ML-001 one-file product fix; no further product work is authorized by this taskpack. |
+
+## 7. Files changed by this task
+
+- `WORK-LAB-AUTHORITY.md`
+- `.project/governance/project-authority-index.json`
+- `.project/governance/taskpack-authority-index.json`
+- `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md` (new)
+- `taskpacks/current/OPEN-TASK-REGISTER.md` (header freeze notice only; rows preserved)
+- `taskpacks/current/README.md`
+- `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md` (superseded banner only)
+- `README.md`
+- `docs/decisions/PROJECT_POSITIONING.md`
+- `docs/current/authority-convergence-20261019/ROADMAP.md` (new)
+- `docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md` (new)
+- `docs/current/authority-convergence-20261019/implementation/WORK-LAB-MINIMAL-LOOP-001-ACP-HERMES-RESUME.md` (new, implementation card)
+- `docs/current/authority-convergence-20261019/solutions/SOLUTION-001-ACP-HERMES-RESUME.md` (new, first solution record)
+- `services/execution-federation/hermes_adapter.py` (product fix: remove the unimplemented `Capability.RESUME` declaration)
+- `.project-local/runs/authority-convergence-20261019/minimal_loop_readback.py` (new, adapter readback)
+- `.project-local/artifacts/authority-convergence-20261019/minimal-loop/01-acp-honesty.out`, `02-federation-tests.out`, `03-nf22-tests.out`, `04-readback.out` (new receipts)
+- `docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md` (freeze banner)
+- `docs/current/ui-priority-20261009/HANDOFF-20261018-QODER-SESSION.md` (freeze banner)
+- `docs/current/workflow-assistance/workflow/active-authority-index.md` (current pointer)
+- `docs/current/workflow-assistance/workflow/project-definition.md` (positioning supplement)
+- `docs/current/DOCUMENT-CENSUS.md` (increment note)
+- `docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md` (freeze banner)
+- `docs/history/owner-inputs/20261019/WORK-LAB_权威收敛任务包_20261019.zip` (new archive)
+- `docs/history/owner-inputs/RECORD-ARCHIVE-REGISTER.json`
+- `docs/history/owner-inputs/RECORD-ARCHIVE-MEMBERS.jsonl`
+- `docs/history/owner-inputs/RECORD-SOURCE-CENSUS.json`
+- `scripts/maintenance/owner_material_catalog.py` (generated-index intro now points at the new CURRENT/roadmap/report)
+- `scripts/audit/normalise_doc_citations.py` (default-load scope now follows the current bootstrap chain: convergence taskpack + report/roadmap; unused package-member allowance removed; verifier-output literal protected from mechanical rewrite)
+- generated owner-material indexes (`docs/history/owner-inputs/INDEX.md`, `docs/history/owner-inputs/CATALOG.html`, CSV projections)
+- `projections/agents/source/work-lab-workflow/SKILL.md` (default skill: new positioning, problem-loop state separation, current taskpack and freeze rule; v1.2.0)
+- `.agents/skills/work-lab-workflow/SKILL.md` (regenerated projection, content hash updated)
+- `config/skills-inventory.json` (regenerated: 8 of 19 stale hashes corrected from disk/HEAD, including this skill; no skill added or removed)
+- `ASSET_REPLACEMENT_MANIFEST.md`, `HANDOFF-UI-L10B.md`, `UI_DECISIONS.md`, `UI_IMPLEMENTATION_REPORT.md`, `UI_REFERENCE_MANIFEST.md`, `VISUAL_QA_REPORT.md` (disposition banner authority chain only; body bytes outside the banner unchanged)
+
+## 8. Verification
+
+Executed commands, exit codes and the exact HEAD are recorded in the convergence report
+§test report. Raw outputs and the machine receipt index are under
+`.project-local/artifacts/authority-convergence-20261019/`; they are worktree gate receipts,
+not exact-SHA CI. The 14 worktree gates pass (14/14); the report also records ten additional
+read-only consumer checks. Of those, only one is red for a reason outside this task (drift in
+the external source-inventory snapshot); the pre-existing ACP capability declaration mismatch
+was fixed by ML-001 and its verifier now passes. The report states which items were not
+executed and why.
+
+## 9. Rollback
+
+Revert only this task's files to the pre-task bytes; do not use destructive repository-wide
+reset/clean. The prior UI taskpack and all historical records remain in place, so restoring
+them as current is a matter of reverting the authority/index pointers and the freeze
+banners. The new owner-material archive and register rows are additive and can be removed
+as a unit if the archival decision is withdrawn.
+
+## 10. Next step
+
+The minimal loop in §4 is delivered (ML-001 / SOLUTION-001). Remaining steps require owner action:
+confirm the result, then authorize commit/push so exact-SHA CI can judge the product change.
+Any further loop or system capability needs a new explicit user Task Grant; until then all other
+work stays frozen and this taskpack remains the only current plan.

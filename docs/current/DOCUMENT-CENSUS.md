@@ -3,9 +3,18 @@
 > Record资料统一入口：`docs/history/owner-inputs/INDEX.md`（完整登记、别名、包内成员、内容去重、历史摘要）。
 > 本次来源覆盖与原字节验证见`docs/history/owner-inputs/RECORD-ARCHIVE-VALIDATION.json`；旧数量仍只是原盘点快照。
 
-> 2026-10-09范围切换：唯一CURRENT为`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，完整交接在`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`。
-> **2026-10-18 本轮交接**：`docs/current/ui-priority-20261009/HANDOFF-20261018-SESSION.md`（`main` = `fae41c4d`）。
-> 旧文档数量/状态/建议只描述此前盘点，现行任务以OPEN为准；UI优先、手机端不做。
+> **2026-10-19 权威收敛（增量说明，不改下方旧盘点数字）**：其他任务冻结，唯一CURRENT为
+> `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`；
+> 路线图`docs/current/authority-convergence-20261019/ROADMAP.md`，报告`docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md`。
+> 该收敛下的首个真实最小闭环`WORK-LAB-MINIMAL-LOOP-001`已交付（2026-10-19）：实现卡
+> `docs/current/authority-convergence-20261019/implementation/WORK-LAB-MINIMAL-LOOP-001-ACP-HERMES-RESUME.md`，
+> 方案记录`docs/current/authority-convergence-20261019/solutions/SOLUTION-001-ACP-HERMES-RESUME.md`；
+> 产品修复一处`services/execution-federation/hermes_adapter.py`，未提交、未跑exact-SHA CI、未提交AAOS候选。
+> UI包与`docs/current/ui-priority-20261009/`交接均为SUPERSEDED_20261019/FROZEN，仅作历史证据；手机端不做。
+> 以下2026-10-09/10-18各行是当时快照，保留供追溯；现行任务以OPEN与两个治理索引为准。
+> 2026-10-09范围切换（历史快照）：唯一CURRENT为`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，完整交接在`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`。
+> **2026-10-18 本轮交接（历史快照）**：`docs/current/ui-priority-20261009/HANDOFF-20261018-SESSION.md`（`main` = `fae41c4d`）。
+> 旧文档数量/状态/建议只描述此前盘点，现行任务以OPEN为准；UI已冻结、手机端不做。
 > 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
 
 
@@ -175,9 +184,9 @@
 
 ## 8. 未测 / 不确定（不假装）
 
-- `.project-local/` 内未被跟踪的 md 数量：未测（该根整体被忽略，需要单独枚举才能给数）。
+- `.project-local/` 内未被跟踪的 md 数量：**已测 2026-10-18**——1,269 个 md / 16,329,118 B；该根在 `.gitignore:42` 整体忽略，`git status` 对其中 md 的未跟踪计数为 0（设计如此）。
 - `apps/observer/docs/` 的 md 字节数：未测。
-- 账本行数 163 与 183 的差集逐条归因：未做，只给了两种口径与差异来源假设（无优先级单元格 / 续行）。
+- 账本行数 163 与 183 的差集逐条归因：**已完成 2026-10-18**，见 §10。
 
 ## 9. 2026-10-10 复测更正（WUI-17：默认加载链的引用可追溯性）
 
@@ -244,4 +253,14 @@
   证明这些豁免是**承重**的（撤掉一条，工具立刻报 `rewritten=1` 即会把更正记录改写）。最终态
   `DOC_CITATIONS CHECKED docs=9 citations=436 rewritten=0 blocked=0 generic_allowed=16 absent_quoted=8 stale_allowances=0`，
   该门 8→**9 例**、两表门 **7 例**全绿。教训登记 ERR-247（假出处与失明普查）、ERR-248（写入秩序与表形状）。
-- `WORK-LAB_UI开发资料总包_按批次.zip` 内 12 个内层 ZIP 的逐成员清单：未展开（导入的是字节原件）。
+- `WORK-LAB_UI开发资料总包_按批次.zip` 内 12 个内层 ZIP 的逐成员清单：**已展开 2026-10-18**，见 §10。
+
+## 10. 2026-10-18 三面复量与三策略执行（WUI-17 收尾）
+
+- **三面复量（与活门同一条规则）**：直接 import `scripts/ci/verify_authority_index_paths.py` 的 `check()`，不另写解析器；扫描 `reports/`、`knowledge-staging/`、仓库根全部受跟踪 md，得 **662 面 / 4,168 条引用 / 3,257 断**（2026-10-09 记的 397/4,153/3,262 是当时口径与树，今天不沿用）。按来源拆：外购技能副本 **559 / 3,327 / 2,871**；日期化归档 **70 / 329 / 243**；其余（原称"当下仍在写"）**33 / 512 / 143**。回执 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`。
+- **"当下仍在写"这一档按证据重分类，不再当作活引用去改**：143 条逐面归因 = 五份根级 `historical-non-normative` 记录 93 条（`ASSET_REPLACEMENT_MANIFEST.md` 8、`HANDOFF-UI-L10B.md` 3、`UI_DECISIONS.md` 2、`UI_IMPLEMENTATION_REPORT.md` 53、`UI_REFERENCE_MANIFEST.md` 27）+ `AGENTS.md` 6 条（那 6 条正是"仓库根没有 `skills/`、`bin/` 目录"这句话本身[no-tree-claim DELETED ref=skills/][no-tree-claim DELETED ref=bin/]）+ 日期化报告 44 条。六份根级历史文件的正文被 `scripts/ci/verify_root_document_dispositions.py` 按字节冻结，日期化报告改写即让记录说假话；因此这一档与日期归档同用棘轮。"逐条清"在这里的正确落地是**逐条归因并锁死**，不是改历史。
+- **三策略已机器化**：`.project/governance/refs-surface-policies.json`（面级声明 + 386 行基线）与 `scripts/ci/verify_refs_surface_policies.py`。门同时拒绝"新增断链"与"基线里已修好的条目未重发基线"，外购副本声明设 500 面下限防失效。现态 `REFS_SURFACE_POLICIES_PASS surfaces=662 refs=4168 external_surfaces=559 ratchet_surfaces=103 ratchet_baseline=386 new=0 fixed=0`；必门 `tests/workflow-assistance/test_refs_surface_policies.py` **8 例全绿**，含两条真文件伪证（删一条基线→`NEW_BROKEN` 点名该行；加一条假基线→`FIXED_BUT_BASELINE_STALE` 点名该行）。
+- **账本行数 163 与 183 的差集已逐条归因**：在 `taskpacks/current/OPEN-TASK-REGISTER.md` 修订 `9488cf9707`（2026-10-08）上复量，163 = 匹配 `^\| <id> \| P<digit>` 的任务行；183 = 196 个表格行 − 7 条分隔行 − 6 条表头行。20 条差额逐类为：**8** 条没有优先级列（SKILLS-…、GATE-RECHECK-…、TOOLCHAIN-PROBE-…、U19-MSVC-…、U19-P0C-…、UI-CHECK-…、SPILL-…、HANDOFF-…）、**4** 条来自另一张"层/处置"表、**6** 条优先级单元格不是 `P<digit>`（D1 ENV、D2 USER AUTH、C2/C3/O1/O2 OPTIONAL）、**2** 条首列含空格（`AG-01..04 gate`、`AG-05..07 gate`）。现行账本（HEAD `0369d349`）为 **25 条任务行 / 27 条表格行 / 1 条分隔行**，旧口径两数都不再适用。
+- **`.project-local/` 未跟踪 md 已测**：**1,269 个 md / 16,329,118 B**；该根在 `.gitignore:42` 整体忽略，`git status` 对其中 md 的未跟踪计数为 0。
+- **UI 资料总包内层 ZIP 已展开**：外层 `WORK-LAB_UI开发资料总包_按批次.zip` 37,048,117 B、sha256 `c94ff634dad3fa47cd843493c5f3b59c946fd987295085b8c821febba13eef48`，含 **12 个内层 ZIP / 197 个非目录成员**（逐 ZIP 成员数 12/25/12/39/11/19/14/21/23/15/3/3），逐成员 name+size+CRC32 回执 `.project-local/artifacts/wui-20261009/ui-batch-zip-census.json`（25,930 B）。
+- **仍属 owner 决定**：六份历史文件是否最终 `git mv` 进 `docs/history/archive/`；消费清单与字节保留证明已具备（§9 / WUI-17 行 ③）。

@@ -263,7 +263,7 @@
         "WUI-13"
       ],
       "scope": "frontend; Tauri window config; existing geometry and legibility probes",
-      "acceptance": "Tab/Ctrl K/Esc/focus；中文IME；不抢焦点/选中/阅读位置；长路径/字号缩放；2560×1440与100/125/150/200%DPI；main默认及900×600、HUD440×780；不恢复手机断点",
+      "acceptance": "Tab/Ctrl K/Esc/focus；中文IME；不抢焦点/选中/阅读位置；长路径/字号缩放；2560×1440与100/125/150/200%DPI；main默认及900×600、HUD440×680；不恢复手机断点",
       "inherited": "U05/U08/U19; GEOMETRY; UI-WINDOW-FLOOR",
       "sourceTasks": [
         "T12",

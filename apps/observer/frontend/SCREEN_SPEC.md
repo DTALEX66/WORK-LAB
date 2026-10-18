@@ -108,7 +108,7 @@ The product has exactly two windows, and both sizes are declared in `apps/observ
 |---|---|---|---|---|---|
 | `main`, default | 1280×820, resizable | 214.5px measured at a 1262px inner width (`clamp(210px, 17vw, 280px)`; 2026-10-09 `geometry2.json`) | inline, overflow menu when the band cannot hold it | full width | no horizontal overflow; no wrap; every lane reachable |
 | `main`, at its floor | ≥ 900×600 (`minWidth`/`minHeight`) | rail is its own scroll box, 345px over 1778px of content, 27 lanes, last item hit-testable | overflow menu allowed | full width | the same set, re-measured at 900×600 |
-| `panel` (HUD) | 440×780, `resizable: false` | none by design | inline | icon + shortcut chip | no rail; no horizontal overflow |
+| `panel` (HUD) | 440×680, `resizable: false` | none by design | inline | icon only (label + Ctrl K chip remain in the DOM, named by aria-label/title) | no rail; no horizontal overflow; command row stays on one line |
 
 **There is no narrow band.** Owner decision 2026-10-07 (优先跑通全量执行桌面端电脑端 UI，先删除手机端其他端)
 deleted the phone shell, and `tests/ci/test_desktop_only_shell.py` pins both the absence of a mobile
@@ -202,7 +202,7 @@ region below "requires" one.
 ## Gate coverage owed
 
 All six assertion families this section listed are now enforced. `topbar_geometry_via_cdp.py` runs three
-passes over the shipped bundle — 20 checks at the 1280×820 default, 14 at the 440×780 HUD, 21 at the
+passes over the shipped bundle — 20 checks at the 1280×820 default, 14 at the 440×680 HUD, 21 at the
 900×600 window floor — and `text_legibility_via_cdp.py` asserts 6 per theme plus three for the switch
 itself. Delivered: rail reachability (`nav_items_reachable`, `nav_groups_are_disclosures` — and since
 2026-10-09 the disclosure *behaviour* rather than only its markup, 7 cases in

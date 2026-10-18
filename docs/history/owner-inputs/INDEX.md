@@ -5,8 +5,10 @@
 
 ## 当前任务与历史摘要
 
-- [当前 UI 优先任务包](../../../taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md)
-- [完整后续交接提示词](../../current/ui-priority-20261009/NEXT-AGENT-PROMPT.md)
+- [当前权威收敛任务包](../../../taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md)
+- [当前路线图](../../current/authority-convergence-20261019/ROADMAP.md)
+- [权威收敛报告](../../current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md)
+- [UI 历史交接（FROZEN_20261019）](../../current/ui-priority-20261009/NEXT-AGENT-PROMPT.md)
 - [历史关键信息与沿用边界](HISTORICAL-KEY-POINTS.md)
 - [本次归档、去重、压缩及验证记录](RECORD-ARCHIVE-REPORT.md)
 - [可搜索文件目录](CATALOG.html)：可按文件名、包内路径、材料分类、原位置筛选。
@@ -30,25 +32,10 @@
 后续增量材料先核对已有摘要，再追加源别名/版本和包内成员登记，运行 `build-index` 与 `verify`。
 不要另建第二个资料目录或任务账本；没有找到文件时报告具体 ID/路径/摘要缺口，不用新摘要冒充原件。
 
-## 默认忽略范围（W12，2026-10-16 补）
-
-这一节写给**查询者**，不是写给登记流程：它声明本仓哪一部分是历史证据、哪一部分是当前合同。
-
-- **历史与归档默认不进入工作流查询与上下文包**：`docs/history/**`（含 `docs/history/archive/**`、各
-  `record-*/originals/**`）、`90-archive/**`、`taskpacks/history/**` 都只作**来源**。需要时按资料 ID 显式提取
-  （`scripts/maintenance/owner_material_catalog.py extract WL-REC-00xx`），不要整目录扫。
-- **大产物只登记、不逐行引用**：`docs/history/**` 下的 `*.zip`、`*.otf`、`*.png` 等批量二进制
-  （实测少数几个文件即占受跟踪体积的绝大部分：最大单个 35.3 MB，前 15 个合计约 130 MB）保留原件与摘要，
-  检索走目录与登记，不参与行号引用。
-- **当前合同优先于旧手册**：任何冲突时以下列顺序为准——`WORK-LAB-AUTHORITY.md` →
-  `.project/governance/project-authority-index.json` → `taskpacks/current/OPEN-TASK-REGISTER.md`；
-  旧的 Hermes / CC Switch 手册即使与本页同名列在目录里，也**不得**覆盖当前合同。
-- 本节只声明范围，不删除、不搬迁 Git 历史与归档资产（W12 明确要求保留）。
-
 ## 原文件及别名目录
 
 
-本次登记 **104 条资料**及 **2382 条包内成员**。下表链接指向规范存储；压缩资料的成员链在 JSON/CSV 和可搜索目录中完整列出。
+本次登记 **105 条资料**及 **2387 条包内成员**。下表链接指向规范存储；压缩资料的成员链在 JSON/CSV 和可搜索目录中完整列出。
 
 
 ### TASK_HANDOFF
@@ -84,6 +71,7 @@
 | WL-REC-0066 | 三项目_VI_UI_UX_作品集完整交付包.zip ! 三项目_产品案例/assets/fonts/Noto-OFL.txt | 共享历史 | [压缩包成员](<record-20261009/WORK-LAB-HISTORICAL-RECORDS-20261009.zip>) |
 | WL-REC-0067 | 三项目_VI_UI_UX_作品集完整交付包.zip ! 三项目_产品案例/assets/fonts/Inter-OFL.txt | 共享历史 | [压缩包成员](<record-20261009/WORK-LAB-HISTORICAL-RECORDS-20261009.zip>) |
 | WL-REC-0100 | 三项目_VI_UI_UX_作品集完整交付包.zip ! 三项目_产品案例/asset-manifest.json | 共享历史 | [压缩包成员](<record-20261009/WORK-LAB-HISTORICAL-RECORDS-20261009.zip>) |
+| WL-REC-0105 | WORK-LAB_9DE58194E69BB8E88488E88395E58C95E4BB8AE585.zip | 当前输入 | [原件](<20261019/WORK-LAB_权威收敛任务包_20261019.zip>) |
 
 ### AUDIT
 

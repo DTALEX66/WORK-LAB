@@ -1,5 +1,11 @@
 # 交接提示词 · 2026-10-18 晚段（main `f6077d18` → QODER 新会话）
 
+> **FROZEN_20261019 — 本文是 UI 轮次的历史交接，不再是当前指令。**
+> 用户 2026-10-19 决定：其他任务冻结，唯一 CURRENT 为
+> `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`；
+> 当前路线图见 `docs/current/authority-convergence-20261019/ROADMAP.md`。
+> 本文数字与证据保留原样，未完成项不被冻结关闭，也不因冻结被视为已交付。
+
 > **这是给下一个会话的提示词，不是权威。** 权威顺序仍是
 > `WORK-LAB-AUTHORITY.md` → `.project/governance/project-authority-index.json` → 唯一 CURRENT 任务包 →
 > `taskpacks/current/OPEN-TASK-REGISTER.md`。本文所有数字都注明了测量命令与口径；**未测的写"未测"**。
@@ -158,6 +164,7 @@ $PY tests/workflow-assistance/test_tool_inventory_coverage.py   # 12 passed
 | 事实 | 值 / 位置 |
 |---|---|
 | 项目解释器 | `.project-local/toolchains/wl-py311/Scripts/python.exe`（Python **3.11.15**）；CI 是 Ubuntu + 3.12.3 |
+| Rust / MSVC（2026-10-18 实测，旧“本机无 Rust”作废） | `D:\All projects\OS External Configuration\toolchains\rust\cargo\bin` 的 `rustc/cargo` **1.97.1**；必须设 `RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-msvc`（该 rustup 的默认是 **GNU**，不设会去找 `dlltool.exe` 而误判“工具链缺失”）；MSVC `14.44.35207` + Windows SDK `10.0.28000.0`；`vcvars64.bat` 要用 CRLF 的 `.cmd` 调用，git-bash 的 `cmd //c 'call "…"'` 会转义引号并假 exit 0。实测 `apps/token-monitor/src-tauri`: `cargo check --locked` exit 0/43.31s，`cargo build --release --locked --features custom-protocol` exit 0/1m28s（`cargo-target/release/hermes-token-monitor.exe`，8,939,008 B） |
 | 依赖锁 | `packages/client-neutral-core/requirements.lock` |
 | 运行时根 | `.project-local/runs/`（临时/缓存），证据 `.project-local/artifacts/` |
 | CI 时长 | `workflow-assistance` ≈2–9 min（其中 governance 批 132s）；`observer` ≈9–16 min；整轮 ≈15–20 min |

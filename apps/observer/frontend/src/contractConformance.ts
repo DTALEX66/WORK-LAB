@@ -35,13 +35,14 @@ export const GENERATED_CONTRACT_MODULE = 'packages/client-neutral-core/generated
 // on this list: they were first declared through $defs, the generator cannot follow a $ref and emitted
 // `unknown` for every stage, and the honest fix was to inline the stage shape in the schema so the
 // projection names it. Four exemptions became one.
+// WUI-15 (20261018): `ci` and `projects[].ci` left this list for the same reason -- the schema now names
+// the six (plus `projectId` on a project row) producer keys, so the projection carries them and the
+// refinement assertions below cover them instead of exempting them.
 export const GENERATED_COLLAPSED_PATHS = [
   'governance.families',
   'workspace',
   'tasks',
-  'ci',
   'projects[].repositories',
-  'projects[].ci',
   'artifactHandlesSummary.refused',
   'isolatedTrials[].isolation',
 ] as const
@@ -51,17 +52,42 @@ export type CollapsedPath = typeof GENERATED_COLLAPSED_PATHS[number]
 // --- the top-level keys the generator does name -------------------------------------------------------
 export type SchemaVersionRefines = Expect<Refines<SnapshotV3['schemaVersion'], WorkflowSnapshotV3['schemaVersion']>>
 export type RevisionRefines = Expect<Refines<SnapshotV3['revision'], WorkflowSnapshotV3['revision']>>
+export type GeneratedAtRefines = Expect<Refines<SnapshotV3['generatedAt'], WorkflowSnapshotV3['generatedAt']>>
 export type SourceWatermarkRefines = Expect<Refines<SnapshotV3['sourceWatermark'], WorkflowSnapshotV3['sourceWatermark']>>
 export type TransportRefines = Expect<Refines<SnapshotV3['transport'], WorkflowSnapshotV3['transport']>>
 export type CoverageRefines = Expect<Refines<SnapshotV3['coverage'], WorkflowSnapshotV3['coverage']>>
-export type ExecutionIdsRefines = Expect<Refines<SnapshotV3['sourceRefs'], WorkflowSnapshotV3['sourceRefs']>>
-export type TokenSummaryRefines = Expect<Refines<SnapshotV3['tokenSummary'], WorkflowSnapshotV3['tokenSummary']>>
+export type GovernanceRefines = Expect<Refines<SnapshotV3['governance'], WorkflowSnapshotV3['governance']>>
+export type ProjectsRefines = Expect<Refines<SnapshotV3['projects'], WorkflowSnapshotV3['projects']>>
 export type ExecutionsRefines = Expect<Refines<SnapshotV3['executions'], WorkflowSnapshotV3['executions']>>
+export type TasksRefines = Expect<Refines<SnapshotV3['tasks'], WorkflowSnapshotV3['tasks']>>
+export type TokenSummaryRefines = Expect<Refines<SnapshotV3['tokenSummary'], WorkflowSnapshotV3['tokenSummary']>>
+export type GitRefines = Expect<Refines<SnapshotV3['git'], WorkflowSnapshotV3['git']>>
+export type CiRefines = Expect<Refines<SnapshotV3['ci'], WorkflowSnapshotV3['ci']>>
+export type SourceRefsRefines = Expect<Refines<SnapshotV3['sourceRefs'], WorkflowSnapshotV3['sourceRefs']>>
+export type SoftwareRefines = Expect<Refines<SnapshotV3['software'], WorkflowSnapshotV3['software']>>
+export type TaskRecordsRefines = Expect<Refines<SnapshotV3['taskRecords'], WorkflowSnapshotV3['taskRecords']>>
+export type AdapterCapabilitiesRefines = Expect<Refines<SnapshotV3['adapterCapabilities'], WorkflowSnapshotV3['adapterCapabilities']>>
+export type ArtifactHandlesRefines = Expect<Refines<SnapshotV3['artifactHandles'], WorkflowSnapshotV3['artifactHandles']>>
+export type ArtifactHandlesSummaryRefines = Expect<Refines<SnapshotV3['artifactHandlesSummary'], WorkflowSnapshotV3['artifactHandlesSummary']>>
+export type CollectorsRefines = Expect<Refines<SnapshotV3['collectors'], WorkflowSnapshotV3['collectors']>>
+export type OperationProgressRefines = Expect<Refines<SnapshotV3['operationProgress'], WorkflowSnapshotV3['operationProgress']>>
+export type IsolatedTrialsRefines = Expect<Refines<SnapshotV3['isolatedTrials'], WorkflowSnapshotV3['isolatedTrials']>>
+
+/**
+ * The whole object, not just its paths: until WUI-15 the front model could not be handed to the generated
+ * projection as a unit because `ci` collapsed to `unknown[]` at both levels. Now every remaining collapse
+ * (`workspace` / `tasks` / the free-form blocks) is a `Record<string, unknown>` on the hand side too, so
+ * the assignment itself compiles -- and any future field that drifts wider fails here even if nobody added
+ * a per-path line for it.
+ */
+export type WholeSnapshotRefines = Expect<Refines<SnapshotV3, WorkflowSnapshotV3>>
 
 // --- how many paths this module actually pins; the Python gate floors this number -------------------
 export const PINNED_REFINEMENT_PATHS = [
-  'schemaVersion', 'revision', 'sourceWatermark', 'transport', 'coverage',
-  'sourceRefs', 'tokenSummary', 'executions',
+  'schemaVersion', 'revision', 'generatedAt', 'sourceWatermark', 'transport', 'coverage',
+  'governance', 'projects', 'executions', 'tasks', 'tokenSummary', 'git', 'ci', 'sourceRefs',
+  'software', 'taskRecords', 'adapterCapabilities', 'artifactHandles', 'artifactHandlesSummary',
+  'collectors', 'operationProgress', 'isolatedTrials',
 ] as const
 
 /**

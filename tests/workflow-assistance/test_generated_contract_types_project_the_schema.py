@@ -301,10 +301,11 @@ class FrontModelConsumesGeneratedContractTests(unittest.TestCase):
         # WUI-21 (2026-10-11) added `operationProgress` / `isolatedTrials`, whose `isolation` object is
         # free-form in the contract and therefore one more measured collapse. (Four more appeared first,
         # because the stages were declared through $defs and the generator cannot follow a $ref; inlining
-        # the stage shape in the schema named them and the count went back down to 8.) Pinning the old 7
-        # would make the gate red on a correct contract; the real invariant is the equality with
-        # GENERATED_COLLAPSED_PATHS checked immediately below, which fails on ANY difference either way.
-        self.assertGreaterEqual(len(measured), 8,
+        # the stage shape in the schema named them.) WUI-15 (2026-10-18) then took it 8 -> 6 by naming both
+        # `ci` levels in the schema, so the projection carries those fields instead of collapsing them.
+        # Pinning a count would make the gate red on a correct contract; the real invariant is the equality
+        # with GENERATED_COLLAPSED_PATHS checked immediately below, which fails on ANY difference either way.
+        self.assertGreaterEqual(len(measured), 6,
                                 f"the scan found {measured}; a collapse set this small means the "
                                 "scan stopped reading the block, not that the contract got clean")
         source = (FRONTEND / "src/contractConformance.ts").read_text(encoding="utf-8")

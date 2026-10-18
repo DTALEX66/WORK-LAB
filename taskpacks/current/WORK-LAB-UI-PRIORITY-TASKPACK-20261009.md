@@ -1,5 +1,11 @@
 # WORK-LAB UI 优先后续执行任务包 — 2026-10-09
 
+> **SUPERSEDED_20261019 / FROZEN_20261019。** 用户 2026-10-19 冻结其他任务，并把
+> `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md` 设为唯一 CURRENT。
+> 本文件保留原计划、状态与历史证据，不再派工；未完成 WUI 项不因本冻结关闭，也不得无证标记完成。
+> 当前定位、冻结范围和路线图见 `docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md`
+> 与 `docs/current/authority-convergence-20261019/ROADMAP.md`。
+
 **TaskPack ID:** `WORK-LAB-UI-PRIORITY-TASKPACK-20261009`
 **CURRENT:** 唯一当前执行计划；替代 `WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918` 及其旧派工顺序。
 **依据:** 用户2026-10-09最新明确请求、两个原件任务包；顶层仍为WORK-LAB-AUTHORITY.md与既有机器索引。
@@ -15,7 +21,7 @@ AAOS拥有完整知识/人的知识工作学习/AI学习资产/双向学习及�
 
 **不做手机端，且没有手机端延后/冻结任务。** 16张桌面母版与浅深主题用于对照；原件17_mobile及窄屏断点仅保留来源，不派工。
 保留React/TypeScript/Vite + Tauri/Rust + Python + JSON Schema；复用品牌、组件及主题，有意义文字≥12px。
-main默认1280×820、下限900×600；既有HUD440×780是桌面浮窗，不是手机端。五目的地是建议，不是永久数字断言。
+main默认1280×820、下限900×600；既有HUD440×680是桌面浮窗，不是手机端。五目的地是建议，不是永久数字断言。
 
 ## UI优先路线
 
@@ -177,7 +183,7 @@ WUI-20按需协作独立推进，不阻塞核心；公共回执/安全缺陷若�
 
 依赖：WUI-03, WUI-13。范围：frontend; Tauri window config; existing geometry and legibility probes。
 
-验收：Tab/Ctrl K/Esc/focus；中文IME；不抢焦点/选中/阅读位置；长路径/字号缩放；2560×1440与100/125/150/200%DPI；main默认及900×600、HUD440×780；不恢复手机断点。
+验收：Tab/Ctrl K/Esc/focus；中文IME；不抢焦点/选中/阅读位置；长路径/字号缩放；2560×1440与100/125/150/200%DPI；main默认及900×600、HUD440×680；不恢复手机断点。
 
 继承：U05/U08/U19; GEOMETRY; UI-WINDOW-FLOOR。源任务：T12,T16。
 

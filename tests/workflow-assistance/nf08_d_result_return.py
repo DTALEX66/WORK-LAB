@@ -19,6 +19,7 @@ Pure and deterministic: no network, no remote write, no paid call.
 """
 from __future__ import annotations
 
+import json
 import os
 import sys
 import unittest
@@ -165,6 +166,68 @@ class TestReviewTrigger(unittest.TestCase):
         req = rr.distinguish_receipt_published_vs_review_requested(
             _receipt(receiptId="r-2", status="REVIEW_REQUESTED"))
         self.assertTrue(req["review_requested"])
+
+
+class TestReceiptSerialization(unittest.TestCase):
+    def test_to_dict_is_json_serializable_and_fingerprint_is_a_digest(self):
+        r = rr.build_receipt(
+            receipt_id="r-20", project="work-lab", task_id="t-1", task_revision=3,
+            run_session_id="run-9", baseline="0" * 40, artifact_digest="sha256:abc",
+            execution_completed=True)
+        data = r.to_dict()
+        # the fingerprint is a value, not the bound method the first version leaked
+        self.assertRegex(data["fingerprint"], r"^[0-9a-f]{64}$")
+        self.assertEqual(data["fingerprint"], r.fingerprint())
+        encoded = json.dumps(data, sort_keys=True)
+        self.assertIn('"fingerprint": "' + r.fingerprint() + '"', encoded)
+
+
+class TestRevisionConflict(unittest.TestCase):
+    def test_same_receipt_id_with_a_new_revision_is_a_conflict(self):
+        box = rr.OutboxDedupe()
+        first = _receipt(receiptId="r-20", task_revision=3)
+        self.assertTrue(box.enqueue(first)["enqueued"])
+        second = _receipt(receiptId="r-20", task_revision=4)
+        conflict = box.enqueue(second)
+        self.assertFalse(conflict["enqueued"])
+        self.assertTrue(conflict["conflict"])
+        self.assertEqual(conflict["reason"], "IDEMPOTENCY_CONFLICT")
+        self.assertEqual(len(box.pending()), 1)
+        send = box.send_attempt(second, ack=False)
+        self.assertFalse(send["sent"])
+        self.assertEqual(send["reason"], "IDEMPOTENCY_CONFLICT")
+        recon = box.lost_ack_reconcile(second)
+        self.assertFalse(recon["resent"])
+        self.assertEqual(recon["reason"], "IDEMPOTENCY_CONFLICT")
+
+
+class TestEgressPolicy(unittest.TestCase):
+    def test_egress_is_default_deny(self):
+        policy = rr.EgressPolicy()
+        denied = policy.check("review-page", _receipt())
+        self.assertFalse(denied["allowed"])
+        self.assertEqual(denied["reason"], "DESTINATION_NOT_AUTHORISED")
+        policy.authorize("review-page")
+        allowed = policy.check("review-page", _receipt())
+        self.assertTrue(allowed["allowed"])
+        self.assertEqual(allowed["payload"]["receipt_id"], "r-1")
+        self.assertFalse(allowed["payload"]["body_included"])
+        self.assertFalse(allowed["payload"]["session_log_included"])
+
+    def test_egress_never_carries_private_fields_even_when_authorized(self):
+        policy = rr.EgressPolicy()
+        policy.authorize("review-page")
+        res = policy.check("review-page", _receipt(task_body="SECRET"))
+        self.assertFalse(res["allowed"])
+        self.assertEqual(res["reason"], "PRIVATE_FIELD_REFUSED")
+        self.assertIn("task_body", res["fields"])
+
+    def test_egress_authorization_does_not_imply_acceptance(self):
+        policy = rr.EgressPolicy()
+        policy.authorize("review-page")
+        payload = policy.check("review-page", _receipt(accepted=False))["payload"]
+        self.assertTrue(payload["execution_completed"])
+        self.assertFalse(payload["accepted"])
 
 
 class TestProjectionReverseEdit(unittest.TestCase):

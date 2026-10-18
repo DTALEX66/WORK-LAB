@@ -376,7 +376,7 @@ Normative sizes, to be asserted by `scripts/audit/topbar_geometry_via_cdp.py`:
 - **900–1099px**: rail 210px, action row may drop secondary controls into an overflow menu; the primary
   action and the theme toggle stay visible.
 - **Below 900px there is no rail state to design.** The main window is floored at `minWidth: 900` /
-  `minHeight: 600` in `apps/observer/src-tauri/tauri.conf.json`, the 440×780 surface is the rail-less
+  `minHeight: 600` in `apps/observer/src-tauri/tauri.conf.json`, the 440×680 surface is the rail-less
   HUD, and the owner decision of 2026-10-07 deleted the phone shell. This document once carried a
   "**< 760px**: rail collapses to an icon rail or a drawer; every control ≥ 44px tall" row; see
   Known Gap 10 for what building it produced and why the row, not the implementation, was the defect.
@@ -505,7 +505,7 @@ each one declared at the sentence rather than excused repo-wide:
     unnamed — and then the screenshot showed what the numbers had no field for: 23 lanes as 23 identical
     dots, because `.nav-dot` is a status marker rather than an icon and hiding `.truncate` had removed
     the only distinguishing content. A drawer was built next, which is when the contradiction surfaced:
-    `tauri.conf.json` floors the main window at 900×600, the 440×780 surface renders no rail, and
+    `tauri.conf.json` floors the main window at 900×600, the 440×680 surface renders no rail, and
     `tests/ci/test_desktop_only_shell.py` pins both that floor and the absence of a mobile navigation
     surface (owner decision 2026-10-07, 优先跑通全量执行桌面端电脑端 UI，先删除手机端其他端). Both
     attempts were discarded before commit; the diff is archived at
@@ -544,13 +544,16 @@ each one declared at the sentence rather than excused repo-wide:
     missing number. The instrument now records `backend` per row and enforces the two coverage checks only in
     live mode, printing `NOT_ENFORCED` in static mode, so a chrome-only sweep cannot be quoted as lane
     coverage again (ERR-237).
-13. **The fixed HUD does not fit the acceptance screen at 200% display scaling.** `tauri.conf.json` declares
-    the panel as 440×780 with `resizable: false`, so its declared size is the physical demand: at 200% that is
-    880×1560 against a 2560×1392 work area (the −48px taskbar is an assumption the receipt prints rather than
-    hides). This is derived by `scripts/audit/display_scaling_via_cdp.py` from the shipped declaration, and it
-    is NOT a desktop measurement — whether tao clamps a non-resizable window to the work area is unverified,
-    because no release binary exists to read back (row 14). Owed: an owner decision — shrink the declared HUD,
-    make it resizable with a floor, or accept that 200% on a 1440-tall panel costs the bottom of the float.
+13. **Closed 2026-10-13: the fixed HUD now fits the acceptance screen at 200% display scaling.** This gap
+    read: `tauri.conf.json` declares the panel as 440×780 with `resizable: false`, so at 200% the physical
+    demand was 880×1560 against a 2560×1392 work area (the −48px taskbar is an assumption the receipt
+    prints rather than hides), and it asked for an owner decision — shrink the declared HUD, make it
+    resizable with a floor, or accept the loss. The declaration is now 440×680, so the derived demand is
+    880×1360 with 32px spare. The 780 figure was the declaration at the time of the finding; the
+    2026-10-13 correction and the gate pass are recorded in
+    `taskpacks/current/OPEN-TASK-REGISTER.md`, and this line keeps that history rather than rewriting the
+    measurement. Still unverified for the reason in row 14: whether tao clamps a non-resizable window to
+    the work area needs a release binary to read back.
 14. **No DPI-awareness readback exists for this product.** `src-tauri/build.rs` is a bare
     `tauri_build::build()` and the repo carries no Windows manifest of its own, so Per-Monitor v2 is framework
     behaviour asserted by dependency rather than something this repository states. The native half of WUI-14

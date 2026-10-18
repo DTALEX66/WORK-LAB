@@ -1,21 +1,25 @@
 {
   "schemaVersion": "workflow/taskpack-authority-index/v1",
-  "generatedAt": "2026-10-09",
-  "currentTaskpack": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+  "generatedAt": "2026-10-19",
+  "currentTaskpack": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
   "authority": {
     "owner": "DTALEX66",
-    "created": "2026-10-09",
+    "created": "2026-10-19",
     "expires": "unbounded (main is sole authority; superseded only by a newer registered CURRENT)",
-    "taskpack": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+    "taskpack": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
     "topAuthority": "WORK-LAB-AUTHORITY.md",
     "topMachineAuthority": ".project/governance/project-authority-index.json",
-    "supersedes": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-    "baseline_main": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-    "baseline_tree": "a36e97ecbcb951e53a4c877e14244aa626d70fc8"
+    "supersedes": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+    "baseline_main": "f6077d18cfc76d588d9315ec0ac82769c3009d9a",
+    "baseline_tree": "6dcb2094ffa5fdb693e959de5aaa870eea8b1f78",
+    "baseline_local_head": "0369d349d46b75c7048b884331bb40a0f42d4e34",
+    "baseline_local_tree": "d2a0222992f0171e0fc999dd6bb032ccbd40ed1f",
+    "baseline_worktree": "dirty at convergence start (59 porcelain entries); prior uncommitted work preserved",
+    "currentRoadmap": "docs/current/authority-convergence-20261019/ROADMAP.md"
   },
   "classification": {
     "CURRENT": [
-      "WORK-LAB-UI-PRIORITY-TASKPACK-20261009"
+      "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019"
     ],
     "SUPERSEDED": [
       "WORK-LAB-FORWARD-RECONCILIATION-2026-08-20",
@@ -40,7 +44,8 @@
       "INT-002-006-READONLY-EVIDENCE-PROJECTION",
       "AGENT-WORKFLOW-ENHANCEMENTS-20260812",
       "WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25",
-      "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918"
+      "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+      "WORK-LAB-UI-PRIORITY-TASKPACK-20261009"
     ],
     "HISTORICAL": [
       "WORK-LAB-DSH-HANDOFF-2026-08-15",
@@ -215,11 +220,22 @@
     {
       "id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
       "path": "taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md",
-      "role": "single CURRENT UI-first plan",
-      "status": "ADOPTED_PLANNING_20261009",
+      "role": "SUPERSEDED UI-first plan; retained for history and its unresolved rows",
+      "status": "SUPERSEDED_20261019",
       "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER.md",
       "evidence": [
         "docs/current/ui-priority-20261009/CONVERSATION-DECISIONS.md"
+      ]
+    },
+    {
+      "id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "path": "taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md",
+      "role": "single CURRENT authority-convergence plan: positioning, roadmap, capability map, freeze and minimal-loop baseline; product implementation not authorized",
+      "status": "CURRENT_20261019",
+      "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER.md",
+      "evidence": [
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "docs/history/owner-inputs/20261019/WORK-LAB_权威收敛任务包_20261019.zip"
       ]
     }
   ],
@@ -330,14 +346,20 @@
   ],
   "currentSourceInputs": [
     {
+      "path": "docs/history/owner-inputs/20261019/WORK-LAB_权威收敛任务包_20261019.zip",
+      "sha256": "36a2614dff217c1f9ad96838ba0304ac3d734e23ad9ebb3e86bb00e2114be2a0",
+      "id": "WL-REC-0105",
+      "role": "owner authority-convergence package; source document only, no execution authority"
+    },
+    {
       "path": "docs/history/owner-inputs/20261009/WORK-LAB_UI前端更新任务包_20261009.zip",
       "sha256": "fe5afa5328c7530723f492a6188ea19dfa6fb2269b2400b77174c1a42f72fd45",
-      "role": "owner input not implementation evidence"
+      "role": "owner input not implementation evidence; UI tasks frozen 2026-10-19"
     },
     {
       "path": "docs/history/owner-inputs/20261009/WORK-LAB_本对话最终任务包_20261009.zip",
       "sha256": "3740f98aadfce5e13a046f09773bbad362f0d3bceb32d65a0951065dd21237f7",
-      "role": "owner input not implementation evidence"
+      "role": "owner input not implementation evidence; UI tasks frozen 2026-10-19"
     }
   ],
   "legacyTaskFreeze": {
@@ -345,5 +367,13 @@
     "archive": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json",
     "reconciliation": "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
     "noNewExecutionGrant": true
+  },
+  "currentFreeze": {
+    "date": "2026-10-19",
+    "source": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+    "scope": "all tasks except WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019, including all WUI rows and prior UI/blueprint/Atlas/ORCA plans",
+    "state": "FROZEN_NO_DISPATCH",
+    "statusPreservation": "existing task statuses and evidence stay as recorded; nothing is closed by this freeze",
+    "unfreeze": "roadmap gate plus a new explicit user Task Grant; see docs/current/authority-convergence-20261019/ROADMAP.md"
   }
 }

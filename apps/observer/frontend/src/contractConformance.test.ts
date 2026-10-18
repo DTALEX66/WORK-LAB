@@ -29,18 +29,25 @@ describe('contractConformance', () => {
     expect(PINNED_REFINEMENT_PATHS.length).toBeGreaterThanOrEqual(8)
     expect(new Set(PINNED_REFINEMENT_PATHS).size).toBe(PINNED_REFINEMENT_PATHS.length)
     const keys = Object.keys(snap as unknown as Record<string, unknown>)
+    // WUI-15 pins the optional sections too, and a bare fixture omits them by design. They are admitted
+    // from the declared key set, which is typed `keyof SnapshotV3`, so a rename fails the compile.
+    const declaredOptional: (keyof SnapshotV3)[] = ['software', 'taskRecords', 'adapterCapabilities',
+                                                   'artifactHandles', 'artifactHandlesSummary',
+                                                   'collectors', 'operationProgress', 'isolatedTrials']
     for (const path of PINNED_REFINEMENT_PATHS) {
-      expect(keys, `pinned path ${path} is not on the projection`).toContain(path)
+      const present = keys.includes(path) || (declaredOptional as string[]).includes(path)
+      expect(present, `pinned path ${path} is not on the projection`).toBe(true)
     }
   })
 
   it('lists the generated collapses as distinct, well-formed paths whose leaves exist', () => {
     // The floor tracks the generator, not a frozen number: WUI-21 (2026-10-11) added the isolated-trial
-    // sections, whose `isolation` object is free-form in the contract and so one more measured collapse.
-    // What must hold is the one-for-one equality with the generated block, and that is asserted in BOTH
-    // directions by the Python gate (`tests/workflow-assistance/test_generated_contract_types_project_the_schema.py`),
-    // which reads the generated text itself. Pinning an exact count here would only make the honest growth red.
-    expect(GENERATED_COLLAPSED_PATHS.length).toBeGreaterThanOrEqual(8)
+    // sections, whose `isolation` object is free-form in the contract and so one more measured collapse;
+    // WUI-15 (2026-10-18) removed two because the schema now names both `ci` levels. What must hold is the
+    // one-for-one equality with the generated block, and that is asserted in BOTH directions by the Python
+    // gate (`tests/workflow-assistance/test_generated_contract_types_project_the_schema.py`), which reads
+    // the generated text itself. Pinning an exact count here would only make the honest growth red.
+    expect(GENERATED_COLLAPSED_PATHS.length).toBeGreaterThanOrEqual(6)
     expect(new Set(GENERATED_COLLAPSED_PATHS).size).toBe(GENERATED_COLLAPSED_PATHS.length)
     for (const path of GENERATED_COLLAPSED_PATHS) {
       expect(path).toMatch(PATH_SHAPE)
@@ -64,15 +71,18 @@ describe('contractConformance', () => {
   it('hands a real fixture value to the generated contract’s own field types', () => {
     // These are assignments, not casts: if the front model drifts away from the generated projection the
     // compile fails here as well, and the fixture is the producer-shaped object the app renders.
+    const whole: WorkflowSnapshotV3 = snap
     const transport: WorkflowSnapshotV3['transport'] = snap.transport
     const coverage: WorkflowSnapshotV3['coverage'] = snap.coverage
     const executions: WorkflowSnapshotV3['executions'] = snap.executions
     const tokenSummary: WorkflowSnapshotV3['tokenSummary'] = snap.tokenSummary
-    // The project ROW cannot be handed over whole: it contains two collapsed paths
-    // (`projects[].repositories`, `projects[].ci`), and an interface is not assignable to an index
-    // signature in TypeScript. What is checked here is the generator-named part of the row.
+    // WUI-15: the row is handed over whole. It could not be before: `ci` collapsed to `unknown[]` and an
+    // interface is not assignable to an index signature, so only the generator-named part was checked.
+    const row: WorkflowSnapshotV3['projects'][number] = snap.projects[0]
     const rowIdentifiers: WorkflowSnapshotV3['projects'][number]['executionIds'] = snap.projects[0].executionIds
     const rowGit: WorkflowSnapshotV3['projects'][number]['git'] = snap.projects[0].git
+    expect(whole.projects.length).toBe(snap.projects.length)
+    expect(row.ci.length).toBe(snap.projects[0].ci.length)
     expect(transport.transportState).toBe(snap.transport.transportState)
     expect(rowIdentifiers).toEqual(snap.projects[0].executionIds)
     expect(rowGit.matchState).toBe(snap.projects[0].git.matchState)
@@ -82,11 +92,10 @@ describe('contractConformance', () => {
   })
 
   it('keeps the optional sections optional in the consumed shape', () => {
-    // The renderer distinguishes ABSENT from empty for these four, so the GENERATED contract has to say the
-    // same thing the front model does: the key may be missing. Asserted at type level, because "optional" is
-    // a property of the type, not of one fixture -- and a whole-object cast here would have to be a lie: the
-    // row model contains collapsed paths, so `SnapshotV3` is not assignable to `WorkflowSnapshotV3` as a
-    // unit (which is precisely what GENERATED_COLLAPSED_PATHS records).
+    // The renderer distinguishes ABSENT from empty for these, so the GENERATED contract has to say the
+    // same thing the front model does: the key may be missing. Asserted at type level, because "optional"
+    // is a property of the type, not of one fixture. (WUI-15: the whole object is assignable as of the ci
+    // collapse fix, but "optional" is still not something one bare fixture can demonstrate.)
     type Expect<T extends true> = T
     type IsOptional<T, K extends keyof T> = {} extends Pick<T, K> ? true : false
     type Generated = WorkflowSnapshotV3

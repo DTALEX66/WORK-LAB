@@ -113,4 +113,34 @@ describe('lane state matrix', () => {
       expect(lying, `${entry.id} claimed liveness against an OFFLINE snapshot`).toEqual([])
     }
   })
+
+  it('the collector delivery card keeps gap, empty and measured states apart in its lane', () => {
+    const LANE = 'privacy'
+
+    const gap = renderLane(LANE, mkSnap({}))
+    expect(gap.container.querySelector('[data-collector-gap="true"]')?.textContent).toContain('来源缺口')
+    expect(gap.container.querySelectorAll('[data-collector-row]')).toHaveLength(0)
+    cleanup()
+
+    const empty = renderLane(LANE, mkSnap({ collectors: [] } as unknown as Partial<SnapshotV3>))
+    expect(empty.container.querySelector('[data-collector-unregistered="true"]')?.textContent)
+      .toContain('没有登记任何采集器')
+    expect(empty.container.querySelector('[data-collector-gap]')).toBeNull()
+    expect(empty.container.querySelectorAll('[data-collector-row]')).toHaveLength(0)
+    cleanup()
+
+    const measured = renderLane(LANE, mkSnap({
+      collectors: [{
+        collector: 'sidecar', totalRuns: 4,
+        lastRunAt: '2026-10-19T00:00:00Z', lastSuccessAt: '2026-10-19T00:00:00Z',
+        consecutiveFailures: 0, circuitOpen: false, droppedEvents: 0,
+        refusedRows: 2, deliveredRows: 7, lastRefusalReason: 'schema mismatch', fresh: true,
+      }],
+    } as unknown as Partial<SnapshotV3>))
+    const row = measured.container.querySelector('[data-collector-row="sidecar"]')
+    expect(row?.textContent).toContain('交出 7')
+    expect(row?.textContent).toContain('拒绝 2')
+    expect(row?.textContent).not.toMatch(/\d+(\.\d+)?\s*%/)
+    expect(measured.container.querySelector('[data-collector-fresh-but-refusing="1"]')).not.toBeNull()
+  })
 })

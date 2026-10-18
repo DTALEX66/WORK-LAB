@@ -1,6 +1,6 @@
 # WORK-LAB · UI 最终落地参考清单（L10 / L10b Execution Reference Manifest）
 <!-- ROOT-DISPOSITION:BEGIN NON-NORMATIVE-HISTORICAL -->
-> **NON-NORMATIVE-HISTORICAL / 历史记录，不派工**（2026-10-10 登记，WUI-17）：本文件不在权威链里，正文逐字保留未改（门会把它与提交字节逐字节比对）。现行权威顺序：`WORK-LAB-AUTHORITY.md` → `.project/governance/project-authority-index.json` → `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md` → `taskpacks/current/OPEN-TASK-REGISTER.md`；根目录逐份处置见 `docs/current/DOCUMENT-CENSUS.md` §4 与 `.project/governance/root-document-dispositions.json`。
+> **NON-NORMATIVE-HISTORICAL / 历史记录，不派工**（2026-10-10 登记，WUI-17）：本文件不在权威链里，正文逐字保留未改（门会把它与提交字节逐字节比对）。现行权威顺序：`WORK-LAB-AUTHORITY.md` → `.project/governance/project-authority-index.json` → `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md` → `taskpacks/current/OPEN-TASK-REGISTER.md`（2026-10-19 更新；旧 UI 包已 SUPERSEDED_20261019 / FROZEN，不再是 CURRENT）；根目录逐份处置见 `docs/current/DOCUMENT-CENSUS.md` §4 与 `.project/governance/root-document-dispositions.json`。
 <!-- ROOT-DISPOSITION:END -->
 
 > 本清单是 L10 / L10b UI 工程落地执行（2026-09-27）的共享视觉事实源。所有页面/组件/

@@ -2608,6 +2608,34 @@
       "contentId": "sha256:b8bd438e74b91cb0193ffda03c13c1191a4dd54bb1614a92ada012519a1fda72",
       "deduplication": "CANONICAL_ORIGINAL",
       "intakeNote": "2026-10-11 independent cloud audit of the three projects at exact SHAs (WORK main cd4daa83, UI branch 71b1ae86, registered line 50dab560). Four WORK findings W01-W04; judged row by row in docs/current/ui-priority-20261009/CLOUD-AUDIT-INTAKE-2026-10-11.md. The package contains probes with hard-coded test ports and synthetic fixtures: source documents only, no execution authority, nothing from it was run."
+    },
+    {
+      "id": "WL-REC-0105",
+      "sourceRelativePath": "WORK-LAB_9DE58194E69BB8E88488E88395E58C95E4BB8AE585.zip",
+      "sourceMember": null,
+      "archivePath": "docs/history/owner-inputs/20261019/WORK-LAB_权威收敛任务包_20261019.zip",
+      "archiveMemberChain": [],
+      "bytes": 9459,
+      "sha256": "36a2614dff217c1f9ad96838ba0304ac3d734e23ad9ebb3e86bb00e2114be2a0",
+      "ownership": "WORK_LAB",
+      "classificationBasis": "Owner-supplied 2026-10-19 authority-convergence task package; defines WORK-LAB positioning, current scope, roadmap and acceptance, and supersedes the UI-priority current range",
+      "category": "TASK_HANDOFF",
+      "status": "CURRENT_INPUT_NOT_IMPLEMENTATION",
+      "keywords": [
+        "WORK-LAB_9DE58194E69BB8E88488E88395E58C95E4BB8AE585.zip",
+        "WORK-LAB_权威收敛任务包_20261019.zip",
+        "authority convergence",
+        "权威收敛",
+        "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+        "ROADMAP",
+        "ACCEPTANCE"
+      ],
+      "contentIdentity": "EXACT_BYTES",
+      "suppliedProgramsExecuted": false,
+      "storageKind": "FILE",
+      "contentId": "sha256:36a2614dff217c1f9ad96838ba0304ac3d734e23ad9ebb3e86bb00e2114be2a0",
+      "deduplication": "CANONICAL_ORIGINAL",
+      "intakeNote": "2026-10-19 owner decision: all other tasks frozen; this package is the current authority and closed-loop goal. Package documents carry no extra execution grant; no program in it was run. Archive bytes are identical to the supplied ZIP."
     }
   ],
   "deduplicationReport": "docs/history/owner-inputs/RECORD-DEDUPLICATION.json",

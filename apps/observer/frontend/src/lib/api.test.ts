@@ -15,7 +15,7 @@ function mkSnap(over: Partial<SnapshotV3> = {}): SnapshotV3 {
   return {
     schemaVersion: 'workflow/snapshot/v3',
     revision: 0,
-    generatedAt: null,
+    generatedAt: '2026-10-08T00:00:00Z',
     sourceWatermark: null,
     transport: {
       transportState: 'UNKNOWN', freshnessState: 'UNKNOWN',

@@ -9,22 +9,22 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 274,
+    "total": 276,
     "by_classification": {
-      "entrypoint": 7,
-      "contract_drift": 84,
-      "test_behavior_alignment": 37,
-      "working_directory_recovery": 2,
-      "evidence_state": 54,
+      "boundary_leak": 2,
       "ci_configuration": 22,
-      "feature_gap": 13,
-      "config_downgrade": 3,
-      "dead_entry": 4,
-      "path_boundary": 15,
       "ci_tooling": 22,
-      "sql_schema": 1,
+      "config_downgrade": 3,
+      "contract_drift": 86,
+      "dead_entry": 4,
+      "entrypoint": 7,
+      "evidence_state": 54,
+      "feature_gap": 13,
+      "path_boundary": 15,
       "regression_contract": 8,
-      "boundary_leak": 2
+      "sql_schema": 1,
+      "test_behavior_alignment": 37,
+      "working_directory_recovery": 2
     },
     "repeat_prevention_required": true,
     "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer); 2026-09-30: ERR-093 (asset-inventory boundary spill), ERR-094 (audit-package digest basis: CRLF vs repository bytes), ERR-095 (codex global overlay/skill targets absent in live CODEX_HOME while the registry claims READBACK_VERIFIED), ERR-096 (Hermes managed skill live drift + stale skill-provenance records); ERR-092 is reserved by the unmerged branch g15-dsh-codex-registry-reconcile-20260930) 2026-10-06: ERR-101 (U19 GDI capture rectangle exceeded the measured client area by 25% and photographed the desktop, forging 375-722 colours on a blank window); ERR-102 (release binary paints only #08090a while the identical dist renders fully in Chrome: 3387 colours, 0.00% near-black, versus 41 colours, 100% near-black; root cause still open)."
@@ -8293,6 +8293,76 @@
         "fixedCommit": null,
         "note": "fixed in the uncommitted working set; commit is a separate owner authorization"
       }
+    },
+    {
+      "error_id": "ERR-276",
+      "date": "2026-10-13",
+      "task_id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "DSH data-root layer (DSH_HOME user env var) vs config/client-evidence.json evidence.dsh.config_path; five-dimension baseline D1/D2/D3",
+      "command": "python -c \"check user-scope DSH_HOME is absent, count session files under both DSH data roots, and resolve every DSH shortcut TargetPath with Test-Path\"",
+      "exit_code": 1,
+      "observed_error": "Asking for an official-standard DSH+Hermes update exposed an undeclared data-root split: the live data root is C:\\Users\\ALEX\\.dsh (15 session.v4.jsonl.zstd files, 7,872 files, newest write 2026-10-13 19:23, carries .credentials.yaml) while HKCU\\Environment DSH_HOME still pinned D:\\All projects\\DSH\\.dsh (13 session files, newest session write 2026-10-03, newest non-session file 2026-10-07). config/client-evidence.json evidence.dsh.config_path said UNKNOWN and its note asserted the env var, legacy data root and shortcut were untouched, so the declared surface claimed ignorance of a fact that decided which sessions the user would see at the next logon. A second, dead entry also sat beside the working one in the Start Menu: DSH Desktop.lnk -> D:\\All projects\\DSH\\DSH Desktop.exe, Test-Path False.",
+      "root_cause": "ERR-088's trap is bidirectional and was only closed in one direction on 2026-09-24. Then, DSH_HOME pointed at D: while the C: root was the empty fallback, so the fix was to keep DSH_HOME=D: and archive the C: skeleton. Since the official 0.2.0-rc.2 NSIS install (2026-10-01) the machine moved to the vendor default %USERPROFILE%\\.dsh - and the live sessions were written there (owning process resolves the root with no DSH_HOME in its environment). The registry layer was never re-pointed, so any process that DOES inherit DSH_HOME (a fresh logon session after the frozen-variable window passes) resolves the D: root instead, i.e. the same layer in the opposite direction: the declared root and the live root diverged and nothing compared them. A separate dead-entry defect sat on top: the superseded community build's Start-Menu shortcut survived the build's deletion.",
+      "fix": "Compared both roots by activity instead of by assertion (sessions + mtimes + credential file), took C:\\Users\\ALEX\\.dsh as live, and cleared the stale user-scope value with [Environment]::SetEnvironmentVariable('DSH_HOME',$null,'User') - re-read HKCU:\\Environment shows DSH_HOME absent, so a fresh logon now falls back to the official default %USERPROFILE%\\.dsh, which is exactly the live root. Neither root's data was moved or merged: C: keeps 14 sessions, D: keeps 13 as the untouched archive. Removed the dead Start-Menu shortcut (DSH Desktop.lnk, TargetPath D:\\All projects\\DSH\\DSH Desktop.exe, Test-Path False) and the spent desktop installer; verified DeepSeek Harness.lnk still resolves to the official exe. The official update channel was checked before any upgrade: https://download.deepseek.com/dsh-desk/feeds/win-x64/nightly.yml advertises 0.2.0-rc.2 with size 289313640 and sha512 raIlxMQd... , matching the installed build, so no upgrade was applied.",
+      "regression_test": "scripts/ci/verify_error_ledger.py must read back ERR-276; the live state it records: user-scope DSH_HOME absent; C:\\Users\\ALEX\\.dsh\\sessions holding 15 session.v4.jsonl.zstd and advancing; D:\\All projects\\DSH\\.dsh holding 13 session files and static; no DSH .lnk anywhere with a non-resolving TargetPath; and an official build whose version equals the nightly.yml feed head",
+      "regressionCommand": "python scripts/ci/verify_error_ledger.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Before declaring a managed client up to date, the declared state and the live state must be compared by measurement, never by assertion: read both candidate data roots' session counts and mtimes and require exactly one to be advancing. Any DSH env-var change must be re-read from the live session's environment block AND from a fresh logon expectation, and the file-level record (config/client-evidence.json evidence.dsh) must be updated in the same change - it must never keep claiming 'not modified' after a modification. Shortcut health must be verified by WScript.Shell TargetPath plus Test-Path for every DSH entry, and a dead entry removed, not left beside the resolving one.",
+      "remaining_boundary": "The live DSH process still holds the C: root from the session it was launched in; the corrected behaviour is only observable at the next logon, which automation must not schedule. Machine-level HKLM DSH_HOME was never created, so no UAC escalation is pending. The D: archive (7,826 files, 13 session files) is intentionally retained and is now unused by any process; its disposition is a separate owner decision. Unrelated and NOT addressed here: the five-dimension baseline D2 asks for a desktop entry, and this machine has no Desktop shortcut for the official DSH build (Start Menu only) - measured, recorded, left to the owner.",
+      "status_before": "PARTIAL",
+      "status_after": "PASS",
+      "intakeSource": "2026-10-13 用户指令「帮我更新DSH 和 HERMES 按照官方标准」的前置核对",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "DSH data-root resolution + entry uniqueness (five-dimension runtime baseline D1/D2/D3)",
+        "regressionCommand": "fresh-logon readback: DSH_HOME absent from the user scope, C:\\Users\\ALEX\\.dsh is the advancing root, D: archive static",
+        "currentApplicability": "VERIFIED_LIVE_20261013"
+      },
+      "related": [
+        "ERR-088 (same layer, opposite direction: DSH_HOME frozen out of the live session)",
+        "ERR-087 (sibling layer: .lnk Target/Icon reset by NSIS silent installs)"
+      ]
+    },
+    {
+      "error_id": "ERR-277",
+      "date": "2026-10-13",
+      "task_id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "hermes update (git transport selection) -> bootstrap-cache/install-main.ps1 repository stage",
+      "command": "git -C %LOCALAPPDATA%/hermes/hermes-agent fetch origin --filter=blob:none (through the local proxy) followed by powershell -File install-main.ps1 -IncludeDesktop",
+      "exit_code": 1,
+      "observed_error": "The requested official Hermes update stalled twice at git fetch: through 127.0.0.1:7890 git moved 3.3 KB/s on a 127 MB partial clone (curl through the same proxy pulled 2.6 MB/s from the same host), and ~/.gitconfig http.lowSpeedTime=999999 made the stall invisible - after 12 s the in-flight tmp_pack_* was 0 bytes and index-pack had 0.00 s CPU growth. While working around it, a session scoped GIT_CONFIG_KEY_1/KEY_2 was exported without a matching GIT_CONFIG_VALUE_2, so every git child died with 'error: missing config value GIT_CONFIG_VALUE_2 / fatal: unable to parse command-line config'. install-main.ps1 then read the checkout as commit-less and MOVED it to hermes-agent.broken-20261013-193500; the installer could not re-clone for the same reason and exited 1, leaving no hermes-agent tree, no node_modules, no packaged desktop app, and Desktop\\Hermes.lnk broken.",
+      "root_cause": "Two independent mistakes, one environmental and one mine. (1) Environmental: for this repo the transport, not the network, is the bottleneck - the vendored partial clone needs one long-lived POST to git-upload-pack, and the proxy throttles that stream while it happily serves short requests at full speed; at the same time the global http.lowSpeedLimit=0 / lowSpeedTime=999999 turned 'slow' into 'hangs forever', so no failure ever surfaced. (2) Mine: git's command-line config protocol requires GIT_CONFIG_KEY_<n> and GIT_CONFIG_VALUE_<n> to be balanced - exporting a key for a slot whose value was optional made git fail closed on EVERY invocation, including the installer's own git, and the installer's correct response to a commit-less checkout (move it aside rather than overwrite it) then removed the live tree. The environment mistake is what made the second mistake destructive.",
+      "fix": "Recovered in place instead of re-cloning: the moved directory was intact (163 MB pack, complete refs/remotes/origin/*, refs/stash holding the run's autostash 4ad8a8fc), so it was renamed back, the transport was pinned in the REPO config (remote.origin.url = the mirror that measured 654 KB/s, http.proxy = 127.0.0.1:7890, http.lowSpeedTime = 120) rather than in env vars, main was fetched and fast-forwarded to cba45e8a66d32fbeba0735257ac114fda3f5e230 (2026-10-13), the stashed autostash was popped (only a redundant working-tree change remained), and the official installer was re-run with -IncludeDesktop to rebuild the dependency environment and the packaged app. Final readback: 'Hermes Agent v0.21.7+472.gcba45e8 (2026.9.24) - stable', install-stamp dirty=false at commit cba45e8a6, apps/desktop/release/win-unpacked/Hermes.exe 204 MB rebuilt 19:44, node_modules and apps/desktop/node_modules present, and both Desktop and Start-Menu Hermes.lnk resolving end-to-end. remote.origin.url was restored to the canonical https://github.com/NousResearch/hermes-agent.git while the repo-local http.proxy stayed, so the next fetch is both canonical and proxied.",
+      "regression_test": "scripts/ci/verify_error_ledger.py must read back ERR-277; and a live readback must still show: %LOCALAPPDATA%/hermes/hermes-agent exists as a git checkout with a commit, hermes --version resolving from install-stamp.json, the packaged Hermes.exe present with both shortcuts Test-Path True, and no GIT_CONFIG_KEY_* exported without a matching GIT_CONFIG_VALUE_*",
+      "regressionCommand": "python scripts/ci/verify_error_ledger.py",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "Before injecting command-line config into a process tree, the KEY_n/VALUE_n pairs must be balanced and the result must be proven with one cheap readback (git status) BEFORE the long operation starts - an unbalanced pair makes git fail closed on every child, including installers that will then move a checkout aside. For this repo the transport must be pinned in the repository config (http.proxy plus a lowSpeedTime that fails instead of waiting) rather than in session env, because the installer and the updater spawn their own git. Any mirror used as a transport must be reverted to the canonical remote before the run ends, and the run must end with a version plus shortcut readback, never with 'the fetch looked slow'. A moved or renamed checkout must never be treated as lost: .git plus refs/stash is the recovery surface, and the installer's own rename is evidence, not damage.",
+      "remaining_boundary": "stash@{0} (hermes-update-autostash-20261013-112627) is deliberately KEPT as a safety copy of the pre-recovery working tree even though its content is now redundant; dropping it is the owner's call. The mirror (gh-proxy.com) remains only as a recorded measurement, not as configuration: the repo remote is canonical again and the only persisted deviation is the repo-local http.proxy=http://127.0.0.1:7890 plus http.lowSpeedTime=120. The interactive 'hermes setup' wizard still needs a real console and was not completed here.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "2026-10-13 user instruction to update DSH and Hermes to official standard; self-inflicted during execution and recovered in the same round",
+      "regressionTestVerifiability": "PATH_GONE",
+      "regressionTestVerifiabilityReason": "no tracked file carries this basename",
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": null,
+        "verifiedCommit": null,
+        "affectedCapability": "Hermes official update + five-dimension runtime baseline D1/D2 (single entry, desktop entry)",
+        "regressionCommand": "hermes --version; Test-Path apps/desktop/release/win-unpacked/Hermes.exe; WScript.Shell TargetPath + Test-Path on both Hermes.lnk",
+        "currentApplicability": "VERIFIED_LIVE_20261013"
+      },
+      "related": [
+        "ERR-088 (same layer as the DSH half of this round, opposite direction)",
+        "ERR-087 (sibling layer: .lnk Target/Icon reset by NSIS silent installs)"
+      ]
     }
   ],
   "wlrReconciled": true,

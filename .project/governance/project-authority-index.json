@@ -1,11 +1,22 @@
 {
   "schemaVersion": "work-lab/project-authority-index/v1",
-  "authorityId": "WORK-LAB-AUTHORITY-20261009-UI-PRIORITY",
+  "authorityId": "WORK-LAB-AUTHORITY-20261019-CONVERGENCE",
   "repository": "DTALEX66/WORK-LAB",
   "baselineAtCreation": {
     "commit": "803268da9dc356fe63f26b3b5405f724bc06b5b9",
     "tree": "606db598abd3724baf6a45ffcfb319f9b0a4d550",
     "purpose": "immutable pre-authority-freeze retrieval anchor"
+  },
+  "convergenceBaseline": {
+    "date": "2026-10-19",
+    "origin_main": "f6077d18cfc76d588d9315ec0ac82769c3009d9a",
+    "origin_main_tree": "6dcb2094ffa5fdb693e959de5aaa870eea8b1f78",
+    "local_branch": "docs/handoff-20261018-qoder",
+    "local_head": "0369d349d46b75c7048b884331bb40a0f42d4e34",
+    "local_head_tree": "d2a0222992f0171e0fc999dd6bb032ccbd40ed1f",
+    "ahead_of_origin_main": 1,
+    "worktree": "dirty; 59 porcelain entries recorded before the authority-convergence edits; protected parallel-writer files untouched",
+    "recorded_by": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019"
   },
   "currentMainMustBeResolvedDynamically": true,
   "topHumanAuthority": "WORK-LAB-AUTHORITY.md",
@@ -15,7 +26,8 @@
     "config": ".project/governance/config-authority-index.json",
     "fieldOwnership": "config/config-ownership.json"
   },
-  "currentTaskpack": "taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md",
+  "currentTaskpack": "taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md",
+  "currentRoadmap": "docs/current/authority-convergence-20261019/ROADMAP.md",
   "currentOpenTaskRegister": "taskpacks/current/OPEN-TASK-REGISTER.md",
   "auditBootstrap": [
     "resolve current origin/main commit and tree",
@@ -75,12 +87,22 @@
     "90-archive"
   ],
   "currentDecision": {
-    "date": "2026-10-09",
-    "source": "docs/current/ui-priority-20261009/CONVERSATION-DECISIONS.md",
-    "uiFirst": true,
-    "mobile": "OUT_OF_SCOPE_NO_DEFERRED_TASK",
+    "date": "2026-10-19",
+    "source": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+    "positioning": "client-neutral workflow management, governance, runtime monitoring and problem closed-loop system for a personal AI environment",
+    "currentScope": "authority convergence plus one real minimal problem loop as the first current work item",
+    "otherTasks": "FROZEN_20261019_NO_DISPATCH",
+    "futureCapabilities": "FROZEN_OR_DEFERRED_PER_ROADMAP",
+    "uiPriority": "SUPERSEDED_20261019",
+    "mobile": "OUT_OF_SCOPE_NO_NEW_TASK",
     "legacyDisposition": "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
     "implementation": "NOT_EXECUTED"
+  },
+  "currentSourceInput": {
+    "id": "WL-REC-0105",
+    "path": "docs/history/owner-inputs/20261019/WORK-LAB_权威收敛任务包_20261019.zip",
+    "sha256": "36a2614dff217c1f9ad96838ba0304ac3d734e23ad9ebb3e86bb00e2114be2a0",
+    "role": "owner authority-convergence package; source document only, no execution authority"
   },
   "ownerMaterialCatalog": {
     "index": "docs/history/owner-inputs/INDEX.md",

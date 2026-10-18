@@ -20,7 +20,7 @@
 ## 0. 结论（先说不能交付的部分）
 
 **当前状态是「可评审工作集 + 明确缺口」，不是「成熟可部署」。**
-生产阻断项未过：桌面 200% 显示缩放派生检查失败；原生键盘门从未产出判定；六条云端审计缺陷本轮已修但未提交、未进 CI；
+生产阻断项未过（**2026-10-12 时点**）：桌面 200% 显示缩放派生检查失败（**2026-10-19 已复测转 PASS，见 §4 该行**）；原生键盘门从未产出判定；六条云端审计缺陷本轮已修但未提交、未进 CI；
 隔离试用的写入面（发起/取消）未获授权，三页因此展示不出一次真实端到端试用；
 本地全量门在本沙箱内 `GATE_EXIT=1`，归因见 §2.1（其中 4 组是本轮引入并已修，剩余为宿主删除守卫与符号链接权限）。
 
@@ -95,11 +95,11 @@
 
 | 项 | 状态 | 说明 |
 |---|---|---|
-| Rust/Tauri 构建 | 本机无证据 | CI 的 observer 作业在 `33051db7` 跑过 `Build the real Tauri desktop binary (MSVC)` 与 `U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)`；**那是 CI 的读数，本机没有 release 二进制** |
+| Rust/Tauri 构建 | 本机工具链可用；observer release 二进制仍未重制 | **2026-10-18 更正**：本机 MSVC Rust 链实测可用——`rustc 1.97.1`（host `x86_64-pc-windows-msvc`）+ MSVC `14.44.35207` + Windows SDK `10.0.28000.0`；`apps/token-monitor/src-tauri` 的 `cargo check --locked` exit 0/43.31s、`cargo build --release --locked --features custom-protocol` exit 0/1m28s，产出 `D:/All projects/WORK-LAB/.project-local/runs/token-hud/cargo-target/release/hermes-token-monitor.exe`（8,939,008 B，sha256 `bcb86b486fa2472af1ad72e6cdef40658c6ae101a2e9c7afe07bbbc22b312b04`，PE32+，仅 `VCRUNTIME140`/系统 DLL，无 libgcc/libwinpthread）。旧句“本机无证据”当时指 observer 没有 release 二进制；observer 的该二进制本轮仍未重制，故本行不关闭；旧“本机无 Rust 工具链”是只探测 `~/.rustup`/`~/.cargo` 的路径错误，已作废 |
 | Windows 安装/卸载/升级 | **未执行** | 本轮未做，也不由本仓自行安装到用户机器 |
 | 用户备份/恢复演练 | **未执行** | 依赖上一项 |
 | 原生键盘门 | **未执行** | `KEYBOARD_FOCUS_GATE_NOT_RUN`，证据面自报 |
-| 200% 显示缩放 | **未通过** | `DISPLAY_SCALING_GATE_FAIL`：HUD 440×780 logical、`resizable=false` → 需 880×1560 physical，实测工作区 2560×1392，「弹窗不裁切」在 200% 不成立。修法（HUD 尺寸 or 允许滚动/缩放）需 owner 定夺 |
+| 200% 显示缩放 | **部分通过（2026-10-19 复测：派生几何 PASS；原生 DPI 感知仍未读回）** | **2026-10-19 更正**：panel 声明已由 440×780 改为 440×680（`apps/observer/src-tauri/tauri.conf.json:32-35`），200% 物理需求 880×1360，对 2560×1392 工作区余 32px；在重建的 bundle（digest `16773551f07bdc41…`）上重跑 `scripts/audit/display_scaling_via_cdp.py`，四档 geometry 全 PASS 且 `failures=[]`，收据 `.project-local/runs/hud-preview/display-scaling-20261019.json`；同一 bundle 的封印为 `EVIDENCE_SEAL_PASS BOUND=21 UNBOUND=4 STALE=3`。**原文（2026-10-12 历史判定）**：`DISPLAY_SCALING_GATE_FAIL`：HUD 440×780 logical、`resizable=false` → 需 880×1560 physical，实测工作区 2560×1392，「弹窗不裁切」在 200% 不成立；该句描述的是声明仍为 780 时的状态，保留作历史。仍未测：Per-Monitor v2 的位图路径需 release `app.exe` 读回 |
 | 移动端 | 按决定不做 | 用户 2026-10-07 已删除该范围，390/320/768 三档停在同一权威下 |
 
 ## 5. 接受层
@@ -124,7 +124,7 @@
 
 ## 7. 遗留清单（按可执行顺序）
 
-1. 桌面 200% 显示缩放：HUD 尺寸或允许滚动/缩放 —— **owner 决定**。
+1. ~~桌面 200% 显示缩放：HUD 尺寸或允许滚动/缩放 —— **owner 决定**。~~ **2026-10-13 已决（panel 780→680），2026-10-19 复测**：四档派生几何与 geometry 全 PASS（`EVIDENCE_SEAL_PASS`）；原生位图路径仍需 release `app.exe` 读回。
 2. 授权 `config.apply` / `readback` / `rollback` 的目标面 —— **owner 决定**；本仓不自行开可写面（等于自授权）。
 3. 隔离试用写入面（WUI-10 约束③）：恢复点只存本次触及范围前态 + 发布摘要，摘要匹配才自动恢复；现成机制在
    `integrations/executors/hermes/managed_asset_baseline.py` 与 `services/policy/single_field_apply_loop.py`。
@@ -148,3 +148,55 @@
 - **插行使 CSV 的 `path:line` 指针腐烂**：本轮 5 个指针失配，必须用守门谓词自身（`pointer_findings` +
   `tracked_file_bodies`）列全，再按引用码文本重定位，最后复跑引用门确认。
 - **新增 registry lane 必须同一改动里进导航分组**，否则 IA 不变式门立刻红（`navInvariantViolations()`）。
+
+---
+
+## 9. 2026-10-19 终验复量（当前工作集）
+
+本节只记录本轮重新读到的事实；§0–§8 的 2026-10-12 判定保留为历史。
+
+### 9.1 判定基线
+
+| 项 | 值 | 复算方式 |
+|---|---|---|
+| HEAD | `0369d349d46b75c7048b884331bb40a0f42d4e34` | `git rev-parse HEAD` |
+| `origin/main` | `f6077d18cfc76d588d9315ec0ac82769c3009d9a` | `git rev-parse origin/main` |
+| 本线领先 main | 1 个提交 | `git rev-list --count origin/main..HEAD` |
+| 工作集 | 58 项未提交（10 新增入暂存 / 14 修改入暂存 / 22 仅修改 / 2 暂存后又修改 / 2 新增后又修改 / 8 未跟踪） | `git status --porcelain` |
+| 源码与构建同版 | 前端最后一次源写入 01:33（状态矩阵第 5 例），`vite build` 01:34 退出 0；`find … -newer dist/index.html` 无结果；测试文件不进入打包，重建前后 bundle 摘要同为 `8b107a47…` | 时间序 + 构建日志 |
+| bundle 身份 | **`8b107a47ee4eb753ee3bf53a44d2260e0cc5ac9a9bbce907e65bbfc1d9269785`** | `scripts/audit/bundle_provenance.py:describe()` |
+
+构建与测试日志：`.project-local/runs/wui19-final/tsc.log`、`.project-local/runs/wui19-final/vitest.log`、`.project-local/runs/wui19-final/vite-build.log`。
+
+### 9.2 分层结果（本轮实测）
+
+| 层 | 结果 | 证据 |
+|---|---|---|
+| 实现 | 工作集可构建（`tsc -b` + `vite build` 均退出 0） | 9.1 的构建日志与 bundle 身份 |
+| 测试 | `tsc -p tsconfig.json --noEmit` 退出 0；`vitest run` **67 文件 / 791 用例全绿**；WUI-20 核心 `nf08_d_result_return` **20/20**；WUI-10 约束③恢复路径 **4/4** | `vitest.log`、`tsc.log`；Python 用例本轮复跑 |
+| 真实来源 | 10 步重封 **10/10 按预期结算**；12/12 截图；封印 **BOUND=21 / UNBOUND=6 / STALE=3**（共 30 行），9 张被引用收据全部绑定当前 bundle | `.project-local/artifacts/wui-20261009/evidence-seal.json`、`.project-local/artifacts/wui-20261009/evidence-receipt.json` |
+| 几何 | full 1262×668 **21/21**、compact 504×528 **15/15**、floor 900×600 **22/22** | `.project-local/artifacts/wui-20261009/geometry-freshbundle.json` |
+| 可读性 | 静态 1280 深/浅各 9 项、live 1280 深/浅各 10 项（31 泳道全部到达自身内容；药丸 18/13/4/3；AA 失败 0、低于字号地板 0）、DPI 宽度 2048/1706 四组各 9 项、1440 两组各 9 项——全部 PASS | `legibility-allviews-fresh.json`、`legibility-live-views.json`、`legibility-dpi-widths.json`、`legibility-1440.json` |
+| 显示缩放 | 100/125/150/200% 四档 CSS 视口 2560×1440 / 2048×1152 / 1706×960 / 1280×720，各 21 项 PASS，`failures=[]`；原生 DPI 感知仍 `NOT_MEASURED`（无 release `app.exe` 可读 manifest） | `.project-local/artifacts/wui-20261009/display-scaling.json` |
+| SSE | 推送修订 `[7, 9, 8]`，全部按序落到页面；旧帧拒绝 `true`；`failures=[]`；伪证步按设计 exit=1 且给出两条具名失败 | `sse-revision.json`、`sse-revision-falsify.json` |
+| 桌面安装 | **未执行**：Observer release 二进制本轮未重制，原生键盘门因此 `KEYBOARD_FOCUS_GATE_NOT_RUN`（封印中 3 行为 STALE，不计 PASS）；Windows 安装/卸载/升级与用户备份恢复演练未做 | `evidence-seal.json` 的 ceilings |
+| 接受 | WUI-20 核心独立验收完成（见登记册该行）；真实对端发送未获授权。WUI-10 约束③在隔离临时目录读回（4/4），真实字段仍 `NOT_PASSED_AWAITING_AUTHORIZATION`。WUI-08 四步生产者在真实数据中仍是 `NOT_PROJECTED`（10 张卡、60 个 stage：PROJECTED 20 / NOT_PROJECTED 40） | `.project-local/artifacts/wui-20261009/evidence-receipt.json` 的 `shots[].dom.wui08Chain`；WUI-10 用例 |
+| 发布 | **未执行**：commit/push/PR 需 owner 授权；`config.apply` 未获权；远端 LFS 载荷第三方复证未走通 | §5、§6 的未变项 |
+
+### 9.3 六态矩阵（WUI-19 验收条文逐项）
+
+| 状态 | 本轮读到的事实 | 证据 |
+|---|---|---|
+| 正常 | 真实 sidecar（fresh canonical store、worker disabled）下 12/12 截图 PASS，`bundleStayedPut=true`，12 张图全部绑定当前 bundle | `.project-local/artifacts/wui-20261009/evidence-receipt.json` |
+| 未知 | 无数据时 `TokenPanel` 全 UNKNOWN、无 0；`ProjectPanel` 说注册表为空/UNKNOWN；`CompactHUD` 显示 UNKNOWN 传输；offline 身份合同逐 lane 说明「什么仍是 UNKNOWN、为什么切换不是答案」 | `apps/observer/frontend/src/components/truth.test.tsx`（5 例）、`apps/observer/frontend/src/offlineViewIdentity.contract.test.tsx`（7 例） |
+| 空 | 每个注册泳道在「尚无快照」时不得出现成功药丸或伪造 0（sweep 逐 lane 断言）；live 运行 31/31 泳道到达自身内容而非离线面板 | `apps/observer/frontend/src/laneStateMatrix.sweep.test.tsx`（5 例，含 2026-10-19 新增的采集交付卡三态复用）、`legibility-live-views.json` |
+| 离线 | 离线快照在任何泳道都不得读成 live 投影（sweep 逐 lane 断言）；传输真值单点派生合同 21 例 | `laneStateMatrix.sweep.test.tsx`、`apps/observer/frontend/src/topbarTransportTruth.contract.test.tsx`（21 例）、`apps/observer/frontend/src/laneTransportTruth.sweep.test.tsx`（11 例） |
+| 故障 | SSE 伪证控制按设计失败（读到 `rev10`，期望停留在 `rev9`），证明「拒绝旧帧」的判定不是恒绿；正常仪器 `staleFrameExpectedRefused=true` | `sse-revision.json`、`sse-revision-falsify.json` |
+| 重启与恢复 | 断线不关流、重连带游标、`resync_required` 走重同步（合同 6 例）；本轮实机 SSE 运行未发生重连（`reconnectLastEventIds=[]`，如实记为未触发）；WUI-10 恢复点/摘要匹配/冲突拒绝 4 例 | `apps/observer/frontend/src/lib/sseResumeContract.test.ts`（6 例）、`sse-revision.json`、`tests/workflow-assistance/test_wui10_constraint3_recovery_readback.py`（4 例） |
+| 手机端 | 按用户 2026-10-07 决定不做，不构成本轮缺口 | — |
+
+### 9.4 结论
+
+- 可评审工作集成立：源码→构建→12 屏→几何/可读性/缩放/SSE 的证据链全部绑定 **`8b107a47…`** 这一个 bundle，且 10 步重封无红。
+- **仍不是发布 PASS**：桌面安装/卸载/备份恢复未做，原生键盘门无判定（STALE 不计 PASS），原生 DPI 感知 `NOT_MEASURED`，`config.apply` 与真实对端发送均未获授权，commit/push 未执行。
+- 缺失项按「未执行 / 未通过 / NOT_MEASURED」记录，没有用 skip 或空收据换 PASS。

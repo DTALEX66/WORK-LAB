@@ -17,7 +17,7 @@ function snapshotWith(cards?: AdapterCapabilityCard[]): SnapshotV3 {
   s.sourceWatermark = null
   s.transport = { transportState: 'LIVE', freshnessState: 'FRESH', connectedSince: null, eventsUrl: null }
   s.coverage = { numerator: null, denominator: null, scope: null }
-  s.governance = { state: 'OK', families: {} } as SnapshotV3['governance']
+  s.governance = { state: 'CLEAN', families: {} } as SnapshotV3['governance']
   s.workspace = {}
   s.projects = []
   s.executions = []
