@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-18T13:08:47Z",
+  "generatedAt": "2026-10-18T15:00:16Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -567,13 +567,14 @@
     },
     {
       "path": "scripts/audit/observer_stream_cost_probe.py",
-      "sha256": "ff197fd826d19a06429ec8bc318268c9296c84855506bfa0bf79c234d8c12ace",
-      "bytes": 28288,
-      "lines": 683,
+      "sha256": "fe007640e6d469b5f7b35b403833d7b056efed1a0da374823e9c3f4560c466b8",
+      "bytes": 28612,
+      "lines": 687,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 3,
+      "citedByRecords": 4,
       "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/STREAM-COST-BASELINE-20261018.md",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "tests/ci/test_observer_stream_cost_probe.py"
