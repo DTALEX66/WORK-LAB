@@ -844,7 +844,10 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
 判定算术：存在 FAIL → FAIL；否则有必需层未解决（NOT_AVAILABLE/NOT_RUN/SKIPPED/NOT_APPLICABLE）→ **INCOMPLETE**；
 未解决**永不进 PASS**；CLI 退出码 0/1/3。分层设计文档
 `docs/current/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md`；本机实测六层全 PASS（draw 读回 0xff00 == expected、
-webview2 155.0.4283.45）。接线在 U19 之前跑并进 artifact。**CI runner 上的读数尚未采集**（该探针的价值正是让 runner 先说话）。
+webview2 155.0.4283.45）。接线在 U19 之前跑并进 artifact。
+**CI runner 读数已采集（2026-10-18，run `39121405373`）**：`session` FAIL（runner 无交互会话，`SESSIONNAME`=null，
+环境事实）、其余五层含 `draw` 全 PASS，整体 FAIL 但**不阻断** `observer` 作业（success）；
+读法与含义写进 `docs/current/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md` 的 runner 实测一节。
 
 **2026-10-17 · W06 已完成（前端部分，PR 见下）**：实测 `apps/observer/frontend/src/lib/api.ts` 的轮询固定 5 秒、
 且**同 revision 也无条件 `setSnap` 并推进"更新时间"**。改为：
@@ -878,7 +881,7 @@ webview2 155.0.4283.45）。接线在 U19 之前跑并进 artifact。**CI runner
   **保留** `imported-from-workbuddy-20261006`（453 MB）：其 MANIFEST 记录的源目录**已不存在**，这是唯一副本。
 
 **仍未开始（逐条点名）**：**W01–W12 的独立条目已全部落地或收口**。仍欠的是**各自的测量/取舍半条**：
-W02 的 token-monitor 缓存与 `cargo check` 冗余判定、W04 的 CI runner 读数、W06 的 CPU 与数据延迟测量。
+W02 的 token-monitor 缓存与 `cargo check` 冗余判定、W06 的 CPU 与数据延迟测量（W04 的 runner 读数已于 2026-10-18 采集并登记）。
 
 
 

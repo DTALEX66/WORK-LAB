@@ -63,4 +63,21 @@ DESKTOP_CAPABILITY_PASS platform=win32 elapsed=0.047s
   cleanup   PASS  created+removed
 ```
 
-**CI runner 上的读数尚未采集**——这一步的价值正是让它在 runner 上先说话，而不是等 U19 的绿勾去猜。
+## CI runner 实测（2026-10-18，run `39121405373`，`observer` 作业，artifact `ci-summary-observer`）
+
+```
+DESKTOP_CAPABILITY_FAIL platform=win32 elapsed=0.0s deadline=90s
+  session   FAIL  SESSIONNAME=null（无交互会话；证据自述是启发式，不是"没画出窗口"）
+  display   PASS  1024x768
+  draw      PASS  painted_pixel=0xff00 == expected
+  webview2  PASS  version=154.0.4258.62（注册表）
+  loopback  PASS  port=61869 released
+  cleanup   PASS  created+removed
+```
+
+**读法**：`session` 层 FAIL 是**环境事实**，不是产品缺陷——GitHub 托管的 Windows runner 没有交互桌面会话，
+`SESSIONNAME` 为空。其余五层（含真画像素的 `draw`）在 runner 上是 PASS，说明该探针能把"环境缺一层"和
+"画不出来"分开报。按本文件上一节的规则，这种环境**不得**尝试 U19 的真实桌面读回，harness 应记环境原因并以
+INCOMPLETE 结束。探针不阻断 CI（`observer` 作业 success），它只把这条事实写进 artifact。
+
+代码本机与 runner 的差异只有环境：本机 WebView2 `155.0.4283.45`、runner `154.0.4258.62`。
