@@ -46,7 +46,7 @@ class PointerDriftTests(unittest.TestCase):
         """The tool's default must be the file that actually drifts; a default nobody runs is decoration."""
         proc = subprocess.run([sys.executable, str(TOOL)], cwd=ROOT, capture_output=True, text=True,
                               encoding="utf-8", errors="replace")
-        self.assertIn("pointers=", proc.stdout + proc.stderr)
+        self.assertIn("REPOINT citations=", proc.stdout + proc.stderr)
         self.assertTrue(MATRIX.is_file(), "the default target must exist")
 
 
