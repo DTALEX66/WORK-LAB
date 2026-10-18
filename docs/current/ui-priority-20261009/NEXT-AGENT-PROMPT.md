@@ -1,7 +1,8 @@
 # 可直接交给下一个Agent的完整提示词
 
-> **先读本轮的交接**：`docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md`
-> （对应 `main` = `1eedf2e0`，CI 全绿）。它记录本轮修掉的三个缺陷、本机环境的硬限制、
+> **先读本轮交接**：`docs/current/ui-priority-20261009/HANDOFF-20261018-SESSION.md`
+> （对应 `main` = `fae41c4d`；含 W01–W12 落地、四类反复失败的根治、仍未完成清单、以及"绝对不能碰"的 4 个文件）。
+> 上一轮交接：`docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md`（`main` = `1eedf2e0`，历史记录）。它记录本轮修掉的三个缺陷、本机环境的硬限制、
 > 未来规划归档位置、以及工作区里属于另一个并行写者的 4 个文件（不要提交或丢弃）。
 > 本文件只讲 **UI 任务线本身怎么执行**，两者不重复。
 

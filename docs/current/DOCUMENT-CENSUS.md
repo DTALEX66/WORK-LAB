@@ -4,6 +4,7 @@
 > 本次来源覆盖与原字节验证见`docs/history/owner-inputs/RECORD-ARCHIVE-VALIDATION.json`；旧数量仍只是原盘点快照。
 
 > 2026-10-09范围切换：唯一CURRENT为`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，完整交接在`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`。
+> **2026-10-18 本轮交接**：`docs/current/ui-priority-20261009/HANDOFF-20261018-SESSION.md`（`main` = `fae41c4d`）。
 > 旧文档数量/状态/建议只描述此前盘点，现行任务以OPEN为准；UI优先、手机端不做。
 > 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
 
