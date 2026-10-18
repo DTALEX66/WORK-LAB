@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-16T18:32:47Z",
+  "generatedAt": "2026-10-18T10:07:06Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -262,11 +262,12 @@
       "lines": 250,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 5,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
         "tests/ci/test_desktop_capability_probe.py"
       ]
     },
