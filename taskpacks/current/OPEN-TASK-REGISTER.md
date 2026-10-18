@@ -864,13 +864,16 @@ webview2 155.0.4283.45）。接线在 U19 之前跑并进 artifact。
 ①证据摘要自证（`apps/observer/frontend/src/lib/evidenceRange.ts:309-322` 用同一个 `wholeDigest` 跟自己比，必绿）；
 ②采集器"跑了"被记成"交付了"（`packages/client-neutral-core/scripts/collectors.py:110` 空 records 仍 `ok=True`
 → 健康表新鲜 → coverage N/N → live gate 可判 LIVE）；③单写者有三处裸 `sqlite3` 旁路（`services/receipts/usage_estimator.py:81`、
-`execution_recorder.py:53`，且硬编码 `D:\` 路径、无 `__main__` 保护）；④Observer 运行时跨模块导入编排内部
-（`apps/observer/src/observer_store.py:29-31`），与 `module-dependencies.json` 的 `runtimeEdges: []` 不符。
+`services/receipts/execution_recorder.py:53`，且硬编码 `D:\` 路径、无 `__main__` 保护）；④Observer 运行时跨模块导入编排内部
+（`apps/observer/src/observer_store.py:29-31`），与 `.project/governance/module-dependencies.json` 的 `runtimeEdges: []` 不符。
 另：**7 道核心门从未在 CI 执行**（`canonical-single-writer`、`observer-readonly-boundary`、`snapshot-schema-v3`、
 `privacy-redaction`、`observer-no-business-write`、`field-quality-no-fabrication`、`sse-browser-reconnect` 在两个
 workflow 中 grep 命中均为 0），而 CI 里真正跑的只读检查是"源码里出现 `raise` 字样"（`scripts/ci/verify_observer_readonly.py:23-32`）。
 P0 四项**不在此自动派工**（涉及产品语义与门禁策略），等 owner 裁定；报告已按"被假绿咬到的概率"排序。
 审计期间顺带修掉一个真缺陷（文档化 sidecar 启动在干净 shell 里 `ModuleNotFoundError`），见下条。
+本轮产物自己也撞了两道结构门禁，均已修：①新探针与测试以文本模式开管道未声明编码（`ERR-211` 的 cp936 陷阱）；
+②登记正文里两处引用是简写（`services/receipts/execution_recorder.py`、`.project/governance/module-dependencies.json`），
+"能解析"不等于"读者能照着打开"。
 
 **2026-10-18 · W06 的测量半条：跑了，数字在 `docs/current/ui-priority-20261009/STREAM-COST-BASELINE-20261018.md`**
 新探针 `scripts/audit/observer_stream_cost_probe.py`（3 个 CPU 窗口只差一件事 + 端到端延迟）实测：

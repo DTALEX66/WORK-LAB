@@ -188,7 +188,11 @@ def check_external_sampler() -> dict[str, Any]:
     started = time.monotonic()
     process = subprocess.Popen(
         [sys.executable, "-c", _CONTROL_SOURCE],
-        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        # Declared, not inherited: on a cp936 host a child that prints non-ASCII kills the reader thread
+        # and the stream comes back None (ERR-211), which here would read as "the sampler saw nothing"
+        # and silently downgrade every CPU window to a fabricated 0.0%.
+        text=True, encoding="utf-8", errors="replace",
     )
     try:
         before = process_cpu_seconds(process.pid)

@@ -39,7 +39,8 @@ def run_probe(*args: str, timeout: float = 180.0) -> tuple[int, dict, str]:
         out = Path(tmp) / "report.json"
         completed = subprocess.run(
             [sys.executable, str(SCRIPT), "--json-out", str(out), *args],
-            capture_output=True, text=True, timeout=timeout, cwd=str(ROOT),
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=timeout, cwd=str(ROOT),
         )
         report = json.loads(out.read_text(encoding="utf-8")) if out.is_file() else {}
         return completed.returncode, report, completed.stdout + completed.stderr
