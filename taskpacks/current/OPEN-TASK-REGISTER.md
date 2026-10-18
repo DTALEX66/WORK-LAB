@@ -859,6 +859,33 @@ webview2 155.0.4283.45）。接线在 U19 之前跑并进 artifact。
 **仍未做的那一半**：方案要求"测请求数、CPU 与数据延迟"——请求数已由测试断言，**CPU 与端到端延迟未测**（需长跑观测）；
 后端"按版本复用纯投影"未动。
 
+**2026-10-18 · 全量审计（定位/前端/后端/门禁）：报告在 `docs/audits/FULL-AUDIT-20261018.md`**
+结论：**定位没漂，承诺漂了**。产品身份与"前端零写路径"经实测一致；漂的是四条自我承诺——
+①证据摘要自证（`apps/observer/frontend/src/lib/evidenceRange.ts:309-322` 用同一个 `wholeDigest` 跟自己比，必绿）；
+②采集器"跑了"被记成"交付了"（`packages/client-neutral-core/scripts/collectors.py:110` 空 records 仍 `ok=True`
+→ 健康表新鲜 → coverage N/N → live gate 可判 LIVE）；③单写者有三处裸 `sqlite3` 旁路（`services/receipts/usage_estimator.py:81`、
+`execution_recorder.py:53`，且硬编码 `D:\` 路径、无 `__main__` 保护）；④Observer 运行时跨模块导入编排内部
+（`apps/observer/src/observer_store.py:29-31`），与 `module-dependencies.json` 的 `runtimeEdges: []` 不符。
+另：**7 道核心门从未在 CI 执行**（`canonical-single-writer`、`observer-readonly-boundary`、`snapshot-schema-v3`、
+`privacy-redaction`、`observer-no-business-write`、`field-quality-no-fabrication`、`sse-browser-reconnect` 在两个
+workflow 中 grep 命中均为 0），而 CI 里真正跑的只读检查是"源码里出现 `raise` 字样"（`scripts/ci/verify_observer_readonly.py:23-32`）。
+P0 四项**不在此自动派工**（涉及产品语义与门禁策略），等 owner 裁定；报告已按"被假绿咬到的概率"排序。
+审计期间顺带修掉一个真缺陷（文档化 sidecar 启动在干净 shell 里 `ModuleNotFoundError`），见下条。
+
+**2026-10-18 · W06 的测量半条：跑了，数字在 `docs/current/ui-priority-20261009/STREAM-COST-BASELINE-20261018.md`**
+新探针 `scripts/audit/observer_stream_cost_probe.py`（3 个 CPU 窗口只差一件事 + 端到端延迟）实测：
+无消费者 **0.17%** 单核、有流无写入 **0.36%**、写入期 **1.04%**；端到端延迟 n=10 min 6.484s / p50 6.500s / p95 7.485s。
+**延迟由节拍决定**：watcher 每 0.25s 检测，SSE 每 `HEARTBEAT_SECONDS/2`=**7.5s** 才推一次，探针把两个常量从源码读出与样本并排写，
+避免"被节拍限制"被读成"实现退化"。由此得产品推论：流健康时前端不轮询，用户可见陈旧度上界就是 **7.5s**（设计包络，非缺陷）。
+**仪器被查过**：本机外部读子进程 CPU 是坏的（helper 自报 0.8125s，外部只看到 0.0938–0.125s 且冻结），
+故探针先跑控制实验，读不到就判定采样器盲并降级为同进程托管，报告写明 `instrumentCheck` 与 `effectiveMode`——
+**否则每个窗口都会报成 0.0%**。未测项如实留白：前端渲染成本（U19 域）、采集器成本（`--no-worker`）、小时级长跑。
+测试 `tests/ci/test_observer_stream_cost_probe.py` 9 例（含"盲仪器必须降级"、"帧没到必须 INCOMPLETE"）。
+**顺带修掉一个真缺陷**：按文档启动 sidecar 在干净 shell 里 `ModuleNotFoundError: canonical_store`——
+`tests/conftest.py` 替测试注入了模块根，所以 CI 每次绿都经过引导，而**发布出去的启动器一次都没经过**。
+`services/orchestration/sidecar.py` 现按自身位置推导模块根，新增 `tests/ci/test_sidecar_documented_launch.py`
+用清空 `PYTHONPATH` 的环境跑一次文档命令并要求 `/api/v1/snapshot` 真的应答。
+
 **2026-10-18 · 旧路径类反复失败：根因与处置**
 
 - **量化**：全仓 383 条失效路径引用。按种类拆开才算清楚：**376 条在历史/审计文档里**
@@ -881,7 +908,7 @@ webview2 155.0.4283.45）。接线在 U19 之前跑并进 artifact。
   **保留** `imported-from-workbuddy-20261006`（453 MB）：其 MANIFEST 记录的源目录**已不存在**，这是唯一副本。
 
 **仍未开始（逐条点名）**：**W01–W12 的独立条目已全部落地或收口**。仍欠的是**各自的测量/取舍半条**：
-W02 的 token-monitor 缓存与 `cargo check` 冗余判定、W06 的 CPU 与数据延迟测量（W04 的 runner 读数已于 2026-10-18 采集并登记）。
+W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读数、W06 的 CPU 与数据延迟测量已于 2026-10-18 采集并登记）。
 
 
 
