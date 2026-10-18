@@ -10,11 +10,30 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import os
 from pathlib import Path
 import queue
+import sys
 import threading
 import time
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 import uuid
+
+# Module roots, derived from this file, so the documented entry works as documented:
+# `python services/orchestration/sidecar.py --project-root . ...` (apps/observer/README.md)
+# and `apps/observer/start-observer.cmd` both run it with nothing on PYTHONPATH, and running a
+# script puts only ITS directory on sys.path. The other roots were supplied by
+# `tests/conftest.py` alone -- which is exactly why the gap survived: every green CI run came
+# through the pytest bootstrap, and the shipped launcher came through none of it. Measured
+# 2026-10-18: the documented command died at `from canonical_store import CanonicalStore`
+# with `ModuleNotFoundError` in a clean shell.
+for _relative in (
+    "../../packages/client-neutral-core/scripts",
+    "../receipts",
+    "../policy",
+    "../authority",
+):
+    _candidate = (Path(__file__).resolve().parent / _relative).resolve()
+    if _candidate.is_dir() and str(_candidate) not in sys.path:
+        sys.path.insert(0, str(_candidate))
 
 from sidecar_lock import SingleInstanceLock
 from canonical_store import CanonicalStore

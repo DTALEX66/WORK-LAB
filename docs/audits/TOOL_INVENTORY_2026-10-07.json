@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-18T10:42:54Z",
+  "generatedAt": "2026-10-18T15:00:16Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 76,
+    "trackedTools": 77,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 76,
+    "referencedSomewhere": 77,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -563,6 +563,21 @@
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/error-ledger.json",
         "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/observer_stream_cost_probe.py",
+      "sha256": "fe007640e6d469b5f7b35b403833d7b056efed1a0da374823e9c3f4560c466b8",
+      "bytes": 28612,
+      "lines": 687,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 4,
+      "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/ui-priority-20261009/STREAM-COST-BASELINE-20261018.md",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/ci/test_observer_stream_cost_probe.py"
       ]
     },
     {
