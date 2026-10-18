@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-18T10:07:06Z",
+  "generatedAt": "2026-10-18T10:42:54Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -262,11 +262,12 @@
       "lines": 250,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md",
+        "docs/current/ui-priority-20261009/HANDOFF-20261018-SESSION.md",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "tests/ci/test_desktop_capability_probe.py"
       ]
@@ -537,14 +538,14 @@
       "lines": 241,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 7,
       "citedBy": [
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
+        "docs/current/ui-priority-20261009/HANDOFF-20261018-SESSION.md",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json",
-        "tests/workflow-assistance/test_default_load_doc_citations_resolve.py"
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
@@ -754,7 +755,7 @@
       "lines": 153,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 9,
+      "citedByRecords": 10,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
         ".workbuddy/memory/2026-10-13.md",
@@ -800,7 +801,7 @@
       "lines": 218,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 10,
+      "citedByRecords": 11,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
         ".workbuddy/memory/2026-10-13.md",
@@ -868,14 +869,14 @@
       "lines": 178,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 15,
+      "citedByRecords": 16,
       "citedBy": [
         ".workbuddy/memory/2026-10-13.md",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
+        "docs/current/ui-priority-20261009/HANDOFF-20261018-SESSION.md",
         "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.html",
-        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.txt"
+        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.html"
       ]
     },
     {
