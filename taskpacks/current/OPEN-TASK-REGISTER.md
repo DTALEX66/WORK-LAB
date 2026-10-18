@@ -870,7 +870,7 @@ webview2 155.0.4283.45）。接线在 U19 之前跑并进 artifact。**CI runner
   ② `scripts/ci/verify_live_doc_paths_resolve.py`：**活文档**不得引用不存在的仓内路径；历史根除外（含索引里已声明
      `FROZEN_ARCHIVED` 的蓝图）；例外必须带理由与日期，且**例外过期（路径又存在了）本身就是失败**。
      实测 `LIVE_DOC_PATHS citations=603 missing=0 stale_exceptions=0`。两个门都接进了 CI 的前置检查。
-- **分类处置**：根级 11 份文档**已由** `verify_root_document_dispositions.py` 分类（6 份 historical 已打 NON-NORMATIVE 标记）。
+- **分类处置**：根级 11 份文档**已由** `scripts/ci/verify_root_document_dispositions.py` 分类（6 份 historical 已打 NON-NORMATIVE 标记）。
   **不删**这些文件不是保守，而是被既有裁定禁止：WUI-17 要求保留原始字节，且 `UI_IMPLEMENTATION_REPORT.md`
   是 `tests/workflow-assistance/test_path_text_is_one_predicate.py` 的**载荷**（大写反例）。故处置为"打标记 + 机器校验"。
 - **清理**：`.project-local` **1952 MB → 1047 MB**。删除：死工具链 `toolchains/lambda`（590 MB，本地推理运行时，
