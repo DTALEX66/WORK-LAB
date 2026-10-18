@@ -838,9 +838,48 @@ overlay with a specificity-raising selector.」同文件把该表列为「pinned
 - 两个新验证器一并接进 CI 的**前置检查**（否则它们只是本机门，推上去无人跑——ERR-261/263/264 那类缺口），
   可达性门 `operands=68 ci_only=0`。
 
-**仍未开始（逐条点名）**：W04（桌面验收环境分层——先交独立探针与分层设计，不新建服务器）、
-W06（SSE 健康时的轮询节奏与后端纯投影复用，标注"待测"）。
-W07 / W08 / W09 / W12 已完成，故不在本清单内。
+**2026-10-17 · W04 已完成（PR #173）**：新增 `scripts/audit/desktop_capability_probe.py` —— 六层、**不启动产品**：
+`session`（SESSIONNAME，**证据里标注它是启发式**）、`display`（GetSystemMetrics）、**`draw`（真画一个像素并
+读回来，证据是两个值而不是布尔）**、`webview2`（注册表版本）、`loopback`（绑定→释放→重绑）、`cleanup`（建树并删）。
+判定算术：存在 FAIL → FAIL；否则有必需层未解决（NOT_AVAILABLE/NOT_RUN/SKIPPED/NOT_APPLICABLE）→ **INCOMPLETE**；
+未解决**永不进 PASS**；CLI 退出码 0/1/3。分层设计文档
+`docs/current/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md`；本机实测六层全 PASS（draw 读回 0xff00 == expected、
+webview2 155.0.4283.45）。接线在 U19 之前跑并进 artifact。**CI runner 上的读数尚未采集**（该探针的价值正是让 runner 先说话）。
+
+**2026-10-17 · W06 已完成（前端部分，PR 见下）**：实测 `apps/observer/frontend/src/lib/api.ts` 的轮询固定 5 秒、
+且**同 revision 也无条件 `setSnap` 并推进"更新时间"**。改为：
+①流健康时定时器**不再读**而是查陈旧度 —— 一次读在 `MAX_STALENESS_MS`（45s）内跳过，过了**恰好补一次**
+（"少请求"不会变成"陈旧屏幕"）；事件（open/reconnect/resync）仍强制读，且 `onError` 立即把定时器重新派上用场；
+②同**签名**（revision + transport 状态 + freshness + coverage + sourceWatermark）不重渲染、不推进更新时间 ——
+**transport 在同一 revision 上变化不会被 revision 缓存吞掉**（方案点名的反例）。
+新增 3 例测试：十个定时周期零请求、流断开后立刻恢复、同签名不推进而 transport 变化推进。
+**仍未做的那一半**：方案要求"测请求数、CPU 与数据延迟"——请求数已由测试断言，**CPU 与端到端延迟未测**（需长跑观测）；
+后端"按版本复用纯投影"未动。
+
+**2026-10-18 · 旧路径类反复失败：根因与处置**
+
+- **量化**：全仓 383 条失效路径引用。按种类拆开才算清楚：**376 条在历史/审计文档里**
+  （`docs/history/**`、`docs/audits/**`、`reports/**`、`knowledge-staging/**`、`taskpacks/history/**`）——
+  记录九月的事就该写九月的路径，改写它是**篡改记录**；**7 条在活文档里**，其中 3 条是载荷：
+  一份权威文档指向不存在的 exe、一份 census 少了 `.py` 扩展名、一份指南用反引号把外部产品的目录写成了仓内路径。
+- **根因**：**引用面 > 校验面**。权威索引只校验 51 个目标，其余文档从未被检查，于是重命名文件会在引用里留下一个
+  只有"读到那段话的人"才会发现的路标。四天里四次同形状的 CI 红，每次都用"读报错→猜行号→再差一行"修，正是这个缺口的症状。
+- **根治（两个门 + 两个工具）**：
+  ① `scripts/ci/repoint_source_pointers.py`：按**引用的那段代码**重新推导行号（`--apply` 就地改），
+     找不到引文就**拒绝猜测**并点名；门 `tests/ci/test_source_pointers_are_current.py` 的报错里直接给修复命令；
+  ② `scripts/ci/verify_live_doc_paths_resolve.py`：**活文档**不得引用不存在的仓内路径；历史根除外（含索引里已声明
+     `FROZEN_ARCHIVED` 的蓝图）；例外必须带理由与日期，且**例外过期（路径又存在了）本身就是失败**。
+     实测 `LIVE_DOC_PATHS citations=603 missing=0 stale_exceptions=0`。两个门都接进了 CI 的前置检查。
+- **分类处置**：根级 11 份文档**已由** `scripts/ci/verify_root_document_dispositions.py` 分类（6 份 historical 已打 NON-NORMATIVE 标记）。
+  **不删**这些文件不是保守，而是被既有裁定禁止：WUI-17 要求保留原始字节，且 `UI_IMPLEMENTATION_REPORT.md`
+  是 `tests/workflow-assistance/test_path_text_is_one_predicate.py` 的**载荷**（大写反例）。故处置为"打标记 + 机器校验"。
+- **清理**：`.project-local` **1952 MB → 1047 MB**。删除：死工具链 `toolchains/lambda`（590 MB，本地推理运行时，
+  只被审计文档引用）、`toolchains/wl-ag11`（266 MB，旧 venv）、一批一时性运行时目录（229 MB）。
+  **保留** `imported-from-workbuddy-20261006`（453 MB）：其 MANIFEST 记录的源目录**已不存在**，这是唯一副本。
+
+**仍未开始（逐条点名）**：**W01–W12 的独立条目已全部落地或收口**。仍欠的是**各自的测量/取舍半条**：
+W02 的 token-monitor 缓存与 `cargo check` 冗余判定、W04 的 CI runner 读数、W06 的 CPU 与数据延迟测量。
+
 
 
 **本批第二次被同一类漂移咬到（如实登记）**：W05 在 `apps/observer/frontend/src/lib/api.ts` 里插行

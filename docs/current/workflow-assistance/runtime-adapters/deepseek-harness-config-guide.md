@@ -67,7 +67,7 @@ DSH 会话会自动加载项目根与模块的 AGENTS.md。WORK-LAB 根 AGENTS.m
 
 ### 3.1 DSH 官方技能发现路径（优先级从高到低）
 
-DSH 的本地技能提供者按以下 rank 扫描（`packages/skill/skill-filesystem`）：
+DSH 的本地技能提供者按以下 rank 扫描（DSH 侧目录名 packages/skill/skill-filesystem，**不是本仓路径**，故不加反引号）：
 
 | Rank | 来源 | 根路径 |
 |---|---|---|
