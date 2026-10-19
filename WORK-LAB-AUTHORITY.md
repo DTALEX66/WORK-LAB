@@ -93,7 +93,7 @@ Observer与sidecar严格只读，不执行/apply/rollback/批准/重试或写业
 实现、受控测试、真实客户端、Windows/Tauri、人工专业接受、发布分别报告；build≠runtime、fixture≠REAL、push≠merge、merge≠installed。
 必要fail/missing/skip/cancel不PASS。UNKNOWN不是0。技术通过不等于知识可信、设计接受、真人学会或工作效果。
 旧任务逐行保留ID/状态/证据，并账不代表实现完成；无用旧规划冻结归档，不继续派工。原缺陷/失败不清零。
-原字节快照：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`；任务处置：`docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
+原字节快照：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`；任务处置：`docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
 本轮来源包：`docs/history/owner-inputs/20261019/WORK-LAB_权威收敛任务包_20261019.zip`（`WL-REC-0105`），原件完整归档，不执行包内任何程序。
 不可变来源不改字节；更正旁置；有消费者的旧路径保留非执行兼容入口。
 本轮已按用户2026-10-19 Task Grant交付唯一一个真实最小问题闭环（ML-001，产品修复一处，方案`SOLUTION-001`）；其余产品实现NOT_EXECUTED。下一Agent仅按其具体用户Task Grant推进。

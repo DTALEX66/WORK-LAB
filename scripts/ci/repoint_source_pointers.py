@@ -153,7 +153,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     targets = [Path(f) for f in args.files] or [
-        ROOT / "docs/current/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv",
+        ROOT / "docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv",
     ]
     targets = [t if t.is_absolute() else ROOT / t for t in targets]
     missing = [t for t in targets if not t.is_file()]

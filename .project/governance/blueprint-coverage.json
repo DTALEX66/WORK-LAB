@@ -6,7 +6,7 @@
   "blueprintDoc": "docs/future/WORK-LAB-BLUEPRINT-20261006.md",
   "observedAt": "2026-10-07T00:31:37+0800",
   "baseSha": "6015f0ba1dc0c195a83e704bd73117b68f077347",
-  "note": "2026-10-09: historical blueprint coverage, not current dispatch. New CURRENT UI-first WUI supersedes old planning obligations. Historical status remains evidence for its own observation, not new product PASS. Useful requirements mapped in docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json.",
+  "note": "2026-10-09: historical blueprint coverage, not current dispatch. New CURRENT UI-first WUI supersedes old planning obligations. Historical status remains evidence for its own observation, not new product PASS. Useful requirements mapped in docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json.",
   "inputs": [
     {
       "sourceId": "BLUEPRINT-DOCX",
@@ -296,7 +296,7 @@
       "title": "最新闭环任务与未来目标的一一映射",
       "decision": "T01—T09 与 AG/U 横切项映射到唯一 open register；未列出的 current 项不因此删减",
       "anchors": [
-        "taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md",
+        "taskpacks/history/pre-convergence-20261019/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md",
         "taskpacks/current/OPEN-TASK-REGISTER.md"
       ],
       "status": "PARTIAL",
@@ -449,7 +449,7 @@
       "title": "旧分支吸收与退役",
       "decision": "语义/字段差异，禁止整支盲合并",
       "anchors": [
-        "taskpacks/current/BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md"
+        "taskpacks/history/pre-convergence-20261019/BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md"
       ],
       "status": "PARTIAL",
       "evidence": "2026-09-17 convergence executed and frozen; later absorbable increments still judged per semantic diff",

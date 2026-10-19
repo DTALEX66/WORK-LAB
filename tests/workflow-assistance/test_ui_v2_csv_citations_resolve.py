@@ -26,8 +26,8 @@ from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MATRIX = ROOT / "docs/current/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv"
-CHECKLIST = ROOT / "docs/current/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv"
+MATRIX = ROOT / "docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv"
+CHECKLIST = ROOT / "docs/history/archive/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv"
 
 CITATION = re.compile(r"(?<![\w:./-])(ABSENT:)?([A-Za-z0-9_./\-]+\.(?:py|tsx|ts|json|yaml|yml|csv|md|js))(:\d+)?")
 # What must never decide whether a citation resolves: the runtime root (not checkout-verifiable),

@@ -45,7 +45,7 @@
       "promotion_criteria": "PROMOTE only on the four REAL-evidence steps in the pilot card (project launch, worktree identity, task correlation, exit/readback) against a real external project, with WORK-LAB readback matching the task id and nothing promoted on a green badge alone.",
       "rejection_reason": null,
       "last_verified_at": "2026-10-07",
-      "task_card": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
+      "task_card": "taskpacks/history/pre-convergence-20261019/ORCA-PILOT-TASK-CARD-20260925.md",
       "blueprint_row": "16.01",
       "discovery": "RESOLVED",
       "upstream": "stablyai/orca",
@@ -58,7 +58,7 @@
         "services/orchestration/worktree_manager.py",
         "packages/client-neutral-core/scripts/dispatch_contract.py",
         "packages/client-neutral-core/scripts/result_return.py",
-        "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md"
+        "taskpacks/history/pre-convergence-20261019/ORCA-PILOT-TASK-CARD-20260925.md"
       ],
       "decision_basis": "Row 16.01 triggers on an existing entry gap, and the gap is real: the adapter contract declares worktree_identity and remote_execution and GenericProcessAdapter only proves process presence, while nothing tracked launches an external workspace (no ShellExecute/open -a path exists in the repository). WORK-LAB keeps task, evidence and permission truth either way, so this stays a comparison and not a dependency. The card, not this row, owns the pilot.",
       "blocker": "The pilot's four steps each require launching and exiting a third-party desktop app plus a real external project; that is owner-side action with per-operation authorization, and the launch path itself does not exist yet in this repository."
@@ -497,7 +497,7 @@
         "apps/observer/frontend/src/lib/viewRegistry.ts",
         "apps/observer/frontend/src/components/graph/workflow-canvas.tsx",
         "packages/client-neutral-core/scripts/entry_semantics.py",
-        "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md"
+        "taskpacks/history/pre-convergence-20261019/ORCA-PILOT-TASK-CARD-20260925.md"
       ],
       "blocker": ""
     },

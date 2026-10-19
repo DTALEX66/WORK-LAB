@@ -80,9 +80,11 @@ class VerdictsAcrossPathShapes(unittest.TestCase):
                 self.assertIs(expected, path_text.inside_root(candidate, root)[0])
 
     def test_relative_inside_keeps_the_declared_case(self) -> None:
-        self.assertEqual("UI_IMPLEMENTATION_REPORT.md",
-                         path_text.relative_inside("D:/All projects/WORK-LAB/UI_IMPLEMENTATION_REPORT.md",
-                                                   "D:/All projects/WORK-LAB"))
+        self.assertEqual("docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md",
+                         path_text.relative_inside(
+                             "D:/All projects/WORK-LAB/docs/history/archive/root-ui-records-20261019/"
+                             "UI_IMPLEMENTATION_REPORT.md",
+                             "D:/All projects/WORK-LAB"))
         self.assertEqual("Config.YAML",
                          path_text.relative_inside("/home/Runner/work/WORK-LAB/Config.YAML",
                                                    "/home/Runner/work/WORK-LAB"))

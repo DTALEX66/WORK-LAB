@@ -95,7 +95,7 @@
     "futureCapabilities": "FROZEN_OR_DEFERRED_PER_ROADMAP",
     "uiPriority": "SUPERSEDED_20261019",
     "mobile": "OUT_OF_SCOPE_NO_NEW_TASK",
-    "legacyDisposition": "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
+    "legacyDisposition": "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
     "implementation": "NOT_EXECUTED"
   },
   "currentSourceInput": {

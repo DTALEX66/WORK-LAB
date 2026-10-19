@@ -38,10 +38,18 @@ class ShippedRepository(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("REFS_SURFACE_POLICIES_PASS", result.stdout)
         self.assertIn("new=0 fixed=0", result.stdout)
-        # the baseline must not have quietly become empty: 386 rows were measured on 2026-10-18
+        # The baseline must not have quietly become empty or drifted -- asserted as a property, not a
+        # frozen count. After the six root-level UI records and design.qa.yaml moved to
+        # docs/history/archive/root-ui-records-20261019/, the ratcheted population was re-measured at 295
+        # rows (it was 386 on 2026-10-18: 93 broken refs left the root surface, +2 came from AGENTS.md's
+        # owner-gated stale pointers). The ratchet already requires new=0 fixed=0 (every recorded row is
+        # still broken today and no repair drifted), so the residual guard is "the recorded baseline is a
+        # live, non-empty measurement": its length must equal the verifier's own ratchet_broken_today count.
         policy = json.loads(POLICY.read_text(encoding="utf-8"))
-        self.assertGreaterEqual(len(policy["ratchet"]["baseline"]), 380)
-        self.assertIn(f"ratchet_baseline={len(policy['ratchet']['baseline'])}", result.stdout)
+        baseline_rows = len(policy["ratchet"]["baseline"])
+        self.assertGreater(baseline_rows, 0)
+        self.assertIn(f"ratchet_baseline={baseline_rows}", result.stdout)
+        self.assertIn(f"ratchet_broken_today={baseline_rows}", result.stdout)
 
 
 class TheRatchetCanGoRed(unittest.TestCase):
@@ -87,7 +95,7 @@ class ClassificationAndFloors(unittest.TestCase):
                        "reports/skills/nested/page.md"):
             self.assertTrue(verifier.is_external_skill_copy(target, self.policy), target)
         for target in ("reports/PROJECT-FULL-STAGE-AUDIT-20260928.md", "AGENTS.md",
-                       "UI_IMPLEMENTATION_REPORT.md"):
+                       "NOTICE.md"):
             self.assertFalse(verifier.is_external_skill_copy(target, self.policy), target)
 
     def test_a_duplicate_reference_is_counted_twice(self) -> None:

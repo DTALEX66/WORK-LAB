@@ -149,8 +149,8 @@ class RootDocumentDispositionTests(unittest.TestCase):
         derived = MODULE.authority_named_root_documents(index)
         self.assertIn("AGENTS.md", derived)
         self.assertIn("WORK-LAB-AUTHORITY.md", derived)
-        self.assertNotIn("UI_IMPLEMENTATION_REPORT.md", derived,
-                         "a closed execution report must never be read as an authority document")
+        self.assertNotIn("NOTICE.md", derived,
+                         "a provenance notice must never be read as an authority document")
         registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
         declared = {row["path"] for row in registry["documents"]
                     if row["disposition"] == "authority"}

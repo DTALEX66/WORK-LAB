@@ -9,6 +9,14 @@
     "apps/observer/web": {
       "reason": "skill-references/observer.md names the surface in order to say it was RETIRED on 2026-10-07; the sentence's subject is its absence, so the path must stay.",
       "since": "2026-10-18"
+    },
+    "taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md": {
+      "reason": "AGENTS.md line 12 is protected parallel-writer text and still names the superseded UI taskpack as the only CURRENT. That package moved to taskpacks/history/pre-convergence-20261019/ on 2026-10-19; repointing the line needs an owner decision (convergence report section 9 risk 6), and the same pointer is named in docs/history/archive/MOVED-PATHS-20261019.json. Delete this exception when AGENTS.md is fixed.",
+      "since": "2026-10-19"
+    },
+    "docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md": {
+      "reason": "AGENTS.md line 16, same protected text. The whole UI-priority directory moved to docs/history/archive/ui-priority-20261009/ on 2026-10-19. Delete this exception when AGENTS.md is fixed.",
+      "since": "2026-10-19"
     }
   }
 }

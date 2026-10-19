@@ -62,11 +62,11 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 | 2 | `WORK-LAB-AUTHORITY.md` §2：观测/配置治理工作台；§3：UI-first current scope | AMEND | 产品本体与当前范围被 2026-10-19 决定取代；UI 不再优先 | 重写 §2/§3，保留 §4-§6 的数据真值、模块、安全和证据规则 |
 | 3 | `.project/governance/project-authority-index.json`：`authorityId=...UI-PRIORITY`、`uiFirst=true` | AMEND | 机器权威必须与人类权威同一切换 | 新 `authorityId`、新 CURRENT、新 `currentDecision`，保留历史决定 |
 | 4 | `.project/governance/taskpack-authority-index.json`：UI 包为唯一 CURRENT | AMEND | 单一 CURRENT 需要切换；旧包保留为 SUPERSEDED | UI 包移入 `SUPERSEDED`，新收敛包进入 `CURRENT` |
-| 5 | `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`：自称唯一 CURRENT、UI-first | FREEZE / SUPERSEDED | 不删除历史，但不能继续派工；未完成 WUI 行不因冻结关闭 | 文件保留，顶部加 SUPERSEDED/FROZEN 提示 |
+| 5 | `taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`：自称唯一 CURRENT、UI-first | FREEZE / SUPERSEDED | 不删除历史，但不能继续派工；未完成 WUI 行不因冻结关闭 | 文件保留，顶部加 SUPERSEDED/FROZEN 提示 |
 | 6 | `taskpacks/current/OPEN-TASK-REGISTER.md`：2026-10-09 UI 优先切换、唯一 CURRENT 指向 UI 包 | AMEND（仅表头）/ FREEZE（行） | 账本必须指向新 CURRENT；历史行与证据保留，不无证关闭 | 表头改为 2026-10-19 冻结与新 CURRENT；WUI 行原样保留 |
 | 7 | `taskpacks/current/README.md`：唯一 CURRENT 指向 UI 包 | AMEND | 目录入口会误导新会话 | 改为新 CURRENT + 冻结说明 |
-| 8 | `docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`：UI 后续交接 | FREEZE / SUPERSEDED | 稳定入口仍指向 UI 任务，需显式失效 | 顶部加冻结横幅并指向新 CURRENT |
-| 9 | `docs/current/ui-priority-20261009/HANDOFF-20261018-QODER-SESSION.md`：UI 轮次交接 | FREEZE | 历史交接保留，但不能再作为当前指令 | 顶部加冻结横幅 |
+| 8 | `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT.md）：UI 后续交接 | FREEZE / SUPERSEDED | 稳定入口仍指向 UI 任务，需显式失效 | 顶部加冻结横幅并指向新 CURRENT |
+| 9 | `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-QODER-SESSION.md）：UI 轮次交接 | FREEZE | 历史交接保留，但不能再作为当前指令 | 顶部加冻结横幅 |
 | 10 | `docs/current/workflow-assistance/workflow/active-authority-index.md`：2026-10-09 UI 范围切换 | AMEND | 导航索引不是第二权威，但必须指向当前权威 | 顶部范围说明改为 2026-10-19 |
 | 11 | `docs/current/DOCUMENT-CENSUS.md`：UI 当前任务与交接 | AMEND | 文档总索引需要反映新 CURRENT；旧计数仍是其日期快照 | 顶部加 2026-10-19 增量说明，不改旧盘点数字 |
 | 12 | `docs/decisions/PROJECT_POSITIONING.md`：2026-10-09 定位 | AMEND | 决策记录是常见入口，必须与顶层权威一致 | 重写为 2026-10-19 收敛定位 |
@@ -75,7 +75,7 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 | 15 | `docs/future/WORK-LAB-BLUEPRINT-20261006.md`：完整未来蓝图 | FREEZE | 已有 FROZEN_ARCHIVED 标记；历史依据，非当前派工 | 不改正文；由新路线图取代其未来范围 |
 | 16 | `AGENTS.md`：workflow-assistance 范围、受管客户端与五维底线；第 12 行仍写“唯一CURRENT是 UI 包，UI 优先” | KEEP（规则）/ OWNER DECISION（第 12 行） | 执行规则、模块、安全和五维底线仍有效；第 12 行与 2026-10-19 决定冲突，但该文件是受保护的并行写者文件 | 本任务不修改该文件；机器权威与 verifier 已指向收敛包。建议 owner 授权后把第 12 行改为收敛包 |
 | 17 | `docs/history/**`、`taskpacks/history/**`：旧任务/审计/交接 | FREEZE | 冻结历史只作来源，不得据名称重新派工 | 不修改；需要时点名读取 |
-| 18 | WUI 报告（含 `docs/current/ui-priority-20261009/WUI-19-FINAL-ACCEPTANCE-20261012.md`） | FREEZE | 记录的是过去轮次与证据；冻结不改写历史字节 | 不修改；其未完成项保持原状态 |
+| 18 | WUI 报告（含 `docs/history/archive/ui-priority-20261009/WUI-19-FINAL-ACCEPTANCE-20261012.md`） | FREEZE | 记录的是过去轮次与证据；冻结不改写历史字节 | 不修改；其未完成项保持原状态 |
 | 19 | HUD 融合/紧凑 HUD 扩展方向 | FREEZE（产品方向） | 既有 HUD 是桌面观测面，可保留；新融合扩展不属于当前问题闭环 | 不新增 HUD 功能；既有代码与测试保留 |
 | 20 | 手机端相关表述 | KEEP（不做）/ 不再新建任务 | 2026-10-09 决定仍有效；新包未要求手机端 | 不新建手机端延后/冻结任务 |
 | 21 | `docs/current/workflow-assistance-README.md`、`docs/current/workflow-assistance/workflow/codex-global-enhancement.md` 的“非 Runtime/非模型网关”边界 | KEEP | 与新定位兼容，且是重要的反向边界 | 不改正文；由顶层权威统一表述 |
@@ -83,7 +83,7 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 | 23 | `.agents/skills/work-lab-workflow/SKILL.md`（源 `projections/agents/source/work-lab-workflow/SKILL.md`）：仍把 UI 包写成 current taskpack，产品描述停留在旧定位 | AMEND | 这是新会话默认读取的技能；陈旧的默认材料会让新会话直接继承错误的 CURRENT | 更新源文件的定位、问题闭环、验证范围与冻结规则，运行 `projections/agents/generate.py` 重生成投影，并用 canonical generator 修正 `config/skills-inventory.json` 的 8 条陈旧哈希 |
 | 24 | 根目录 6 份历史文档的 disposition banner：权威链仍写 UI 包为 CURRENT | AMEND（仅 banner） | `scripts/ci/verify_root_document_dispositions.py` 实测 6 条 `STALE_POINTER`，新会话读根文件时会看到错误 CURRENT；正文必须保持逐字不变 | 仅改 banner 的权威链并注明 UI 包已 SUPERSEDED/FROZEN；正文与 BEGIN/END 之外字节未动，verifier 与 16 项测试通过 |
 | 25 | `scripts/audit/normalise_doc_citations.py` 的默认加载 scope：第 5 步仍写 UI 包，并保留两份已冻结的 UI 入口文档 | AMEND | 该工具自己声明 scope 是 auditBootstrap 的读取顺序；权威切换后它仍在检查一份已 SUPERSEDED 的包，而真正的 CURRENT 任务包与收敛报告/路线图没有被检查 | scope 改为收敛任务包 + 本报告/路线图；删除只被旧 UI 文档使用的一条包内文件允许项（`SOURCE_BASELINE`，不带扩展名，避免再次成为引用）；把 verifier 输出字面量 `OPEN-TASK-REGISTER.md` 登记为不可改写；实测 `docs=9 citations=862 rewritten=0 blocked=0`，9 项测试通过 |
-| 26 | `docs/current/ui-priority-20261009/TASK-BREAKDOWN.json`：`currentTaskpack` 仍为 UI 包（无 banner 的 JSON 历史字段） | FREEZE / NON-NORMATIVE | 它是 UI 轮次的机器可读拆解，不是治理索引；改写历史 JSON 会破坏其日期证据 | 不修改；当前权威只由 `.project/governance/taskpack-authority-index.json` 决定 |
+| 26 | `docs/history/archive/ui-priority-20261009/TASK-BREAKDOWN.json`：`currentTaskpack` 仍为 UI 包（无 banner 的 JSON 历史字段） | FREEZE / NON-NORMATIVE | 它是 UI 轮次的机器可读拆解，不是治理索引；改写历史 JSON 会破坏其日期证据 | 不修改；当前权威只由 `.project/governance/taskpack-authority-index.json` 决定 |
 
 ## 4. 当前能力映射（2026-10-19 只读核对）
 
@@ -199,7 +199,7 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 - `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`（新）
 - `taskpacks/current/OPEN-TASK-REGISTER.md`（仅表头冻结说明；行保留）
 - `taskpacks/current/README.md`
-- `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`（仅顶部失效提示）
+- `taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`（仅顶部失效提示）
 - `README.md`
 - `docs/decisions/PROJECT_POSITIONING.md`
 - `docs/current/authority-convergence-20261019/ROADMAP.md`（新）
@@ -209,8 +209,8 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 - `services/execution-federation/hermes_adapter.py`（**产品修复**：移除未实现的 `Capability.RESUME` 声明，5 行新增/1 行删除）
 - `.project-local/runs/authority-convergence-20261019/minimal_loop_readback.py`（新，适配器层读回脚本）
 - `.project-local/artifacts/authority-convergence-20261019/minimal-loop/01-acp-honesty.out`、`02-federation-tests.out`、`03-nf22-tests.out`、`04-readback.out`（新，最小闭环收据）
-- `docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`（仅顶部失效提示）
-- `docs/current/ui-priority-20261009/HANDOFF-20261018-QODER-SESSION.md`（仅顶部失效提示）
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT.md）（仅顶部失效提示）
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-QODER-SESSION.md）（仅顶部失效提示）
 - `docs/current/workflow-assistance/workflow/active-authority-index.md`（范围说明）
 - `docs/current/workflow-assistance/workflow/project-definition.md`（定位补充）
 - `docs/current/DOCUMENT-CENSUS.md`（增量说明）
@@ -224,12 +224,18 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 - `projections/agents/source/work-lab-workflow/SKILL.md`（默认技能源：新定位、问题闭环状态分离、当前任务包与冻结规则；版本 1.2.0）
 - `.agents/skills/work-lab-workflow/SKILL.md`（由 `projections/agents/generate.py` 重生成，content_hash 已更新）
 - `config/skills-inventory.json`（由 `scripts/ci/generate_skills_inventory.py` 重生成：19 条中 8 条陈旧哈希按磁盘/HEAD 实测修正，含本技能新哈希；无技能增删）
-- `ASSET_REPLACEMENT_MANIFEST.md`、`HANDOFF-UI-L10B.md`、`UI_DECISIONS.md`、`UI_IMPLEMENTATION_REPORT.md`、`UI_REFERENCE_MANIFEST.md`、`VISUAL_QA_REPORT.md`
+- `docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md`、`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-UI-L10B.md）、`docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md`、`docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md`、`docs/history/archive/root-ui-records-20261019/UI_REFERENCE_MANIFEST.md`、`docs/history/archive/root-ui-records-20261019/VISUAL_QA_REPORT.md`
   （仅 disposition banner 的权威链改指新 CURRENT；正文与 banner 外字节未动，由 verifier 与 16 项测试守卫）
 - 由 `scripts/maintenance/owner_material_catalog.py build-index` 生成的 `docs/history/owner-inputs/INDEX.md`、`docs/history/owner-inputs/CATALOG.html`、`docs/history/owner-inputs/RECORD-ARCHIVE-REGISTER.csv`、`docs/history/owner-inputs/RECORD-ARCHIVE-MEMBERS.csv`
 
 未修改：`AGENTS.md`、`config/adapter-registry.json`、`config/client-evidence.json`、
 `taskpacks/current/error-ledger.json`；没有修改 DESIGN-LAB/AAOS；没有覆盖任何未提交工作。
+
+**2026-10-19 归档对齐说明**：本表记录的是权威收敛当时的改动。同日按用户指示执行的归档规范化
+（54 项 `git mv`，含本表里的 UI 包目录、UI 任务包与六份根级 UI 记录）把它们的最终位置改到
+`docs/history/archive/` 与 `taskpacks/history/pre-convergence-20261019/`；本表路径已随之改指。
+逐件移动与哈希见 `docs/history/archive/MOVED-PATHS-20261019.json`，任务包侧记录见
+`taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md` §11。
 
 ## 9. 风险与回滚
 
@@ -246,7 +252,7 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
    文档与索引切换后，必须由下一次 CI 在提交后的 exact SHA 上重新验证，不能把本报告的结构门结果当作 CI 结果。
 5. 工作树含先前未提交改动；本任务只在指定文件上追加编辑，未触碰 4 个受保护并行写者文件。
 6. `AGENTS.md` 第 12 行仍写“唯一CURRENT是 UI 包，UI 优先”，该文件是受保护的并行写者文件，未修改；
-   `docs/current/ui-priority-20261009/TASK-BREAKDOWN.json` 的 `currentTaskpack` 字段与若干已冻结 taskcard
+   `docs/history/archive/ui-priority-20261009/TASK-BREAKDOWN.json` 的 `currentTaskpack` 字段与若干已冻结 taskcard
    也保留历史 UI 指向。这些是残留旧口径，不能作为当前权威：新会话须按 `WORK-LAB-AUTHORITY.md` →
    `.project/governance/project-authority-index.json` → 收敛任务包解析；机器 verifier 已通过。
    若要清理 `AGENTS.md` 这一行，需 owner 明确授权后单独修改。

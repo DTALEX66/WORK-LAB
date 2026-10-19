@@ -160,7 +160,7 @@ one-pixel-wide windows.
 
 ## States required per region
 
-State lists here follow the repo's own truth rule — `UI_DECISIONS.md`: "UNKNOWN ≠ 0，不伪造 KPI" — so a
+State lists here follow the repo's own truth rule — `docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md`: "UNKNOWN ≠ 0，不伪造 KPI" — so a
 lane that has not received a value renders `UNKNOWN`, and a skeleton would be a fabricated state. No
 region below "requires" one.
 

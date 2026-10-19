@@ -23,7 +23,7 @@ MATRIX = REPO / ".project" / "governance" / "blueprint-coverage.json"
 PROJECTION = REPO / "docs" / "future" / "WORK-LAB-BLUEPRINT-COVERAGE.md"
 BLUEPRINT = REPO / "docs" / "future" / "WORK-LAB-BLUEPRINT-20261006.md"
 SNAPSHOT = REPO / "docs" / "audits" / "BLUEPRINT_SYNC_AUDIT_2026-10-06.md"
-ATLAS = REPO / "taskpacks" / "current" / "WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md"
+ATLAS = REPO / "taskpacks" / "history" / "pre-convergence-20261019" / "WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md"
 REGISTER = REPO / "taskpacks" / "current" / "OPEN-TASK-REGISTER.md"
 
 ALLOWED_STATUS = {"NOT_RUN", "FAIL", "UNVERIFIED", "PASS", "PARTIAL", "BLOCKED"}
@@ -68,7 +68,7 @@ def extract_ag_rows() -> list[dict]:
             "id": identifier, "kind": "atlas-gap",
             "title": re.sub(r"\s*—.*$", "", title)[:90],
             "decision": ("frozen historical row; priority " if frozen else "planning record row; priority ") + (priority or "UNKNOWN"),
-            "anchors": ["taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md"],
+            "anchors": ["taskpacks/history/pre-convergence-20261019/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md"],
             "status": "UNVERIFIED", "liveStatus": ("FROZEN_ARCHIVED (historical, no dispatch)" if frozen else "PLANNED (no live status column)"),
             "evidence": ("corresponds to open register row U" + linked.group(1)
                          if linked else "no live register cross-reference in its own row"),

@@ -125,7 +125,7 @@ overclaim.
 - `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md` (new)
 - `taskpacks/current/OPEN-TASK-REGISTER.md` (header freeze notice only; rows preserved)
 - `taskpacks/current/README.md`
-- `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md` (superseded banner only)
+- `taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md` (superseded banner only)
 - `README.md`
 - `docs/decisions/PROJECT_POSITIONING.md`
 - `docs/current/authority-convergence-20261019/ROADMAP.md` (new)
@@ -135,8 +135,8 @@ overclaim.
 - `services/execution-federation/hermes_adapter.py` (product fix: remove the unimplemented `Capability.RESUME` declaration)
 - `.project-local/runs/authority-convergence-20261019/minimal_loop_readback.py` (new, adapter readback)
 - `.project-local/artifacts/authority-convergence-20261019/minimal-loop/01-acp-honesty.out`, `02-federation-tests.out`, `03-nf22-tests.out`, `04-readback.out` (new receipts)
-- `docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md` (freeze banner)
-- `docs/current/ui-priority-20261009/HANDOFF-20261018-QODER-SESSION.md` (freeze banner)
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT.md） (freeze banner)
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-QODER-SESSION.md） (freeze banner)
 - `docs/current/workflow-assistance/workflow/active-authority-index.md` (current pointer)
 - `docs/current/workflow-assistance/workflow/project-definition.md` (positioning supplement)
 - `docs/current/DOCUMENT-CENSUS.md` (increment note)
@@ -151,7 +151,7 @@ overclaim.
 - `projections/agents/source/work-lab-workflow/SKILL.md` (default skill: new positioning, problem-loop state separation, current taskpack and freeze rule; v1.2.0)
 - `.agents/skills/work-lab-workflow/SKILL.md` (regenerated projection, content hash updated)
 - `config/skills-inventory.json` (regenerated: 8 of 19 stale hashes corrected from disk/HEAD, including this skill; no skill added or removed)
-- `ASSET_REPLACEMENT_MANIFEST.md`, `HANDOFF-UI-L10B.md`, `UI_DECISIONS.md`, `UI_IMPLEMENTATION_REPORT.md`, `UI_REFERENCE_MANIFEST.md`, `VISUAL_QA_REPORT.md` (disposition banner authority chain only; body bytes outside the banner unchanged)
+- `docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md`, `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-UI-L10B.md）, `docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md`, `docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md`, `docs/history/archive/root-ui-records-20261019/UI_REFERENCE_MANIFEST.md`, `docs/history/archive/root-ui-records-20261019/VISUAL_QA_REPORT.md` (disposition banner authority chain only; body bytes outside the banner unchanged)
 
 ## 8. Verification
 
@@ -178,3 +178,58 @@ The minimal loop in §4 is delivered (ML-001 / SOLUTION-001). Remaining steps re
 confirm the result, then authorize commit/push so exact-SHA CI can judge the product change.
 Any further loop or system capability needs a new explicit user Task Grant; until then all other
 work stays frozen and this taskpack remains the only current plan.
+
+## 11. Amendment 2026-10-19 — archive normalization (user directive)
+
+**Directive (verbatim):** “任何旧的过时的冗余的陈旧的，不要再明面上，全部归档到该去汇总的地方，
+包括仓库目录文件夹整体搬走，要么压缩归档到历史里。我描述不准确，按照规范化处理，防止再次索引路径到旧资料上”。
+
+This is an amendment to this CURRENT taskpack, not a second task truth: no register row is
+closed, reopened or rewritten in status, and no other work is unfrozen.
+
+**Normalization target (existing conventions):** documents under `docs/history/archive/`,
+taskpacks under `taskpacks/history/`, evidence under `reports/` and `docs/audits/`, external
+copies under `knowledge-staging/`. Moves are `git mv`; nothing is deleted and no historical
+body is rewritten.
+
+**Executed moves — 54 items**, all recorded with `from`/`to`/`sha256`/`bytes`/`lastCommit` in
+`docs/history/archive/MOVED-PATHS-20261019.json`:
+
+| Group | Count | Destination |
+| --- | --- | --- |
+| Root UI records (six `.md` + `design.qa.yaml`) | 7 | `docs/history/archive/root-ui-records-20261019/` |
+| Frozen UI round directory (formerly under `docs/current/`, named ui-priority-20261009; backticks in this repo mean "resolvable path", so the old name is written bare) | 20 | `docs/history/archive/ui-priority-20261009/**` |
+| Non-current `taskpacks/current/**` (all but register, README, error ledger, this taskpack) | 23 | `taskpacks/history/pre-convergence-20261019/**` |
+| Module instructions file (formerly at the `docs/current/` root, named workflow-assistance-AGENTS.md) | 1 | `docs/history/archive/workflow-assistance/module-instructions-20261019.md` |
+| Two dated workflow records | 2 | `docs/history/archive/workflow-assistance/{handoffs,audit}/` |
+
+Resulting surfaces: `taskpacks/current/` = 4 tracked files; root Markdown = 5
+(`authority=2`, `convention-current=3`, `historical-non-normative=0`); `docs/current/` = 40 md.
+
+**Consumer repointing.** Every active index and consumer was repointed in the same change:
+the two governance indexes, `WORK-LAB-AUTHORITY.md`, the open register, `docs/current/**`,
+`docs/decisions/**`, `docs/future/**`, Observer design contracts and tests, path constants in
+`packages/client-neutral-core/scripts/`, and the anchors/default targets in
+`scripts/ci|audit|maintenance`. Frozen `original-tree/**` bytes and the error ledger's historical
+citations are deliberately unchanged.
+
+**Fixture changes.** The uppercase-filename falsifiers in
+`tests/workflow-assistance/test_control_service.py` and
+`tests/workflow-assistance/test_path_text_is_one_predicate.py` no longer depend on a root UI
+record: the control-service case now uses root-level `NOTICE.md` (`docs/` is a non-diffable root),
+and the predicate case uses the nested archived path and asserts the nested relative result.
+`test_refs_surface_policies.py` and `test_root_document_dispositions.py` use `NOTICE.md` as the
+non-authority example.
+
+**Re-index prevention.** `scripts/ci/verify_stale_surface_paths.py` reads the move map and fails
+if any old path appears on an active surface. Frozen history, evidence, `knowledge-staging/` and
+`.workbuddy/` are out of scope; `taskpacks/current/error-ledger.json` and `AGENTS.md` are named
+allowances that must still be used. `tests/ci/test_stale_surface_paths_are_gone.py`
+proves the gate reds on a planted old path and reds on an unused allowance.
+
+**Files changed by this amendment:** the 54 moved paths above; the governance indexes and
+consumer files listed in `docs/history/archive/MOVED-PATHS-20261019.json`;
+`.project/governance/root-document-dispositions.json`; `scripts/ci/verify_root_document_dispositions.py`;
+the four test files named above; `scripts/ci/verify_stale_surface_paths.py` (new);
+`tests/ci/test_stale_surface_paths_are_gone.py` (new); `docs/current/DOCUMENT-CENSUS.md`
+(§4, §7, §9, §10 and new §11); and this section.

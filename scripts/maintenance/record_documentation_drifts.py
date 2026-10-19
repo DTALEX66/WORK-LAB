@@ -51,7 +51,7 @@ entry = {
     "phase": "EVIDENCE_CLOSEOUT",
     "classification": "contract_drift",
     "entrypoint": "taskpacks/current/OPEN-TASK-REGISTER.md (P1-01 row, lane counts), "
-                  "taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md "
+                  "taskpacks/history/pre-convergence-20261019/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md "
                   "(AG-01..AG-08 rows), apps/observer/frontend/src/lib/viewRegistry.ts",
     "command": "python .project-local/runs/convergence-20261007-c/record_drifts.py",
     "exit_code": 1,

@@ -98,7 +98,7 @@ ALLOW = {
         "Pre-convergence spelling of the same missing example (wlg130-delivery-verdict.md).",
     "tests/test_release_manifest.py":
         "Illustrative filename in a python-testing reference, not this repository's path.",
-    # The 2026-10-09 cutover record (docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json) is a
+    # The 2026-10-09 cutover record (docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json) is a
     # per-row account of what happened to the OLD ledger's claims. Its quoted paths are the historical
     # object of the sentence, not instructions, so re-pointing one to a file that happens to exist today
     # would rewrite the record. Each entry below is measured with `git log --all -1 --format=%h -- <path>`

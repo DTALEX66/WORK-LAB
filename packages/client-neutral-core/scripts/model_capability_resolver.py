@@ -21,7 +21,7 @@ Fail-closed rules:
 - selected and rejected candidates both carry reason codes
 
 AG-01..AG-04 (2026-10-01 atlas gap remediation, see
-taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md):
+taskpacks/history/pre-convergence-20261019/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md):
 - an explicit user choice is TERMINAL when usable — a project overlay can
   never silently overwrite it (AG-01);
 - every entry path (explicit, overlay, scan) shares the SAME capability /

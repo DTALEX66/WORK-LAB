@@ -1,7 +1,7 @@
 """Negative-control + regression tests for the AG-01..AG-04 repairs.
 
 These pin the four defects recorded in
-`taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md` against
+`taskpacks/history/pre-convergence-20261019/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md` against
 regression. Each test fails on the pre-repair implementation, so it is a real
 negative control rather than a restatement of the code.
 

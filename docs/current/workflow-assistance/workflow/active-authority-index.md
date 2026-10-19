@@ -4,8 +4,8 @@
 
 > 2026-10-19权威收敛：其他任务冻结，唯一CURRENT为`taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`；
 > 路线图`docs/current/authority-convergence-20261019/ROADMAP.md`，报告`docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md`。
-> UI包与`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`为SUPERSEDED_20261019/FROZEN，仅作历史；手机端不做。
-> 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
+> UI包与`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT.md）为SUPERSEDED_20261019/FROZEN，仅作历史；手机端不做。
+> 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
 
 
 > **NON-AUTHORITY VIEW** — 本文件是只读分类索引，不是第二顶层 Authority。
@@ -43,7 +43,7 @@
 
 - 历史 handoff 与审计：`docs/history/archive/workflow-assistance/handoffs/`、
   `docs/history/archive/workflow-assistance/audit/` 中带日期的交接文档（如
-  `docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`）
+  `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 workflow-baseline-and-recovery-handoff-2026-08-13.md））
   记录当时状态，**不构成当前规范**，仅作归档。
   2026-10-08 更正：本条原写作 docs/handoffs/ 与 docs/audit/ 两个裸路径，而它们在 2026-09 目录收敛后
   就不存在了（`ls` 实测两者皆无），索引因此把读者指向空路径；现改写为收敛后的真实归档根。旧写法在此

@@ -10,12 +10,12 @@
 > `docs/current/authority-convergence-20261019/implementation/WORK-LAB-MINIMAL-LOOP-001-ACP-HERMES-RESUME.md`，
 > 方案记录`docs/current/authority-convergence-20261019/solutions/SOLUTION-001-ACP-HERMES-RESUME.md`；
 > 产品修复一处`services/execution-federation/hermes_adapter.py`，未提交、未跑exact-SHA CI、未提交AAOS候选。
-> UI包与`docs/current/ui-priority-20261009/`交接均为SUPERSEDED_20261019/FROZEN，仅作历史证据；手机端不做。
+> UI包与`docs/history/archive/ui-priority-20261009/`交接均为SUPERSEDED_20261019/FROZEN，仅作历史证据（2026-10-19 整体归档）；手机端不做。
 > 以下2026-10-09/10-18各行是当时快照，保留供追溯；现行任务以OPEN与两个治理索引为准。
-> 2026-10-09范围切换（历史快照）：唯一CURRENT为`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，完整交接在`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`。
-> **2026-10-18 本轮交接（历史快照）**：`docs/current/ui-priority-20261009/HANDOFF-20261018-SESSION.md`（`main` = `fae41c4d`）。
+> 2026-10-09范围切换（历史快照）：唯一CURRENT为`taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，完整交接在`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT.md）。
+> **2026-10-18 本轮交接（历史快照）**：`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-SESSION.md）（`main` = `fae41c4d`）。
 > 旧文档数量/状态/建议只描述此前盘点，现行任务以OPEN为准；UI已冻结、手机端不做。
-> 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
+> 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
 
 
 > 本文件解决一件事：**任何会话都不该再问"任务在哪、文档在哪"**。它不新增权威，只把已有权威的位置、
@@ -41,16 +41,16 @@
 | `WORK-LAB-AUTHORITY.md` | 1 | 2026-10-07 | 最高人类权威 | 是 |
 | `AGENTS.md` | 1 | 2026-10-08 | 执行规则 | 是 |
 | `.project/governance/` | 54 | 2026-10-08 | 机器权威（含 `.project/governance/generated/CURRENT_STATE.md`） | 是 |
-| `taskpacks/current/` | 26 | 2026-10-08 | 活账本 + 当前 taskpack + 卡片 | 是 |
-| `docs/current/` | 43 md（2026-10-10 复测；2026-10-08 记为 38） | 2026-10-10 | 当前工作文档 | 是（受引用门禁） |
+| `taskpacks/current/` | 4（2026-10-19 归档后；原记 26） | 2026-10-19 | 活账本 + 当前 taskpack | 是 |
+| `docs/current/` | 40 md（2026-10-19 归档后；2026-10-10 记 43） | 2026-10-19 | 当前工作文档 | 是（受引用门禁） |
 | `docs/decisions/` | 18 | 2026-10-07 | ADR、`docs/decisions/global-execution-standard.md`、`docs/decisions/instruction-precedence.md` | 是 |
 | `docs/future/` | 3 | 2026-10-08 | 蓝图与覆盖投影（含生成物） | 计划 |
-| `taskpacks/history/` | 81 | 2026-10-08 | 冻结历史 | **非规范** |
-| `docs/history/` | 115 md | 2026-10-08 | 冻结历史 + `docs/history/archive/` + `docs/history/archive/recovered-originals/` | **非规范** |
+| `taskpacks/history/` | 146（2026-10-19 归档后；原记 81） | 2026-10-19 | 冻结历史 | **非规范** |
+| `docs/history/` | 180 md（2026-10-19 归档后；原记 115） | 2026-10-19 | 冻结历史 + `docs/history/archive/` + `docs/history/archive/recovered-originals/` | **非规范** |
 | `reports/` | 527 | 2026-10-06 | 审计证据（`reports/audit-archive/` 479、`reports/audit-evidence/` 34） | 证据 |
 | `knowledge-staging/` | 224 | **2026-09-23** | 边界标记为 `HISTORY_ONLY_CONVERGE`，非活动模块 | 冻结候选 |
 | `90-archive/` | 1 | **2026-09-24** | 只剩边界标记文件；内容 2026-09-23 已并入 `docs/history/` | 冻结候选 |
-| 仓库根 `*.md` | 11 | 混合 | **8 个不在权威链里**（2026-10-10 复测；原记 10）（见 §4） | 混杂 |
+| 仓库根 `*.md` | **5**（2026-10-19 归档后；2026-10-10 记 11） | 2026-10-19 | 权威 2 + 现行约定 3；不在权威链里的历史记录 = **0**（见 §4） | 权威/约定 |
 
 ## 3. "自称是任务清单"的东西有 9 份，只有一份是账本（2026-10-10 复点；标题原记 10，下表逐名点数实为 9）
 
@@ -66,31 +66,41 @@
 | `README.md`、`taskpacks/current/README.md`、`docs/decisions/PROJECT_POSITIONING.md`、`docs/audits/BLUEPRINT_SYNC_AUDIT_2026-10-06.md`、`taskpacks/current/WORK-LAB-UNIFIED-…-20260918.md` | 描述/投影，不得当账本读 |
 | `taskpacks/history/OPEN-TASK-REGISTER-20260917.md` | 冻结孪生，非规范 |
 
-## 4. 仓库根目录是真正的踩坑点
+## 4. 仓库根目录是真正的踩坑点（2026-10-19 已清零）
+
+**2026-10-19 结果（用户指示：旧资料全部归档、不得再被索引）**：根上六份历史记录
+（`ASSET_REPLACEMENT_MANIFEST.md`、`HANDOFF-UI-L10B.md`、`UI_DECISIONS.md`、`UI_IMPLEMENTATION_REPORT.md`、
+`UI_REFERENCE_MANIFEST.md`、`VISUAL_QA_REPORT.md`）连同 `design.qa.yaml` 已 `git mv` 到
+`docs/history/archive/root-ui-records-20261019/`，逐件 `from`/`to`/`sha256`/`bytes` 登记在
+`docs/history/archive/MOVED-PATHS-20261019.json`；根目录现只剩 **5** 份受跟踪 Markdown（权威 2 + 现行约定 3）。
+两个以大写文件名为载荷的测试夹具已改指根级 `NOTICE.md`（`docs/` 是非 diffable root），
+`taskpacks/current/error-ledger.json` 的 8 处旧路径引用（门实测）保留为证据并在移动清单中**具名豁免**。
+“先改引用、再移动、同一提交内完成”在本次一次完成：54 项归档移动 + 活跃索引改指；
+`scripts/ci/verify_stale_surface_paths.py` 读取移动清单，防止旧路径再次出现在活跃面上。
+
+**以下是 2026-10-10 的原始测量，保留供追溯（当时六份都在根目录，现均已在 archive）**：
 
 根上有 **8 个不在权威链里的 md（105.9 KB，2026-10-10 复测；原记 10 个约 127 KB）**，其中两份**看起来像活任务**：
 
 - `HANDOFF-UI-L10B.md`（12,588 B）开头即 `⛔ CLOSED — DO NOT RE-EXECUTE`，但放在根目录，新会话按文件名读就会误接；
 - `UI_IMPLEMENTATION_REPORT.md`（54,649 B，2026-10-08）与 `reports/UI-CHECK-OBSERVER-20261006.md` 角色重复。
 
-**处置（本索引提出，未擅自执行）**：`git mv` 进 `docs/history/archive/` 是规范动作，但这些路径被
+**处置（本索引提出；移动部分 2026-10-19 已执行）**：`git mv` 进 `docs/history/archive/` 是规范动作，但这些路径被
 `README.md`、账本行与 `docs/current/workflow-assistance/workflow/active-authority-index.md` 引用，移动会同时打红引用门禁。因此要求：**先改引用、
 再移动、同一提交内完成**，并让 `scripts/ci/verify_authority_index_paths.py` 当场复验。逐个移动的清单见 §7。
 
-**2026-10-10 执行结果（WUI-17：移动被证伪，改为就地标注＋机器守护）**：先量消费者，再决定动不动，结论是
-**这六份历史记录今天不能移**。逐名引用实测（口径：`grep -rl -F "UI_IMPLEMENTATION_REPORT.md"`，
-扩展名 md/json/py/csv，全仓排除 `.project-local/`，含其自身 = **21** 个文件点名；其中
+**2026-10-10 执行结果（WUI-17：当时判定移动被证伪，改为就地标注＋机器守护——该结论已被 2026-10-19 用户指示取代）**：先量消费者，再决定动不动，当时的结论是
+**这六份历史记录当时不能移**（不是因为不能归档，而是因为夹具与账本尚未改写）。逐名引用实测（口径：`grep -rl -F "UI_IMPLEMENTATION_REPORT.md"`，
+即 2026-10-10 的根文件名；扩展名 md/json/py/csv，全仓排除 `.project-local/`，含其自身 = **21** 个文件点名；其中
 `taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/**` 3 份、`docs/audits/` 3 份、`tests/` 2 份、
 `taskpacks/current/error-ledger.json` 1 份、`HANDOFF-UI-L10B.md` 1 份），关键约束是：
 它被两份测试当作**伪证夹具**使用
-（`tests/workflow-assistance/test_path_text_is_one_predicate.py:83`、
-`tests/workflow-assistance/test_control_service.py:385-400`——该夹具的作用是让"折叠大小写后仍在根内"这类断言
-必须真红，见 `tests/workflow-assistance/test_control_service.py:385` 的注释），以及**活账本**`taskpacks/current/error-ledger.json:5574`
+（`tests/workflow-assistance/test_path_text_is_one_predicate.py`、
+`tests/workflow-assistance/test_control_service.py`——该夹具的作用是让"折叠大小写后仍在根内"这类断言
+必须真红），以及**活账本**`taskpacks/current/error-ledger.json:5574`
 在某条记录的 `fix` 文字里逐字引用了它；`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/**`
-在 `.gitattributes` 里标了 `-text -diff`，即刻意保留原字节的冻结树。移动要么改写这些原字节，要么让夹具与账本
-变成假话，两条都违反 WUI-17
-验收里"保留原字节/哈希"。因此接受标准里的"先迁消费者再移动"这一步今天只做了一半，做法改为**就地标注**：
-根目录每份 Markdown 的处置现在登记在 `.project/governance/root-document-dispositions.json`（11 份实测：
+在 `.gitattributes` 里标了 `-text -diff`，即刻意保留原字节的冻结树。当时的做法是**就地标注**：
+根目录每份 Markdown 的处置登记在 `.project/governance/root-document-dispositions.json`（2026-10-10 为 11 份：
 `authority=2`、`convention-current=3`、`historical-non-normative=6`——本文上面的"8 份不在权威链里"用的是
 "除 AGENTS/README/WORK-LAB-AUTHORITY 之外"的口径，两套分类各自成立，故都保留原措辞），六份历史记录在 H1
 下方插入一段可见的 `NON-NORMATIVE-HISTORICAL` 声明（含现行任务包逐字路径），正文其余字节未动；必门
@@ -131,7 +141,7 @@
 
 1. **本索引必须被引用**：`README.md` 与 `docs/current/workflow-assistance/workflow/active-authority-index.md` 各加一行指向本文件；
    本文件位于 `docs/current/`，因此受 `scripts/ci/verify_authority_index_paths.py` 约束——写错路径会直接红。
-2. **根目录清零**：§4 的 8 个文件（2026-10-10 复点）按"改引用 → 移动 → 同提交复验"处理，根目录最终只留权威与入口文档。
+2. **根目录清零**：**已完成 2026-10-19**。§4 的六份历史记录与 `design.qa.yaml` 按"改引用 → 移动 → 同提交复验"移入 `docs/history/archive/root-ui-records-20261019/`；根目录现只剩 5 份受跟踪 Markdown（权威 2 + 现行约定 3），旧路径由 `scripts/ci/verify_stale_surface_paths.py` 拦住。
 3. **冻结面要被标记**：`knowledge-staging/`（224 文件，2026-09-23）与 `90-archive/` 需一份
    `FROZEN` 声明（现只有 `BOUNDARY.md`）；`taskpacks/history/` 无 README，`docs/history/archive/` 6 个子树
    只有 3 个有——统一补，并采用 `reports/audit-archive/20260930/ARCHIVE-INDEX.json` 那种**逐文件
@@ -222,12 +232,14 @@
   门增至 **8 例**（新增：账本必须在作用面内、受跟踪文件与目录无关地可见、外购副本不作裸名含义），
   且三条都用**改工具本体**的方式伪证过（去掉参考副本排除→该例红 failures=1；把走盘限制到单个根→红 failures=2；
   两次工具均按字节还原、还原后 8/8 绿，`.project-local/runs/falsify_citation_cases.py`）。教训登记 ERR-242。
-- **根目录处置已成机器合同**（§4 末）：清册 `.project/governance/root-document-dispositions.json` 实测
-  11 份 = `authority=2 / convention-current=3 / historical-non-normative=6`；门
-  `scripts/ci/verify_root_document_dispositions.py` 输出 `ROOT_DISPOSITIONS_PASS root_md=11 authority=2
-  convention=3 historical=6`，必门 `tests/workflow-assistance/test_root_document_dispositions.py` **14 例全绿**
+- **根目录处置已成机器合同**（§4 末）：2026-10-10 的清册实测为 11 份 =
+  `authority=2 / convention-current=3 / historical-non-normative=6`，门输出
+  `ROOT_DISPOSITIONS_PASS root_md=11 authority=2 convention=3 historical=6`，必门
+  `tests/workflow-assistance/test_root_document_dispositions.py` **14 例全绿**
   （含 6 条合成伪证 + 2 条真文件伪证：删声明→`UNLABELLED_HISTORICAL`、追加正文→`BODY_REWRITTEN`，
   均逐字节还原 13,210 B / 10,255 B）。六份历史文件各 +481 B，正文与提交字节逐字节相同由门复核。
+  **2026-10-19 更新**：六份已移入 `docs/history/archive/root-ui-records-20261019/`，清册收敛为 5 份
+  （`authority=2 / convention-current=3 / historical-non-normative=0`），见 §11。
 - **同日第三轮：两表引用形状与"改完又被整表覆掉"的收据问题**。绑定矩阵与验收清单自身的必门
   `tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py` 本轮两次判红，量出的形状是：233 条引用里
   **58 条只有 basename**、**6 条写了不存在的目录**、**1 条指从未存在的文件**；而指针内容检查"打不开就跳过"，
@@ -258,9 +270,60 @@
 ## 10. 2026-10-18 三面复量与三策略执行（WUI-17 收尾）
 
 - **三面复量（与活门同一条规则）**：直接 import `scripts/ci/verify_authority_index_paths.py` 的 `check()`，不另写解析器；扫描 `reports/`、`knowledge-staging/`、仓库根全部受跟踪 md，得 **662 面 / 4,168 条引用 / 3,257 断**（2026-10-09 记的 397/4,153/3,262 是当时口径与树，今天不沿用）。按来源拆：外购技能副本 **559 / 3,327 / 2,871**；日期化归档 **70 / 329 / 243**；其余（原称"当下仍在写"）**33 / 512 / 143**。回执 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`。
-- **"当下仍在写"这一档按证据重分类，不再当作活引用去改**：143 条逐面归因 = 五份根级 `historical-non-normative` 记录 93 条（`ASSET_REPLACEMENT_MANIFEST.md` 8、`HANDOFF-UI-L10B.md` 3、`UI_DECISIONS.md` 2、`UI_IMPLEMENTATION_REPORT.md` 53、`UI_REFERENCE_MANIFEST.md` 27）+ `AGENTS.md` 6 条（那 6 条正是"仓库根没有 `skills/`、`bin/` 目录"这句话本身[no-tree-claim DELETED ref=skills/][no-tree-claim DELETED ref=bin/]）+ 日期化报告 44 条。六份根级历史文件的正文被 `scripts/ci/verify_root_document_dispositions.py` 按字节冻结，日期化报告改写即让记录说假话；因此这一档与日期归档同用棘轮。"逐条清"在这里的正确落地是**逐条归因并锁死**，不是改历史。
+- **"当下仍在写"这一档按证据重分类，不再当作活引用去改**：143 条逐面归因 = 五份根级 `historical-non-normative` 记录 93 条（`docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md` 8、`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-UI-L10B.md） 3、`docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md` 2、`docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md` 53、`docs/history/archive/root-ui-records-20261019/UI_REFERENCE_MANIFEST.md` 27）+ `AGENTS.md` 6 条（那 6 条正是"仓库根没有 `skills/`、`bin/` 目录"这句话本身[no-tree-claim DELETED ref=skills/][no-tree-claim DELETED ref=bin/]）+ 日期化报告 44 条。六份根级历史文件的正文被 `scripts/ci/verify_root_document_dispositions.py` 按字节冻结，日期化报告改写即让记录说假话；因此这一档与日期归档同用棘轮。"逐条清"在这里的正确落地是**逐条归因并锁死**，不是改历史。
 - **三策略已机器化**：`.project/governance/refs-surface-policies.json`（面级声明 + 386 行基线）与 `scripts/ci/verify_refs_surface_policies.py`。门同时拒绝"新增断链"与"基线里已修好的条目未重发基线"，外购副本声明设 500 面下限防失效。现态 `REFS_SURFACE_POLICIES_PASS surfaces=662 refs=4168 external_surfaces=559 ratchet_surfaces=103 ratchet_baseline=386 new=0 fixed=0`；必门 `tests/workflow-assistance/test_refs_surface_policies.py` **8 例全绿**，含两条真文件伪证（删一条基线→`NEW_BROKEN` 点名该行；加一条假基线→`FIXED_BUT_BASELINE_STALE` 点名该行）。
 - **账本行数 163 与 183 的差集已逐条归因**：在 `taskpacks/current/OPEN-TASK-REGISTER.md` 修订 `9488cf9707`（2026-10-08）上复量，163 = 匹配 `^\| <id> \| P<digit>` 的任务行；183 = 196 个表格行 − 7 条分隔行 − 6 条表头行。20 条差额逐类为：**8** 条没有优先级列（SKILLS-…、GATE-RECHECK-…、TOOLCHAIN-PROBE-…、U19-MSVC-…、U19-P0C-…、UI-CHECK-…、SPILL-…、HANDOFF-…）、**4** 条来自另一张"层/处置"表、**6** 条优先级单元格不是 `P<digit>`（D1 ENV、D2 USER AUTH、C2/C3/O1/O2 OPTIONAL）、**2** 条首列含空格（`AG-01..04 gate`、`AG-05..07 gate`）。现行账本（HEAD `0369d349`）为 **25 条任务行 / 27 条表格行 / 1 条分隔行**，旧口径两数都不再适用。
 - **`.project-local/` 未跟踪 md 已测**：**1,269 个 md / 16,329,118 B**；该根在 `.gitignore:42` 整体忽略，`git status` 对其中 md 的未跟踪计数为 0。
 - **UI 资料总包内层 ZIP 已展开**：外层 `WORK-LAB_UI开发资料总包_按批次.zip` 37,048,117 B、sha256 `c94ff634dad3fa47cd843493c5f3b59c946fd987295085b8c821febba13eef48`，含 **12 个内层 ZIP / 197 个非目录成员**（逐 ZIP 成员数 12/25/12/39/11/19/14/21/23/15/3/3），逐成员 name+size+CRC32 回执 `.project-local/artifacts/wui-20261009/ui-batch-zip-census.json`（25,930 B）。
-- **仍属 owner 决定**：六份历史文件是否最终 `git mv` 进 `docs/history/archive/`；消费清单与字节保留证明已具备（§9 / WUI-17 行 ③）。
+- **owner 已决定并执行（2026-10-19）**：六份历史文件已 `git mv` 进 `docs/history/archive/root-ui-records-20261019/`；
+  同一指示还归档了 UI 优先目录、23 份非当前 taskpack 等共 54 项，见 §11。消费清单与字节保留证明见
+  `docs/history/archive/MOVED-PATHS-20261019.json`。
+
+## 11. 2026-10-19 归档规范化（用户指示：旧资料不在明面上，且不得再被索引）
+
+**指示原文**：“任何旧的过时的冗余的陈旧的，不要再明面上，全部归档到该去汇总的地方，包括仓库目录文件夹整体搬走，
+要么压缩归档到历史里。我描述不准确，按照规范化处理，防止再次索引路径到旧资料上”。
+
+**规范化目标（沿用既有约定，不新造第二套）**：文档历史统一锚点 `docs/history/archive/`；taskpack 历史统一锚点
+`taskpacks/history/`；证据留在 `reports/` 与 `docs/audits/`；外购/参考副本留在 `knowledge-staging/`；
+`90-archive/` 仍只有 `BOUNDARY.md`。移动一律 `git mv`，不删除、不改写正文。
+
+**本次移动（54 项，全部为 `git mv`；逐件 `from`/`to`/`sha256`/`bytes`/`lastCommit` 见
+`docs/history/archive/MOVED-PATHS-20261019.json`）**：
+
+| 组 | 数量 | 目标 |
+| --- | --- | --- |
+| 根级六份 UI 历史记录 + `design.qa.yaml` | 7 | `docs/history/archive/root-ui-records-20261019/` |
+| 已冻结的 UI 轮次目录（原在 `docs/current/` 下，名 ui-priority-20261009，反引号在本仓意为“可解析路径”，故只写名） | 20 | `docs/history/archive/ui-priority-20261009/**` |
+| `taskpacks/current/**` 中除活账本、README、账本 JSON、唯一 CURRENT 外的 23 份 | 23 | `taskpacks/history/pre-convergence-20261019/**` |
+| 模块指令文件（原在 `docs/current/` 根，名 workflow-assistance-AGENTS.md） | 1 | `docs/history/archive/workflow-assistance/module-instructions-20261019.md` |
+| 两份 workflow 历史记录 | 2 | `docs/history/archive/workflow-assistance/handoffs/` 与 `docs/history/archive/workflow-assistance/audit/`（带日期文件名） |
+
+**保留在明面上的当前位置**：`taskpacks/current/` 只剩 4 份（`OPEN-TASK-REGISTER.md`、`README.md`、
+`error-ledger.json`、`WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`）；`docs/current/` 剩 40 份
+（以 OPEN、两个治理索引与收敛报告/路线图为核心）。
+
+**防再次索引（机器控制）**：
+
+- `docs/history/archive/MOVED-PATHS-20261019.json` 登记每条旧路径、新路径与内容哈希；它是唯一移动真相。
+- `scripts/ci/verify_stale_surface_paths.py` 扫描受跟踪的**活跃面**，出现任一旧路径即 `STALE_SURFACE_PATHS_FAIL`；
+  冻结历史（`docs/history/`、`taskpacks/history/`）、证据（`reports/`、`docs/audits/`）、`knowledge-staging/`、
+  `.workbuddy/` 不参与扫描；受保护文件 `taskpacks/current/error-ledger.json` 与 `AGENTS.md` 以**具名豁免**登记，
+  且豁免必须仍被使用（旧路径消失即报 `ALLOWANCE_UNMET`），不允许静默放行。
+- `tests/ci/test_stale_surface_paths_are_gone.py`（**14 例**）钉住：活树判绿、人口不小于地板（1,287 面 / 2,599 受跟踪文件实测）、
+  每条移动的目标文件按 sha256+bytes 复核、47 条旧路径与旧目录在磁盘上确实不存在、7 个裸名不得重现在仓库根、
+  种入旧路径必判 `STALE`、`original-tree/**` 冻结写法**不得**被判旧、历史/证据面不扫、豁免不再被使用即红、
+  移动清单自身不被扫、不可解码字节不冒充判决。`tests/ci/` 由 `scripts/ci/run_root_governance_suite.py` 按 glob 发现，
+  新门落地即被 CI 度量，不依赖手工登记。
+- 门的第一个缺陷是**测试自己找到的**：`(?<!x)a|b|c` 解析成 `((?<!x)a)|b|c`，一条 lookbehind 只保护 48 个分支中的第一个，
+  于是索引里 5 条 `archivePath` 冻结写法全部被误判为旧路径；改为 `(?<!x)(?:a|b|c)` 后清零，并留下
+  `test_a_frozen_original_tree_spelling_is_not_convicted` 作为回归例。另两条真实残留也是门先于文档发现的：
+  `docs/current/` 下的 ui-priority-20261009 目录与 `taskpacks/current/` 下的 WORK-LAB-UNIVERSAL-WORKFLOW-TASKPACK-20260916
+  目录在 `git mv` 之后留下**空目录**（反引号在本仓意为“可解析路径”，故此处只写名），即“旧目录还在明面上”，
+  已 `rmdir` 清除并由 `test_no_enforced_old_path_still_exists_on_disk` 钉住。
+
+**已改指的活跃消费者（要点）**：两个治理索引、`WORK-LAB-AUTHORITY.md`、CURRENT taskpack、活账本、
+`docs/current/workflow-assistance*`、`docs/decisions/`、`docs/future/`、Observer 设计合同与测试夹具、
+`packages/client-neutral-core/scripts/` 中的路径常量、`scripts/ci|audit|maintenance` 的锚点与默认目标。
+**故意不改**：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/**`（`-text -diff` 冻结原字节）、
+历史记录正文中的旧路径（它们是被引用的历史对象）、`error-ledger.json` 的既有记录。

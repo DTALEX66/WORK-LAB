@@ -2,7 +2,7 @@
 
 The pack's §5 stage list (未开始 → 提交中 → 排队/运行 → 通过/失败/取消/未知, 超时=未知或超时) is the thing being
 contracted, and the intake decision for it says the server contract comes first because "UI 不得先造字段"
-(`docs/current/ui-priority-20261009/UI-V2-INTAKE-20261010.md:39`). So this file drives a **real** `TaskLedger`
+(`docs/history/archive/ui-priority-20261009/UI-V2-INTAKE-20261010.md:39`). So this file drives a **real** `TaskLedger`
 and asserts what its records may and may not say:
 
 * `SUBMITTING` is absent from the state enum forever, because no module records the client-to-ledger handoff.

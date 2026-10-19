@@ -1,6 +1,6 @@
 # Hermes Token Monitor
 
-交接与验证摘要见 [`token-monitor-handoff.md`](./token-monitor-handoff.md)。
+交接与验证摘要见 [`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 token-monitor-handoff-2026-08-05.md）](../../../history/archive/workflow-assistance/handoffs/token-monitor-handoff-2026-08-05.md)（已归档，2026-08-05）。
 
 本项目提供两个层次的本地监视器：
 

@@ -78,7 +78,7 @@ function snapWithShelf(): SnapshotV3 {
   return mkSnap({
     workspace: {
       sources: [
-        { path: 'taskpacks/current/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md', evidenceKind: 'PLAN', loadedAt: '2026-10-08T01:00:00Z' },
+        { path: 'taskpacks/history/pre-convergence-20261019/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md', evidenceKind: 'PLAN', loadedAt: '2026-10-08T01:00:00Z' },
         { path: '.project/governance/generated/CURRENT_STATE.json', evidenceKind: 'STATIC_BASELINE', loadedAt: '2026-10-08T01:00:00Z', generatedAt: '2026-10-07T22:00:00Z' },
       ],
     },
@@ -283,7 +283,7 @@ describe('REQ-RANGE · shelf honesty and addressing', () => {
     expect(/^\/\?view=evidence(&|$)/.test(href), `link escaped the lane contract: ${href}`).toBe(true)
     fireEvent.click(link!)
     await waitFor(() => expect(columnsOf(container).getAttribute('data-state')).toBe('REFUSED'))
-    expect(seen[0].handle).toBe('taskpacks/current/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md')
+    expect(seen[0].handle).toBe('taskpacks/history/pre-convergence-20261019/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md')
     // the refusal is what the owner sees: no content, and the backend's own reason
     expect(container.querySelector('[data-testid="evidence-content"]')).toBeNull()
     expect(columnsOf(container).textContent).toContain('ABSOLUTE_PATH_REQUIRED')

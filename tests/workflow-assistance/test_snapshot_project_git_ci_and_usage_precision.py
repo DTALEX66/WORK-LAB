@@ -1,7 +1,7 @@
 """WL-L01 / WL-L02 / WL-L03 — three cloud-audit findings against the v3 snapshot producer.
 
 Source: WL-REC-0104 (AAOS-WORK-DESIGN-cloud-audit-20261011), triaged in
-docs/current/ui-priority-20261009/CLOUD-AUDIT-INTAKE-2026-10-11.md and registered on the WUI-19 row.
+docs/history/archive/ui-priority-20261009/CLOUD-AUDIT-INTAKE-2026-10-11.md and registered on the WUI-19 row.
 
 Each finding is proved twice: once on the shape the producer emits now, and once against the exact
 claim the audit made (the borrowed SHA is not present, the CI list is not empty, the precision is not
