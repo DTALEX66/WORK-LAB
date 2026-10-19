@@ -289,6 +289,12 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
    具体 Task Grant 并选定问题；问题中心/解决方案库作为系统能力仍未被授权整体实施。
 4. AAOS 候选仍不提交：没有已接通 API。只有在存在真实接收回执时才能写“AAOS 已接收”，
    不把“已提交”或“本地方案记录”写成接收。
+5. 账本派生投影 `docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json` 的重发是 **owner 项**：
+   生产脚本 `scripts/audit/ledger_regression_command_targets.py --apply` 同时会写受保护文件
+   `taskpacks/current/error-ledger.json`，因此本轮未执行；实测缺口已登记在
+   `docs/current/DOCUMENT-CENSUS.md` §13（2026-10-19 实测：投影记录 274 条 vs 账本 276 条、
+   PATH_GONE 36 vs 38、digest `4fc45f59`→`4dc25201`；该数字是当日读数，重发后即失效）。
+   owner 授权前，由它派生的 CI 红项保持原样，不本地改投影去凑绿。
 
 ## 12. 包内 10 项验收标准逐项覆盖
 
@@ -307,6 +313,7 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 
 “DONE”指该项在本轮范围内被覆盖并有落点；它不把未做的系统能力（问题中心、方案库、
 AAOS 接通、exact-SHA CI）算作已完成。
+
 ### exact-SHA CI 证据（0045017a，run 39239568709）
 
 结论 `failure`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；红作业：aggregate / workflow-assistance。
@@ -316,3 +323,17 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 本地=远端 True，工作树干净。本轮引入过并已被抓住修掉的唯一回归是
 `test_workspace_evidence_loads_plan_governance_and_history_as_typed_sources` 的 `KeyError: 'plan'`
 （归档迁移时把证据源指到了 671 B 的桩文件上），它在本 run 的失败清单里已不再出现。
+
+### exact-SHA CI 证据（263cb8f4，run 39241704566）
+
+结论 `failure`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；红作业：aggregate / workflow-assistance。
+红作业里点名的失败测试共 9 个，其中 **8 个是本轮之前就存在的**（同一批在
+本轮起点 `6b6678c3` 的 run 里就已红：DSH 日期回读、executor registry pin、账本 274/276 派生三件、
+ERR-276 绑定、派生审计幂等），**本轮新增 1 个**：test_the_chain_is_normalised_not_merely_resolvable。
+本地=远端 True，工作树干净。本轮在这个 head 上确实引入并暴露了一个回归：`test_the_chain_is_normalised_not_merely_resolvable` 报
+`0 != 1 : 1 citation(s) are still shorthand`。原因是归档轮写进
+`docs/current/DOCUMENT-CENSUS.md` 的 owner 段落用裸文件名引用了派生脚本，引用规范化门（本地
+`tests/workflow-assistance/test_default_load_doc_citations_resolve.py` 与 CI 的 workflow-assistance 作业）
+都判红。修复只走工具自身的通道：`scripts/audit/normalise_doc_citations.py --apply` 改写那一个 token
+为 `scripts/audit/triage_unbound_ledger_records.py`，门恢复 9/9 绿、`rewritten=0 blocked=0`，随下一提交
+在其 exact SHA 上复验。

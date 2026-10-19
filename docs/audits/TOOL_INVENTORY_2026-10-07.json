@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-19T10:16:24Z",
+  "generatedAt": "2026-10-19T11:17:18Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -449,7 +449,7 @@
       "lines": 386,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 14,
+      "citedByRecords": 15,
       "citedBy": [
         ".workbuddy/memory/2026-10-13.md",
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
@@ -978,14 +978,14 @@
       "lines": 182,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 10,
+      "citedByRecords": 12,
       "citedBy": [
         ".workbuddy/memory/2026-10-13.md",
         "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
-        "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json"
       ]
     },
     {

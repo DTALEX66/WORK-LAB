@@ -343,10 +343,13 @@ Surfaces after this amendment, measured with `git ls-files -z`: **2,548** tracke
 modules ran green.
 **The gate was extended in the same pass.** `old_patterns()` consumed only the record's `from` paths, so a
 pointer at a document that now survives only as an archive member was invisible. The consolidation's 56
-`deletedPaths` are enforced too (48 -> **104** patterns), the required gate grew from 16 to **18** cases --
-one plants a deleted-member path and must convict, one asserts the live tree names none -- and the
-population test recomputes its expectation from the record instead of a literal, so growing the record
+`deletedPaths` are enforced too (48 -> **104** patterns), the required gate grew from 16 to **19** cases --
+one plants a deleted-member path and must convict, one asserts the live tree names none, one asserts that the
+`original-tree/` spelling is *not* convicted (the exclusion has to wrap the whole alternation, not its first
+branch), and one pins that the four owner-authorized handoffs are archive members and gone from the tree --
+and the population test recomputes its expectation from the record instead of a literal, so growing the record
 cannot leave the gate describing an older world.
+
 ## 14. Status correction of sections 5/8/10 as of 2026-10-19 (late)
 
 Sections 5, 8 and 10 were written when the minimal-loop product fix was uncommitted, CI had never
@@ -366,5 +369,13 @@ measured rather than recalled:
   convergence report are unchanged by this round -- the pre-existing set was measured as eight failing
   tests on the run of this round's starting commit `6b6678c3` and the same set (minus anything this
   round introduced, which was fixed) on later runs.
+- **One regression this round created, and its own gate caught it.** The owner-item paragraph written into
+  `docs/current/DOCUMENT-CENSUS.md` cited the triage producer by bare basename instead of its full path, so
+  `tests/workflow-assistance/test_default_load_doc_citations_resolve.py` failed at head `263cb8f4` with
+  "1 citation(s) are still shorthand". The fix was the sanctioned channel -- `scripts/audit/normalise_doc_citations.py`
+  run with `--apply` -- which rewrote that single token to `scripts/audit/triage_unbound_ledger_records.py`; the gate is
+  then 9/9 green and the normaliser reports `rewritten=0 blocked=0`. Prose is a governed surface: the same gate
+  reads what this round writes, and writing the correction above without the full path would itself re-open
+  the fault.
 - Documentation-only states in section 5 still mean documentation, not features: the minimal loop is
   the only product change authorized so far.

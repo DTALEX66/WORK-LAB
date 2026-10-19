@@ -461,4 +461,4 @@ population 断言改成按记录本身重算期望值，不再写死数字，免
 唯一重发通道 `scripts/audit/ledger_regression_command_targets.py --apply` 会**同时改写
 `taskpacks/current/error-ledger.json`**（受保护并行写者文件），因此本轮不执行；同理不做只改投影不改账本的
 半套（那会让投影与账本互相矛盾）。owner 决定项：授权按既定顺序重发派生审计
-（`--apply` → `triage_unbound_ledger_records.py`）并顺带处理 ERR-276/277 与 executor registry pin。
+（`--apply` → `scripts/audit/triage_unbound_ledger_records.py`）并顺带处理 ERR-276/277 与 executor registry pin。
