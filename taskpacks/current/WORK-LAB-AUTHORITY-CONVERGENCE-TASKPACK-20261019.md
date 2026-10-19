@@ -261,3 +261,14 @@ shipped bytes, every member's hash/size/CRC32, and that no member is still track
 owner-material index now routes its "UI 历史交接" row to the manifest. Post-deletion surfaces,
 measured with `git ls-files -z`: 2,550 tracked, `docs/history/` 167 md, `taskpacks/history/` 108,
 `docs/current/` 40 md, `taskpacks/current/` 4, repository root 5 md.
+**One gate stays red, named and attributed (not worked around):**
+`tests/workflow-assistance/test_project_local_citation_audit.py` reports `unadjudicated != 0` on a fresh
+scan. Evidence gathered this run: the shipped record's `generatedAt` is 2026-10-10T14:38:39Z（counts.unadjudicated=0, reviewQueue=8, presentOnThisMachine=309） with
+`counts.unadjudicated=0`, `reviewQueue=8`, `presentOnThisMachine=309`, last committed in 5f14677d;
+the test's corpus is the whole git-ignored `.project-local/` tree (nine days of runtime residue from
+several sessions, including this round's scratch scripts), so the drift is not produced by the tracked
+changes in §11/§12. The test is not registered in CI -- neither `.github/workflows/` nor the
+`services/orchestration/run_quality_gate.py` stage map names it. The audit script also mutates: it disposes
+`.project-local/runs/...` directories and rewrites the tracked record; one run this round corrupted that
+record and it was restored by bytes. Owner decision needed: reissue the derived audits in the documented
+order together with a runtime-residue cleanup, or register the gate, or record it as a local observation.

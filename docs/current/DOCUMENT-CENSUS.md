@@ -361,3 +361,15 @@ PROMPT-PACK / CLOSEOUT / START-ANY-AGENT / AGENT-PROMPT，且位于 `docs/histor
 **删除后的面计数（`git ls-files -z` 实测）**：受跟踪文件 **2,550**（删除前 2,602）；
 `docs/history/` md **167**；`taskpacks/history/` **108**；`docs/current/` md **40**；
 `taskpacks/current/` **4**；仓库根 md **5**。§2 表已按这组数字更新。
+**一处保留的红（具名，不静默）**：`tests/workflow-assistance/test_project_local_citation_audit.py`
+的 `test_regenerating_the_record_is_idempotent_apart_from_the_timestamp` 判 `unadjudicated != 0`。
+归因实测：受跟踪记录 `docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json` 的 `generatedAt` 为
+2026-10-10T14:38:39Z（counts.unadjudicated=0, reviewQueue=8, presentOnThisMachine=309）（`counts.unadjudicated=0`、`reviewQueue=8`、`presentOnThisMachine=309`），最后一次提交是
+5f14677d；该测试扫的语料是整棵 `.project-local/`（9 天里多轮会话的运行残留，含本轮
+`.project-local/runs/archive-normalization-20261019/` 的脚本与回执），**不来自本轮的受跟踪改动**。
+该测试也未登记进 CI：`.github/workflows/` 与 `services/orchestration/run_quality_gate.py` 的 stage 表里
+都没有它的名字（本轮实测两处 grep 皆空），所以它是本地未登记门——CI 的判决不含它。
+另记一条危险：`scripts/audit/project_local_citation_audit.py` 不只读，它会 DISPOSE `.project-local` 运行目录
+并重写上面那份受跟踪记录；本轮运行过一次，把记录改坏后按字节 `git checkout --` 还原（还原后该测试回到 1 红而不是 2 红）。
+**因此本轮不再重跑它**，把它作为 owner 决定项登记：要么按既定顺序重发派生审计（先 `scripts/audit/ledger_regression_command_targets.py --apply`
+再 `scripts/audit/triage_unbound_ledger_records.py`，并连带清理运行残留），要么把它登记进 CI 或明确降级为本地观察。
