@@ -16,6 +16,7 @@ import hashlib
 import importlib.util
 import json
 import shutil
+import subprocess
 import tempfile
 import unittest
 import zipfile
@@ -107,6 +108,27 @@ class LiveTree(unittest.TestCase):
                 self.assertNotIn(entry["path"], tracked,
                                  f"consolidated file is still tracked: {entry['path']}")
                 self.assertFalse((ROOT / entry["path"]).exists(), entry["path"])
+
+    def test_every_archive_member_is_reproducible_from_git_history(self) -> None:
+        """The deletion promise is checkable without trusting the builder that made it.
+
+        Each member records the Git ref that still holds its bytes. Re-deriving the sha256 from that
+        ref proves the archive is a copy of committed content, not of whatever was on this machine.
+        """
+        block = MODULE.load_manifest(MANIFEST)["consolidation"]
+        record = json.loads((ROOT / block["manifest"]).read_text(encoding="utf-8"))
+        with zipfile.ZipFile(ROOT / block["archive"]) as bundle:
+            for entry in record["members"]:
+                ref = entry.get("provenance")
+                self.assertTrue(ref, f"member without provenance: {entry['path']}")
+                blob = subprocess.run(["git", "cat-file", "blob", ref], cwd=ROOT,
+                                      capture_output=True)
+                self.assertEqual(0, blob.returncode, f"provenance ref unresolvable: {ref}")
+                self.assertEqual(entry["sha256"], hashlib.sha256(blob.stdout).hexdigest(),
+                                 entry["path"])
+                self.assertEqual(entry["sha256"],
+                                 hashlib.sha256(bundle.read(entry["path"])).hexdigest(),
+                                 entry["path"])
 
     def test_the_formerly_governed_handoffs_are_archived_and_gone(self) -> None:
         """Four documents were kept on 2026-10-19 morning because a pointer named them.
