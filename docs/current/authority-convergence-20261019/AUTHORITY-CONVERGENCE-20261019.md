@@ -471,3 +471,20 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 本地=远端 True，工作树有 1 处未提交改动。这一 head 改的是仪器与文档（采样分母入 `scripts/audit/text_legibility_via_cdp.py`、它的 56 例判定测试、路线图表格补形、工具清单同批重发）。preflight 步骤绿（清单与它摘要的文件同批重发这一步奏效了），治理批红名单仍是本轮之前就存在的四项基线，本轮新增 0。
 
 那四项基线各自等的是 owner 决定：受保护账本里 ERR-276/277 的 fixedCommit 绑定、`config/adapter-registry.json` 钉住的 SHA、DSH 的日期回读、以及随包绑定有效性的裁决——都不是本轮可以自行关掉的，也不该为了凑绿而改判定。
+
+### exact-SHA CI 证据（0108ec8b，run 39294943304）
+
+结论 `failure`；触发 `pull_request`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；
+红作业：aggregate / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+未发言步骤：（无）——一个作业可以在第一个步骤就红掉，
+把后面装着其余套件的步骤整体跳过，于是"基线红不见了"是读数缺席而不是问题消失。
+红作业里点名的失败测试共 4 个：4 个属于本轮之前就存在的基线
+（test_deepseek_harness_keeps_its_older_dated_readback、test_regenerating_the_record_is_idempotent_apart_from_the_timestamp、test_the_pinned_registry_is_the_one_the_commit_carries、test_the_shipped_bindings_are_valid），本轮新增 0 个（零回归）。
+基线里本 run 没有发言的项：（全部发言过）。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中账本派生四件已随派生审计重发而消失，
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树有 1 处未提交改动。这一 head 只含路线图与判决文档（表格补第四列、NEXT 补两条实测代价）。preflight 绿、治理批红名单仍是四项既有基线、`observer` success，本轮新增 0。
+
+这条链到此的诚实读法：每一个被推送的 head 的判决都由"下一次推送"记录下来，所以最新那个 head 的判决天然是欠着的——本轮把欠的那一段读完了（run 39294943304，红名单四项基线、新增 0），并把它写在这里；下一轮从它自己产生的 head 继续这个错位，而不是假装链条已经闭合。

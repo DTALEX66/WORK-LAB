@@ -45,10 +45,16 @@
   之后才能撤掉 `apps/observer/frontend/src/contractConformance.ts` 里对 `artifactHandlesSummary.refused`
   的豁免行。这是**跨模块**改动（生产者在 workflow-assistance 侧），需要一张显式跨模块任务卡。
 - 把逐泳道的**浏览器扫掠**接进 CI 作业：`scripts/audit/text_legibility_via_cdp.py` 的算术与判定已由
-  `tests/ci/test_text_legibility_gate.py`（52 例）在 CI 里钉住，但它启动真浏览器量已构建产物的那一步不在任何
+  `tests/ci/test_text_legibility_gate.py`（56 例）在 CI 里钉住，但它启动真浏览器量已构建产物的那一步不在任何
   作业里（CI 的浏览器步骤跑的是 `scripts/audit/topbar_geometry_via_cdp.py`）；
   `scripts/audit/evidence_handles_render_via_headless_chromium.py` 同样只是本机取证。接入会影响共享管道
-  （需要浏览器与时长预算），等 owner 点头再做。
+  （需要浏览器与时长预算），等 owner 点头再做。时长代价已有实测：一趟两主题 × 31 泳道（含逐屏滚动）
+  本机 46 秒，不是"接不起"的量级。
+- 扫掠的**采样预算**要按泳道内容量提高：现在每泳道最多 16 次视口级采样、每区域最多 6 站，
+  实测一趟报出 sampled 2,933 / present 8,006、sweep_stops 298/564，也就是全库只看到约 37% 的叶子文本；
+  把手泳道实有 200 行 / 1,200 个 `data-origin` 格 / 23,031px 列表，其中被采到的只有 143 个节点。
+  分母已经由仪器自己报出（`sampled_nodes_stay_within_the_measured_population`），
+  剩下的问题是把预算提到能覆盖，代价是作业时长——先由 owner 定"地板/AA 要覆盖到每一行"是不是本轮标准。
 
 NEXT 不是实施承诺；启动任一项仍需用户明确 Task Grant 和独立验收。
 
