@@ -346,6 +346,7 @@ class AllViewsVerdictTests(unittest.TestCase):
         return {"lane": lane, "error": None, "theme": "dark", "pageBackground": WHITE, "nodes": nodes,
                 "coverage": {"atTop": max(1, len(nodes) // 2), "afterScroll": len(nodes),
                              "scrolledRegions": 1, "scrollWidth": 900, "innerWidth": 900,
+                             "presentNodes": len(nodes) + 6, "sweepStopsUsed": 1, "sweepStopsNeeded": 2,
                              "scrollHeight": 2400, "innerHeight": 820}}
 
     @staticmethod
@@ -370,6 +371,38 @@ class AllViewsVerdictTests(unittest.TestCase):
         self.assertFalse(check["pass"])
         self.assertIn("lane4", check["detail"])
         self.assertFalse(v["passed"])
+
+    def test_a_lane_that_omits_the_population_is_not_a_scanned_lane_either(self) -> None:
+        """`presentNodes` is the denominator of every sampled count on this rail. Without it, "2,933 nodes
+        measured, 0 below the floor" reads as full coverage even when a 23,031px list was sampled for 143
+        nodes, which is exactly what the evidence lane looked like on 2026-10-19."""
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        del views[6]["coverage"]["presentNodes"]
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        check = checks_of(v)["coverage_was_reported"]
+        self.assertFalse(check["pass"])
+        self.assertIn("lane6", check["detail"])
+
+    def test_sampling_more_text_than_the_page_contains_convicts_the_harvest(self) -> None:
+        """A lane cannot hold fewer leaf texts than the sweep measured: a merge or dedup that double-counts
+        surfaces here instead of as a suspiciously large node count."""
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        views[3]["coverage"] = {**views[3]["coverage"], "presentNodes": 3}
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        check = checks_of(v)["sampled_nodes_stay_within_the_measured_population"]
+        self.assertFalse(check["pass"])
+        self.assertIn("lane3", check["detail"])
+        self.assertFalse(v["passed"])
+
+    def test_a_clean_sweep_still_says_what_it_sampled_versus_what_exists(self) -> None:
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        v = legibility.views_verdict("dark", self.collected(lanes))
+        check = checks_of(v)["sampled_nodes_stay_within_the_measured_population"]
+        self.assertTrue(check["pass"], json.dumps(v["checks"], ensure_ascii=False))
+        for token in ("sampled=", "present=", "sweep_stops="):
+            self.assertIn(token, check["detail"])
 
     def test_horizontal_overflow_is_named_per_lane_at_this_width(self) -> None:
         lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]

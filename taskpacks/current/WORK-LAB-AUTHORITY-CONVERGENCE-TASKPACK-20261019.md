@@ -539,10 +539,15 @@ What the sweep does *not* cover, measured rather than assumed: a direct DOM read
 population -- 200 row children, 1,200 `data-origin` cells, a 23,031px-tall list, the capacity line reading
 "投影 200 行 / 上限 200，省略 4912 行" and the first row carrying a real handle path. The sweep sampled 143
 text nodes on that lane, because its per-lane budget is 16 viewport-sized harvest steps and 23,031px at a
-748px viewport needs ~31. So "0 below the floor, 0 AA failures" is a verdict over a sample of that lane's
-rows, not over all 1,200 cells, and the instrument should report sampled-versus-present before anyone reads
-its green as full coverage. Raising the budget or sweeping proportionally to the scroll height is the next
-round's item; the limit is named here so the number cannot quietly become a claim about the whole table.
+748px viewport needs ~31. So "0 below the floor, 0 AA failures" was a verdict over a sample.
+That gap is now the instrument's own problem to state: every lane reports `presentNodes` (the same leaf
+predicate minus the viewport test) and `sweepStopsUsed`/`sweepStopsNeeded`, a lane omitting them is
+convicted by `coverage_was_reported`, and a lane whose sampled count exceeds what the page holds -- a
+double-counting merge -- is convicted by `sampled_nodes_stay_within_the_measured_population`. Re-run against
+the same bundle, both themes: **sampled 2,933 of 8,006 leaf texts, sweep stops 298 of 564**, receipt
+`.project-local/artifacts/standalone-run-20261019/22-legibility-sampling.json`. The rail's green now carries
+its denominator, so nobody can read it as "every row was looked at"; raising the budget to close that 37%
+is a separate decision with a runtime cost, and it is now a number rather than an assumption.
 
 Verification, measured: `npm run typecheck` clean; 77 tests green across the four affected frontend files
 (33 of them the handle contract); `npm run build` ok; `scripts/ci/verify_snapshot_keys_rendered.py` still

@@ -403,6 +403,21 @@ def views_expression(size_key: str) -> str:
     return ("(async () => {\n"
             "  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\n"
             "  const harvest = () => (" + HARVEST_BODY + ");\n"
+            # The denominator the sampled node counts need: the same leaf predicate as the harvest, minus
+            # the viewport-intersection test, so "143 nodes measured" can be read against "1,340 nodes
+            # exist" instead of being mistaken for the whole screen.
+            "  const presentLeaves = () => { let count = 0;\n"
+            "      for (const el of document.querySelectorAll('body *')) {\n"
+            "        const own = Array.from(el.childNodes)\n"
+            "            .filter((n) => n.nodeType === 3 && n.textContent.trim().length);\n"
+            "        if (!own.length) continue;\n"
+            "        const r = el.getBoundingClientRect();\n"
+            "        if (!r.width || !r.height) continue;\n"
+            "        const cs = getComputedStyle(el);\n"
+            "        if (cs.display === 'none' || cs.visibility === 'hidden') continue;\n"
+            "        count += 1;\n"
+            "      }\n"
+            "      return count; };\n"
             "  const keyOf = (n) => [n.path, n.text, n.size, n.weight, n.color].join('|');\n"
             "  const merge = (a, b) => { const seen = new Set(a.map(keyOf)); const out = a.slice();\n"
             "      for (const n of b) { if (!seen.has(keyOf(n))) { seen.add(keyOf(n)); out.push(n); } } return out; };\n"
@@ -428,10 +443,15 @@ def views_expression(size_key: str) -> str:
             "    // straight to the bottom would sample the first and last screens and call the middle covered,\n"
             "    // while an unbounded sweep of 31 lanes would never finish.\n"
             "    let budget = 16;\n"
+            "    let sweepStopsUsed = 0;\n"
+            "    let sweepStopsNeeded = 0;\n"
             "    for (const el of regions) {\n"
             "      const step = Math.max(200, Math.floor(el.clientHeight * 0.8));\n"
-            "      const stops = Math.min(6, Math.max(1, Math.ceil(el.scrollHeight / step)));\n"
-            "      for (let index = 1; index <= stops && budget > 0; index += 1, budget -= 1) {\n"
+            "      const wanted = Math.max(1, Math.ceil(el.scrollHeight / step));\n"
+            "      const stops = Math.min(6, wanted);\n"
+            "      sweepStopsNeeded += wanted;\n"
+            "      for (let index = 1; index <= stops && budget > 0;\n"
+            "           index += 1, budget -= 1, sweepStopsUsed += 1) {\n"
             "        el.scrollTop = index * step;\n"
             "        await sleep(35);\n"
             "        nodes = merge(nodes, harvest().nodes);\n"
@@ -443,6 +463,8 @@ def views_expression(size_key: str) -> str:
             "        firstText: (top.nodes.length ? top.nodes[0].text : null),\n"
             "        pageBackground: top.pageBackground, nodes: nodes,\n"
             "        coverage: { atTop: top.nodes.length, afterScroll: nodes.length, scrolledRegions: regions.length,\n"
+            "            presentNodes: presentLeaves(), sweepStopsUsed: sweepStopsUsed,\n"
+            "            sweepStopsNeeded: sweepStopsNeeded,\n"
             "            scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth,\n"
             "            scrollHeight: document.documentElement.scrollHeight,\n"
             "            innerHeight: window.innerHeight } });\n"
@@ -503,11 +525,31 @@ def views_verdict(theme: str, collected: dict, size: int | None = None,
     unscrolled = []
     uncovered = [view["lane"] for view in views
                  if not all(key in (view.get("coverage") or {})
-                            for key in ("atTop", "afterScroll", "scrolledRegions", "scrollWidth"))]
+                            for key in ("atTop", "afterScroll", "scrolledRegions", "scrollWidth",
+                                        "presentNodes", "sweepStopsUsed", "sweepStopsNeeded"))]
     add("coverage_was_reported", not uncovered,
         f"lanes_without_coverage={json.dumps(uncovered[:8])} -- the scroll sweep and the overflow reading "
         "come from the same harvest script, so a lane that reports neither means the below-the-fold "
         "population went unmeasured again")
+    # A sampled count without its denominator invites the wrong reading: "2,933 nodes measured, 0 below the
+    # floor" sounds like the product was checked when a lane with a 23,031px list was sampled for 143 nodes.
+    # The invariant here is the one that cannot be argued with -- the sweep cannot have measured more leaf
+    # text than the page contains, so a merge or dedup that double-counts convicts itself.
+    sampled_total = sum(len(scored.get(view["lane"]) or []) for view in views)
+    present_total = sum((view.get("coverage") or {}).get("presentNodes") or 0 for view in views)
+    stops_used = sum((view.get("coverage") or {}).get("sweepStopsUsed") or 0 for view in views)
+    stops_needed = sum((view.get("coverage") or {}).get("sweepStopsNeeded") or 0 for view in views)
+    over_sampled = [f"{view['lane']}={len(scored.get(view['lane']) or [])}"
+                    f"/{(view.get('coverage') or {}).get('presentNodes')}"
+                    for view in views
+                    if (view.get("coverage") or {}).get("presentNodes") is not None
+                    and len(scored.get(view["lane"]) or []) > view["coverage"]["presentNodes"]]
+    add("sampled_nodes_stay_within_the_measured_population",
+        present_total > 0 and not over_sampled,
+        f"sampled={sampled_total} present={present_total} sweep_stops={stops_used}/{stops_needed} "
+        f"over_sampled={json.dumps(over_sampled[:6])} -- a lane whose sampled count exceeds the leaf text "
+        "it contains means the harvest double-counted; the under-sampled lanes are named so that a green "
+        "on this rail is read as a verdict over a sample, not over every row")
     for view in views:
         coverage = view.get("coverage") or {}
         width_gap = (coverage.get("scrollWidth") or 0) - (coverage.get("innerWidth") or 0)
