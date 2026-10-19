@@ -522,6 +522,28 @@ directory the build is configured to write, asserts the tracked Vite source root
 explicitly when the bundle is simply not built. Re-planting the original defect in that disposable checkout
 convicts three cases and restores byte-identically.
 
+Re-measured after the split, because "the tests are green" is not "the page still paints" (a rebuilt bundle,
+real Chromium, live backend, both themes, 1280px; the receipt names the bundle it painted,
+`bundleDigest=7626fd5135ac482a…`): 31 views reached, 2,933 text nodes per theme, 0 below the 12px floor,
+0 AA failures, 0 thin views, every lane showing its own content rather than the offline panel, and tone
+components actually on screen (`tag.bg-panel2.text-muted` 48, `tag.info` 14, `tag.ok` 11, `tag.warn` 9) --
+receipt `.project-local/artifacts/standalone-run-20261019/21-legibility-after-split.json`. The below-the-fold
+population is measured, not assumed: all 31 lanes carry scrollable regions (82 regions swept) and every one
+of them gained text nodes once swept -- overview 77→131, environment 48→129, agents 57→139 -- which is what
+the pre-split census could not claim. Paints at the repository's own window sizes, including the 900x600
+floor, are in `.project-local/artifacts/standalone-run-20261019/15-evidence-paint.json`; one capture attempt
+timed out and the receipt records the attempt, not just the retry.
+
+What the sweep does *not* cover, measured rather than assumed: a direct DOM read of the live evidence lane
+(`.project-local/runs/standalone-20261019/probe-rows-clean.txt`) shows the split block does render its
+population -- 200 row children, 1,200 `data-origin` cells, a 23,031px-tall list, the capacity line reading
+"投影 200 行 / 上限 200，省略 4912 行" and the first row carrying a real handle path. The sweep sampled 143
+text nodes on that lane, because its per-lane budget is 16 viewport-sized harvest steps and 23,031px at a
+748px viewport needs ~31. So "0 below the floor, 0 AA failures" is a verdict over a sample of that lane's
+rows, not over all 1,200 cells, and the instrument should report sampled-versus-present before anyone reads
+its green as full coverage. Raising the budget or sweeping proportionally to the scroll height is the next
+round's item; the limit is named here so the number cannot quietly become a claim about the whole table.
+
 Verification, measured: `npm run typecheck` clean; 77 tests green across the four affected frontend files
 (33 of them the handle contract); `npm run build` ok; `scripts/ci/verify_snapshot_keys_rendered.py` still
 `rendered=22 unrendered=0`; the launcher guard 7 passed; the anti-re-index gate
