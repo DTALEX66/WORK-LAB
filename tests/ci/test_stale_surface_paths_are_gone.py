@@ -53,9 +53,13 @@ class LiveTree(unittest.TestCase):
         self.assertGreaterEqual(result["scanned"], MODULE.SCAN_FLOOR,
                                 "a scan below the floor is a blind instrument, not a clean tree")
         self.assertEqual(54, manifest["counts"]["moves"])
-        self.assertEqual(48, len(MODULE.old_patterns(manifest)),
-                         "47 moved paths + 1 forbidden prefix; a missing pattern means the gate "
-                         "stopped seeing a move")
+        # every moved-from path, every deleted archive member and every forbidden prefix must be
+        # in the matcher; a number that cannot be re-derived from the record proves nothing
+        expected = ({move["from"] for move in manifest["moves"] if "/" in move["from"]}
+                    | set(manifest["consolidation"]["deletedPaths"])
+                    | {entry["prefix"] for entry in manifest["forbiddenPrefixes"]})
+        self.assertEqual(len(expected), len(MODULE.old_patterns(manifest)),
+                         "the gate stopped seeing part of the record it is built from")
 
     def test_every_moved_file_lives_at_its_new_path_with_the_recorded_bytes(self) -> None:
         """The hash chain runs root -> archive path -> ZIP member, and every link is checked."""
@@ -152,6 +156,14 @@ class LiveTree(unittest.TestCase):
             self.assertFalse((ROOT / name).exists(), f"{name} reappeared at the repository root")
 
 
+    def test_no_active_surface_names_a_deleted_archive_member(self) -> None:
+        """Live check: the whole active population, not only the synthetic case below."""
+        manifest = MODULE.load_manifest(MANIFEST)
+        result = MODULE.scan(ROOT, manifest)
+        self.assertEqual([], result["findings"], result["findings"][:5])
+        self.assertGreaterEqual(len(manifest["consolidation"]["deletedPaths"]), 56)
+
+
 class SyntheticTree(unittest.TestCase):
     def setUp(self) -> None:
         self.scratch = Path(tempfile.mkdtemp(prefix="stale-paths-", dir=_runtime_root()))
@@ -188,6 +200,19 @@ class SyntheticTree(unittest.TestCase):
         result = MODULE.scan(self.scratch, self.manifest)
         self.assertTrue(any("STALE .project/governance/pointer.json:1" in f
                             for f in result["findings"]), result["findings"])
+
+    def test_a_planted_reference_to_a_deleted_archive_member_is_convicted(self) -> None:
+        """The second half of the owner's instruction: nothing may index onto deleted material.
+
+        The move record's `from` paths say where a document used to live; the consolidation's
+        `deletedPaths` say where it lived just before being deleted. A pointer to either is the same
+        defect, so both are enforced by one matcher.
+        """
+        sample = MODULE.load_manifest(MANIFEST)["consolidation"]["deletedPaths"][0]
+        self._write("docs/current/POINTER.md", f"接手指令见 {sample}\n")
+        result = MODULE.scan(self.scratch, self.manifest)
+        self.assertTrue(any(f.startswith("STALE docs/current/POINTER.md:1") and sample in f
+                            for f in result["findings"]), result["findings"][:3])
 
     def test_a_frozen_original_tree_spelling_is_not_convicted(self) -> None:
         """The guard that makes the whole scope survivable: history keeps its own operands.

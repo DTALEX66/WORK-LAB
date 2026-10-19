@@ -332,12 +332,18 @@ Four allowances expired rather than being loosened: the two `AGENTS.md` named al
 `.project/governance/live-doc-path-exceptions.json`, the two `QUOTED_AS_ABSENT` entries in
 `scripts/audit/normalise_doc_citations.py`, and the two `AGENTS.md` rows in the ratchet baseline. The
 stale-path gate went from 8 allowances to **4** and reports
-`STALE_SURFACE_PATHS_PASS scanned=1289 enforced=48 allowances=4`; the baseline reissued at 293 rows.
+`STALE_SURFACE_PATHS_PASS scanned=1289 enforced=104 allowances=4 taskpacks/current/error-ledger.json=8 tests/ci/test_project_authority_reference.py=2 tests/ci/test_stale_surface_paths_are_gone.py=10 tests/workflow-assistance/test_project_local_citation_audit.py=1`; the baseline reissued at 293 rows.
 `tests/ci/test_stale_surface_paths_are_gone.py` gained a case asserting the four paths are archive members,
 absent from the tree, and named by no entry in the machine index.
 
 Surfaces after this amendment, measured with `git ls-files -z`: **2,548** tracked, `docs/history/` 167 md
 (unchanged -- all four deleted documents lived under `taskpacks/history/`), `taskpacks/history/` **104**,
 `docs/current/` 40 md, `taskpacks/current/` 4, repository root 5 md. The re-index gate reports
-`STALE_SURFACE_PATHS_PASS scanned=1289 enforced=48 allowances=4`, and 106 targeted test cases across eight
+`STALE_SURFACE_PATHS_PASS scanned=1289 enforced=104 allowances=4 taskpacks/current/error-ledger.json=8 tests/ci/test_project_authority_reference.py=2 tests/ci/test_stale_surface_paths_are_gone.py=10 tests/workflow-assistance/test_project_local_citation_audit.py=1`, and 106 targeted test cases across eight
 modules ran green.
+**The gate was extended in the same pass.** `old_patterns()` consumed only the record's `from` paths, so a
+pointer at a document that now survives only as an archive member was invisible. The consolidation's 56
+`deletedPaths` are enforced too (48 -> **104** patterns), the required gate grew from 16 to **18** cases --
+one plants a deleted-member path and must convict, one asserts the live tree names none -- and the
+population test recomputes its expectation from the record instead of a literal, so growing the record
+cannot leave the gate describing an older world.

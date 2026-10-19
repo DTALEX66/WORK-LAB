@@ -2,8 +2,8 @@
   "schemaVersion": "work-lab/frozen-surface-manifest/v1",
   "root": "docs/history/archive",
   "normative": false,
-  "generatedFromCommit": "752d8a4b63213fa5f4192b7beee2deace68cebf7",
-  "generatedFromTree": "ccc218055244fd6c7f6694519a6e16a939d67c3c",
+  "generatedFromCommit": "983bf571a1184a2fb16de3abe4f877133e56668f",
+  "generatedFromTree": "ebc237154be0f55bab83dfc2efacefee81283578",
   "totals": {
     "files": 158,
     "bytes": 2304018

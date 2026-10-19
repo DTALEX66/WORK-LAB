@@ -428,8 +428,13 @@ sha256 `1b1effdf7f80128b4007181dbc7fdb1af01d0776db9ce5f26eb8199d93503347`。
 `scripts/audit/normalise_doc_citations.py` 的两条 QUOTED_AS_ABSENT、
 棘轮基线里 AGENTS.md 的两行——四处都随旧指向消失而失效，按“许可不再被使用即红”的规则删除；
 防再索引门的豁免从 8 条收敛到 **4 条**，实测
-`STALE_SURFACE_PATHS_PASS scanned=1289 enforced=48 allowances=4`，棘轮基线 295 → **293 行**。
+`STALE_SURFACE_PATHS_PASS scanned=1289 enforced=104 allowances=4 taskpacks/current/error-ledger.json=8 tests/ci/test_project_authority_reference.py=2 tests/ci/test_stale_surface_paths_are_gone.py=10 tests/workflow-assistance/test_project_local_citation_audit.py=1`，棘轮基线 295 → **293 行**。
 `docs/history/archive/MOVED-PATHS-20261019.json` 的 consolidation 段同步记下 `keptInPlace={}` 与 12 条 `removedInto`，
 必门新增一例：断言这四份既在归档成员里、又不在树上，且机器索引里再也找不到它们的路径。
 
-**§13 之后的面计数（`git ls-files -z` 实测）**：受跟踪 **2,548**；`docs/history/` md **167**（第二批 4 份全在 `taskpacks/history/`，故此项不变）；`taskpacks/history/` **104**；`docs/current/` md **40**；`taskpacks/current/` **4**；仓库根 md **5**。防再索引门 `STALE_SURFACE_PATHS_PASS scanned=1289 enforced=48 allowances=4`。
+**§13 之后的面计数（`git ls-files -z` 实测）**：受跟踪 **2,548**；`docs/history/` md **167**（第二批 4 份全在 `taskpacks/history/`，故此项不变）；`taskpacks/history/` **104**；`docs/current/` md **40**；`taskpacks/current/` **4**；仓库根 md **5**。防再索引门 `STALE_SURFACE_PATHS_PASS scanned=1289 enforced=104 allowances=4 taskpacks/current/error-ledger.json=8 tests/ci/test_project_authority_reference.py=2 tests/ci/test_stale_surface_paths_are_gone.py=10 tests/workflow-assistance/test_project_local_citation_audit.py=1`。
+**门的一次实质加强（同轮）**：`old_patterns()` 原先只吃移动记录里的 `from`，也就是只盯"移动前的旧路径"。
+现在把 `consolidation.deletedPaths`（56 条被汇总删除后的目的地）一并纳入判定，因此"指向一份只剩归档成员的文件"
+与"指向移动前的旧位置"同罪——这正是"防止再次索引路径到旧资料上"的下半句。判定分支 48 → **104 条**，
+必门 16 → **18 例**：新增一条"种入已删成员路径必须判红"，一条"活树全量不得点名任何已删成员"；
+population 断言改成按记录本身重算期望值，不再写死数字，免得清单扩充时门自己先失真。

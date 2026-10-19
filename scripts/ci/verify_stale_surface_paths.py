@@ -55,6 +55,9 @@ def load_manifest(path: Path) -> dict:
 def old_patterns(manifest: dict) -> list[str]:
     """Enforced old paths plus declared old directory prefixes, longest first."""
     values = [move["from"] for move in manifest["moves"] if "/" in move["from"]]
+    # The deleted destinations belong here too: an index that points at a document which now only
+    # exists as an archive member is the same failure the move record exists to catch.
+    values += manifest.get("consolidation", {}).get("deletedPaths", [])
     values += [entry["prefix"] for entry in manifest.get("forbiddenPrefixes", [])]
     return sorted(set(values), key=len, reverse=True)
 
