@@ -272,3 +272,15 @@ changes in §11/§12. The test is not registered in CI -- neither `.github/workf
 `.project-local/runs/...` directories and rewrites the tracked record; one run this round corrupted that
 record and it was restored by bytes. Owner decision needed: reissue the derived audits in the documented
 order together with a runtime-residue cleanup, or register the gate, or record it as a local observation.
+**First exact-SHA CI verdict after this amendment, and the fix:** pushing `249e5fea` made
+`work-lab-gate` run 39226565397 report `aggregate=failure`; the only red module was
+`workflow-assistance` -> `test_the_shipped_inventory_describes_the_tree` (gate-plan,
+supply-chain-security, integration, observer and token-monitor all success). Cause: the derived
+inventory `docs/audits/TOOL_INVENTORY_2026-10-07.json` stores each tool's git-index blob sha256, and
+nine `scripts/audit|maintenance` tools edited by §11/§12 still carried their old hashes. Fixed by the
+tool's own ordering rule (ERR-151: stage, then re-measure, then commit): after staging,
+`scripts/audit/tool_inventory_readback.py` produced `trackedTools=77 withLedgerPromise=19
+referencedSomewhere=77 unclaimed=0` and `tests/workflow-assistance/test_tool_inventory_coverage.py`
+re-ran `Ran 12 tests / OK`. The new stale-path gate is outside that inventory's scope (it covers
+`scripts/audit` and `scripts/maintenance` only); it reaches CI because
+`tests/ci/test_stale_surface_paths_are_gone.py` is discovered by `scripts/ci/run_root_governance_suite.py`.

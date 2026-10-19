@@ -373,3 +373,14 @@ PROMPT-PACK / CLOSEOUT / START-ANY-AGENT / AGENT-PROMPT，且位于 `docs/histor
 并重写上面那份受跟踪记录；本轮运行过一次，把记录改坏后按字节 `git checkout --` 还原（还原后该测试回到 1 红而不是 2 红）。
 **因此本轮不再重跑它**，把它作为 owner 决定项登记：要么按既定顺序重发派生审计（先 `scripts/audit/ledger_regression_command_targets.py --apply`
 再 `scripts/audit/triage_unbound_ledger_records.py`，并连带清理运行残留），要么把它登记进 CI 或明确降级为本地观察。
+**exact-SHA CI 的第一次判决与修法（2026-10-19）**：推送 `249e5fea` 后 `work-lab-gate` run 39226565397 判
+`aggregate=failure`，唯一红模块是 `workflow-assistance` 的 `test_the_shipped_inventory_describes_the_tree`
+（gate-plan / supply-chain-security / integration / observer / token-monitor 皆 success）。
+原因不在本轮改动本身，而在派生清单落后：`docs/audits/TOOL_INVENTORY_2026-10-07.json` 存的是每件工具的
+git-index blob sha256，本轮改过 9 份 `scripts/audit|maintenance` 工具后清单仍是旧哈希。
+修法按该工具自己的顺序纪律（ERR-151：先 `git add`、后重测清单、再提交）：暂存后重跑
+`scripts/audit/tool_inventory_readback.py`，得 `trackedTools=77 withLedgerPromise=19 referencedSomewhere=77 unclaimed=0`，
+`tests/workflow-assistance/test_tool_inventory_coverage.py` 复跑 `Ran 12 tests / OK`。
+新门 `scripts/ci/verify_stale_surface_paths.py` 不在该清单口径内（清单只覆盖 `scripts/audit` 与
+`scripts/maintenance`），它的 CI 覆盖来自 `tests/ci/test_stale_surface_paths_are_gone.py` 被
+`scripts/ci/run_root_governance_suite.py` 按 glob 发现。
