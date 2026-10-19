@@ -135,8 +135,8 @@ overclaim.
 - `services/execution-federation/hermes_adapter.py` (product fix: remove the unimplemented `Capability.RESUME` declaration)
 - `.project-local/runs/authority-convergence-20261019/minimal_loop_readback.py` (new, adapter readback)
 - `.project-local/artifacts/authority-convergence-20261019/minimal-loop/01-acp-honesty.out`, `02-federation-tests.out`, `03-nf22-tests.out`, `04-readback.out` (new receipts)
-- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT.md） (freeze banner)
-- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-QODER-SESSION.md） (freeze banner)
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT） (freeze banner)
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-QODER-SESSION） (freeze banner)
 - `docs/current/workflow-assistance/workflow/active-authority-index.md` (current pointer)
 - `docs/current/workflow-assistance/workflow/project-definition.md` (positioning supplement)
 - `docs/current/DOCUMENT-CENSUS.md` (increment note)
@@ -151,7 +151,7 @@ overclaim.
 - `projections/agents/source/work-lab-workflow/SKILL.md` (default skill: new positioning, problem-loop state separation, current taskpack and freeze rule; v1.2.0)
 - `.agents/skills/work-lab-workflow/SKILL.md` (regenerated projection, content hash updated)
 - `config/skills-inventory.json` (regenerated: 8 of 19 stale hashes corrected from disk/HEAD, including this skill; no skill added or removed)
-- `docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md`, `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-UI-L10B.md）, `docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md`, `docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md`, `docs/history/archive/root-ui-records-20261019/UI_REFERENCE_MANIFEST.md`, `docs/history/archive/root-ui-records-20261019/VISUAL_QA_REPORT.md` (disposition banner authority chain only; body bytes outside the banner unchanged)
+- `docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md`, `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-UI-L10B）, `docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md`, `docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md`, `docs/history/archive/root-ui-records-20261019/UI_REFERENCE_MANIFEST.md`, `docs/history/archive/root-ui-records-20261019/VISUAL_QA_REPORT.md` (disposition banner authority chain only; body bytes outside the banner unchanged)
 
 ## 8. Verification
 
@@ -218,7 +218,7 @@ citations are deliberately unchanged.
 `tests/workflow-assistance/test_path_text_is_one_predicate.py` no longer depend on a root UI
 record: the control-service case now uses root-level `NOTICE.md` (`docs/` is a non-diffable root),
 and the predicate case uses the nested archived path and asserts the nested relative result.
-`test_refs_surface_policies.py` and `test_root_document_dispositions.py` use `NOTICE.md` as the
+`tests/workflow-assistance/test_refs_surface_policies.py` and `tests/workflow-assistance/test_root_document_dispositions.py` use `NOTICE.md` as the
 non-authority example.
 
 **Re-index prevention.** `scripts/ci/verify_stale_surface_paths.py` reads the move map and fails
@@ -233,3 +233,31 @@ consumer files listed in `docs/history/archive/MOVED-PATHS-20261019.json`;
 the four test files named above; `scripts/ci/verify_stale_surface_paths.py` (new);
 `tests/ci/test_stale_surface_paths_are_gone.py` (new); `docs/current/DOCUMENT-CENSUS.md`
 (§4, §7, §9, §10 and new §11); and this section.
+
+## 12. Amendment 2026-10-19 (second) — consolidate, then delete (user directive)
+
+**Directive (verbatim):** “旧交接和一些提示词的资料 汇总到一起归档后 就删除了吧”. This overrides the
+standing "archive, never delete" convention for the named class only, and only because the bytes
+are proved to survive elsewhere first.
+
+Measured result: 91 tracked files matched the handoff/prompt name patterns inside
+`docs/history/` and `taskpacks/history/`; **52** were consolidated into
+`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` (484,845 B of content, 263,031 B archive,
+sha256 recorded in `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json`) and then
+`git rm`'d; **4** were kept because a machine pointer or a piece of code reads them by path
+(`staticHandoffViews[].entry_record`, `frozenTaskCards[].path`, the citation auditor's fixture name,
+and `scripts/ci/generate_current_state.py`'s source list); **35** were excluded by rule -- the byte-frozen
+`original-tree/**`, owner inbound records and recovered last copies, imported `session-history/**`,
+and the `reports/` + `knowledge-staging/` evidence and third-party-copy surfaces.
+
+Proof before deletion: the manifest records `path`/`bytes`/`sha256`/`crc32` per member, the builder
+reopened the archive and compared each member against both its own recorded hash and the bytes on
+disk (52/52), and only then did `git rm` run. Recovery is either unzipping at the repository root
+or reading the file from Git history, since these were committed before removal.
+`tests/ci/test_stale_surface_paths_are_gone.py` asserts the archive's recorded sha256 against the
+shipped bytes, every member's hash/size/CRC32, and that no member is still tracked or still on disk.
+
+25 live citations were repointed to the archive with the member named in place, and the generated
+owner-material index now routes its "UI 历史交接" row to the manifest. Post-deletion surfaces,
+measured with `git ls-files -z`: 2,550 tracked, `docs/history/` 167 md, `taskpacks/history/` 108,
+`docs/current/` 40 md, `taskpacks/current/` 4, repository root 5 md.

@@ -12,8 +12,8 @@
 > 产品修复一处`services/execution-federation/hermes_adapter.py`，未提交、未跑exact-SHA CI、未提交AAOS候选。
 > UI包与`docs/history/archive/ui-priority-20261009/`交接均为SUPERSEDED_20261019/FROZEN，仅作历史证据（2026-10-19 整体归档）；手机端不做。
 > 以下2026-10-09/10-18各行是当时快照，保留供追溯；现行任务以OPEN与两个治理索引为准。
-> 2026-10-09范围切换（历史快照）：唯一CURRENT为`taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，完整交接在`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT.md）。
-> **2026-10-18 本轮交接（历史快照）**：`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-SESSION.md）（`main` = `fae41c4d`）。
+> 2026-10-09范围切换（历史快照）：唯一CURRENT为`taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，完整交接在`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT）。
+> **2026-10-18 本轮交接（历史快照）**：`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-SESSION）（`main` = `fae41c4d`）。
 > 旧文档数量/状态/建议只描述此前盘点，现行任务以OPEN为准；UI已冻结、手机端不做。
 > 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
 
@@ -45,8 +45,8 @@
 | `docs/current/` | 40 md（2026-10-19 归档后；2026-10-10 记 43） | 2026-10-19 | 当前工作文档 | 是（受引用门禁） |
 | `docs/decisions/` | 18 | 2026-10-07 | ADR、`docs/decisions/global-execution-standard.md`、`docs/decisions/instruction-precedence.md` | 是 |
 | `docs/future/` | 3 | 2026-10-08 | 蓝图与覆盖投影（含生成物） | 计划 |
-| `taskpacks/history/` | 146（2026-10-19 归档后；原记 81） | 2026-10-19 | 冻结历史 | **非规范** |
-| `docs/history/` | 180 md（2026-10-19 归档后；原记 115） | 2026-10-19 | 冻结历史 + `docs/history/archive/` + `docs/history/archive/recovered-originals/` | **非规范** |
+| `taskpacks/history/` | 108（2026-10-19 归档 146 → 汇总删除 38 后） | 2026-10-19 | 冻结历史 + §12 汇总归档 | **非规范** |
+| `docs/history/` | 167 md（2026-10-19 归档 180 → 汇总删除 14 后；原记 115） | 2026-10-19 | 冻结历史 + `docs/history/archive/` + `docs/history/archive/recovered-originals/` | **非规范** |
 | `reports/` | 527 | 2026-10-06 | 审计证据（`reports/audit-archive/` 479、`reports/audit-evidence/` 34） | 证据 |
 | `knowledge-staging/` | 224 | **2026-09-23** | 边界标记为 `HISTORY_ONLY_CONVERGE`，非活动模块 | 冻结候选 |
 | `90-archive/` | 1 | **2026-09-24** | 只剩边界标记文件；内容 2026-09-23 已并入 `docs/history/` | 冻结候选 |
@@ -270,7 +270,7 @@
 ## 10. 2026-10-18 三面复量与三策略执行（WUI-17 收尾）
 
 - **三面复量（与活门同一条规则）**：直接 import `scripts/ci/verify_authority_index_paths.py` 的 `check()`，不另写解析器；扫描 `reports/`、`knowledge-staging/`、仓库根全部受跟踪 md，得 **662 面 / 4,168 条引用 / 3,257 断**（2026-10-09 记的 397/4,153/3,262 是当时口径与树，今天不沿用）。按来源拆：外购技能副本 **559 / 3,327 / 2,871**；日期化归档 **70 / 329 / 243**；其余（原称"当下仍在写"）**33 / 512 / 143**。回执 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`。
-- **"当下仍在写"这一档按证据重分类，不再当作活引用去改**：143 条逐面归因 = 五份根级 `historical-non-normative` 记录 93 条（`docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md` 8、`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-UI-L10B.md） 3、`docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md` 2、`docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md` 53、`docs/history/archive/root-ui-records-20261019/UI_REFERENCE_MANIFEST.md` 27）+ `AGENTS.md` 6 条（那 6 条正是"仓库根没有 `skills/`、`bin/` 目录"这句话本身[no-tree-claim DELETED ref=skills/][no-tree-claim DELETED ref=bin/]）+ 日期化报告 44 条。六份根级历史文件的正文被 `scripts/ci/verify_root_document_dispositions.py` 按字节冻结，日期化报告改写即让记录说假话；因此这一档与日期归档同用棘轮。"逐条清"在这里的正确落地是**逐条归因并锁死**，不是改历史。
+- **"当下仍在写"这一档按证据重分类，不再当作活引用去改**：143 条逐面归因 = 五份根级 `historical-non-normative` 记录 93 条（`docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md` 8、`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-UI-L10B） 3、`docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md` 2、`docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md` 53、`docs/history/archive/root-ui-records-20261019/UI_REFERENCE_MANIFEST.md` 27）+ `AGENTS.md` 6 条（那 6 条正是"仓库根没有 `skills/`、`bin/` 目录"这句话本身[no-tree-claim DELETED ref=skills/][no-tree-claim DELETED ref=bin/]）+ 日期化报告 44 条。六份根级历史文件的正文被 `scripts/ci/verify_root_document_dispositions.py` 按字节冻结，日期化报告改写即让记录说假话；因此这一档与日期归档同用棘轮。"逐条清"在这里的正确落地是**逐条归因并锁死**，不是改历史。
 - **三策略已机器化**：`.project/governance/refs-surface-policies.json`（面级声明 + 386 行基线）与 `scripts/ci/verify_refs_surface_policies.py`。门同时拒绝"新增断链"与"基线里已修好的条目未重发基线"，外购副本声明设 500 面下限防失效。现态 `REFS_SURFACE_POLICIES_PASS surfaces=662 refs=4168 external_surfaces=559 ratchet_surfaces=103 ratchet_baseline=386 new=0 fixed=0`；必门 `tests/workflow-assistance/test_refs_surface_policies.py` **8 例全绿**，含两条真文件伪证（删一条基线→`NEW_BROKEN` 点名该行；加一条假基线→`FIXED_BUT_BASELINE_STALE` 点名该行）。
 - **账本行数 163 与 183 的差集已逐条归因**：在 `taskpacks/current/OPEN-TASK-REGISTER.md` 修订 `9488cf9707`（2026-10-08）上复量，163 = 匹配 `^\| <id> \| P<digit>` 的任务行；183 = 196 个表格行 − 7 条分隔行 − 6 条表头行。20 条差额逐类为：**8** 条没有优先级列（SKILLS-…、GATE-RECHECK-…、TOOLCHAIN-PROBE-…、U19-MSVC-…、U19-P0C-…、UI-CHECK-…、SPILL-…、HANDOFF-…）、**4** 条来自另一张"层/处置"表、**6** 条优先级单元格不是 `P<digit>`（D1 ENV、D2 USER AUTH、C2/C3/O1/O2 OPTIONAL）、**2** 条首列含空格（`AG-01..04 gate`、`AG-05..07 gate`）。现行账本（HEAD `0369d349`）为 **25 条任务行 / 27 条表格行 / 1 条分隔行**，旧口径两数都不再适用。
 - **`.project-local/` 未跟踪 md 已测**：**1,269 个 md / 16,329,118 B**；该根在 `.gitignore:42` 整体忽略，`git status` 对其中 md 的未跟踪计数为 0。
@@ -300,7 +300,7 @@
 | 两份 workflow 历史记录 | 2 | `docs/history/archive/workflow-assistance/handoffs/` 与 `docs/history/archive/workflow-assistance/audit/`（带日期文件名） |
 
 **保留在明面上的当前位置**：`taskpacks/current/` 只剩 4 份（`OPEN-TASK-REGISTER.md`、`README.md`、
-`error-ledger.json`、`WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`）；`docs/current/` 剩 40 份
+`taskpacks/current/error-ledger.json`、`taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`）；`docs/current/` 剩 40 份
 （以 OPEN、两个治理索引与收敛报告/路线图为核心）。
 
 **防再次索引（机器控制）**：
@@ -326,4 +326,38 @@
 `docs/current/workflow-assistance*`、`docs/decisions/`、`docs/future/`、Observer 设计合同与测试夹具、
 `packages/client-neutral-core/scripts/` 中的路径常量、`scripts/ci|audit|maintenance` 的锚点与默认目标。
 **故意不改**：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/**`（`-text -diff` 冻结原字节）、
-历史记录正文中的旧路径（它们是被引用的历史对象）、`error-ledger.json` 的既有记录。
+历史记录正文中的旧路径（它们是被引用的历史对象）、`taskpacks/current/error-ledger.json` 的既有记录。
+
+## 12. 2026-10-19 汇总后删除（用户指示：旧交接与提示词资料归档后删除）
+
+**指示原文**：“旧交接和一些提示词的资料 汇总到一起归档后 就删除了吧”。这条指示取代
+`docs/current/workflow-assistance/workflow/active-authority-index.md` 第 4 节“归档操作＝移入历史，
+**不删除**”的默认约定：删除只适用于**先汇总、后验证**的一类文件，且只由 owner 本次指示授权。
+
+**范围按名字与位置判定，不靠记忆**：`git ls-files` 中文件名含 HANDOFF / NEXT-AGENT-PROMPT /
+PROMPT-PACK / CLOSEOUT / START-ANY-AGENT / AGENT-PROMPT，且位于 `docs/history/` 或
+`taskpacks/history/`。命中 91 份，其中：
+
+| 处置 | 数量 | 依据 |
+| --- | --- | --- |
+| 汇总后删除 | **52** | 内容 484,845 B → 单一归档 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` 263,031 B，sha256 `3bd841513b4623781068…`（全值见清单） |
+| 具名保留（机器指针在读） | **4** | `taskpacks/history/pre-convergence-20261019/HERMES-UPDATE-HANDOFF-20260927.md`（`staticHandoffViews[].entry_record`）、`taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md`（`frozenTaskCards[].path`）、`taskpacks/history/pre-convergence-20261019/SESSION-HANDOFF-P0C-20261006.md`（`scripts/audit/project_local_citation_audit.py` 与其测试的夹具名）、`taskpacks/history/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md`（`scripts/ci/generate_current_state.py` 的来源清单） |
+| 规则性排除 | **35** | `taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/**`（`-text -diff` 原字节冻结树）、`docs/history/owner-inputs/**` 与 `docs/history/archive/recovered-originals/**`（owner 入库原件，部分是仅存副本）、`docs/history/archive/session-history/**`（导入的多项目材料）、`reports/**` 与 `knowledge-staging/**`（证据面与外购副本） |
+
+**逐件证明在先，删除在后**：清单 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json`
+对每个成员记 `path`/`bytes`/`sha256`/`crc32`；构建脚本把 ZIP 重新打开、逐成员读回并把自己的哈希
+与磁盘字节三方比对，52/52 全对才执行 `git rm`。恢复路径两条：在项目根解压该 ZIP，或从 Git 历史
+取回（这些文件在删除前已提交）。
+
+**删除后不留在明面上的东西**：52 条旧路径在受跟踪树中全部消失（必门逐条断言
+`path not in git ls-files` 且文件不存在）；`docs/history/archive/FROZEN-MANIFEST.json` 重生成
+（156 条 / 2,287,740 B，含 ZIP 与清单本体），所以这两个新产物从今天起也是字节冻结的。
+
+**受影响的活引用**：25 处改指到 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` 并就地写出
+成员名；`docs/history/owner-inputs/INDEX.md` 由生成器重生成，其“UI 历史交接”行改指汇总清单。
+默认加载链引用门随后判红一次：我在括号里把成员名连着扩展名一起写了出来，被引用扫描当成一条从根打不开的裸名引用，
+去掉扩展名后归零——记录这一点是因为**它是我自己造出来的缺陷，由门先看见**，不是工具误报。
+
+**删除后的面计数（`git ls-files -z` 实测）**：受跟踪文件 **2,550**（删除前 2,602）；
+`docs/history/` md **167**；`taskpacks/history/` **108**；`docs/current/` md **40**；
+`taskpacks/current/` **4**；仓库根 md **5**。§2 表已按这组数字更新。

@@ -2,11 +2,11 @@
   "schemaVersion": "work-lab/frozen-surface-manifest/v1",
   "root": "docs/history/archive",
   "normative": false,
-  "generatedFromCommit": "6b6678c309736da90b99d5a61b06c2c76b367627",
-  "generatedFromTree": "a6882a2ea42911c835397c3ddfbad4863cd38d1b",
+  "generatedFromCommit": "c76f5e2e465f760ae4dc5ed40ffa04327321a512",
+  "generatedFromTree": "53f15a2255275b981333a7c54ee03e1d00261f82",
   "totals": {
-    "files": 168,
-    "bytes": 2406936
+    "files": 158,
+    "bytes": 2302110
   },
   "files": [
     {
@@ -15,9 +15,19 @@
       "sha256": "f7cc36f56c8412aee85388d8f50a1bad4b305458c32e134d0eec91ea16cac32c"
     },
     {
+      "path": "docs/history/archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json",
+      "bytes": 14239,
+      "sha256": "fcfc08217252bca3373858729a7459cc04e8ab3a3cd07cdfaa831b59cbd76541"
+    },
+    {
+      "path": "docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip",
+      "bytes": 131,
+      "sha256": "ebc039eec8736e4016aa80428b06cd0e215aec548e5230f869eca6f2c5e0c18d"
+    },
+    {
       "path": "docs/history/archive/MOVED-PATHS-20261019.json",
-      "bytes": 26051,
-      "sha256": "967d2894027dbd8bdb87e992f1b56061c042900c11248fdb608f726a2628f7e1"
+      "bytes": 27568,
+      "sha256": "de61ca3aaf26eb3bd47e5178d29ecb19ebcf8d05f8ce278a5a8966d1825b556c"
     },
     {
       "path": "docs/history/archive/recovered-originals/RECORD-20261008/00_总控启动提示词.md",
@@ -238,11 +248,6 @@
       "path": "docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md",
       "bytes": 6367,
       "sha256": "5ce48c510e2a425ab321ad8b7d31738c2bef3eb95d21e8aeecc83ca9332f5b3c"
-    },
-    {
-      "path": "docs/history/archive/root-ui-records-20261019/HANDOFF-UI-L10B.md",
-      "bytes": 13308,
-      "sha256": "088491cfca1e3c52fa6d037ecc6e1ba0db287707e5f54cb2557a206cb5627789"
     },
     {
       "path": "docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md",
@@ -650,21 +655,6 @@
       "sha256": "14ca1173eeabcf0bcb28b1a6da0a8f392873858148668301028d646c42e58ea5"
     },
     {
-      "path": "docs/history/archive/ui-priority-20261009/HANDOFF-20260713-GATE-AND-FUTURE-PLAN.md",
-      "bytes": 30281,
-      "sha256": "285c392803a5ac037e22327e4881d5047ce9f02d418f551a37878144fd91b9ee"
-    },
-    {
-      "path": "docs/history/archive/ui-priority-20261009/HANDOFF-20261018-QODER-SESSION.md",
-      "bytes": 17831,
-      "sha256": "8fc7e64e5e14d87194452c019aa63179e61f9456fc745eb0882427246a8c968a"
-    },
-    {
-      "path": "docs/history/archive/ui-priority-20261009/HANDOFF-20261018-SESSION.md",
-      "bytes": 12281,
-      "sha256": "a47461f39e5cecf18f0f5346d7770b35ef3544330ed18bd2735fb527f5137044"
-    },
-    {
       "path": "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.csv",
       "bytes": 60818,
       "sha256": "fb4c32b2c22c4e6f20977266a1311d5fe7af8c0c83d3b256a3ec366adacee6ae"
@@ -673,11 +663,6 @@
       "path": "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
       "bytes": 475770,
       "sha256": "16b1a375dfa1c724ec402536f48b6ef16b6dcf0384d21b2f14bd8d25836e99d2"
-    },
-    {
-      "path": "docs/history/archive/ui-priority-20261009/NEXT-AGENT-PROMPT.md",
-      "bytes": 13850,
-      "sha256": "d058e35bba49859aaf79073354cf5b4cc15d1e5330ffbb3add00a0aeb10b8af2"
     },
     {
       "path": "docs/history/archive/ui-priority-20261009/SOURCE-TASK-MAPPING.json",
@@ -701,8 +686,8 @@
     },
     {
       "path": "docs/history/archive/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
-      "bytes": 23131,
-      "sha256": "22e51ecbf3d6d04d48a55beff3297ea176445064e50c6e86ee666df4a7f241a7"
+      "bytes": 23259,
+      "sha256": "1d4e875643ea7df8d23f3eecbf8ae7c69a82745c7e92bf7fb8ca8fd16ea5951e"
     },
     {
       "path": "docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv",
@@ -743,16 +728,6 @@
       "path": "docs/history/archive/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml",
       "bytes": 2623,
       "sha256": "0eeb93447008db923beed8782a5fc1bc0797dd7b904b539f710bec5289b1a200"
-    },
-    {
-      "path": "docs/history/archive/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.json",
-      "bytes": 1575,
-      "sha256": "a69b1eddb5092dfe749419fae953948a65be66e1d48b35259b793416b614c877"
-    },
-    {
-      "path": "docs/history/archive/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.md",
-      "bytes": 5110,
-      "sha256": "b32871e64a1c292af1c9a6246461537c12fe8f3e75da586b9046a2c219908769"
     },
     {
       "path": "docs/history/archive/workflow-assistance/audit/wlg130-delivery-verdict-2026-08-13.md",
@@ -800,34 +775,14 @@
       "sha256": "30c96164c88940008fa553c86a4406870c1dc7ebc76ceca6addc37ecf3f8d78e"
     },
     {
-      "path": "docs/history/archive/workflow-assistance/handoffs/audit-prevention-controls-handoff-2026-08-13.md",
-      "bytes": 6844,
-      "sha256": "c286c9ef555754598df496506219970bcf6d57da35cc913016a60a0c2e3a9338"
-    },
-    {
-      "path": "docs/history/archive/workflow-assistance/handoffs/audit-r2-fixes-handoff-2026-08-14.md",
-      "bytes": 4391,
-      "sha256": "a6c4ccb8695d96d6224cefbb07903b418bfb30207e10fe55b04fd5d0647d5d87"
-    },
-    {
       "path": "docs/history/archive/workflow-assistance/handoffs/hermes-desktop-source-root-repair-2026-07-24.md",
       "bytes": 9165,
       "sha256": "45ad341702619d32d3ca9668b7801f9604be92ed61dadffa1c0ec8cc0ee82902"
     },
     {
-      "path": "docs/history/archive/workflow-assistance/handoffs/token-monitor-handoff-2026-08-05.md",
-      "bytes": 6630,
-      "sha256": "cf5bc38d918ea6d1c90abb077fa6f3a4ff363bd2900285e14bdf02743601efdd"
-    },
-    {
       "path": "docs/history/archive/workflow-assistance/handoffs/workflow-assistance-2026-07-23.md",
       "bytes": 4982,
       "sha256": "1e6450c463543f7981389cd623993c41f707c9f32384d7af915e019c10f13c39"
-    },
-    {
-      "path": "docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md",
-      "bytes": 6025,
-      "sha256": "5c08dab0c784860893a8682099fe47ea7bb73d720983f25c2433796d68833161"
     },
     {
       "path": "docs/history/archive/workflow-assistance/module-instructions-20261019.md",
@@ -838,11 +793,6 @@
       "path": "docs/history/archive/workflow-convergence-20261005.md",
       "bytes": 6480,
       "sha256": "7434d773318f4ec2d3bd5daa91ea6147c0d88bc292d28ecddf49ba9169c5a683"
-    },
-    {
-      "path": "docs/history/archive/workflow-convergence-handoff-20261005.md",
-      "bytes": 2715,
-      "sha256": "8db27395972684500b555d98d55e30a6496faee36d8bbbf83132f1070da7bd94"
     },
     {
       "path": "docs/history/archive/workflow-convergence-receipt-20261005.json",

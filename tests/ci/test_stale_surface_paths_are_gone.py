@@ -18,6 +18,7 @@ import json
 import shutil
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -57,14 +58,55 @@ class LiveTree(unittest.TestCase):
                          "stopped seeing a move")
 
     def test_every_moved_file_lives_at_its_new_path_with_the_recorded_bytes(self) -> None:
+        """The hash chain runs root -> archive path -> ZIP member, and every link is checked."""
         manifest = MODULE.load_manifest(MANIFEST)
-        for move in manifest["moves"]:
-            target = ROOT / move["to"]
-            self.assertTrue(target.is_file(), f"moved file missing: {move['to']}")
-            raw = target.read_bytes()
-            self.assertEqual(move["sha256"], hashlib.sha256(raw).hexdigest(),
-                             f"bytes differ from the move record: {move['to']}")
-            self.assertEqual(move["bytes"], len(raw), f"size differs: {move['to']}")
+        archive = ROOT / manifest["consolidation"]["archive"]
+        with zipfile.ZipFile(archive) as bundle:
+            for move in manifest["moves"]:
+                if "removedInto" in move:
+                    with bundle.open(move["to"]) as handle:
+                        raw = handle.read()
+                    self.assertEqual(move["sha256"], hashlib.sha256(raw).hexdigest(),
+                                     f"archive member differs from the move record: {move['to']}")
+                    self.assertFalse((ROOT / move["to"]).exists(),
+                                     f"consolidated file is still loose: {move['to']}")
+                    continue
+                target = ROOT / move["to"]
+                self.assertTrue(target.is_file(), f"moved file missing: {move['to']}")
+                raw = target.read_bytes()
+                self.assertEqual(move["sha256"], hashlib.sha256(raw).hexdigest(),
+                                 f"bytes differ from the move record: {move['to']}")
+                self.assertEqual(move["bytes"], len(raw), f"size differs: {move['to']}")
+
+    def test_the_consolidated_archive_is_whole_and_its_members_are_all_gone_from_the_tree(self) -> None:
+        """Deletion is only defensible because one artifact holds every byte, provably."""
+        manifest = MODULE.load_manifest(MANIFEST)
+        block = manifest["consolidation"]
+        archive = ROOT / block["archive"]
+        record = json.loads((ROOT / block["manifest"]).read_text(encoding="utf-8"))
+        self.assertEqual(block["archiveSha256"], hashlib.sha256(archive.read_bytes()).hexdigest())
+        self.assertEqual(block["members"], len(record["members"]))
+        tracked = set(MODULE.tracked_files(ROOT))
+        with zipfile.ZipFile(archive) as bundle:
+            self.assertEqual(sorted(bundle.namelist()),
+                             sorted(entry["path"] for entry in record["members"]))
+            for entry in record["members"]:
+                with bundle.open(entry["path"]) as handle:
+                    raw = handle.read()
+                self.assertEqual(entry["sha256"], hashlib.sha256(raw).hexdigest(), entry["path"])
+                self.assertEqual(entry["bytes"], len(raw), entry["path"])
+                self.assertEqual(zipfile.crc32(raw) & 0xFFFFFFFF, entry["crc32"], entry["path"])
+                self.assertNotIn(entry["path"], tracked,
+                                 f"consolidated file is still tracked: {entry['path']}")
+                self.assertFalse((ROOT / entry["path"]).exists(), entry["path"])
+
+    def test_a_pointer_kept_because_governance_reads_it_is_still_on_disk(self) -> None:
+        """Four handoffs matched the pattern but were kept: a machine pointer names each one."""
+        block = MODULE.load_manifest(MANIFEST)["consolidation"]
+        self.assertGreaterEqual(len(block["keptInPlace"]), 4)
+        for path, reason in block["keptInPlace"].items():
+            self.assertTrue((ROOT / path).is_file(), f"{path} is gone but is still governed")
+            self.assertGreater(len(reason), 40, path)
 
     def test_no_enforced_old_path_still_exists_on_disk(self) -> None:
         manifest = MODULE.load_manifest(MANIFEST)

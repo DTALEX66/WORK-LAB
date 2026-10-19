@@ -65,8 +65,8 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 | 5 | `taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`：自称唯一 CURRENT、UI-first | FREEZE / SUPERSEDED | 不删除历史，但不能继续派工；未完成 WUI 行不因冻结关闭 | 文件保留，顶部加 SUPERSEDED/FROZEN 提示 |
 | 6 | `taskpacks/current/OPEN-TASK-REGISTER.md`：2026-10-09 UI 优先切换、唯一 CURRENT 指向 UI 包 | AMEND（仅表头）/ FREEZE（行） | 账本必须指向新 CURRENT；历史行与证据保留，不无证关闭 | 表头改为 2026-10-19 冻结与新 CURRENT；WUI 行原样保留 |
 | 7 | `taskpacks/current/README.md`：唯一 CURRENT 指向 UI 包 | AMEND | 目录入口会误导新会话 | 改为新 CURRENT + 冻结说明 |
-| 8 | `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT.md）：UI 后续交接 | FREEZE / SUPERSEDED | 稳定入口仍指向 UI 任务，需显式失效 | 顶部加冻结横幅并指向新 CURRENT |
-| 9 | `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-QODER-SESSION.md）：UI 轮次交接 | FREEZE | 历史交接保留，但不能再作为当前指令 | 顶部加冻结横幅 |
+| 8 | `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT）：UI 后续交接 | FREEZE / SUPERSEDED | 稳定入口仍指向 UI 任务，需显式失效 | 顶部加冻结横幅并指向新 CURRENT |
+| 9 | `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-QODER-SESSION）：UI 轮次交接 | FREEZE | 历史交接保留，但不能再作为当前指令 | 顶部加冻结横幅 |
 | 10 | `docs/current/workflow-assistance/workflow/active-authority-index.md`：2026-10-09 UI 范围切换 | AMEND | 导航索引不是第二权威，但必须指向当前权威 | 顶部范围说明改为 2026-10-19 |
 | 11 | `docs/current/DOCUMENT-CENSUS.md`：UI 当前任务与交接 | AMEND | 文档总索引需要反映新 CURRENT；旧计数仍是其日期快照 | 顶部加 2026-10-19 增量说明，不改旧盘点数字 |
 | 12 | `docs/decisions/PROJECT_POSITIONING.md`：2026-10-09 定位 | AMEND | 决策记录是常见入口，必须与顶层权威一致 | 重写为 2026-10-19 收敛定位 |
@@ -209,8 +209,8 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 - `services/execution-federation/hermes_adapter.py`（**产品修复**：移除未实现的 `Capability.RESUME` 声明，5 行新增/1 行删除）
 - `.project-local/runs/authority-convergence-20261019/minimal_loop_readback.py`（新，适配器层读回脚本）
 - `.project-local/artifacts/authority-convergence-20261019/minimal-loop/01-acp-honesty.out`、`02-federation-tests.out`、`03-nf22-tests.out`、`04-readback.out`（新，最小闭环收据）
-- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT.md）（仅顶部失效提示）
-- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-QODER-SESSION.md）（仅顶部失效提示）
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT）（仅顶部失效提示）
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-20261018-QODER-SESSION）（仅顶部失效提示）
 - `docs/current/workflow-assistance/workflow/active-authority-index.md`（范围说明）
 - `docs/current/workflow-assistance/workflow/project-definition.md`（定位补充）
 - `docs/current/DOCUMENT-CENSUS.md`（增量说明）
@@ -224,7 +224,7 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 - `projections/agents/source/work-lab-workflow/SKILL.md`（默认技能源：新定位、问题闭环状态分离、当前任务包与冻结规则；版本 1.2.0）
 - `.agents/skills/work-lab-workflow/SKILL.md`（由 `projections/agents/generate.py` 重生成，content_hash 已更新）
 - `config/skills-inventory.json`（由 `scripts/ci/generate_skills_inventory.py` 重生成：19 条中 8 条陈旧哈希按磁盘/HEAD 实测修正，含本技能新哈希；无技能增删）
-- `docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md`、`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-UI-L10B.md）、`docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md`、`docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md`、`docs/history/archive/root-ui-records-20261019/UI_REFERENCE_MANIFEST.md`、`docs/history/archive/root-ui-records-20261019/VISUAL_QA_REPORT.md`
+- `docs/history/archive/root-ui-records-20261019/ASSET_REPLACEMENT_MANIFEST.md`、`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 HANDOFF-UI-L10B）、`docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md`、`docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md`、`docs/history/archive/root-ui-records-20261019/UI_REFERENCE_MANIFEST.md`、`docs/history/archive/root-ui-records-20261019/VISUAL_QA_REPORT.md`
   （仅 disposition banner 的权威链改指新 CURRENT；正文与 banner 外字节未动，由 verifier 与 16 项测试守卫）
 - 由 `scripts/maintenance/owner_material_catalog.py build-index` 生成的 `docs/history/owner-inputs/INDEX.md`、`docs/history/owner-inputs/CATALOG.html`、`docs/history/owner-inputs/RECORD-ARCHIVE-REGISTER.csv`、`docs/history/owner-inputs/RECORD-ARCHIVE-MEMBERS.csv`
 
