@@ -379,7 +379,8 @@ HARVEST_BODY = """(() => {
 HARVEST = "JSON.stringify(" + HARVEST_BODY + ")"
 
 MIN_VIEW_NODES = 12      # a lane rendering fewer readable nodes than this drew nothing but chrome
-MIN_VIEWS = 20           # the rail carries 23 lanes; reaching a handful is not "every view"
+MIN_VIEWS = 20           # the rail is read live from the DOM; this floor only catches a sweep that
+                         # visited a handful of lanes and still called itself "every view"
 # The sentence the product prints when it cannot reach a snapshot. Its presence inside a lane means the
 # lane's OWN surface was never rendered, so the nodes measured for that lane are shell, not content.
 OFFLINE_PANEL_MARK = "读不到快照"
@@ -392,10 +393,26 @@ def views_expression(size_key: str) -> str:
     quietly "pass" a subset while the product gained or lost a view. A single page load can only ever
     show one view, so the shipped census measured Overview and was described as the product (ERR-218);
     and a view that renders nothing is reported as a failure rather than as a silence an average hides.
+
+    Each lane is harvested twice — at the top and after scrolling every scrollable region to its bottom —
+    because the visibility filter in HARVEST_BODY only accepts painted nodes. Measured on 2026-10-19: the
+    evidence lane contributed 42 nodes and a single handle-block node, so a green AA verdict said nothing
+    about the 200 handle rows below the fold. The scroll pass also carries the horizontal-overflow reading,
+    which no earlier check made at the 900px floor.
     """
     return ("(async () => {\n"
             "  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\n"
             "  const harvest = () => (" + HARVEST_BODY + ");\n"
+            "  const keyOf = (n) => [n.path, n.text, n.size, n.weight, n.color].join('|');\n"
+            "  const merge = (a, b) => { const seen = new Set(a.map(keyOf)); const out = a.slice();\n"
+            "      for (const n of b) { if (!seen.has(keyOf(n))) { seen.add(keyOf(n)); out.push(n); } } return out; };\n"
+            "  const scrollers = () => { const seen = new Set(); const out = [];\n"
+            "      for (const el of [document.scrollingElement, ...document.querySelectorAll('*')]) {\n"
+            "        if (!el || seen.has(el) || el === document.body) continue;\n"
+            "        if (el.scrollHeight <= el.clientHeight + 8) continue;   // nothing below the fold here\n"
+            "        seen.add(el); out.push(el);\n"
+            "      }\n"
+            "      return out; };\n"
             "  const lanes = Array.from(document.querySelectorAll('.nav button[data-lane]'))\n"
             "      .map((b) => b.getAttribute('data-lane'));\n"
             "  const views = [];\n"
@@ -404,10 +421,31 @@ def views_expression(size_key: str) -> str:
             "    if (!button) { views.push({ lane: lane, error: 'NO_RAIL_BUTTON', nodes: [] }); continue; }\n"
             "    button.click();\n"
             "    await sleep(80);\n"
-            "    const result = harvest();\n"
-            "    views.push({ lane: lane, error: null, theme: result.theme,\n"
-            "        firstText: (result.nodes.length ? result.nodes[0].text : null),\n"
-            "        pageBackground: result.pageBackground, nodes: result.nodes });\n"
+            "    const top = harvest();\n"
+            "    let nodes = top.nodes;\n"
+            "    const regions = scrollers().filter((el) => el.clientHeight > 200);\n"
+            "    // Sweep each scrollable region in viewport-sized steps, under a per-lane budget: jumping\n"
+            "    // straight to the bottom would sample the first and last screens and call the middle covered,\n"
+            "    // while an unbounded sweep of 31 lanes would never finish.\n"
+            "    let budget = 16;\n"
+            "    for (const el of regions) {\n"
+            "      const step = Math.max(200, Math.floor(el.clientHeight * 0.8));\n"
+            "      const stops = Math.min(6, Math.max(1, Math.ceil(el.scrollHeight / step)));\n"
+            "      for (let index = 1; index <= stops && budget > 0; index += 1, budget -= 1) {\n"
+            "        el.scrollTop = index * step;\n"
+            "        await sleep(35);\n"
+            "        nodes = merge(nodes, harvest().nodes);\n"
+            "      }\n"
+            "      el.scrollTop = 0;\n"
+            "    }\n"
+            "    await sleep(35);\n"
+            "    views.push({ lane: lane, error: null, theme: top.theme,\n"
+            "        firstText: (top.nodes.length ? top.nodes[0].text : null),\n"
+            "        pageBackground: top.pageBackground, nodes: nodes,\n"
+            "        coverage: { atTop: top.nodes.length, afterScroll: nodes.length, scrolledRegions: regions.length,\n"
+            "            scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth,\n"
+            "            scrollHeight: document.documentElement.scrollHeight,\n"
+            "            innerHeight: window.innerHeight } });\n"
             "  }\n"
             "  return JSON.stringify({ pageBackground: harvest().pageBackground,\n"
             "      sizes: { [" + json.dumps(size_key) + "]: window.innerWidth },\n"
@@ -460,6 +498,31 @@ def views_verdict(theme: str, collected: dict, size: int | None = None,
     thin = [lane for lane, rows in scored.items() if len(rows) < MIN_VIEW_NODES]
     add("every_view_rendered_readable_text", not thin,
         "thin_views=" + json.dumps([f"{lane}={len(scored[lane])}" for lane in thin])[:400])
+
+    overflow = []
+    unscrolled = []
+    uncovered = [view["lane"] for view in views
+                 if not all(key in (view.get("coverage") or {})
+                            for key in ("atTop", "afterScroll", "scrolledRegions", "scrollWidth"))]
+    add("coverage_was_reported", not uncovered,
+        f"lanes_without_coverage={json.dumps(uncovered[:8])} -- the scroll sweep and the overflow reading "
+        "come from the same harvest script, so a lane that reports neither means the below-the-fold "
+        "population went unmeasured again")
+    for view in views:
+        coverage = view.get("coverage") or {}
+        width_gap = (coverage.get("scrollWidth") or 0) - (coverage.get("innerWidth") or 0)
+        if width_gap > 1:
+            overflow.append(f"{view['lane']}={width_gap}px")
+        if (coverage.get("scrolledRegions") or 0) > 0 and \
+                coverage.get("afterScroll") == coverage.get("atTop"):
+            unscrolled.append(f"{view['lane']}({coverage.get('atTop')} nodes, "
+                              f"{coverage.get('scrolledRegions')} regions)")
+    add("no_horizontal_overflow_at_this_width", not overflow,
+        f"width={size}px offenders={json.dumps(overflow[:8])}")
+    add("scrollable_lanes_gained_nodes_after_scrolling", not unscrolled,
+        "a lane with a scrollable region that contributed no new text after the scroll pass means the "
+        "below-the-fold content is still unsampled: "
+        + json.dumps(unscrolled[:8]))
 
     seen = pill_variants(views)
     stalled = [view["lane"] for view in views

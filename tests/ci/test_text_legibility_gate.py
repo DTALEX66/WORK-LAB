@@ -340,7 +340,13 @@ class AllViewsVerdictTests(unittest.TestCase):
                  for i in range(count)]
         if extra is not None:
             nodes.append(extra)
-        return {"lane": lane, "error": None, "theme": "dark", "pageBackground": WHITE, "nodes": nodes}
+        # Coverage is part of the harvest contract now: the scroll sweep and the overflow reading are the
+        # only things that prove the below-the-fold population was measured. The default here is a lane that
+        # scrolled and gained text, which is what a healthy lane reports.
+        return {"lane": lane, "error": None, "theme": "dark", "pageBackground": WHITE, "nodes": nodes,
+                "coverage": {"atTop": max(1, len(nodes) // 2), "afterScroll": len(nodes),
+                             "scrolledRegions": 1, "scrollWidth": 900, "innerWidth": 900,
+                             "scrollHeight": 2400, "innerHeight": 820}}
 
     @staticmethod
     def collected(lanes: list[str], **overrides) -> dict:
@@ -352,6 +358,37 @@ class AllViewsVerdictTests(unittest.TestCase):
         v = legibility.views_verdict("dark", self.collected(lanes))
         self.assertTrue(v["passed"], json.dumps(v["checks"], ensure_ascii=False))
         self.assertEqual(v["counts"]["views"], legibility.MIN_VIEWS)
+
+    def test_a_lane_that_reports_no_coverage_is_not_treated_as_scanned(self) -> None:
+        """The scroll sweep and the overflow reading share one harvest script; if it stops reporting, the
+        two coverage checks would pass by measuring nothing -- which is how the handle rows stayed invisible."""
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        del views[4]["coverage"]
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        check = checks_of(v)["coverage_was_reported"]
+        self.assertFalse(check["pass"])
+        self.assertIn("lane4", check["detail"])
+        self.assertFalse(v["passed"])
+
+    def test_horizontal_overflow_is_named_per_lane_at_this_width(self) -> None:
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        views[2]["coverage"] = {**views[2]["coverage"], "scrollWidth": 941, "innerWidth": 900}
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views), size=900)
+        check = checks_of(v)["no_horizontal_overflow_at_this_width"]
+        self.assertFalse(check["pass"])
+        self.assertIn("lane2=41px", check["detail"])
+
+    def test_a_scrollable_lane_that_yielded_no_new_text_is_reported_as_unsampled(self) -> None:
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        views[9]["coverage"] = {**views[9]["coverage"], "atTop": 14, "afterScroll": 14,
+                                "scrolledRegions": 2}
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        check = checks_of(v)["scrollable_lanes_gained_nodes_after_scrolling"]
+        self.assertFalse(check["pass"])
+        self.assertIn("lane9", check["detail"])
 
     def test_a_view_that_renders_almost_nothing_is_a_failure_not_a_small_average(self) -> None:
         lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
