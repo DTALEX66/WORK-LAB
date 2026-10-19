@@ -289,12 +289,14 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
    具体 Task Grant 并选定问题；问题中心/解决方案库作为系统能力仍未被授权整体实施。
 4. AAOS 候选仍不提交：没有已接通 API。只有在存在真实接收回执时才能写“AAOS 已接收”，
    不把“已提交”或“本地方案记录”写成接收。
-5. 账本派生投影 `docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json` 的重发是 **owner 项**：
-   生产脚本 `scripts/audit/ledger_regression_command_targets.py --apply` 同时会写受保护文件
-   `taskpacks/current/error-ledger.json`，因此本轮未执行；实测缺口已登记在
-   `docs/current/DOCUMENT-CENSUS.md` §13（2026-10-19 实测：投影记录 274 条 vs 账本 276 条、
-   PATH_GONE 36 vs 38、digest `4fc45f59`→`4dc25201`；该数字是当日读数，重发后即失效）。
-   owner 授权前，由它派生的 CI 红项保持原样，不本地改投影去凑绿。
+5. 账本派生投影的重发**不需要 owner 授权**，本段原先的说法是错的，已按代码实测改正并执行：
+   `scripts/audit/ledger_regression_command_targets.py` 无条件按 `--audit-out`（默认即出厂投影）写出，
+   只有账本才受 `--apply` 控制。先只读预览（`changed_existing=0`，新增行只有 ERR-276 与 ERR-277，
+   `repointMap`/`handAdjudicated` 未变），再落地重发两份派生审计（投影 274→276、PATH_GONE 36→38、
+   `docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json` 的 unboundPass 94→96），受保护账本字节未动。
+   本地门实测 `50 passed, 1 failed`：本轮之前 8 项红里的 4 项成因消除，仍属 owner 的是
+   ERR-276/277 的 `fixedCommit` 绑定（必须有真实修复提交才可写）、executor registry pin、DSH 日期合同、
+   派生审计幂等（未裁决的 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`）。
 
 ## 12. 包内 10 项验收标准逐项覆盖
 

@@ -453,12 +453,17 @@ population 断言改成按记录本身重算期望值，不再写死数字，免
 **一条环境红，判明不改**：`tests/ci/test_sidecar_documented_launch.py` 在本机报
 `PermissionError [WinError 32] %TEMP%\...\canonical.sqlite`（teardown 删目录时被自己拉起的子进程占着句柄），
 同一模块在 CI 的 `integration` 作业为 success。与归档规范化无关，未改产品也未放宽测试。
-**账本派生投影今天确实过期，但重发它需要 owner 动手（不自行绕过）**：
+**账本派生投影确实过期，但我先记错了它的阻塞理由（2026-10-19 按代码实测改正并重发）**：
 `tests/ci/test_shipped_projections_are_current.py` 实测 `docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json`
 与当前树不一致：`records SHIPPED=274 FRESH=276`、`counts.PATH_GONE SHIPPED=36 FRESH=38`、
-`stateDigest 4fc45f59… → 4dc25201…`、"238 PASS 记录"→"240"。差异里属于既有 owner 项的是 274/276
-（ERR-276/277 未随投影发布，本轮之前 CI 的 8 项红里就有它），属于本轮迁档影响的是 PATH_GONE +2。
-唯一重发通道 `scripts/audit/ledger_regression_command_targets.py --apply` 会**同时改写
-`taskpacks/current/error-ledger.json`**（受保护并行写者文件），因此本轮不执行；同理不做只改投影不改账本的
-半套（那会让投影与账本互相矛盾）。owner 决定项：授权按既定顺序重发派生审计
-（`--apply` → `scripts/audit/triage_unbound_ledger_records.py`）并顺带处理 ERR-276/277 与 executor registry pin。
+`stateDigest 4fc45f59… → 4dc25201…`、"238 PASS 记录"→"240"。差异里属于本轮迁档影响的是 PATH_GONE +2，
+属于既有 owner 项的是 ERR-276/277 未随投影发布。
+本段原文写的是"唯一重发通道会**同时改写受保护账本**，因此本轮不执行；也不做只改投影不改账本的半套"——
+读 `scripts/audit/ledger_regression_command_targets.py` 的写出路径后**这条前提是假的**：投影在 `main()` 里
+无条件按 `--audit-out`（默认就是出厂文件）写出，只有账本才需要 `--apply`。于是本轮按"先只读预览、再落地"
+重发：预览差异 `changed_existing=0`（没有任何既有记录的断言被改写）、新增行只有 ERR-276 与 ERR-277 两条、
+`repointMap` 与 `handAdjudicated` 逐键未变；再由 `scripts/audit/triage_unbound_ledger_records.py` 把
+`docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json` 的 `unboundPass 94→96` 同步追正。受保护账本字节未动
+（`git status` 只出现这两份审计）。效果：本轮之前 8 项 CI 红中的 4 项成因消除（标签齐全、两次测量同 digest、
+计数分布、未绑定计数），gone-guard 命名项转绿；仍属 owner 的只剩 ERR-276/277 的 `fixedCommit` 绑定
+（那是一条"修复在哪个提交"的断言，必须有真实提交才可写）、executor registry pin、DSH 日期合同与派生审计幂等。
