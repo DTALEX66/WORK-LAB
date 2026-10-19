@@ -307,3 +307,12 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
 
 “DONE”指该项在本轮范围内被覆盖并有落点；它不把未做的系统能力（问题中心、方案库、
 AAOS 接通、exact-SHA CI）算作已完成。
+### exact-SHA CI 证据（0045017a，run 39239568709）
+
+结论 `failure`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；红作业：aggregate / workflow-assistance。
+红作业里点名的失败测试共 8 个，其中 **8 个是本轮之前就存在的**（同一批在
+本轮起点 `6b6678c3` 的 run 里就已红：DSH 日期回读、executor registry pin、账本 274/276 派生三件、
+ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）。
+本地=远端 True，工作树干净。本轮引入过并已被抓住修掉的唯一回归是
+`test_workspace_evidence_loads_plan_governance_and_history_as_typed_sources` 的 `KeyError: 'plan'`
+（归档迁移时把证据源指到了 671 B 的桩文件上），它在本 run 的失败清单里已不再出现。

@@ -347,3 +347,24 @@ pointer at a document that now survives only as an archive member was invisible.
 one plants a deleted-member path and must convict, one asserts the live tree names none -- and the
 population test recomputes its expectation from the record instead of a literal, so growing the record
 cannot leave the gate describing an older world.
+## 14. Status correction of sections 5/8/10 as of 2026-10-19 (late)
+
+Sections 5, 8 and 10 were written when the minimal-loop product fix was uncommitted, CI had never
+judged it, and no AAOS candidate existed. That is no longer the whole picture, so the current state,
+measured rather than recalled:
+
+- **Committed and pushed.** `git rev-parse HEAD` equals `git rev-parse @{u}` and the worktree is
+  clean (re-measure rather than trusting this line); sections 2's
+  baseline (HEAD `0369d349`, `origin/main` `f6077d18`) and the "未提交" wording in section 5 are
+  superseded by the archive-normalization commits and the ML-001 upload.
+- **Sections 11/12/13 are the record of that work**: 54 tracked moves, 56 documents consolidated
+  into one archive and then deleted, `AGENTS.md`'s stale CURRENT lines repointed under explicit owner
+  authorization, and the re-index gate that keeps an old or deleted path from returning.
+- **What is still true**: exact-SHA CI is the judge of the product change (its verdict for this head is
+  appended to the convergence report's test record), the AAOS candidate remains NOT_SUBMITTED,
+  merge to `main` remains an owner decision, and the owner-gated governance reds listed in the
+  convergence report are unchanged by this round -- the pre-existing set was measured as eight failing
+  tests on the run of this round's starting commit `6b6678c3` and the same set (minus anything this
+  round introduced, which was fixed) on later runs.
+- Documentation-only states in section 5 still mean documentation, not features: the minimal loop is
+  the only product change authorized so far.

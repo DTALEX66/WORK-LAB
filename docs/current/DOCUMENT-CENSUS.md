@@ -453,3 +453,12 @@ population 断言改成按记录本身重算期望值，不再写死数字，免
 **一条环境红，判明不改**：`tests/ci/test_sidecar_documented_launch.py` 在本机报
 `PermissionError [WinError 32] %TEMP%\...\canonical.sqlite`（teardown 删目录时被自己拉起的子进程占着句柄），
 同一模块在 CI 的 `integration` 作业为 success。与归档规范化无关，未改产品也未放宽测试。
+**账本派生投影今天确实过期，但重发它需要 owner 动手（不自行绕过）**：
+`tests/ci/test_shipped_projections_are_current.py` 实测 `docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json`
+与当前树不一致：`records SHIPPED=274 FRESH=276`、`counts.PATH_GONE SHIPPED=36 FRESH=38`、
+`stateDigest 4fc45f59… → 4dc25201…`、"238 PASS 记录"→"240"。差异里属于既有 owner 项的是 274/276
+（ERR-276/277 未随投影发布，本轮之前 CI 的 8 项红里就有它），属于本轮迁档影响的是 PATH_GONE +2。
+唯一重发通道 `scripts/audit/ledger_regression_command_targets.py --apply` 会**同时改写
+`taskpacks/current/error-ledger.json`**（受保护并行写者文件），因此本轮不执行；同理不做只改投影不改账本的
+半套（那会让投影与账本互相矛盾）。owner 决定项：授权按既定顺序重发派生审计
+（`--apply` → `triage_unbound_ledger_records.py`）并顺带处理 ERR-276/277 与 executor registry pin。

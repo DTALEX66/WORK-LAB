@@ -2,11 +2,11 @@
   "schemaVersion": "work-lab/frozen-surface-manifest/v1",
   "root": "docs/history/archive",
   "normative": false,
-  "generatedFromCommit": "c8bff20efd421c59c9cbea6a9cee57e8040ee60c",
-  "generatedFromTree": "afed8915f58ba4cf25d77b686e32e66f59ed1764",
+  "generatedFromCommit": "0045017acefb9bfc697bcdbfeb10fc28344d2843",
+  "generatedFromTree": "edd09da758b3dc421c2359ca990b55d532243c8e",
   "totals": {
     "files": 158,
-    "bytes": 2308474
+    "bytes": 2316037
   },
   "files": [
     {
@@ -16,8 +16,8 @@
     },
     {
       "path": "docs/history/archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json",
-      "bytes": 14437,
-      "sha256": "187103f711ee3d1b107654cef694ad547f822e0e385059d7f67644b8503df6a2"
+      "bytes": 22000,
+      "sha256": "074073fd3cdb85db1ac683aca4fb438b1fcad0f1cd91da680296afdccf41ed34"
     },
     {
       "path": "docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip",
