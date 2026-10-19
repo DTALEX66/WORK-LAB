@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-19T09:20:19Z",
+  "generatedAt": "2026-10-19T10:16:24Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -529,19 +529,19 @@
     },
     {
       "path": "scripts/audit/normalise_doc_citations.py",
-      "sha256": "f561627cfd302e6df58ddcc968616860f66a06516701b5f3813f75a4dab154c5",
-      "bytes": 17880,
-      "lines": 273,
+      "sha256": "01e237880ea76fe75d34f6e9f97219eafb6613c7dbc60950dee23b391c0433a8",
+      "bytes": 17324,
+      "lines": 267,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 10,
+      "citedByRecords": 9,
       "citedBy": [
         ".workbuddy/memory/2026-10-18.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
         "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "docs/history/archive/MOVED-PATHS-20261019.json"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -643,14 +643,14 @@
       "lines": 352,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 4,
-      "citedByRecords": 13,
+      "citedByRecords": 12,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
-        "docs/history/archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json"
+        "docs/history/archive/MOVED-PATHS-20261019.json"
       ]
     },
     {

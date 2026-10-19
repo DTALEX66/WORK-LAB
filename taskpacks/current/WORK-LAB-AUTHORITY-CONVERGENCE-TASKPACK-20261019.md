@@ -242,7 +242,7 @@ are proved to survive elsewhere first.
 
 Measured result: 91 tracked files matched the handoff/prompt name patterns inside
 `docs/history/` and `taskpacks/history/`; **52** were consolidated into
-`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` (484,845 B of content, 263,031 B archive,
+`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` (first batch: 484,845 B of content, 263,031 B archive,
 sha256 recorded in `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json`) and then
 `git rm`'d; **4** were kept because a machine pointer or a piece of code reads them by path
 (`staticHandoffViews[].entry_record`, `frozenTaskCards[].path`, the citation auditor's fixture name,
@@ -296,3 +296,48 @@ regenerating the record reset the named allowances' `minOccurrences` back to han
 12) while the measurement is 8 and 6, so the gate convicted itself with `ALLOWANCE_UNMET`; the generator now
 calls the gate's own `--write-allowances` after writing, making the minimums a measurement instead of a
 constant. The clean worktree then re-ran `Ran 16 tests / OK`.
+
+## 13. Amendment 2026-10-19 (third) — owner authorized the pointer changes
+
+Recorded verbatim from the owner's answers this round: for `AGENTS.md` lines 12 and 16 the answer was
+**“授权改这两行”** (authorized to change those two lines), and for the four handoffs kept because a
+machine pointer named them the answer was **“删文件并同步改指针”** (delete the files and move the pointers
+in the same change). The standing "archive, never delete" convention is overridden for these named
+objects only; this is a per-decision authorization, not a new permanent rule.
+
+`AGENTS.md`: the section heading now reads 当前任务范围更新（用户2026-10-19明确决定，取代2026-10-09的UI优先范围）,
+the only CURRENT points at this taskpack, and the UI-round handoff routes to `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` with the member named
+in parentheses. Every rule from that section that is still in force (default main line, no mobile work,
+HUD as a desktop overlay, single-writer and privacy rules preserved) was carried over verbatim -- fixing a
+stale pointer is not a licence to weaken a rule.
+
+Pointers moved: the `staticHandoffViews` entry for HERMES-UPDATE-HANDOFF-20260927 and the `frozenTaskCards`
+entry for WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007 were removed from
+`.project/governance/taskpack-authority-index.json`; the dead `taskpacks/current/` entry in
+`scripts/ci/generate_current_state.py`'s source list was dropped -- it had been silently skipped by an
+`is_file()` filter, which is the "one evidence source went missing and nobody was told" shape.
+
+**The archive builder had to become cumulative (second self-inflicted defect this round, fixed).** It
+originally rewrote the archive from whatever matched today, so when the first 52 documents were already
+untracked it produced a 6-member archive: had that been committed, the byte-preservation promise for the
+first batch would have been silently void. The builder now reads the shipped archive and manifest,
+re-verifies every carried member by sha256 and size, copies those bytes forward untouched, appends the new
+additions, refuses to shrink, and excludes the archive and its own manifest by name from the candidate set.
+Shipped state measured: **56** members (52 carried forward + 4 added), 492,296 B of content,
+268,142 B archive, sha256 `1b1effdf7f80128b4007181dbc7fdb1af01d0776db9ce5f26eb8199d93503347`. The
+destructive rewrite was reverted by bytes with `git checkout --` and redone.
+
+Four allowances expired rather than being loosened: the two `AGENTS.md` named allowances in
+`docs/history/archive/MOVED-PATHS-20261019.json`, the two rows in
+`.project/governance/live-doc-path-exceptions.json`, the two `QUOTED_AS_ABSENT` entries in
+`scripts/audit/normalise_doc_citations.py`, and the two `AGENTS.md` rows in the ratchet baseline. The
+stale-path gate went from 8 allowances to **4** and reports
+`STALE_SURFACE_PATHS_PASS scanned=1289 enforced=48 allowances=4`; the baseline reissued at 293 rows.
+`tests/ci/test_stale_surface_paths_are_gone.py` gained a case asserting the four paths are archive members,
+absent from the tree, and named by no entry in the machine index.
+
+Surfaces after this amendment, measured with `git ls-files -z`: **2,548** tracked, `docs/history/` 167 md
+(unchanged -- all four deleted documents lived under `taskpacks/history/`), `taskpacks/history/` **104**,
+`docs/current/` 40 md, `taskpacks/current/` 4, repository root 5 md. The re-index gate reports
+`STALE_SURFACE_PATHS_PASS scanned=1289 enforced=48 allowances=4`, and 106 targeted test cases across eight
+modules ran green.

@@ -2,11 +2,11 @@
   "schemaVersion": "work-lab/frozen-surface-manifest/v1",
   "root": "docs/history/archive",
   "normative": false,
-  "generatedFromCommit": "3b624e2cf9a06e036568bdd4172933e55602ca39",
-  "generatedFromTree": "7e0577dc48cc7fb9942ef9142c3815fac816603e",
+  "generatedFromCommit": "752d8a4b63213fa5f4192b7beee2deace68cebf7",
+  "generatedFromTree": "ccc218055244fd6c7f6694519a6e16a939d67c3c",
   "totals": {
     "files": 158,
-    "bytes": 2305657
+    "bytes": 2304018
   },
   "files": [
     {
@@ -16,18 +16,18 @@
     },
     {
       "path": "docs/history/archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json",
-      "bytes": 14239,
-      "sha256": "fcfc08217252bca3373858729a7459cc04e8ab3a3cd07cdfaa831b59cbd76541"
+      "bytes": 14437,
+      "sha256": "187103f711ee3d1b107654cef694ad547f822e0e385059d7f67644b8503df6a2"
     },
     {
       "path": "docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip",
       "bytes": 131,
-      "sha256": "ebc039eec8736e4016aa80428b06cd0e215aec548e5230f869eca6f2c5e0c18d"
+      "sha256": "fa15ae0b66ecfe7524587a5427f77aac1c993b9c2f7ed48259ed05b1f04d2c7d"
     },
     {
       "path": "docs/history/archive/MOVED-PATHS-20261019.json",
-      "bytes": 31115,
-      "sha256": "7731a063e970bbfe3d9e07399f1f49650c2c105c3776fa0fea51e63accda3c17"
+      "bytes": 29278,
+      "sha256": "e353f430c0f915b3ec4cd251485e7fe97e949e8e21d22ffe749b3b4e955a88fe"
     },
     {
       "path": "docs/history/archive/recovered-originals/RECORD-20261008/00_总控启动提示词.md",

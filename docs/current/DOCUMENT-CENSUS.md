@@ -45,7 +45,7 @@
 | `docs/current/` | 40 md（2026-10-19 归档后；2026-10-10 记 43） | 2026-10-19 | 当前工作文档 | 是（受引用门禁） |
 | `docs/decisions/` | 18 | 2026-10-07 | ADR、`docs/decisions/global-execution-standard.md`、`docs/decisions/instruction-precedence.md` | 是 |
 | `docs/future/` | 3 | 2026-10-08 | 蓝图与覆盖投影（含生成物） | 计划 |
-| `taskpacks/history/` | 108（2026-10-19 归档 146 → 汇总删除 38 后） | 2026-10-19 | 冻结历史 + §12 汇总归档 | **非规范** |
+| `taskpacks/history/` | 104（146 → 第一批汇总删 38 → 第二批删 4） | 2026-10-19 | 冻结历史 + §12/§13 汇总归档 | **非规范** |
 | `docs/history/` | 167 md（2026-10-19 归档 180 → 汇总删除 14 后；原记 115） | 2026-10-19 | 冻结历史 + `docs/history/archive/` + `docs/history/archive/recovered-originals/` | **非规范** |
 | `reports/` | 527 | 2026-10-06 | 审计证据（`reports/audit-archive/` 479、`reports/audit-evidence/` 34） | 证据 |
 | `knowledge-staging/` | 224 | **2026-09-23** | 边界标记为 `HISTORY_ONLY_CONVERGE`，非活动模块 | 冻结候选 |
@@ -340,18 +340,17 @@ PROMPT-PACK / CLOSEOUT / START-ANY-AGENT / AGENT-PROMPT，且位于 `docs/histor
 
 | 处置 | 数量 | 依据 |
 | --- | --- | --- |
-| 汇总后删除 | **52** | 内容 484,845 B → 单一归档 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` 263,031 B，sha256 `3bd841513b4623781068…`（全值见清单） |
-| 具名保留（机器指针在读） | **4** | `taskpacks/history/pre-convergence-20261019/HERMES-UPDATE-HANDOFF-20260927.md`（`staticHandoffViews[].entry_record`）、`taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md`（`frozenTaskCards[].path`）、`taskpacks/history/pre-convergence-20261019/SESSION-HANDOFF-P0C-20261006.md`（`scripts/audit/project_local_citation_audit.py` 与其测试的夹具名）、`taskpacks/history/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md`（`scripts/ci/generate_current_state.py` 的来源清单） |
+| 汇总后删除（第一批） | **52** | 内容 484,845 B → 单一归档 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` 263,031 B，sha256 `3bd841513b4623781068…` |
+| 具名保留（机器指针在读，故第一批未删） | **4** | `staticHandoffViews[].entry_record`、`frozenTaskCards[].path`、审计脚本与其测试的夹具名、`scripts/ci/generate_current_state.py` 的来源清单各点名一份；第二批（§13）按 owner 授权连指针一起改 |
 | 规则性排除 | **35** | `taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/**`（`-text -diff` 原字节冻结树）、`docs/history/owner-inputs/**` 与 `docs/history/archive/recovered-originals/**`（owner 入库原件，部分是仅存副本）、`docs/history/archive/session-history/**`（导入的多项目材料）、`reports/**` 与 `knowledge-staging/**`（证据面与外购副本） |
 
-**逐件证明在先，删除在后**：清单 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json`
-对每个成员记 `path`/`bytes`/`sha256`/`crc32`；构建脚本把 ZIP 重新打开、逐成员读回并把自己的哈希
-与磁盘字节三方比对，52/52 全对才执行 `git rm`。恢复路径两条：在项目根解压该 ZIP，或从 Git 历史
-取回（这些文件在删除前已提交）。
+**逐件证明在先，删除在后**：清单 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json` 对每个成员记 `path`/`bytes`/`sha256`/`crc32`；构建脚本把 ZIP
+重新打开、逐成员读回并与记录哈希、尺寸、CRC32 三方比对，52/52 全对才执行 `git rm`。恢复路径两条：
+在项目根解压该 ZIP，或从 Git 历史取回（这些文件在删除前已提交）。
 
-**删除后不留在明面上的东西**：52 条旧路径在受跟踪树中全部消失（必门逐条断言
+**删除后不留在明面上的东西（第一批）**：52 条旧路径在受跟踪树中全部消失（必门逐条断言
 `path not in git ls-files` 且文件不存在）；`docs/history/archive/FROZEN-MANIFEST.json` 重生成
-（156 条 / 2,287,740 B，含 ZIP 与清单本体），所以这两个新产物从今天起也是字节冻结的。
+（第一批后为 158 条 / 2,305,855 B，含 ZIP 与清单本体），所以这两个新产物从今天起也是字节冻结的。
 
 **受影响的活引用**：25 处改指到 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` 并就地写出
 成员名；`docs/history/owner-inputs/INDEX.md` 由生成器重生成，其“UI 历史交接”行改指汇总清单。
@@ -394,3 +393,43 @@ git-index blob sha256，本轮改过 9 份 `scripts/audit|maintenance` 工具后
 第二个缺陷同批暴露：重新生成清单会把具名豁免的 `minOccurrences` 退回脚本里手写的旧数（19 与 12），
 而实测是 8 与 6，门因此自判 `ALLOWANCE_UNMET`。修法是让生成器写完清单后立刻调用门自己的
 `--write-allowances` 以实测覆盖，豁免下限从此是**测量**而不是常量。两处修好后干净签出 16 例复跑 `OK`。
+
+## 13. 2026-10-19 第二批：owner 授权后改指针并删净，AGENTS.md 同批改对
+
+**owner 决定（本轮问答逐字）**：问“AGENTS.md 第 12/16 行仍把已归档的 UI 任务包写成唯一 CURRENT，
+是否授权修改这一受保护并行写者文件？”→ **“授权改这两行”**；
+问“另外 4 份旧交接因机器指针/代码按路径读取而未删，是否连指针一起改并把它们也汇总删除？”→
+**“删文件并同步改指针”**。因此 `docs/current/workflow-assistance/workflow/active-authority-index.md` 第 4 节“归档不删除”的默认约定，
+在这两类对象上由 owner 明确覆盖；覆盖是逐次授权，不是新常设规则。
+
+**AGENTS.md**：第 5 节抬头改为“当前任务范围更新（用户2026-10-19明确决定，取代2026-10-09的UI优先范围）”，
+唯一 CURRENT 指向 `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`，
+UI 轮次交接改指 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员名写在括号里、不带扩展名）。仍生效的旧规则（默认主线、手机端不做、
+HUD 为桌面浮窗、单写者与隐私规则保持）逐条保留原文，没有借这次改指削弱它们。
+
+**四份指针与两处代码**：删除 `.project/governance/taskpack-authority-index.json` 里
+`staticHandoffViews` 的 HERMES-UPDATE-HANDOFF-20260927 视图项与 `frozenTaskCards` 的
+WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007 卡项；从 `scripts/ci/generate_current_state.py`
+的来源清单里去掉那条早就指向 `taskpacks/current/` 的死路径（该项过去靠 `is_file()` 静默跳过，
+即“证据源少一份而无人报警”）；`scripts/audit/project_local_citation_audit.py` 里剩下的只是
+按名字引用它自己读过的记录，属句子的宾语而非路径，未动。
+
+**归档器必须是累加的（本轮第二次自我缺陷，已修）**：第一批的构建器是“按当前命中重写 ZIP”。
+第二批运行时 52 份已不受跟踪，于是它把出厂归档重写成了 6 个成员——**如果当天就提交，52 份的字节
+留存承诺会静默失效**。修法：构建器先读出厂 ZIP 与清单，逐成员复核 sha256/尺寸后原字节搬入新归档，
+再追加本批命中，并断言成员集合只增不减（缩小即 `ARCHIVE_SHRINK` 中止）；同时把归档自身与它的清单
+按名字排除在候选之外（否则 `HANDOFFS-AND-PROMPTS…` 会被自己的命名规则吞进去）。
+出厂状态实测：成员 **56**（52 carriedForward + 4 addedNow），内容 **492,296 B**，归档 **268,142 B**，
+sha256 `1b1effdf7f80128b4007181dbc7fdb1af01d0776db9ce5f26eb8199d93503347`。
+破坏那次重写靠 `git checkout --` 按字节还原后重做。
+
+**豁免随之作废（不是放宽，是收口）**：`AGENTS.md` 的两条具名豁免、
+`.project/governance/live-doc-path-exceptions.json` 的两条例外、
+`scripts/audit/normalise_doc_citations.py` 的两条 QUOTED_AS_ABSENT、
+棘轮基线里 AGENTS.md 的两行——四处都随旧指向消失而失效，按“许可不再被使用即红”的规则删除；
+防再索引门的豁免从 8 条收敛到 **4 条**，实测
+`STALE_SURFACE_PATHS_PASS scanned=1289 enforced=48 allowances=4`，棘轮基线 295 → **293 行**。
+`docs/history/archive/MOVED-PATHS-20261019.json` 的 consolidation 段同步记下 `keptInPlace={}` 与 12 条 `removedInto`，
+必门新增一例：断言这四份既在归档成员里、又不在树上，且机器索引里再也找不到它们的路径。
+
+**§13 之后的面计数（`git ls-files -z` 实测）**：受跟踪 **2,548**；`docs/history/` md **167**（第二批 4 份全在 `taskpacks/history/`，故此项不变）；`taskpacks/history/` **104**；`docs/current/` md **40**；`taskpacks/current/` **4**；仓库根 md **5**。防再索引门 `STALE_SURFACE_PATHS_PASS scanned=1289 enforced=48 allowances=4`。

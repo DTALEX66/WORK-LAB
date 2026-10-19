@@ -104,13 +104,33 @@ class LiveTree(unittest.TestCase):
                                  f"consolidated file is still tracked: {entry['path']}")
                 self.assertFalse((ROOT / entry["path"]).exists(), entry["path"])
 
-    def test_a_pointer_kept_because_governance_reads_it_is_still_on_disk(self) -> None:
-        """Four handoffs matched the pattern but were kept: a machine pointer names each one."""
+    def test_the_formerly_governed_handoffs_are_archived_and_gone(self) -> None:
+        """Four documents were kept on 2026-10-19 morning because a pointer named them.
+
+        The owner then authorized moving the pointers, so the protected reason must be empty and each
+        named path must be an archive member and absent from the tree -- checked here so a future
+        reader cannot mistake the old exemption for a standing one.
+        """
         block = MODULE.load_manifest(MANIFEST)["consolidation"]
-        self.assertGreaterEqual(len(block["keptInPlace"]), 4)
-        for path, reason in block["keptInPlace"].items():
-            self.assertTrue((ROOT / path).is_file(), f"{path} is gone but is still governed")
-            self.assertGreater(len(reason), 40, path)
+        self.assertEqual({}, block["keptInPlace"])
+        record = json.loads((ROOT / block["manifest"]).read_text(encoding="utf-8"))
+        members = {entry["path"] for entry in record["members"]}
+        formerly_governed = (
+            "taskpacks/history/pre-convergence-20261019/HERMES-UPDATE-HANDOFF-20260927.md",
+            "taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md",
+            "taskpacks/history/pre-convergence-20261019/SESSION-HANDOFF-P0C-20261006.md",
+            "taskpacks/history/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md",
+        )
+        for path in formerly_governed:
+            self.assertIn(path, members, path)
+            self.assertFalse((ROOT / path).exists(), path)
+        index = json.loads((ROOT / ".project/governance/taskpack-authority-index.json")
+                           .read_text(encoding="utf-8"))
+        for collection in ("staticHandoffViews", "frozenTaskCards", "currentTaskCards"):
+            for entry in index.get(collection, []):
+                value = json.dumps(entry, ensure_ascii=False)
+                for path in formerly_governed:
+                    self.assertNotIn(path, value, f"{collection} still names {path}")
 
     def test_no_enforced_old_path_still_exists_on_disk(self) -> None:
         manifest = MODULE.load_manifest(MANIFEST)

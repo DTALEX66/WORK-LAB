@@ -105,12 +105,6 @@ QUOTED_AS_ABSENT = {
     "workflow-assistance-AGENTS.md":
         "2026-10-19 归档记录名：指移动前 docs/current/ 下的模块指令文件，现位于 "
         "docs/history/archive/workflow-assistance/module-instructions-20261019.md",
-    "taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md":
-        "AGENTS.md 第 12 行是受保护的并行写者文本，本轮不编辑；它仍把已归档的 UI 任务包写成唯一 CURRENT。"
-        "该旧指向同时登记在 docs/history/archive/MOVED-PATHS-20261019.json 的具名豁免里，改指需 owner 授权",
-    "docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md":
-        "AGENTS.md 第 16 行的受保护旧指向，同上；该目录 2026-10-19 整体归档到 "
-        "docs/history/archive/ui-priority-20261009/",
     "apps/observer/frontend/src/lib/shared_rule_adaptation.ts":
         "WUI-23 更正记录：这条引用从未存在于仓库，是被逐行核对后替换掉的错误路径本身",
     "test_observer_no_business_write.py":

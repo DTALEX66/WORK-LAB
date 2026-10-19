@@ -6,8 +6,8 @@
   "purpose": "Every document this project's old handoffs and prompt-packs consisted of, held as exact bytes in one compressed archive, with the per-member proof needed to delete the loose originals. Recovery: unzip this archive at the repository root, or read any member from git history -- the files were committed before deletion.",
   "machineVerifier": "scripts/ci/verify_stale_surface_paths.py",
   "archive": "docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip",
-  "archiveBytes": 263031,
-  "archiveSha256": "3bd841513b46237810689dcda4e74804021be4cf809eb453c67b5b42733c9053",
+  "archiveBytes": 268142,
+  "archiveSha256": "1b1effdf7f80128b4007181dbc7fdb1af01d0776db9ce5f26eb8199d93503347",
   "selection": {
     "namePatterns": [
       "HANDOFF",
@@ -33,15 +33,12 @@
     ]
   },
   "counts": {
-    "members": 52,
-    "bytes": 484845
+    "members": 56,
+    "bytes": 492296,
+    "carriedForward": 52,
+    "addedNow": 4
   },
-  "keptInPlace": {
-    "taskpacks/history/pre-convergence-20261019/HERMES-UPDATE-HANDOFF-20260927.md": "staticHandoffViews[].entry_record in .project/governance/taskpack-authority-index.json; verify_project_authority_reference.py requires the referenced path to exist",
-    "taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md": "frozenTaskCards[].path in the same machine index",
-    "taskpacks/history/pre-convergence-20261019/SESSION-HANDOFF-P0C-20261006.md": "named in scripts/audit/project_local_citation_audit.py and its test; the frozen original-tree copy is the operand the test reads, so the name itself is a fixture key",
-    "taskpacks/history/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md": "listed in scripts/ci/generate_current_state.py as a state source"
-  },
+  "keptInPlace": {},
   "members": [
     {
       "path": "docs/history/archive-manifests/MIGRATION_HANDOFF.md",
@@ -354,6 +351,30 @@
       "bytes": 30193,
       "sha256": "daf5a340d76144f5ddf2dc6b0b16bc9d5cd5c3ea99cb6182ae1b45481aca2693",
       "crc32": 637965250
+    },
+    {
+      "path": "taskpacks/history/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md",
+      "bytes": 5436,
+      "sha256": "10507386d0f7d3a63a9feb0d7ddcd71bb80ea1097a6b2d5a50b83172abfa5732",
+      "crc32": 3293978812
+    },
+    {
+      "path": "taskpacks/history/pre-convergence-20261019/HERMES-UPDATE-HANDOFF-20260927.md",
+      "bytes": 659,
+      "sha256": "f419754a061017b62818a82fc87b21478360b2752e60af578fe4ee2d55654e92",
+      "crc32": 3639933839
+    },
+    {
+      "path": "taskpacks/history/pre-convergence-20261019/SESSION-HANDOFF-P0C-20261006.md",
+      "bytes": 655,
+      "sha256": "61836eb3cc9a19d7fd2fe5c35e9c7ca722e33df1a730c005b876e5ebfc987811",
+      "crc32": 959610852
+    },
+    {
+      "path": "taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md",
+      "bytes": 701,
+      "sha256": "1f8a523141e4038808b22e854fc8853a7cb3fdd1f764c3805d5b77cb0d3f3046",
+      "crc32": 885495642
     }
   ]
 }

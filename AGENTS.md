@@ -7,13 +7,14 @@
 新增来源先比对SHA-256，复用相同内容、登记别名；不同版本保留，再更新登记和成员表，运行`build-index`与`verify`。
 历史资料只作来源，不激活旧任务、AGENTS或Authority，不新建第二任务账本。
 
-## 当前任务范围更新（用户2026-10-09明确决定）
+## 当前任务范围更新（用户2026-10-19明确决定，取代2026-10-09的UI优先范围）
 
-新发总体包与UI包为准，唯一CURRENT是`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，UI优先。
+唯一CURRENT是`taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`；其余任务冻结，
+路线图`docs/current/authority-convergence-20261019/ROADMAP.md`。UI优先轮次已归档，其任务包与交接不再是当前指令。
 默认主线为项目观测、能力评价/迁移/目标验证与受管配置，外部软件执行业务；本仓开发流程不强制被观察项目采用。
-手机端不做，不列延后/冻结任务；既有HUD是桌面浮窗。旧任务有用要求并入WUI，无用冻结归档，不独立派工。
+手机端不做，不列延后/冻结任务；既有HUD是桌面浮窗。旧任务有用要求并入现行任务，无用冻结归档，不独立派工。
 本轮仅整理归档/索引/交接，产品代码NOT_EXECUTED；后续执行以具体用户Task Grant为准。
-完整交接：`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`。旧安全/隐私/所有权/单写者规则及有效测试保持。
+UI轮次交接：`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT，已汇总归档）。旧安全/隐私/所有权/单写者规则及有效测试保持。
 
 
 > 全局执行标准（跨软件跨项目）：见 `docs/decisions/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。

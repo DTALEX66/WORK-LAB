@@ -20,7 +20,20 @@ from durable_worker import CollectorResult
 from sidecar import WorkflowSidecar, create_server
 from sse_hub import HEARTBEAT_SECONDS, STALE
 from snapshot_validator import validate_snapshot
-from workspace_evidence import load_workspace_evidence
+from workspace_evidence import (CURRENT_STATE_PATH, ERROR_LEDGER_PATH, PLAN_PATH,
+                                load_workspace_evidence)
+
+
+def _write_fixture(root: Path, rel: Path, text: str) -> None:
+    """Write each operand at the path the product actually reads.
+
+    Hard-coding the fixture's directory is what let this test keep passing while the shipped
+    constant pointed elsewhere, and then go red on CI on 2026-10-19; a moved constant must move
+    the fixture with it, so the fixture is written from the constant.
+    """
+    target = root / rel
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
 import project_temp
 import socket
 import urllib.request
@@ -38,14 +51,13 @@ class CompositionRootTests(unittest.TestCase):
             root = Path(tmp)
             (root / "taskpacks/current").mkdir(parents=True)
             (root / ".project/governance" / "generated").mkdir(parents=True)
-            (root / "taskpacks/current" / "WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md").write_text(
+            _write_fixture(root, PLAN_PATH,
                 "# Master\n> Status: `DELIVERED_PENDING_REMAINING_APPROVALS`\n"
                 "28 个 WL3 任务:\n  VERIFIED_LOCAL: 24\n  BLOCKED(工具链):  1\n  RECONCILE_REQUIRED: 3\n"
                 "| WL3-000 | VERIFIED_LOCAL | freshness |\n| WL3-620 | BLOCKED | portable |\n"
-                "1. **Hermes/Codex global config live apply** — ✅ Codex 已完成；Hermes live 未动；\n",
-                encoding="utf-8",
+                "1. **Hermes/Codex global config live apply** — ✅ Codex 已完成；Hermes live 未动；\n"
             )
-            (root / ".project/governance" / "generated" / "CURRENT_STATE.json").write_text(
+            _write_fixture(root, CURRENT_STATE_PATH,
                 json.dumps({
                     "schema_version": "work-lab-current-state/v1",
                     "generated_at": "2026-08-14T12:58:47Z",
@@ -56,16 +68,14 @@ class CompositionRootTests(unittest.TestCase):
                     "stage3": {"taskpack_id": "WORK-LAB-FINAL-MASTER-CONTROL-PLANE", "task_count": 28},
                     "unverified_capabilities": ["commercial_release"],
                 }),
-                encoding="utf-8",
             )
-            (root / "taskpacks/current" / "error-ledger.json").write_text(
+            _write_fixture(root, ERROR_LEDGER_PATH,
                 json.dumps({
                     "schema_version": "work-lab/error-ledger/v1",
                     "generated_at": "2026-08-14T12:00:00Z",
                     "summary": {"total": 60, "by_classification": {"contract_drift": 27}},
                     "errors": [{"error_id": "ERR-060", "title": "fail closed", "status_after": "PASS"}],
                 }),
-                encoding="utf-8",
             )
 
             evidence = load_workspace_evidence(root)
