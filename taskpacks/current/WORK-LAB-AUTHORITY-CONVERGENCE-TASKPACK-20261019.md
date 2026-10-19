@@ -386,3 +386,53 @@ measured rather than recalled:
   the fault.
 - Documentation-only states in section 5 still mean documentation, not features: the minimal loop is
   the only product change authorized so far.
+
+## 15. Amendment 2026-10-19 (fourth) — run this repository standalone; cross-project linkage is deferred
+
+Owner directive, verbatim: **本项目按照独立运行先运行跑通起来   项目联动延后冻结**
+
+Decision: WORK-LAB has to run end to end from its own repository before any linkage with another
+project is pursued. Everything whose success depends on a foreign project's data, availability or
+interface is deferred or frozen: AAOS candidate submission and its receive-status readback, DESIGN-LAB
+design capability, the external source-root inventory under the owner's `Record` material, and
+cross-project memory or session federation. Freezing is not closing -- the rows stay in
+`taskpacks/current/OPEN-TASK-REGISTER.md` with their existing status and evidence, and no row is
+marked complete by this amendment.
+
+**What "standalone run" means here, measured rather than asserted.** The loopback chain is the
+product surface: `services/orchestration/sidecar.py` (Workflow-owned, read-only control) answers
+`WORKFLOW_SIDECAR_READY` on a random loopback port; `/healthz` returns
+`{"ledgerOwner":"workflow-assistance","observerMutation":false,"readOnlyControl":true}`; `/api/v1/snapshot`
+returns 200 with schema `workflow/snapshot/v3` (152,058 B measured); the same process serves the built
+Vite bundle from `--frontend-root apps/observer/frontend/dist` (200). Rendered against that URL the
+Observer showed genuinely live projection -- the snapshot revision advanced 7 to 12 to 17 while the
+check ran, a `LIVE` state was present, and absent data stayed `UNKNOWN`
+("无执行记录投影 —— 保持 UNKNOWN，不伪造执行行" / "数据源未接入 — 无任务包计数（UNKNOWN）").
+Not claimed: pixel-level visual QA. The available in-app browser surface reported a hidden 0x0 viewport,
+so only structural/accessibility readings and computed nodes were inspected; geometry assertions are
+reported as structural. Receipts: `.project-local/artifacts/standalone-run-20261019/`.
+
+**The defect that blocked the documented one-click entry, fixed.**
+`apps/observer/start-observer.cmd` opened a static HTML path under a directory this repository does not
+contain, while polling a hardcoded port that the sidecar never binds (it starts with `--port 0`). Both
+halves of the documented chain were unrunnable, and neither was guarded -- the sibling
+`tests/ci/test_sidecar_documented_launch.py` proves the command starts, not that a launcher reaches a UI.
+The launcher now deletes a stale endpoint descriptor, starts the sidecar with `--frontend-root`, reads
+`projectionUrl` out of the endpoint descriptor the sidecar writes under the runtime root, and opens that
+origin with the descriptor's own loopback URL injected as `?api=` (the frontend marks such an injected descriptor authoritative; the static-preview
+default does not). `apps/observer/README.md` now documents the same command shape. Guard:
+`tests/ci/test_observer_launcher_chain_is_runnable.py` (6 cases, auto-discovered by the `tests/ci/` glob);
+falsified by planting the original two defects, which produced `2 failed, 4 passed`, then restored
+byte-identically (sha256 prefix `fe28fa0059a09e78`).
+
+**Boundaries that hold under standalone operation.** The Task Ledger source
+`.hermes/task-runtime/task-ledger/ledger.json` [no-tree-claim CLIENT_HOME ref=.hermes/task-runtime/task-ledger/ledger.json]
+is absent in this checkout, so task counts are honestly `UNKNOWN` rather than zero; external client adapters
+return `UNAVAILABLE` when a client is missing, and
+no step of the chain above reads another project's files. The Observer stayed read-only throughout:
+only GET requests were issued and every non-GET is refused with 405 by the sidecar.
+
+**Next slice inside this decision, not authorized yet:** the desktop (Tauri) entry is the packaged
+surface and was not launched here; if the owner wants the exe path proven rather than the loopback path,
+that is the next explicit grant.
+

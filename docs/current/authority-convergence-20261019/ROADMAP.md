@@ -22,9 +22,10 @@
 | 4 | 问题摘要与 Agent 修复任务包生成；优先可靠人工交接，只有已验证连接才允许自动派发 | PARTIAL：通用 TaskPack runner 与任务协议存在，但没有从问题摘要生成修复包的通路 | `services/orchestration/run_taskpack_agent.py`、`services/task-governance/task_protocol.py`；缺口是 issue→repair 生成器与已核验接口 |
 | 5 | 修复状态跟踪与实际结果验证；记录测试、运行读回、版本和失败原因 | PARTIAL：完成权威与证据链存在，未接入问题修复状态机 | `services/task-governance/completion_authority.py`、`services/receipts/evidence_aggregator.py`；缺口是修复生命周期与读回 |
 | 6 | 解决方案库最小闭环：成功方案带适用条件、步骤、证据、回滚和失效条件 | NOT_IMPLEMENTED | 没有解决方案库模块或视图；`services/knowledge/promotion_gate.py` 只是知识提升闸门，不是方案库 |
-| 7 | AAOS 知识候选出口：只提交精选候选并读取正式接收状态 | CONTRACT_ONLY：候选/回执合同与提升闸门存在，未接通 AAOS API，未读取正式接收状态 | `integrations/archeaxis/contracts/promotion_contract.py`、`services/knowledge/promotion_gate.py`、`services/knowledge/BOUNDARY.md` |
+| 7 | AAOS 知识候选出口：只提交精选候选并读取正式接收状态 | FROZEN_20261019（项目联动延后，用户指示）；合同层仍是 CONTRACT_ONLY：候选/回执合同与提升闸门存在，未接通 AAOS API，未读取正式接收状态 | `integrations/archeaxis/contracts/promotion_contract.py`、`services/knowledge/promotion_gate.py`、`services/knowledge/BOUNDARY.md`；冻结不撤销合同，也不声称接收 |
 | 8 | 保持 Control/Observer 权限分离，保护用户配置和未提交改动 | SCAFFOLD：Control 是 loopback 写边界，Observer 有只读门；尚无问题/修复写路径 | `services/control/control_service.py`、`scripts/ci/verify_observer_readonly.py`、`scripts/ci/verify_observer_readonly_boundary.py` |
 | 9 | 验证一个真实最小闭环，不以模拟数据冒充接通 | DELIVERED（2026-10-19，`WORK-LAB-MINIMAL-LOOP-001`）：AG-06 能力门从红转绿；产品修复 `services/execution-federation/hermes_adapter.py`；12+49 回归测试；适配器 launchable 分支真实读回；固化 `SOLUTION-001`。AAOS 候选 NOT_SUBMITTED，exact-SHA CI 未跑 | 不是外部客户端采集来源，而是仓内可复现的能力门；Hermes 原生会话恢复仍不存在，也未声称存在 |
+| 10 | 本仓独立运行跑通（不依赖任何其它项目） | DELIVERED（2026-10-19 实测，非文档）：`services/orchestration/sidecar.py` 在随机回环端口 READY；`/healthz` = `{"ledgerOwner":"workflow-assistance","observerMutation":false,"readOnlyControl":true}`；`/api/v1/snapshot` 200、schema `workflow/snapshot/v3`、152,058 B；同一进程 `--frontend-root apps/observer/frontend/dist` 服务已构建 UI（200）；渲染出的 Observer 读数随快照前进（revision 7→12→17），缺数据保持 UNKNOWN。缺口：一键入口 `apps/observer/start-observer.cmd` 原本指向不存在的路径且写死端口，已修并加守卫 `tests/ci/test_observer_launcher_chain_is_runnable.py`（6 例，种回原缺陷可判红）；Task Ledger 源 `.hermes/task-runtime/task-ledger/ledger.json` [no-tree-claim CLIENT_HOME ref=.hermes/task-runtime/task-ledger/ledger.json] 本机缺失→计数 UNKNOWN；Tauri 桌面 exe 与像素级视觉 QA 本轮未启动 |
 
 最小闭环的固定顺序：
 `发现 → 去重/关联 → 问题摘要 → 匹配历史方案 → 建议或 Agent 修复任务包 → 用户/授权策略交接 → Agent 实际修复 → 测试与运行读回 → 关闭或继续 → 方案固化 → 必要时 AAOS 知识候选`。
@@ -49,6 +50,9 @@ NEXT 不是实施承诺；启动任一项仍需用户明确 Task Grant 和独立
 - 重型多租户、集中身份中心、Kubernetes、复杂分布式调度。
 - 把全软件私人会话自动采集、跨会话自动拼接作为当前功能。
 - WUI-00..WUI-21 及其他 OPEN 账本任务、旧 UI/HUD 扩展、`WORK-LAB-UI-PRIORITY-TASKPACK-20261009` 的后续实施。
+- **项目联动（用户 2026-10-19 指示：本项目按照独立运行先运行跑通起来，项目联动延后冻结）**：AAOS 候选提交与
+  正式接收状态读取、DESIGN-LAB 设计能力、外部 source-root（owner 的 Record 资料）清点与分类、跨项目记忆与
+  会话联邦，全部冻结在本仓独立运行跑通之前。冻结≠关闭：相关账本行、状态与证据原样保留，不因冻结标记为完成。
 
 ## DEFERRED — 延后研究，不承诺实施
 

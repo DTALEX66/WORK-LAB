@@ -6,6 +6,10 @@
 > 路线图`docs/current/authority-convergence-20261019/ROADMAP.md`，报告`docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md`。
 > UI包与`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT）为SUPERSEDED_20261019/FROZEN，仅作历史；手机端不做。
 > 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
+> 2026-10-19 第四次修正（任务包 §15，用户原话"本项目按照独立运行先运行跑通起来   项目联动延后冻结"）：
+> 先跑通本仓独立链（`services/orchestration/sidecar.py` 回环快照 + 已构建 Observer 投影，只读），
+> AAOS 候选提交与接收读取、DESIGN-LAB 设计能力、外部 source-root 清点、跨项目记忆与会话联邦一律冻结；
+> 冻结不关闭账本行，也不把独立运行已实测通过之外的部分算作完成。
 
 
 > **NON-AUTHORITY VIEW** — 本文件是只读分类索引，不是第二顶层 Authority。

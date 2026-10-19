@@ -35,8 +35,14 @@ fixture as live data, and the legacy `/api/dashboard` entry is retired
 Start the sidecar (Workflow module):
 
 ```text
-python services/orchestration/sidecar.py --project-root . --runtime-root <project>/.project-local/runs/workflow
+python services/orchestration/sidecar.py --project-root . --runtime-root <project>/.project-local/runs/workflow --host 127.0.0.1 --port 0 --frontend-root apps/observer/frontend/dist
 ```
+
+`--port 0` binds a random free loopback port and the sidecar prints the real one in its
+`WORKFLOW_SIDECAR_READY` line; `sidecar-endpoint.json` under the runtime root is what tells a
+launcher which port to open, so neither the README nor `start-observer.cmd` may name a port.
+`--frontend-root` is what makes the same command serve the built UI at `http://127.0.0.1:<port>/`;
+without it the command answers an API and shows no page.
 
 The sidecar endpoint descriptor (`sidecar-endpoint.json`) advertises the
 projection/events URLs; the frontend reads `transport.eventsUrl` to subscribe.

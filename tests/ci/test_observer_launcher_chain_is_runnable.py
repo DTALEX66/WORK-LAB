@@ -1,0 +1,90 @@
+"""The Observer's one-click launcher has to describe a chain that actually exists.
+
+Recorded defect (2026-10-19, standalone run): `apps/observer/start-observer.cmd` opened a static
+HTML path under an `apps/observer/` directory the repository does not contain, and polled a
+hardcoded port 61867 while starting the sidecar with `--port 0` (a random free port). Both ends of
+the documented chain were therefore unrunnable, and nothing guarded either half: the sibling
+`test_sidecar_documented_launch.py` proves the *command* starts, not that the launcher reaches a UI.
+
+These cases read the shipped launcher and the shipped README, so re-introducing a dead path, a
+guessed port, or a lone-LF batch file fails here rather than on a user's double-click.
+"""
+from __future__ import annotations
+
+import re
+import subprocess
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+LAUNCHER = ROOT / "apps/observer/start-observer.cmd"
+README = ROOT / "apps/observer/README.md"
+SIDECAR = ROOT / "services/orchestration/sidecar.py"
+DIST = ROOT / "apps/observer/frontend/dist"
+
+
+def launcher_text() -> str:
+    return LAUNCHER.read_bytes().decode("utf-8", errors="replace").replace("\r\n", "\n")
+
+
+class LauncherShapeTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.assertTrue(LAUNCHER.is_file(), "the one-click launcher is missing")
+        self.text = launcher_text()
+
+    def test_the_launcher_is_crlf_only_because_cmd_no_ops_on_lone_lf(self) -> None:
+        raw = LAUNCHER.read_bytes()
+        lone = raw.count(b"\n") - raw.count(b"\r\n")
+        self.assertEqual(0, lone, "a lone-LF line in a .cmd can silently skip its body")
+
+    def test_every_observer_path_the_launcher_names_exists_on_disk(self) -> None:
+        """The original defect: the launcher opened a file that does not exist.
+
+        Only live command lines are scanned, not `rem` comments, because a comment is allowed to
+        name a path that used to be wrong.
+        """
+        offenders = []
+        for line in self._live_lines():
+            for token in re.findall(r"apps[\\/][A-Za-z0-9_.\\/-]+", line):
+                relative = token.rstrip("\\/").replace("\\", "/")
+                if not (ROOT / relative).exists():
+                    offenders.append((line.strip()[:70], relative))
+        self.assertEqual([], offenders, "the launcher names a path that does not exist")
+
+    def _live_lines(self) -> list[str]:
+        return [line for line in self.text.split("\n")
+                if line.strip() and not line.strip().lower().startswith("rem ")]
+
+    def test_the_launcher_serves_the_built_bundle_from_the_sidecar_itself(self) -> None:
+        self.assertIn("--frontend-root", self.text)
+        self.assertTrue((DIST / "index.html").is_file(),
+                        "frontend/dist/index.html is what the launcher is supposed to serve")
+
+    def test_the_launcher_derives_its_url_from_the_descriptor_not_a_guessed_port(self) -> None:
+        self.assertIn("sidecar-endpoint.json", self.text)
+        self.assertIn("projectionUrl", self.text)
+        literals = [line.strip()[:70] for line in self._live_lines()
+                    if re.search(r"(?<![\d.])\d{4,5}(?![\d.])", line)]
+        self.assertEqual([], literals,
+                         "a literal port cannot be right when the sidecar binds --port 0")
+
+
+class ContractAndDocTests(unittest.TestCase):
+    def test_the_sidecar_actually_accepts_the_flag_the_launcher_relies_on(self) -> None:
+        result = subprocess.run([sys.executable, str(SIDECAR), "--help"], capture_output=True,
+                                text=True, encoding="utf-8", errors="replace", cwd=str(ROOT))
+        self.assertEqual(0, result.returncode, result.stderr[-300:])
+        self.assertIn("--frontend-root", result.stdout)
+
+    def test_the_readme_documents_the_same_entry_as_the_launcher(self) -> None:
+        block = README.read_text(encoding="utf-8", errors="replace")
+        start = block.index("sidecar.py --project-root")
+        command = block[start - 200:start + 240]
+        self.assertIn("--frontend-root", command,
+                      "the documented start command must also serve a UI, or a reader following "
+                      "the README gets an API with no page")
+
+
+if __name__ == "__main__":
+    unittest.main()
