@@ -2,11 +2,11 @@
   "schemaVersion": "work-lab/frozen-surface-manifest/v1",
   "root": "docs/history/archive",
   "normative": false,
-  "generatedFromCommit": "983bf571a1184a2fb16de3abe4f877133e56668f",
-  "generatedFromTree": "ebc237154be0f55bab83dfc2efacefee81283578",
+  "generatedFromCommit": "3f2a525002e1165781b0a68ed9a46b3a201c1216",
+  "generatedFromTree": "b71e98bc170407d7a6f6a151495a47090f4685ab",
   "totals": {
     "files": 158,
-    "bytes": 2304018
+    "bytes": 2308474
   },
   "files": [
     {
@@ -26,8 +26,8 @@
     },
     {
       "path": "docs/history/archive/MOVED-PATHS-20261019.json",
-      "bytes": 29278,
-      "sha256": "e353f430c0f915b3ec4cd251485e7fe97e949e8e21d22ffe749b3b4e955a88fe"
+      "bytes": 33734,
+      "sha256": "2b0df14bb404b4cbb7b4ce5062acfec83dbdac1bcd78e82b9281845120460352"
     },
     {
       "path": "docs/history/archive/recovered-originals/RECORD-20261008/00_总控启动提示词.md",

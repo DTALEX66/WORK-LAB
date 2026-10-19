@@ -22,7 +22,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / "scripts" / "ci" / "repoint_source_pointers.py"
-MATRIX = ROOT / "docs" / "current" / "ui-priority-20261009" / "UIV2-INTERFACE-BINDING-MATRIX.csv"
+MATRIX = (ROOT / "docs" / "history" / "archive" / "ui-priority-20261009"
+          / "UIV2-INTERFACE-BINDING-MATRIX.csv")
 
 
 class PointerDriftTests(unittest.TestCase):
