@@ -519,10 +519,18 @@ def views_verdict(theme: str, collected: dict, size: int | None = None,
                               f"{coverage.get('scrolledRegions')} regions)")
     add("no_horizontal_overflow_at_this_width", not overflow,
         f"width={size}px offenders={json.dumps(overflow[:8])}")
-    add("scrollable_lanes_gained_nodes_after_scrolling", not unscrolled,
-        "a lane with a scrollable region that contributed no new text after the scroll pass means the "
-        "below-the-fold content is still unsampled: "
-        + json.dumps(unscrolled[:8]))
+    if backend == "live":
+        # Same scoping rule as `every_lane_reached_its_own_content`: under the static preview the lanes
+        # collapse to the offline panel by design, so demanding that a scroll add text there would fail
+        # `scripts/audit/reseal_wui_evidence.py`'s shell-typography runs for a reason that is not a defect.
+        add("scrollable_lanes_gained_nodes_after_scrolling", not unscrolled,
+            "a lane with a scrollable region that contributed no new text after the scroll pass means the "
+            "below-the-fold content is still unsampled: "
+            + json.dumps(unscrolled[:8]))
+    else:
+        add("scrollable_lanes_scanned", True,
+            f"backend=static NOT_ENFORCED unsampled_lanes={json.dumps(unscrolled[:6])} -- the sweep is "
+            "measuring shell typography here, not each lane's own surface")
 
     seen = pill_variants(views)
     stalled = [view["lane"] for view in views

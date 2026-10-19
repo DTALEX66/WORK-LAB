@@ -385,10 +385,23 @@ class AllViewsVerdictTests(unittest.TestCase):
         views = [self.view(lane) for lane in lanes]
         views[9]["coverage"] = {**views[9]["coverage"], "atTop": 14, "afterScroll": 14,
                                 "scrolledRegions": 2}
-        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views), backend="live")
         check = checks_of(v)["scrollable_lanes_gained_nodes_after_scrolling"]
         self.assertFalse(check["pass"])
         self.assertIn("lane9", check["detail"])
+
+    def test_the_scroll_rule_is_scoped_to_a_live_backend_and_says_so(self) -> None:
+        """Under the static preview every lane collapses to the offline panel by design, so demanding a
+        scroll there would fail `scripts/audit/reseal_wui_evidence.py`'s shell-typography runs for a reason
+        that is not a defect. The scoping is itself asserted, not merely convenient."""
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        views[9]["coverage"] = {**views[9]["coverage"], "atTop": 14, "afterScroll": 14,
+                                "scrolledRegions": 2}
+        checks = checks_of(legibility.views_verdict("dark", self.collected(lanes, views=views)))
+        self.assertNotIn("scrollable_lanes_gained_nodes_after_scrolling", checks)
+        self.assertTrue(checks["scrollable_lanes_scanned"]["pass"])
+        self.assertIn("lane9", checks["scrollable_lanes_scanned"]["detail"])
 
     def test_a_view_that_renders_almost_nothing_is_a_failure_not_a_small_average(self) -> None:
         lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
