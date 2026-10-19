@@ -350,7 +350,7 @@ PROMPT-PACK / CLOSEOUT / START-ANY-AGENT / AGENT-PROMPT，且位于 `docs/histor
 
 **删除后不留在明面上的东西（第一批）**：52 条旧路径在受跟踪树中全部消失（必门逐条断言
 `path not in git ls-files` 且文件不存在）；`docs/history/archive/FROZEN-MANIFEST.json` 重生成
-（第一批后为 158 条 / 2,305,855 B，含 ZIP 与清单本体），所以这两个新产物从今天起也是字节冻结的。
+（158 条，条目字节求和 2,304,018 B，含 ZIP 与清单本体；§13 又重发过一次，此处为当前值），所以这两个新产物从今天起也是字节冻结的。
 
 **受影响的活引用**：25 处改指到 `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip` 并就地写出
 成员名；`docs/history/owner-inputs/INDEX.md` 由生成器重生成，其“UI 历史交接”行改指汇总清单。
