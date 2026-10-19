@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-19T09:13:39Z",
+  "generatedAt": "2026-10-19T09:20:19Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -879,14 +879,14 @@
       "lines": 178,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 14,
+      "citedByRecords": 16,
       "citedBy": [
         ".workbuddy/memory/2026-10-13.md",
         ".workbuddy/memory/2026-10-18.md",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/DOCUMENT-CENSUS.md",
         "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.html",
-        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.txt"
+        "docs/history/owner-inputs/record-20261011/cloud-audit-readable/REPORT.html"
       ]
     },
     {
