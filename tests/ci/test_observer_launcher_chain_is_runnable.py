@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LAUNCHER = ROOT / "apps/observer/start-observer.cmd"
 README = ROOT / "apps/observer/README.md"
 SIDECAR = ROOT / "services/orchestration/sidecar.py"
-DIST = ROOT / "apps/observer/frontend/dist"
+BUILD_OUTPUT = "apps/observer/frontend/dist"
 
 
 def launcher_text() -> str:
@@ -42,12 +42,17 @@ class LauncherShapeTests(unittest.TestCase):
         """The original defect: the launcher opened a file that does not exist.
 
         Only live command lines are scanned, not `rem` comments, because a comment is allowed to
-        name a path that used to be wrong.
+        name a path that used to be wrong. The one exempt path is the build output: it is gitignored,
+        so a fresh checkout legitimately has no bundle, and
+        `test_the_launcher_targets_the_directory_the_build_is_configured_to_write` is what pins it to
+        something real instead of hoping it is present.
         """
         offenders = []
         for line in self._live_lines():
             for token in re.findall(r"apps[\\/][A-Za-z0-9_.\\/-]+", line):
                 relative = token.rstrip("\\/").replace("\\", "/")
+                if relative == BUILD_OUTPUT:
+                    continue
                 if not (ROOT / relative).exists():
                     offenders.append((line.strip()[:70], relative))
         self.assertEqual([], offenders, "the launcher names a path that does not exist")
@@ -58,8 +63,33 @@ class LauncherShapeTests(unittest.TestCase):
 
     def test_the_launcher_serves_the_built_bundle_from_the_sidecar_itself(self) -> None:
         self.assertIn("--frontend-root", self.text)
-        self.assertTrue((DIST / "index.html").is_file(),
-                        "frontend/dist/index.html is what the launcher is supposed to serve")
+        referenced = self._frontend_root_argument()
+        self.assertEqual(BUILD_OUTPUT, referenced,
+                         "the launcher must serve the directory the build actually writes")
+        self.assertTrue((ROOT / "apps/observer/frontend/index.html").is_file(),
+                        "the Vite source root has to exist, or the build output is a fiction")
+        if not (ROOT / BUILD_OUTPUT / "index.html").is_file():
+            # `dist/` is gitignored, so a fresh checkout legitimately has no bundle. Failing here would be a
+            # false red about the environment rather than about the launcher; the CI job builds first.
+            self.skipTest(f"{BUILD_OUTPUT}/index.html is a build output (npm run build); "
+                          "not present in this checkout, so the served-file claim is unmeasured here")
+
+    def _frontend_root_argument(self) -> str:
+        for line in self._live_lines():
+            match = re.search(r"--frontend-root\s+\"?%ROOT%[/\\\\]([^\"' ]+)", line)
+            if match:
+                # The capture is already repository-relative (`%ROOT%` is the repo root), so nothing is
+                # prefixed here — the first version of this helper prepended the frontend directory and
+                # then compared against a path that already carried it.
+                return match.group(1).rstrip("\\/").replace("\\", "/")
+        self.fail("no --frontend-root argument on a live launcher line")
+
+    def test_the_launcher_targets_the_directory_the_build_is_configured_to_write(self) -> None:
+        """Vite's default outDir is `dist`; if that ever changes, the launcher must change with it."""
+        config = (ROOT / "apps/observer/frontend/vite.config.ts").read_text(encoding="utf-8")
+        configured = re.search(r"outDir\s*:\s*['\"]([^'\"]+)['\"]", config)
+        expected = "apps/observer/frontend/" + (configured.group(1) if configured else "dist")
+        self.assertEqual(expected, self._frontend_root_argument())
 
     def test_the_launcher_derives_its_url_from_the_descriptor_not_a_guessed_port(self) -> None:
         self.assertIn("sidecar-endpoint.json", self.text)

@@ -81,7 +81,10 @@ export interface EvidenceRangeResult {
   cost?: EvidenceRangeCost
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
+/** A plain object (not null, not an array). Exported because the handle lane reads the same runtime
+ *  shapes — a sub-record that is absent is a source gap, one that is an array is a shape mismatch, and
+ *  the two must not be folded into each other by a lane-local copy of this predicate. */
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
 const str = (value: unknown): string | null =>
@@ -129,15 +132,22 @@ export interface EvidenceAddress {
   wholeDigest: string | null
 }
 
+/** The two names the handle block's filter state travels under. Declared once, here, and re-used by
+ *  `EVIDENCE_PARAM_NAMES` below and by both link builders — the lane's own copy of this list is what
+ *  drifted out of step (WUI-15 review ⑤/⑥). */
+export const HANDLES_PARAM_NAMES = ['handlesSurface', 'handlesDigest'] as const
+
 export const EVIDENCE_PARAM_NAMES = ['artifact', 'offset', 'limit', 'expectedDigest', 'wholeDigest',
-  'handlesSurface', 'handlesDigest'] as const
+  ...HANDLES_PARAM_NAMES] as const
 
 /** A Windows path is the normal handle shape here, so unlike a ledger id it carries separators, spaces and
  *  a drive letter. What it may not carry is a control character or an unbounded length. Absolute-ness,
  *  surface membership and credential-shaped names are the reader's decisions — the UI must not pre-empt
  *  them, because the typed refusal is the thing the panel exists to show. */
 const MAX_HANDLE_LENGTH = 512
-const CONTROL_CHARS = /[\u0000-\u001f\u007f]/
+/** Exported: the handle filter lane validates its URL value with this same rule, and one regex per
+ *  character class is what keeps the two refusals worded the same way. */
+export const CONTROL_CHARS = /[\u0000-\u001f\u007f]/
 
 export type AddressVerdict =
   | { kind: 'absent' }
@@ -186,7 +196,14 @@ export function readEvidenceAddress(search: string): AddressVerdict {
   }
 }
 
-const PRESERVED_PARAMS = ['theme', 'layout', 'api', 'shell', 'taskId', 'executionId']
+/** What a lane link must carry over. `palette` is a theme channel the shell reads off the address, and
+ *  the two handle-filter names are that block's state — it lives in the URL because web storage is
+ *  forbidden here, so dropping them is how one click on a source silently reset a filter the reader had
+ *  just set (WUI-15 review ⑥). The artifact address itself is deliberately NOT preserved: `evidenceHref`
+ *  writes it from the address it is handed, and copying a previous `offset`/`limit` onto a new handle
+ *  would read bytes nobody asked for. */
+const PRESERVED_PARAMS = ['theme', 'layout', 'palette', 'api', 'shell', 'taskId', 'executionId',
+  ...HANDLES_PARAM_NAMES] as const
 
 /** The shareable address for one slice: the same single `?view=` mechanism the shell already uses. */
 export function evidenceHref(address: EvidenceAddress | null, search: string, laneId = 'evidence'): string {

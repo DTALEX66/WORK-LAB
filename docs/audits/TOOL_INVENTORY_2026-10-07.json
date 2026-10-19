@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-19T15:32:19Z",
+  "generatedAt": "2026-10-19T16:19:57Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -310,9 +310,10 @@
       "lines": 110,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 3,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/authority-convergence-20261019/ROADMAP.md",
         "taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md"
       ]
     },
@@ -779,7 +780,7 @@
       "lines": 153,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 8,
+      "citedByRecords": 9,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
         ".workbuddy/memory/2026-10-13.md",
@@ -824,7 +825,7 @@
       "lines": 218,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 9,
+      "citedByRecords": 10,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
         ".workbuddy/memory/2026-10-13.md",
@@ -870,19 +871,19 @@
     },
     {
       "path": "scripts/audit/text_legibility_via_cdp.py",
-      "sha256": "60aad93f8fe52d56c7d39641bb4bdc5d404cd784923c44b1802d74446d9d4dfe",
-      "bytes": 43144,
-      "lines": 820,
+      "sha256": "f6b2f6bbc5881195e6efc37993df0a5091d8084d8b61baabbd1c3a7a486ea13b",
+      "bytes": 48051,
+      "lines": 891,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 12,
+      "citedByRecords": 14,
       "citedBy": [
         "apps/observer/frontend/DESIGN.md",
         "apps/observer/frontend/SCREEN_SPEC.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "docs/current/DOCUMENT-CENSUS.md",
+        "docs/current/authority-convergence-20261019/ROADMAP.md"
       ]
     },
     {
@@ -926,7 +927,7 @@
       "lines": 819,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 21,
+      "citedByRecords": 22,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         ".workbuddy/memory/2026-10-13.md",

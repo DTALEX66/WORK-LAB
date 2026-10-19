@@ -244,7 +244,7 @@ describe('REQ-RANGE · a refusal is rendered as a refusal', () => {
     const grid = columnsOf(container)
     expect(grid.getAttribute('data-state')).toBe('unaddressed')
     expect(Array.from(grid.children)).toHaveLength(3)
-    expect(grid.textContent).toContain('没有句柄就没有对象')
+    expect(grid.textContent).toContain('没有把手就没有对象')
     expect(grid.textContent).toContain('未提供')
     expect(grid.textContent).not.toMatch(/(^|\D)0(\D|$)/)
     expect(container.querySelectorAll('.tag.ok')).toHaveLength(0)

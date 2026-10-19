@@ -20,20 +20,19 @@
 // WUI-15 (2026-10-20) adds the fourth honest surface of this lane: 证据把手. `artifactHandles` plus
 // `artifactHandlesSummary` ride the live v3 payload — a cap-bounded window of identity rows over a much
 // larger enumeration — and nothing rendered either key, so a reader could not see which artifacts the
-// projection even claims to know about, nor that the window was truncated. The block below states the
-// capacity facts, the refusal counters, the snapshot's own ordering rule, and one row per handle. It never
-// touches content: the payload says `contentIncluded=false`, and byte reading stays where it lives (the
-// range endpoint above). No capacity number is written in this file — every one of them is read from the
-// summary, which is what `evidenceHandles.contract.test.tsx` fails on when a literal is typed in here.
+// projection even claims to know about, nor that the window was truncated. That block is mounted below and
+// lives in `views/EvidenceHandles.tsx` (2026-10-20 refactoring review item ⑤: it was 48% of this file).
+// This file keeps what both surfaces need — the never-padding cell (`Field`), its three origin markers
+// (`FactOrigin`), the `num`/`bool`/`text` readers and the three-column slice verdict — and the handle lane
+// imports them instead of carrying a second copy.
 import * as React from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { EmptyState, ProductStateCard, UnknownState } from '@/components/ui/states'
 import { Dim } from '@/views/RecordInspector'
-import { cn } from '@/lib/utils'
-import type { ArtifactHandle, ArtifactHandlesSummary, SnapshotV3 } from '@/types'
+import { EvidenceHandles } from '@/views/EvidenceHandles'
+import type { SnapshotV3 } from '@/types'
 import type { RecordFocus } from '@/lib/recordFocus'
-import { evidenceRangeEndpoint, fmtTimestamp } from '@/lib/api'
+import { evidenceRangeEndpoint } from '@/lib/api'
 import {
   EVIDENCE_RANGE_SCHEMA_VERSION, EVIDENCE_MAX_LIMIT, isRegisteredReasonCode, digestVerdictOf, fmtBytes,
   makeHttpSliceReader, readEvidenceAddress, readEvidenceShelf, evidenceHref,
@@ -55,13 +54,16 @@ export interface EvidenceViewProps {
 
 const PREVIEW_LIMIT = 1200
 
-/** The three origins the projection can actually distinguish (same vocabulary as RecordInspector/UsageCache). */
-type FactOrigin = 'PROJECTED' | 'NULL_FIELD' | 'SOURCE_GAP'
+/** The three origins the projection can actually distinguish (same vocabulary as RecordInspector/UsageCache).
+ *  Exported because the handle lane labels every one of its cells with the same three words — a second
+ *  private copy of this union is how two lanes start meaning two things. */
+export type FactOrigin = 'PROJECTED' | 'NULL_FIELD' | 'SOURCE_GAP'
 
 /** A cell that never pads: a value the result does not carry stays 未提供 with the reason it is absent.
  *  `origin` writes the DOM contract marker (`data-origin`) so a reader — and the render-level test — can
- *  tell a projected value from an absent field without reading the prose. */
-function Field({ label, value, missing, field, origin }: {
+ *  tell a projected value from an absent field without reading the prose. Exported for the handle lane:
+ *  one renderer for 未提供 in this lane, not two that can disagree. */
+export function Field({ label, value, missing, field, origin }: {
   label: string
   value: string | null
   missing: string
@@ -87,13 +89,15 @@ function Field({ label, value, missing, field, origin }: {
   )
 }
 
-const num = (value: number | null | undefined): string | null =>
+/** The three "is this value actually there" readers, shared with the handle lane: an absent field and a
+ *  fabricated one must not be decided twice in one file-family. */
+export const num = (value: number | null | undefined): string | null =>
   typeof value === 'number' && Number.isFinite(value) ? String(value) : null
 
-const bool = (value: boolean | null | undefined, yes: string, no: string): string | null =>
+export const bool = (value: boolean | null | undefined, yes: string, no: string): string | null =>
   typeof value === 'boolean' ? (value ? yes : no) : null
 
-const text = (value: string | null | undefined): string | null =>
+export const text = (value: string | null | undefined): string | null =>
   value === null || value === undefined || value === '' ? null : value
 
 function statusTone(status: EvidenceRangeResult['status']): 'success' | 'warning' | 'error' {
@@ -190,7 +194,7 @@ export function EvidenceView({
                 ))}
               </div>
               <p className="mt-2 text-xs text-muted">
-                被拒绝的地址不参与任何读取：这里不会把它拼成一个看起来像句柄的东西，也不会退回清单第一条。
+                被拒绝的地址不参与任何读取：这里不会把它拼成一个看起来像把手的东西，也不会退回清单第一条。
               </p>
             </CardContent>
           </Card>
@@ -198,7 +202,7 @@ export function EvidenceView({
 
         <Card>
           <CardHeader>
-            <span>证据产物 · 投影登记的来源</span>
+            <span>证据产物 · 取自快照投影的来源</span>
             <span className="text-[12px] text-muted">
               {shelf.kind === 'sources' ? `${shelf.items.length} 条 · 来自 workspace.sources` : '无投影'}
             </span>
@@ -212,7 +216,7 @@ export function EvidenceView({
             ) : shelf.kind === 'not-provided' ? (
               <div className="text-xs text-warning">
                 来源缺口：v3 快照没有 workspace.sources 字段（生产者未加载仓库证据面），
-                因此没有可寻址的句柄。这与「加载了但一个来源都没有」是两件事。
+                因此没有可寻址的把手（handle）。这与「加载了但一个来源都没有」是两件事。
               </div>
             ) : shelf.items.length === 0 ? (
               <div className="text-xs text-muted">已加载证据面，但没有登记任何来源（空列表是查询结果，不是缺源）</div>
@@ -247,7 +251,7 @@ export function EvidenceView({
               </div>
             )}
             <p className="mt-2 text-[12px] text-muted">
-              投影登记的 path 是仓库相对路径，而区间读要求绝对句柄，并只在声明的证据面上提供内容。
+              取自快照投影的 path 是仓库相对路径，而区间读要求的是绝对路径的把手（handle），并只在声明的证据面上提供内容。
               点开一条不在证据面上的来源，会得到后端的类型化拒绝，而不是一块空白。
             </p>
             {(focus.taskId || focus.executionId) && (
@@ -296,530 +300,9 @@ export function EvidenceView({
           <CardContent className="text-xs text-muted">
             本视图只发起 <span className="font-mono">GET</span>：没有批准 / 派发 / 重试 / 回滚 / apply 的任何入口，
             也没有写深链。读取失败、被拒绝与未送达是三件不同的事，分别如实呈现；
-            项目内部不等于阅读许可 —— 不在声明证据面上的句柄、凭证样名称都由后端拒绝，本视图把拒绝原样展示。
+            项目内部不等于阅读许可 —— 不在声明证据面上的把手、凭证样名称都由后端拒绝，本视图把拒绝原样展示。
           </CardContent>
         </Card>
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// WUI-15 · 证据把手（快照声明，不读内容）
-//
-// The producer publishes two top-level keys next to the evidence shelf: `artifactHandles` (identity rows)
-// and `artifactHandlesSummary` (the scope report that says how the rows were chosen). Both were measured on
-// a live v3 snapshot and both were invisible here. The rules this block follows, in order:
-//
-//  * no content, ever, in any direction. `contentIncluded=false` is a statement about the payload, so the
-//    block renders no preview, no open-file affordance, no read-bytes link — the range endpoint above is
-//    the only thing that can return bytes, and it needs its own address;
-//  * no re-ordering. The snapshot owns the order and publishes `orderingRule` saying so; the front end
-//    shows the rule and keeps the rows in the sequence it received (a sort here would silently disagree
-//    with the disclosure two lines above it);
-//  * no padded numbers. A missing count prints 未提供 with its origin, and a count whose runtime shape is
-//    not a number — the live `refused.droppedOnVerification` is an object — prints no number at all;
-//  * absence is not emptiness. `artifactHandles` undefined is a source gap; `artifactHandles: []` is an
-//    enumerated surface with nothing on it. `snap === null` is a third thing again;
-//  * the truncation is disclosed, not hidden: 投影 / 枚举 / 省略 / 敏感名拒 / 再生目录剪 ride the header so
-//    a reader never mistakes a capped window for the whole repository.
-// ---------------------------------------------------------------------------
-
-/** One summary fact: the printed value, and when there is none, why there is none. */
-interface Fact { value: string | null; missing: string; origin: FactOrigin }
-
-const absentFact = (label: string): Fact => ({
-  value: null,
-  missing: `生产者没有给出 ${label} 字段（来源缺口，不预填）`,
-  origin: 'SOURCE_GAP',
-})
-
-/** A count. Non-numeric runtime shapes keep their shape in the reason and produce no number. */
-function countFact(raw: unknown, label: string): Fact {
-  if (raw === undefined) return absentFact(label)
-  if (raw === null) return { value: null, missing: `${label} 投影为 null —— 未记录，不等于 0`, origin: 'NULL_FIELD' }
-  if (typeof raw !== 'number') {
-    return {
-      value: null,
-      missing: `${label} 的形态不是计数（实测 ${Array.isArray(raw) ? 'array' : typeof raw}），不折算成 0`,
-      origin: 'NULL_FIELD',
-    }
-  }
-  const value = num(raw)
-  return value === null
-    ? { value: null, missing: `${label} 不是可表示的数值`, origin: 'NULL_FIELD' }
-    : { value, missing: '', origin: 'PROJECTED' }
-}
-
-function stringFact(raw: unknown, label: string): Fact {
-  if (raw === undefined) return absentFact(label)
-  const value = text(typeof raw === 'string' ? raw : null)
-  return value === null
-    ? { value: null, missing: `${label} 未投影为字符串`, origin: 'NULL_FIELD' }
-    : { value, missing: '', origin: 'PROJECTED' }
-}
-
-/** A declared boolean, printed with its raw token so the reader can check the wording against the field. */
-function flagFact(raw: unknown, label: string, yes: string, no: string): Fact {
-  if (raw === undefined) return absentFact(label)
-  const value = bool(typeof raw === 'boolean' ? raw : null, yes, no)
-  return value === null
-    ? { value: null, missing: `${label} 未投影为布尔值`, origin: 'NULL_FIELD' }
-    : { value: `${String(raw)} · ${value}`, missing: '', origin: 'PROJECTED' }
-}
-
-const seg = (label: string, fact: Fact): string => `${label} ${fact.value ?? 'UNKNOWN'}`
-
-const subRecord = (value: unknown): Record<string, unknown> | null =>
-  value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
-
-/** The row's `digest` / `digestSource`. `types.ts::ArtifactHandle` names the seven schema keys only, and
- *  the producer attaches these two to the rows whose digest was recorded — read here rather than
- *  re-declared, so the schema stays the single type authority. */
-const rowField = (row: ArtifactHandle, key: 'digest' | 'digestSource'): string | null =>
-  text((row as unknown as Record<string, unknown>)[key] as string | null | undefined)
-
-const HANDLES_DIGEST_OPTIONS = [
-  { value: 'all', label: '全部' },
-  { value: 'recorded', label: '已登记摘要' },
-  { value: 'unrecorded', label: '未登记摘要' },
-] as const
-
-type HandlesDigestFilter = 'all' | 'recorded' | 'unrecorded'
-
-const HANDLES_PARAM_NAMES = ['handlesSurface', 'handlesDigest'] as const
-
-/** Kept alive while a filter link is followed: the shell's own state, the addressed slice, the filters.
- *  `evidenceHref()` in `lib/evidenceRange.ts` owns the artifact address and its own preserve list; this
- *  lane-local copy exists because a filter must not be able to drop a read that is already addressed. */
-const HANDLES_PRESERVED_PARAMS = [
-  'theme', 'layout', 'palette', 'api', 'shell', 'taskId', 'executionId',
-  'artifact', 'offset', 'limit', 'expectedDigest', 'wholeDigest',
-  ...HANDLES_PARAM_NAMES,
-] as const
-
-const HANDLES_MAX_SURFACE_LENGTH = 128
-const HANDLES_CONTROL_CHARS = /[\u0000-\u001f\u007f]/
-
-interface HandlesFilterVerdict { surface: string | null; digest: HandlesDigestFilter; rejected: string[] }
-
-/** The same discipline as `readEvidenceAddress()`: an illegal value is reported, never applied, and never
- *  answered by falling back to the first option. */
-function readHandlesFilters(search: string, knownSurfaces: string[]): HandlesFilterVerdict {
-  let params: URLSearchParams
-  try { params = new URLSearchParams(search) } catch { return { surface: null, digest: 'all', rejected: [] } }
-  const rejected: string[] = []
-
-  const rawSurface = params.get('handlesSurface')
-  let surface: string | null = null
-  if (rawSurface !== null && rawSurface.trim() !== '') {
-    const value = rawSurface.trim()
-    if (value.length > HANDLES_MAX_SURFACE_LENGTH) {
-      rejected.push(`handlesSurface 超过 ${HANDLES_MAX_SURFACE_LENGTH} 个字符，已拒绝`)
-    } else if (HANDLES_CONTROL_CHARS.test(value)) {
-      rejected.push('handlesSurface 含控制字符，已拒绝')
-    } else if (knownSurfaces.length > 0 && !knownSurfaces.includes(value)) {
-      rejected.push(`handlesSurface 不是投影里的证据面（收到 ${value.slice(0, 32)}）：过滤未应用，也不回退成「全部」或第一个面`)
-    } else {
-      surface = value
-    }
-  }
-
-  const rawDigest = (params.get('handlesDigest') ?? '').trim()
-  let digest: HandlesDigestFilter = 'all'
-  if (rawDigest !== '' && rawDigest !== 'all') {
-    if (rawDigest === 'recorded' || rawDigest === 'unrecorded') digest = rawDigest
-    else rejected.push(`handlesDigest 只接受 all / recorded / unrecorded（收到 ${rawDigest.slice(0, 24)}），已拒绝`)
-  }
-  return { surface, digest, rejected }
-}
-
-/** Filter state travels in the query string — web storage is forbidden in this project — so every filter
- *  click is an address, shareable and stable across a refresh. */
-function handlesHref(
-  search: string,
-  updates: Partial<Record<'handlesSurface' | 'handlesDigest', string | null>>,
-): { href: string; search: string } {
-  const current = new URLSearchParams(search)
-  for (const [name, value] of Object.entries(updates)) {
-    if (value === null || value === undefined || value === '') current.delete(name)
-    else current.set(name, value)
-  }
-  const params = new URLSearchParams()
-  params.set('view', current.get('view') ?? 'evidence')
-  for (const name of HANDLES_PRESERVED_PARAMS) {
-    const value = current.get(name)
-    if (value !== null && value !== '') params.set(name, value)
-  }
-  const qs = params.toString()
-  const href = `${window.location.pathname}${qs ? `?${qs}` : ''}`
-  return { href, search: qs ? `?${qs}` : '' }
-}
-
-function handlesChipClass(active: boolean): string {
-  return cn(
-    'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px] no-underline',
-    active ? 'border-primary/70 bg-panel2 text-ink' : 'border-border/60 text-muted hover:text-ink',
-  )
-}
-
-function EvidenceHandles({ snap, search }: { snap: Snap; search: string }) {
-  const rows: ArtifactHandle[] | null = snap && Array.isArray(snap.artifactHandles) ? snap.artifactHandles : null
-  const summary: ArtifactHandlesSummary | null = snap?.artifactHandlesSummary ?? null
-  // The URL is the state: it is read once at mount (so a refresh with `?handlesDigest=unrecorded` in the
-  // address still arrives filtered) and rewritten on every filter click.
-  const [filterSearch, setFilterSearch] = React.useState(search)
-
-  const knownSurfaces = React.useMemo(() => {
-    const found = new Set<string>()
-    for (const row of rows ?? []) {
-      if (typeof row.surface === 'string' && row.surface !== '') found.add(row.surface)
-    }
-    return Array.from(found).sort()
-  }, [rows])
-
-  const filters = React.useMemo(
-    () => readHandlesFilters(filterSearch, knownSurfaces),
-    [filterSearch, knownSurfaces],
-  )
-
-  const applyFilter = (
-    updates: Partial<Record<'handlesSurface' | 'handlesDigest', string | null>>,
-  ) => (event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey
-      || event.shiftKey || event.altKey) return
-    event.preventDefault()
-    const next = handlesHref(filterSearch, updates)
-    window.history.replaceState(null, '', next.href)
-    setFilterSearch(next.search)
-  }
-
-  const visible = (rows ?? []).filter((row) => {
-    if (filters.surface !== null && row.surface !== filters.surface) return false
-    if (filters.digest === 'recorded') return row.digestRecorded === true
-    if (filters.digest === 'unrecorded') return row.digestRecorded === false
-    return true
-  })
-  // A row without the flag is neither recorded nor unrecorded, so it takes part in no digest filter and
-  // says so rather than being counted on the side that happens to be smaller.
-  const unflagged = (rows ?? []).filter((row) => typeof row.digestRecorded !== 'boolean').length
-
-  const projectedCount = countFact(summary?.projectedCount, 'projectedCount')
-  const enumeratedCount = countFact(summary?.enumeratedCount, 'enumeratedCount')
-  const omittedCount = countFact(summary?.omittedCount, 'omittedCount')
-  const refusedFacts = subRecord(summary?.refused)
-  const sensitiveNames = countFact(refusedFacts?.sensitiveNames, 'refused.sensitiveNames')
-  const prunedDirectories = countFact(refusedFacts?.prunedRegenerableDirectories, 'refused.prunedRegenerableDirectories')
-  const notRegularFiles = countFact(refusedFacts?.notRegularFiles, 'refused.notRegularFiles')
-  const reparseDirectories = countFact(refusedFacts?.reparseDirectories, 'refused.reparseDirectories')
-  const unreadableEntries = countFact(refusedFacts?.unreadableEntries, 'refused.unreadableEntries')
-  const droppedEntries = Object.values(refusedFacts?.droppedOnVerification ?? {})
-    .reduce((total, count) => total + (typeof count === 'number' ? count : 0), 0)
-  const droppedCount = countFact(refusedFacts ? droppedEntries : undefined,
-                                 'refused.droppedOnVerification')
-  // A refusal total is only meaningful when the producer published a refusal record at all; an absent
-  // `refused` map stays null so the card cannot appear with invented zeroes.
-  const refusalTotal = refusedFacts
-    ? [refusedFacts.notRegularFiles, refusedFacts.reparseDirectories, refusedFacts.sensitiveNames,
-       refusedFacts.unreadableEntries, refusedFacts.prunedRegenerableDirectories]
-        .reduce((total: number, raw) => total + (typeof raw === 'number' ? raw : 0), 0)
-      + droppedEntries
-    : null
-  const capacityLine = [
-    seg('投影', projectedCount), seg('枚举', enumeratedCount), seg('省略', omittedCount),
-    seg('敏感名拒', sensitiveNames), seg('再生目录剪', prunedDirectories),
-  ].join(' / ')
-
-  const digestIndex = subRecord(summary?.digestIndex)
-  const cost = subRecord(summary?.cost)
-  const content = flagFact(
-    summary?.contentIncluded, 'contentIncluded',
-    '随快照下发（本区块仍然只列身份，内容渲染归区间读那一侧）',
-    '不随快照下发（本区块没有预览 / 打开 / 读取字节的入口）',
-  )
-
-  return (
-    <Card data-testid="evidence-handles">
-      <CardHeader>
-        <span>证据把手（快照声明，不读内容）</span>
-        <span className="text-[12px] text-muted" data-testid="evidence-handles-count">
-          {snap === null ? '把手清单 UNKNOWN · 数据源未接入'
-            : rows === null ? '把手清单 UNKNOWN · 快照没有该字段'
-            : `可见 ${visible.length} 行 / 投影 ${rows.length} 行`}
-        </span>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {snap === null ? (
-          <UnknownState
-            title="证据把手 UNKNOWN（数据源未接入）"
-            description="没有快照就没有把手清单，也没有容量事实：这里不预填行数、不预填枚举量，也不把「读不到」画成「一个把手都没有」。"
-            className="py-6"
-          />
-        ) : (
-          <>
-            <p className="m-0 text-[12px] text-muted" data-testid="evidence-handles-capacity" data-origin={summary ? 'PROJECTED' : 'SOURCE_GAP'}>
-              {capacityLine}
-              {summary === null ? ' —— 容量事实未知：快照没有 artifactHandlesSummary 字段，上述每一项都保持 UNKNOWN，不补 0。' : ''}
-            </p>
-
-            <div className="flex flex-wrap items-center gap-1.5" data-testid="evidence-handles-truncation">
-              <Badge variant="muted">{`顺序 · ${stringFact(summary?.orderingKey, 'orderingKey').value ?? 'UNKNOWN'}`}</Badge>
-              <span className="text-[12px] text-muted">
-                列表顺序就是快照顺序（生产者按 orderingRule 发布，前端不再排序）。
-              </span>
-            </div>
-
-            {summary?.truncated === true && (
-              <p className="m-0 text-[12px] text-muted" data-testid="evidence-handles-window" data-origin="PROJECTED">
-                {`窗口披露：投影 ${projectedCount.value ?? 'UNKNOWN'} 行 / 上限 ${countFact(summary.cap, 'cap').value ?? 'UNKNOWN'}，省略 ${omittedCount.value ?? 'UNKNOWN'} 行 —— 截断是 cap 的设计行为，不是故障；看到的是窗口，不是仓库全量。`}
-              </p>
-            )}
-            {refusalTotal !== null && refusalTotal > 0 && (
-              <ProductStateCard
-                state="partial-failure"
-                subject="证据把手枚举"
-                detail={`生产者拒绝或剪枝 ${refusalTotal} 个条目：敏感名 ${sensitiveNames.value ?? '未提供'}、再生目录剪枝 ${prunedDirectories.value ?? '未提供'}、非普通文件 ${notRegularFiles.value ?? '未提供'}、重解析目录 ${reparseDirectories.value ?? '未提供'}、读不动条目 ${unreadableEntries.value ?? '未提供'}、核对时丢弃 ${droppedCount.value ?? '未提供'}。这些位置没有把手行，也没有被折算成"不存在"。`}
-                className="py-4 text-left"
-              />
-            )}
-
-
-            <div className="flex flex-wrap gap-3" data-testid="evidence-handles-filters">
-              <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="按证据面过滤把手">
-                <span className="text-[12px] uppercase tracking-[0.12em] text-muted">面 handlesSurface</span>
-                <a
-                  href={handlesHref(filterSearch, { handlesSurface: null }).href}
-                  onClick={applyFilter({ handlesSurface: null })}
-                  className={handlesChipClass(filters.surface === null)}
-                  aria-current={filters.surface === null ? 'true' : undefined}
-                  data-filter-kind="surface"
-                  data-filter-value="all"
-                >
-                  全部面
-                </a>
-                {knownSurfaces.map((surface) => (
-                  <a
-                    key={surface}
-                    href={handlesHref(filterSearch, { handlesSurface: surface }).href}
-                    onClick={applyFilter({ handlesSurface: surface })}
-                    className={handlesChipClass(filters.surface === surface)}
-                    aria-current={filters.surface === surface ? 'true' : undefined}
-                    data-filter-kind="surface"
-                    data-filter-value={surface}
-                  >
-                    {surface}
-                  </a>
-                ))}
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="按摘要登记状态过滤把手">
-                <span className="text-[12px] uppercase tracking-[0.12em] text-muted">摘要 handlesDigest</span>
-                {HANDLES_DIGEST_OPTIONS.map((option) => (
-                  <a
-                    key={option.value}
-                    href={handlesHref(filterSearch, { handlesDigest: option.value === 'all' ? null : option.value }).href}
-                    onClick={applyFilter({ handlesDigest: option.value === 'all' ? null : option.value })}
-                    className={handlesChipClass(filters.digest === option.value)}
-                    aria-current={filters.digest === option.value ? 'true' : undefined}
-                    data-filter-kind="digest"
-                    data-filter-value={option.value}
-                  >
-                    {option.label}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {filters.rejected.length > 0 && (
-              <div className="list" data-testid="evidence-handles-filter-rejected">
-                {filters.rejected.map((reason) => (
-                  <div key={reason} className="list-item" data-origin="NULL_FIELD">
-                    <span className="text-[12px] text-warning">{reason}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {unflagged > 0 && (
-              <p className="m-0 text-[12px] text-warning" data-origin="SOURCE_GAP" data-testid="evidence-handles-unflagged">
-                {`其中 ${unflagged} 行没有 digestRecorded 字段：它既不是「已登记」也不是「未登记」，不参与摘要过滤，也不并入任何一侧的计数。`}
-              </p>
-            )}
-
-            {rows === null ? (
-              <div data-testid="evidence-handles-unknown">
-                <UnknownState
-                  title="证据把手 UNKNOWN（字段缺失）"
-                  description="来源缺口：v3 快照没有 artifactHandles 字段（生产者没有发布把手投影）。这与「发布了但一个把手都没有」是两件事，所以这里不画 0 行，也不画空清单。"
-                  className="py-6"
-                />
-              </div>
-            ) : rows.length === 0 ? (
-              <EmptyState
-                title="没有把手行（这是查询结果）"
-                description="artifactHandles 是空数组：把手投影跑了，声明的证据面上没有可登记的把手。空列表是答案，不是缺源。"
-                className="py-6"
-              />
-            ) : visible.length === 0 ? (
-              <p className="m-0 text-[12px] text-muted" data-testid="evidence-handles-filter-empty" data-origin="PROJECTED">
-                {`过滤后没有行：handlesSurface=${filters.surface ?? 'all'} · handlesDigest=${filters.digest} 在投影的 ${rows.length} 行里没有匹配。这是本次过滤的查询结果，投影本身并没有变空。`}
-              </p>
-            ) : (
-              <div className="list" data-testid="evidence-handles-rows" data-ordering="projected">
-                {visible.map((row) => (
-                  <HandleRow key={row.handle} row={row} />
-                ))}
-              </div>
-            )}
-
-            {summary === null ? (
-              <div className="list">
-                <div
-                  className="list-item flex-col items-stretch gap-1"
-                  data-testid="evidence-handles-summary-gap"
-                  data-origin="SOURCE_GAP"
-                >
-                  <div className="text-[12px] uppercase tracking-[0.12em] text-muted">artifactHandlesSummary · 范围报告</div>
-                  <div className="flex items-center gap-1.5 text-[12px] text-warning">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-secondary" aria-hidden="true" />
-                    来源缺口（当前 v3 快照未携带 artifactHandlesSummary · 生产者没有发布把手的范围报告，
-                    cap / 拒绝 / 摘要索引的每一格都保持 UNKNOWN，这里不逐格补 0）
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="list" data-testid="evidence-handles-summary">
-                <Field field="handlesContentIncluded" label="contentIncluded · 内容是否随快照下发" {...factProps(content)} />
-                <Field field="handlesEnumerationScope" label="enumerationScope · 枚举范围" {...factProps(stringFact(summary.enumerationScope, 'enumerationScope'))} />
-                <Field field="handlesCap" label="cap · 窗口上限" {...factProps(countFact(summary.cap, 'cap'))} />
-                <Field field="handlesComplete" label="complete · 枚举是否走完" {...factProps(flagFact(summary.complete, 'complete', '已走完', '未走完'))} />
-                <Field field="handlesTruncated" label="truncated · 是否截断" {...factProps(flagFact(summary.truncated, 'truncated', '已截断', '未截断'))} />
-                <Field field="handlesGeneratedAt" label="generatedAt · 把手生成时间（整秒精度）" {...factProps(generatedFact(summary.generatedAt))} />
-                <Field field="handlesOrderingRule" label="orderingRule · 排序规则（快照原文）" {...factProps(stringFact(summary.orderingRule, 'orderingRule'))} />
-                <Field field="handlesRowsWithDigest" label="digestIndex.rowsWithDigest · 有摘要的行" {...factProps(countFact(digestIndex?.rowsWithDigest, 'digestIndex.rowsWithDigest'))} />
-                <Field field="handlesRowsWithoutDigest" label="digestIndex.rowsWithoutDigest · 无摘要的行" {...factProps(countFact(digestIndex?.rowsWithoutDigest, 'digestIndex.rowsWithoutDigest'))} />
-                <Field field="handlesComputedByHashing" label="digestIndex.computedByHashing · 是否由哈希得到" {...factProps(flagFact(digestIndex?.computedByHashing, 'computedByHashing', '由本侧哈希计算', '取自登记的摘要，界面侧不做哈希'))} />
-                <Field field="handlesRecordsScanned" label="digestIndex.recordsScanned · 扫过的登记记录" {...factProps(countFact(digestIndex?.recordsScanned, 'digestIndex.recordsScanned'))} />
-                <Field field="handlesRecordsUnreadable" label="digestIndex.recordsUnreadable · 读不动的记录" {...factProps(countFact(digestIndex?.recordsUnreadable, 'digestIndex.recordsUnreadable'))} />
-                <Field field="handlesPairsIndexed" label="digestIndex.pairsIndexed · 建索的对数" {...factProps(countFact(digestIndex?.pairsIndexed, 'digestIndex.pairsIndexed'))} />
-                <Field field="handlesElapsedMs" label="cost.elapsedMs · 生产者枚举耗时（毫秒）" {...factProps(countFact(cost?.elapsedMs, 'cost.elapsedMs'))} />
-                <Field field="handlesEntriesScanned" label="cost.entriesScanned · 扫过的条目" {...factProps(countFact(cost?.entriesScanned, 'cost.entriesScanned'))} />
-                <Field field="handlesNotRegularFiles" label="refused.notRegularFiles · 非普通文件" {...factProps(countFact(refusedFacts?.notRegularFiles, 'refused.notRegularFiles'))} />
-                <Field field="handlesReparseDirectories" label="refused.reparseDirectories · 重解析目录" {...factProps(countFact(refusedFacts?.reparseDirectories, 'refused.reparseDirectories'))} />
-                <Field field="handlesUnreadableEntries" label="refused.unreadableEntries · 读不动的条目" {...factProps(countFact(refusedFacts?.unreadableEntries, 'refused.unreadableEntries'))} />
-                <Field field="handlesDroppedOnVerification" label="refused.droppedOnVerification · 核对时丢弃" {...factProps(countFact(refusedFacts?.droppedOnVerification, 'refused.droppedOnVerification'))} />
-                <Field field="handlesSchemaVersion" label="schemaVersion · 摘要契约版本" {...factProps(stringFact(summary.schemaVersion, 'schemaVersion'))} />
-              </div>
-            )}
-
-            <p className="m-0 text-[12px] text-muted" data-testid="evidence-handles-boundary">
-              每一行只有身份元数据：handle / kind / surface / surfaceRoot / sizeBytes / modifiedAt / digestRecorded；
-              digest 与 digestSource 只出现在登记过摘要的那部分行上，其数量由上面的
-              digestIndex.rowsWithDigest / rowsWithoutDigest 披露，本视图不自己数行。
-              时间戳是整秒精度，同一秒内的先后按快照自己的 orderingRule 决定（原文见上），本视图不补毫秒、不补时区，
-              也不把缺失的摘要显示成空串。快照声明 contentIncluded=false，
-              所以这里没有任何预览、打开文件或读取字节的入口：字节只能由区间读端点按地址返回。
-            </p>
-          </>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-/** `generatedAt` is an RFC3339 string; a value that fails the shape check stays UNKNOWN via fmtTimestamp. */
-function generatedFact(raw: unknown): Fact {
-  const base = stringFact(raw, 'generatedAt')
-  if (base.value === null || base.origin !== 'PROJECTED') return base
-  return fmtTimestamp(base.value) === 'UNKNOWN'
-    ? { value: null, missing: 'generatedAt 不是可解析的 RFC3339 时间', origin: 'NULL_FIELD' }
-    : { value: `${fmtTimestamp(base.value)} · 源值 ${base.value} · 整秒`, missing: '', origin: 'PROJECTED' }
-}
-
-function factProps(fact: Fact): { value: string | null; missing: string; origin: FactOrigin } {
-  return { value: fact.value, missing: fact.missing, origin: fact.origin }
-}
-
-/** One projected handle. No link: the row is a declaration of identity, and turning it into a byte read
- *  would be exactly the affordance `contentIncluded=false` forbids this block from offering. */
-function HandleRow({ row }: { row: ArtifactHandle }) {
-  // `null` and "no key" stay different facts: a projected null is a NULL_FIELD, an absent key is a source gap.
-  const size = countFact(row.sizeBytes, 'sizeBytes')
-  const modified = stringFact(row.modifiedAt, 'modifiedAt')
-
-  const timeCell = (() => {
-    if (modified.value === null) {
-      return { text: `时间未提供（${modified.missing}）`, origin: modified.origin, precision: undefined as 'second' | undefined }
-    }
-    const formatted = fmtTimestamp(modified.value)
-    if (formatted === 'UNKNOWN') {
-      return {
-        text: `时间未提供（modifiedAt 不是可解析的 RFC3339 时间：源值 ${modified.value}）`,
-        origin: 'NULL_FIELD' as FactOrigin,
-        precision: undefined as 'second' | undefined,
-      }
-    }
-    return {
-      text: `${formatted} · 整秒精度 · 源值 ${modified.value}`,
-      origin: 'PROJECTED' as FactOrigin,
-      precision: 'second' as const,
-    }
-  })()
-
-  const digestCell = (() => {
-    const recorded = rowField(row, 'digest')
-    if (row.digestRecorded === true) {
-      if (recorded !== null) {
-        const source = rowField(row, 'digestSource')
-        return {
-          text: `摘要已登记 · ${recorded}${source ? ` · 来源 ${source}` : ' · 摘要来源未投影'}`,
-          origin: 'PROJECTED' as FactOrigin,
-        }
-      }
-      return {
-        text: '摘要登记为已记录，但投影里没有摘要值 · 不显示空串冒充摘要',
-        origin: 'NULL_FIELD' as FactOrigin,
-      }
-    }
-    if (row.digestRecorded === false) {
-      return { text: '摘要未记录 · 该把手没有登记摘要（不是空摘要，也不是零）', origin: 'NULL_FIELD' as FactOrigin }
-    }
-    return {
-      text: '摘要状态未投影 · 该行没有 digestRecorded 字段，既不按已记录也不按未记录处理',
-      origin: 'SOURCE_GAP' as FactOrigin,
-    }
-  })()
-
-  return (
-    <div
-      className="list-item flex-col items-stretch gap-1"
-      data-handle-row={row.handle}
-      data-handles-surface={text(row.surface) ?? ''}
-      data-digest-recorded={typeof row.digestRecorded === 'boolean' ? String(row.digestRecorded) : 'absent'}
-    >
-      <div className="flex min-w-0 flex-wrap items-baseline justify-between gap-2">
-        <span className="min-w-0 break-all font-mono text-[12px] text-ink">{text(row.handle) ?? '未提供（handle 字段缺失）'}</span>
-        <span className="text-[12px] text-muted tabular-nums" data-handles-cell="size" data-origin={size.origin}>
-          {size.value !== null ? `${fmtBytes(row.sizeBytes)} · 源值 ${size.value} B` : `大小未提供（${size.missing}）`}
-        </span>
-      </div>
-      <div className="flex min-w-0 flex-wrap gap-2 text-[12px] text-muted">
-        <span data-handles-cell="surface" data-origin={text(row.surface) === null ? 'NULL_FIELD' : 'PROJECTED'}>
-          面 {text(row.surface) ?? '未提供'}
-        </span>
-        <span className="break-all" data-handles-cell="surfaceRoot" data-origin={text(row.surfaceRoot) === null ? 'NULL_FIELD' : 'PROJECTED'}>
-          根 {text(row.surfaceRoot) ?? '未提供（该生产者不发 surfaceRoot）'}
-        </span>
-        <span data-handles-cell="kind" data-origin={text(row.kind) === null ? 'NULL_FIELD' : 'PROJECTED'}>
-          类 {text(row.kind) ?? '未提供'}
-        </span>
-        <span
-          data-handles-cell="modifiedAt"
-          data-origin={timeCell.origin}
-          {...(timeCell.precision ? { 'data-precision': timeCell.precision } : {})}
-        >
-          {timeCell.text}
-        </span>
-        <span data-handles-cell="digest" data-origin={digestCell.origin}>{digestCell.text}</span>
       </div>
     </div>
   )
@@ -841,8 +324,8 @@ function EvidenceColumns({
         <Card data-column="identity">
           <CardHeader><span>身份 · Identity</span></CardHeader>
           <CardContent>
-            <Field label="handle" value={null} missing={rejectedCount > 0 ? '地址被拒绝，没有可用句柄' : '地址里没有 artifact 参数，未指定句柄'} />
-            <Field label="记录摘要" value={null} missing="未指定句柄，谈不上摘要" />
+            <Field label="handle" value={null} missing={rejectedCount > 0 ? '地址被拒绝，没有可用把手' : '地址里没有 artifact 参数，未指定把手'} />
+            <Field label="记录摘要" value={null} missing="未指定把手，谈不上摘要" />
             <Field label="大小" value={null} missing="未发起读取" />
           </CardContent>
         </Card>
@@ -861,8 +344,8 @@ function EvidenceColumns({
           <CardContent>
             <div className="text-xs text-muted" role="status">
               {rejectedCount > 0
-                ? '无判定：地址在校验处就被拒绝，读取未发起。被拒绝的值不会被拼成一个看起来像句柄的东西，也不会退回清单第一条。'
-                : '无判定：没有句柄就没有对象。选择左侧清单里的一条来源，或直接使用带 artifact 参数的地址。'}
+                ? '无判定：地址在校验处就被拒绝，读取未发起。被拒绝的值不会被拼成一个看起来像把手的东西，也不会退回清单第一条。'
+                : '无判定：没有把手就没有对象。选择左侧清单里的一条来源，或直接使用带 artifact 参数的地址。'}
             </div>
           </CardContent>
         </Card>
@@ -971,7 +454,7 @@ function EvidenceColumns({
       <Card data-column="identity">
         <CardHeader><span>身份 · Identity</span></CardHeader>
         <CardContent>
-          <Field field="handle" label="handle" value={text(item.handle) ?? text(address?.handle)} missing="结果未回传句柄" />
+          <Field field="handle" label="handle" value={text(item.handle) ?? text(address?.handle)} missing="结果未回传把手" />
           <Field field="recordedDigest" label="记录摘要（调用方提供）" value={recordedDigest} missing="地址未提供 expectedDigest，后端也没有可比的 wholeDigest" />
           <Field field="digestSource" label="摘要来源" value={text(identity?.digestSource)} missing="该判定未走到摘要核对" />
           <Field field="size" label="大小" value={sizeBytes !== null ? fmtBytes(sizeBytes) : null} missing="结果未携带文件大小" />

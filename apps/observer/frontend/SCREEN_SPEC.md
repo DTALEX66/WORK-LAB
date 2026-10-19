@@ -175,9 +175,17 @@ region below "requires" one.
 
 ## Text and contrast (normative, restated from DESIGN.md)
 
-- No meaningful text below 12px. *Measured 2026-10-08 after the floor sweep: minimum 12px in both
-  themes, 33 leaf nodes at 1262×668. Enforced on screen by `scripts/audit/text_legibility_via_cdp.py`
-  and in source by `tests/workflow-assistance/test_no_sub_floor_text_in_the_observer_source.py`.*
+- No meaningful text below 12px. *Re-measured 2026-10-19 with a per-lane scroll sweep: 31 lanes in both
+  themes at the 900×600 window floor, 2,676 sampled leaf nodes (dark; light 2,678), minimum 12px,
+  `aa_failures=0`, `belowFloor=0`, and no horizontal overflow (`scrollWidth=900 = innerWidth`). Enforcement
+  is split, and stated as such: the probe's arithmetic and its verdict (colour parsing, alpha compositing,
+  thresholds, the per-lane coverage checks) are gated in CI by `tests/ci/test_text_legibility_gate.py`
+  (52 cases) and the source-level rule by `tests/workflow-assistance/test_no_sub_floor_text_in_the_observer_source.py`;
+  the browser sweep of the shipped bundle is not a CI step — the CI browser job runs
+  `scripts/audit/topbar_geometry_via_cdp.py`, so a fresh `LEGIBILITY_GATE_PASS` from
+  `scripts/audit/text_legibility_via_cdp.py` is evidence produced by hand, not a gate the pipeline asserts.
+  The earlier figure "33 leaf nodes at 1262×668" was a single-view census, which
+  this instrument's own ERR-218 lesson says cannot stand for the product.*
 - **A box may not ellipsise a fact.** Any painted element that clips its own text with
   `text-overflow: ellipsis` must carry the whole string somewhere a reader can reach (`title`, or an
   ancestor's `aria-label`); otherwise it is a violation of the assertion

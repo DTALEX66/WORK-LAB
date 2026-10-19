@@ -266,6 +266,19 @@ the floor sweep the same instrument found 12 nodes below 12px (a 9px `{component
 `{typography.label-caps}` group captions, the brand caption, the first-frame strip, the zoom readout)
 and 3 AA failures in light.
 
+**2026-10-19 re-census, swept per lane with a live backend.** The same instrument now scrolls every
+scrollable region in viewport-sized steps before sampling, so the population is the product rather than the
+first screen: 31 lanes × both themes at the 900×600 window floor, 2,676 sampled leaf nodes (light 2,678),
+minimum 12px, `aa_failures=0`, `belowFloor=0`, `no_horizontal_overflow_at_this_width` clean at 900px. The
+evidence lane alone went from 42 nodes (heading and shelf only — the handle rows sat below the fold and were
+never sampled) to 120, including 32 handle-row cells and 20 path strings, all at 12px. Without the scroll
+pass the run reported the same green it had reported while blind to the new block, which is why the sweep,
+a `coverage_was_reported` check and the two coverage checks are part of the instrument now — and why
+`tests/ci/test_text_legibility_gate.py` carries planted cases for all three: a lane that stops reporting
+coverage, a lane that overflows the asked width, and a scrollable lane that yields no new text must each be
+convicted. What CI does **not** do is launch the browser sweep over the shipped bundle; its browser step runs
+the geometry gate, so a legibility sweep is hand-produced evidence until someone authorises wiring it in.
+
 **That census was scoped to the degraded state, and said so too broadly.** With no backend the shell
 renders the offline card, so the 33 nodes never included a filled status pill, a disabled primary action
 or a KPI numeral — precisely where the light theme was still failing. Run against a live v3 snapshot

@@ -15,6 +15,7 @@ import { readFileSync } from 'node:fs'
 
 import { EvidenceView } from '@/views/EvidenceView'
 import type { ArtifactHandle, SnapshotV3 } from '@/types'
+import type { SliceReader } from '@/lib/evidenceRange'
 import {
   HANDLES_CAP, HANDLES_ENUMERATED, HANDLES_OMITTED, HANDLES_ROWS_WITH_DIGEST,
   HANDLES_SENSITIVE_NAMES_REFUSED, HANDLES_PRUNED_REGENERABLE,
@@ -96,14 +97,14 @@ describe('WUI-15 · a missing handle field is a gap, not a zero', () => {
     expect(text).toContain('没有 artifactHandles 字段')
     // the gap is stated as a gap, and the empty list is never substituted for it
     expect(text).not.toContain('没有把手行')
-    expect(capacityLine(container).textContent).toContain('投影 UNKNOWN / 枚举 UNKNOWN / 省略 UNKNOWN')
+    expect(capacityLine(container).textContent).toContain('快照下发 UNKNOWN / 枚举 UNKNOWN / 省略 UNKNOWN')
     expect(capacityLine(container).getAttribute('data-origin')).toBe('SOURCE_GAP')
     expect(container.querySelector('[data-testid="evidence-handles-summary-gap"]')?.getAttribute('data-origin'))
       .toBe('SOURCE_GAP')
     // the per-field list is not conjured up field by field when the whole report is missing
     expect(fieldCell(container, 'handlesCap')).toBeNull()
     expect(container.querySelector('[data-testid="evidence-handles-summary-gap"]')?.textContent).toContain('cap')
-    expect(text).not.toMatch(/投影 0/)
+    expect(text).not.toMatch(/快照下发 0/)
   })
 
   it('an empty array is a queried answer, and says so instead of naming a missing field', () => {
@@ -115,10 +116,10 @@ describe('WUI-15 · a missing handle field is a gap, not a zero', () => {
     expect(text).toContain('空列表是答案，不是缺源')
     expect(text).not.toContain('没有 artifactHandles 字段')
     expect(block(container).querySelector('[data-testid="evidence-handles-count"]')?.textContent)
-      .toContain('可见 0 行 / 投影 0 行')
+      .toContain('可见 0 行 / 窗口内 0 行')
     expect(rows(container)).toHaveLength(0)
     // the summary facts are still real numbers, including the measured zero
-    expect(capacityLine(container).textContent).toContain('投影 0')
+    expect(capacityLine(container).textContent).toContain('快照下发 0')
   })
 
   it('no snapshot at all is a third statement: nothing is claimed about handles', () => {
@@ -126,7 +127,7 @@ describe('WUI-15 · a missing handle field is a gap, not a zero', () => {
     const text = block(container).textContent ?? ''
     expect(text).toContain('数据源未接入')
     expect(text).toContain('UNKNOWN')
-    expect(text).not.toMatch(/投影 \d/)
+    expect(text).not.toMatch(/快照下发 \d/)
     expect(block(container).querySelectorAll('.tag.ok')).toHaveLength(0)
     expect(block(container).querySelectorAll('[data-tone="success"]')).toHaveLength(0)
   })
@@ -193,7 +194,7 @@ describe('WUI-15 · an unrecorded digest is missing, not empty', () => {
       artifactHandlesSummary: mkArtifactHandlesSummary({ projectedCount: 1, enumeratedCount: 1, omittedCount: 0 }),
     }))
     const cell = digestCell(block(container).querySelector('[data-digest-recorded="true"]') as HTMLElement)
-    expect(cell.textContent).toContain('投影里没有摘要值')
+    expect(cell.textContent).toContain('快照投影里没有摘要值')
     expect(cell.getAttribute('data-origin')).toBe('NULL_FIELD')
   })
 
@@ -204,7 +205,7 @@ describe('WUI-15 · an unrecorded digest is missing, not empty', () => {
       artifactHandlesSummary: mkArtifactHandlesSummary(),
     }))
     const unflagged = block(container).querySelector('[data-digest-recorded="absent"]') as HTMLElement
-    expect(digestCell(unflagged).textContent).toContain('摘要状态未投影')
+    expect(digestCell(unflagged).textContent).toContain('摘要状态未取自快照投影')
     expect(digestCell(unflagged).getAttribute('data-origin')).toBe('SOURCE_GAP')
     expect(block(container).querySelector('[data-testid="evidence-handles-unflagged"]')?.textContent)
       .toContain('1 行没有 digestRecorded 字段')
@@ -275,7 +276,7 @@ describe('WUI-15 · filters live in the address, not in web storage', () => {
       '?view=evidence&handlesSurface=' + encodeURIComponent('not-a-projected-surface') + '&handlesDigest=sometimes',
     )
     const rejected = hostile.container.querySelector('[data-testid="evidence-handles-filter-rejected"]') as HTMLElement
-    expect(rejected.textContent).toContain('不是投影里的证据面')
+    expect(rejected.textContent).toContain('不是取自快照投影的证据面')
     expect(rejected.textContent).toContain('handlesDigest 只接受 all / recorded / unrecorded')
     expect(rejected.querySelectorAll('[data-origin="NULL_FIELD"]')).toHaveLength(2)
     // nothing was filtered: an unusable value does not silently become a query
@@ -292,7 +293,7 @@ describe('WUI-15 · filters live in the address, not in web storage', () => {
     expect(rows(container)).toHaveLength(0)
     const note = block(container).querySelector('[data-testid="evidence-handles-filter-empty"]') as HTMLElement
     expect(note.textContent).toContain('过滤后没有行')
-    expect(note.textContent).toContain('投影本身并没有变空')
+    expect(note.textContent).toContain('窗口本身并没有变空')
     expect(note.getAttribute('data-origin')).toBe('PROJECTED')
   })
 })
@@ -301,7 +302,7 @@ describe('WUI-15 · the capacity facts are the snapshot\u2019s, and nothing is r
   it('the header states the window against the enumeration, from the fixture values', () => {
     const { container } = renderHandles(mkSnapWithArtifactHandles())
     const text = capacityLine(container).textContent ?? ''
-    expect(text).toContain('投影 200 / 枚举 4898 / 省略 4698 / 敏感名拒 195 / 再生目录剪 112')
+    expect(text).toContain('快照下发 200 / 枚举 4898 / 省略 4698 / 敏感名拒 195 / 再生目录剪 112')
     expect(text).not.toMatch(/UNKNOWN/)
     expect(block(container).querySelector('[data-testid="evidence-handles-truncation"]')?.textContent)
       .toContain('列表顺序就是快照顺序')
@@ -312,11 +313,20 @@ describe('WUI-15 · the capacity facts are the snapshot\u2019s, and nothing is r
   })
 
   it('the component does not know these numbers — they arrive through the snapshot', () => {
-    const source = readFileSync('src/views/EvidenceView.tsx', 'utf8')
+    // WUI-15 review ⑤: the block moved to views/EvidenceHandles.tsx, so the guard follows it. A guard that
+    // read the old path would still pass on a file that renders nothing, which is a green that guards
+    // nothing — hence the anchors asserted on the file this test actually reads.
+    const source = readFileSync('src/views/EvidenceHandles.tsx', 'utf8')
     expect(source).toContain('artifactHandles')
     expect(source).toContain('artifactHandlesSummary')
+    for (const anchor of ['data-testid="evidence-handles"', 'data-handle-row', 'data-handles-cell="digest"']) {
+      expect(source, `the handle block no longer writes ${anchor} in the file this guard reads`).toContain(anchor)
+    }
     for (const literal of ['4898', '4698', '195', '112', '40/200']) {
       expect(source, `hardcoded capacity literal ${literal}`).not.toContain(literal)
+      // the host file is where a literal could be re-introduced on the way back; it renders the block too
+      expect(readFileSync('src/views/EvidenceView.tsx', 'utf8'), `hardcoded ${literal} in EvidenceView`)
+        .not.toContain(literal)
     }
   })
 
@@ -447,5 +457,174 @@ describe('WUI-15 · the fault state belongs to refusals, not to the designed cap
     expect(capCell).not.toBeNull()
     const all = Array.from(block(container).querySelectorAll('*'))
     expect(all.indexOf(firstRow!)).toBeLessThan(all.indexOf(capCell!))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// The 2026-10-20 review items, each with the test it asked for. Every one of these fails against the
+// bytes that were shipped before the fix, and each also states the case that must KEEP working — a
+// guard that only ever sees the broken branch cannot tell a fix from a deletion.
+// ---------------------------------------------------------------------------
+
+/** Drop a key entirely: the payload shape that must read as a gap, never as a value. */
+function withoutKey(row: ArtifactHandle, key: string): ArtifactHandle {
+  const copy: Record<string, unknown> = { ...row }
+  delete copy[key]
+  return copy as unknown as ArtifactHandle
+}
+
+function refusalCard(container: HTMLElement): HTMLElement {
+  const card = block(container).querySelector<HTMLElement>('[data-state="partial-failure"]')
+  expect(card, 'the producer declined entries; the vocabulary names that a partial failure').not.toBeNull()
+  return card!
+}
+
+/** A reader that resolves: these cases are about the address a click writes, never about bytes. */
+const resolveWithoutReading: SliceReader = async () => ({
+  kind: 'UNREACHABLE', httpStatus: null, detail: '本用例只验地址，不读字节',
+  endpoint: 'http://127.0.0.1:1/api/v1/evidence-range', authoritative: false,
+})
+
+describe('WUI-15 review ① · surfaceRoot is stated as measured, and a missing key stays a gap', () => {
+  function surfaceRootCell(container: HTMLElement, handle: string): HTMLElement {
+    const row = block(container).querySelector<HTMLElement>(`[data-handle-row="${handle}"]`)
+    expect(row, 'the row must be on screen').not.toBeNull()
+    const cell = row!.querySelector<HTMLElement>('[data-handles-cell="surfaceRoot"]')
+    expect(cell, 'every handle row carries its own surfaceRoot cell').not.toBeNull()
+    return cell!
+  }
+
+  it('a row that carries surfaceRoot prints the value it carries', () => {
+    const row = mkArtifactHandle({ handle: 'D:/x/with-root.json', surfaceRoot: '.project-local/runs' })
+    const { container } = renderHandles(mkSnap({
+      artifactHandles: [row],
+      artifactHandlesSummary: mkArtifactHandlesSummary({ projectedCount: 1, enumeratedCount: 1, omittedCount: 0 }),
+    }))
+    const cell = surfaceRootCell(container, row.handle)
+    expect(cell.textContent).toContain('.project-local/runs')
+    expect(cell.getAttribute('data-origin')).toBe('PROJECTED')
+    // the sentence the live snapshot contradicts (05-artifact-handles-shape.json: every row of the
+    // window carries the field) must not come back, in this cell or anywhere in the block
+    expect(cell.textContent).not.toContain('不发 surfaceRoot')
+    expect(block(container).textContent).not.toContain('不发 surfaceRoot')
+  })
+
+  it('a row without the key says 未提供 with the source gap marker, never an empty cell', () => {
+    const row = withoutKey(mkArtifactHandle({ handle: 'D:/x/no-root.json' }), 'surfaceRoot')
+    const { container } = renderHandles(mkSnap({
+      artifactHandles: [row],
+      artifactHandlesSummary: mkArtifactHandlesSummary({ projectedCount: 1, enumeratedCount: 1, omittedCount: 0 }),
+    }))
+    const cell = surfaceRootCell(container, 'D:/x/no-root.json')
+    expect(cell.textContent).toContain('未提供')
+    expect(cell.textContent).toContain('surfaceRoot')
+    expect((cell.textContent ?? '').trim().length).toBeGreaterThan('根（surfaceRoot）'.length)
+    expect(cell.getAttribute('data-origin')).toBe('SOURCE_GAP')
+    // and this is the row where the old sentence lived: a gap in ONE row must not be reported as a
+    // property of the producer, because the measured window carries the field on every row
+    expect(cell.textContent).not.toContain('不发 surfaceRoot')
+  })
+})
+
+describe('WUI-15 review ② · an absent refusal key does not borrow the map’s zero', () => {
+  const refusedWithoutTheKey = {
+    notRegularFiles: 0, reparseDirectories: 0, sensitiveNames: 231,
+    unreadableEntries: 0, prunedRegenerableDirectories: 114,
+  }
+
+  it('refused present but droppedOnVerification absent: the card says 未提供 and prints no 0', () => {
+    const { container } = renderHandles(mkSnapWithArtifactHandles({
+      artifactHandlesSummary: mkArtifactHandlesSummary({ truncated: false, refused: refusedWithoutTheKey as never }),
+    }))
+    const text = refusalCard(container).textContent ?? ''
+    expect(text).toContain('核对时丢弃 未提供')
+    expect(text).not.toMatch(/丢弃 0/)
+    // the counts the producer really published still print — the clause is not being silenced
+    expect(text).toContain('敏感名 231')
+    expect(text).toContain('再生目录剪枝 114')
+    // and the bookkeeping grid keeps the same answer for the same key
+    const cell = fieldCell(container, 'handlesDroppedOnVerification')!
+    expect(cell.getAttribute('data-origin')).toBe('SOURCE_GAP')
+    expect(cell.textContent).toContain('未提供')
+  })
+
+  it('a map that carries per-reason counts still reaches the card as its sum', () => {
+    const { container } = renderHandles(mkSnapWithArtifactHandles({
+      artifactHandlesSummary: mkArtifactHandlesSummary({
+        truncated: false,
+        refused: { ...refusedWithoutTheKey, droppedOnVerification: { digest_mismatch: 3, size_changed: 2 } } as never,
+      }),
+    }))
+    const text = refusalCard(container).textContent ?? ''
+    expect(text).toContain('核对时丢弃 5')
+    // 231 + 114 + 5: the summed map is part of the total, so the two lines cannot disagree
+    expect(text).toContain('生产者拒绝或剪枝 350 个条目')
+  })
+})
+
+describe('WUI-15 review ④ · a long-term refusal is a compact strip, not a page-level shell', () => {
+  const standing = {
+    notRegularFiles: 0, reparseDirectories: 0, sensitiveNames: 231,
+    unreadableEntries: 0, prunedRegenerableDirectories: 114,
+  }
+
+  it('keeps every word and count and drops only the 64px circle and the page-height band', () => {
+    const { container } = renderHandles(mkSnapWithArtifactHandles({
+      artifactHandlesSummary: mkArtifactHandlesSummary({ truncated: false, refused: standing as never }),
+    }))
+    const card = refusalCard(container)
+    expect(card.getAttribute('data-presentation')).toBe('compact')
+    expect(card.querySelector('.icon')).toBeNull()
+    expect(card.className).not.toContain('empty')
+    expect(card.textContent).toContain('局部故障 · 证据把手枚举')
+    expect(card.textContent).toContain('生产者拒绝或剪枝 345 个条目：敏感名 231')
+    // the state vocabulary the card prints is the point of the card, so it travels with the compact shell
+    expect(card.textContent).toContain('依据：')
+    expect(card.textContent).toContain('下一步：')
+  })
+
+  it('the page-level shell is still what a one-off degraded state wears', () => {
+    // control for the assertion above: `.empty .icon` is not gone from the product, only demoted here
+    const { container } = renderHandles(mkSnap())
+    expect(container.querySelector('.empty .icon')).not.toBeNull()
+  })
+})
+
+describe('WUI-15 review ⑥ · following a source keeps the handle filter in the address', () => {
+  it('the shelf link carries handlesDigest and palette, and so does the URL it writes', () => {
+    const snap = mkSnapWithArtifactHandles({
+      workspace: {
+        sources: [{ path: 'reports/evidence-note.md', evidenceKind: 'MARKDOWN_REPORT', loadedAt: '2026-10-19T08:31:22Z' }],
+      } as never,
+    })
+    const { container } = render(
+      <EvidenceView
+        snap={snap}
+        search="?view=evidence&palette=master&handlesDigest=unrecorded"
+        readSlice={resolveWithoutReading}
+      />,
+    )
+    const source = Array.from(container.querySelectorAll('a'))
+      .find((anchor) => (anchor.getAttribute('href') ?? '').includes('artifact='))
+    expect(source, 'each projected source is offered as an address').toBeTruthy()
+    const href = source!.getAttribute('href') ?? ''
+    expect(href).toContain('handlesDigest=unrecorded')
+    expect(href).toContain('palette=master')
+
+    fireEvent.click(source!)
+    const search = window.location.search
+    expect(search).toContain('artifact=')
+    expect(search).toContain('handlesDigest=unrecorded')
+    expect(search).toContain('palette=master')
+    // and the filter the reader set is still in force in the block after the click
+    expect(block(container).querySelector('a[data-filter-value="unrecorded"]')?.getAttribute('aria-current'))
+      .toBe('true')
+    // a reload from that address comes back filtered — the state is the URL, not the component
+    const reloaded = render(
+      <EvidenceView snap={snap} search={search} readSlice={resolveWithoutReading} />,
+    )
+    for (const row of Array.from(block(reloaded.container).querySelectorAll('[data-handle-row]'))) {
+      expect(row.getAttribute('data-digest-recorded')).toBe('false')
+    }
   })
 })

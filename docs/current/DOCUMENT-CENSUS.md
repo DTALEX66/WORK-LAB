@@ -467,3 +467,49 @@ population 断言改成按记录本身重算期望值，不再写死数字，免
 （`git status` 只出现这两份审计）。效果：本轮之前 8 项 CI 红中的 4 项成因消除（标签齐全、两次测量同 digest、
 计数分布、未绑定计数），gone-guard 命名项转绿；仍属 owner 的只剩 ERR-276/277 的 `fixedCommit` 绑定
 （那是一条"修复在哪个提交"的断言，必须有真实提交才可写）、executor registry pin、DSH 日期合同与派生审计幂等。
+
+## 14. 2026-10-19 晚：界面补齐与两份独立复核（设计对齐 / 重构评审）
+
+**缺口是量出来的**：`apps/observer/frontend/src/contractConformance.ts` 钉住 22 个 v3 快照键，界面源码只消费 20 个——
+`artifactHandles` 与 `artifactHandlesSummary` 零消费者，而快照实测已下发 200 行把手（枚举 5024、省略 4824、
+敏感名拒 231、剪枝 114、有摘要 40 / 无摘要 160）。补齐后新增门 `scripts/ci/verify_snapshot_keys_rendered.py`
+（键清单从契约读，注释与类型声明不算消费）与 `tests/ci/test_snapshot_keys_are_rendered.py`（6 例含 4 例植入反例）。
+
+**两份复核查出、随打磨提交处理的问题**：① 界面文案声称"该生产者不发 surfaceRoot"，与实测相反
+（`.project-local/artifacts/standalone-run-20261019/05-artifact-handles-shape.json` 里 surfaceRoot 200/200）；
+② `refused` 存在但缺键时打印"核对时丢弃 0"，把"没有这个键"说成"值为 0"，与同文件自述矛盾且无测试；
+③ 同物两名（shelf 写"绝对句柄"、新区块写"把手"）与"投影"三义（窗口行数 / 快照下发 / `data-origin=PROJECTED`）；
+④ 拒绝卡用整页级状态壳，而拒绝在本仓是长期常态，构成告警疲劳——语义按词表保留，只降呈现强度；
+⑤ `apps/observer/frontend/src/views/EvidenceView.tsx` 中 48% 是把手专用代码，拆出
+`apps/observer/frontend/src/views/EvidenceHandles.tsx`，并同步
+`apps/observer/frontend/src/views/evidenceHandles.contract.test.tsx` 里那条
+`readFileSync` 禁写检查（不同步就会静默失效变假绿）；⑥ `apps/observer/frontend/src/lib/evidenceRange.ts`
+的链接构造保留清单缺 `handlesSurface`/`handlesDigest`/`palette`，点一下来源就丢过滤。
+
+**我先前的一处臆断被复核纠正**：我看图时说那张卡是"红色故障卡"，取样核实它并非红色（ink 白标题 + primary 蓝图标），
+真正的问题是呈现重量而不是配色——结论以取样为准，不以我的目测为准。
+
+**契约不符不止一处（本轮只修了暴露出来的那条）**：`droppedOnVerification` 前端声明 number、生产者发 dict（已改）；
+同类还有 `digest`/`digestSource`、`generatedAt`、`orderingRule`、`cost`、`contentIncluded`、`enumerationScope`、
+`digestIndex` 的多个子键未进合同，`order` 与 `orderingKey` 两份顺序声明无人核对。门之所以没抓到：
+`apps/observer/frontend/src/contractConformance.ts` 把 `artifactHandlesSummary.refused` 列在豁免里，
+生成的 schema 对该字段只写 `{"type":"object"}`，而 `Refines` 只检查"手写 → 生成"单向。下一轮把这些字段进 schema，
+让豁免行能撤掉。
+
+**两条操作性事实**：`docs/audits/TOOL_INVENTORY_2026-10-07.json` 会引用自己登记的条目，因此新增工具后需
+**两次**重测才收敛（本轮 trackedTools 77→78，第一次 `citedByRecords=1`、第二次=2）；
+`apps/observer/frontend/src/lib/legacyRoutes.ts` 头注释长期写"23 条"而实测 26 条，已把计数从散文里去掉，
+只让表格自身承载数量。
+
+**900 地板 AA 扫描：第一次的绿不算数，补了滚动扫掠才算覆盖到表体**。`scripts/audit/text_legibility_via_cdp.py
+--live-backend --all-views --sizes 900` 首跑（无滚动）在两个主题下都是 `LEGIBILITY_GATE_PASS`
+（31 泳道、1273 节点、belowFloor=0、aaFailures=0），但逐泳道拆开看，证据泳道只采到 42 个节点、与把手块
+相关的只有标题一格——因为采样器按"已画在视口内"过滤，200 行把手表体在 900×600 折叠以下根本没进样本。
+所以那次绿只能证明标题与泳道表面合规。给仪器补上**逐屏滚动扫掠**（每个可滚动区域按视口 0.8 高度分步、
+每泳道 16 次采样预算、合并去重）并新增两条检查：`no_horizontal_overflow_at_this_width` 与
+`scrollable_lanes_gained_nodes_after_scrolling`。重跑后：全局节点 1273→**2676**（light 2678），
+证据泳道 42→**120**，其中 32 格是行内单元格、20 格是路径串，全部实测 **12px**，
+`aa_failures=0 belowFloor=0`，900px 下 `scrollWidth=900=innerWidth` 且 `offenders=[]`（无横向溢出）。
+仍要如实说明：扫描期间静态服务器的 stderr 打出一条连接被重置的 traceback（Chrome 关连接），
+不影响判定，但它是日志里出现过的真实内容，不假装没有。**未做**：把手区块的 AA 对比与 900×600 溢出需 CDP 仪器补测后方可作为测量证据引用；
+`.github/workflows/work-lab-gate.yml` 注释里的"44 modules"与实测 56 不符——那是 CI 配置，属共享管道，改动等 owner 点头。

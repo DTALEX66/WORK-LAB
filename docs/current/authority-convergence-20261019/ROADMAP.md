@@ -39,6 +39,15 @@
 - 在明确授权、幂等、回滚和验证条件下，对低风险维护动作做有限自动化。
 - 解决方案过期检测、版本适用性提醒和回归复验。
 - 按需补充成本/Token/资源汇总，只呈现真实可获取的数据；缺失写 UNKNOWN，不补 0。
+- 把手摘要的字段进生成 schema（`digest`/`digestSource`、`generatedAt`、`orderingRule`、`cost`、
+  `contentIncluded`、`enumerationScope`、`digestIndex` 子键、`order` 与 `orderingKey` 的一致性），
+  之后才能撤掉 `apps/observer/frontend/src/contractConformance.ts` 里对 `artifactHandlesSummary.refused`
+  的豁免行。这是**跨模块**改动（生产者在 workflow-assistance 侧），需要一张显式跨模块任务卡。
+- 把逐泳道的**浏览器扫掠**接进 CI 作业：`scripts/audit/text_legibility_via_cdp.py` 的算术与判定已由
+  `tests/ci/test_text_legibility_gate.py`（52 例）在 CI 里钉住，但它启动真浏览器量已构建产物的那一步不在任何
+  作业里（CI 的浏览器步骤跑的是 `scripts/audit/topbar_geometry_via_cdp.py`）；
+  `scripts/audit/evidence_handles_render_via_headless_chromium.py` 同样只是本机取证。接入会影响共享管道
+  （需要浏览器与时长预算），等 owner 点头再做。
 
 NEXT 不是实施承诺；启动任一项仍需用户明确 Task Grant 和独立验收。
 
