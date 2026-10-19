@@ -185,7 +185,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     new, fixed = compare(baseline, result["current"])
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root, capture_output=True,
-                          text=True).stdout.strip()
+                          text=True, encoding="utf-8").stdout.strip()
     for row in new:
         print(f"REFS_SURFACE_POLICIES_FAIL NEW_BROKEN {row['target']}:{row['line']} "
               f"`{row['ref']}` ({row['kind']}) -- a new unresolvable reference on a ratcheted surface; "

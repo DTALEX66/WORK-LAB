@@ -5,8 +5,8 @@
 
 ## 路径重映射（重要）
 
-这些技能默认写 `spark-output/`，但本仓约定是人读文档进 `reports/`、机器上下文进
-`.project-local/artifacts/`。本轮**没有创建 `spark-output/`**（避免出现第二套真值路径），
+这些技能默认把产物写进各自的 `spark-output` 目录，但本仓约定是人读文档进 `reports/`、机器上下文进
+`.project-local/artifacts/`。本轮**没有创建该默认目录**（避免出现第二套真值路径），
 每个 JSON 内都有 `output_remap` 字段记录原路径与去向。下游若按默认路径找不到文件，
 按 `output_remap` 取。
 
@@ -44,7 +44,7 @@ live sidecar 前进，不是主题差异）。真实 Tauri WebView2 窗口本轮
 
 ## 本轮代码改动（供对照，不在此目录）
 
-`apps/observer/frontend/src/views/CompactHUD.tsx`、`views/hudModel.ts`、
-`skins/hud-phenotype.css`、`components/layout/TopStatusBar.tsx`、`main.tsx`、
-`views/compactHudPhenotype.test.tsx`、`views/renderTruthContract.test.tsx`。
-均为未提交状态；提交/推送需 owner 明确授权。
+`apps/observer/frontend/src/views/CompactHUD.tsx`、`apps/observer/frontend/src/views/hudModel.ts`、
+`apps/observer/frontend/src/skins/hud-phenotype.css`、`apps/observer/frontend/src/components/layout/TopStatusBar.tsx`、`apps/observer/frontend/src/main.tsx`、
+`apps/observer/frontend/src/views/compactHudPhenotype.test.tsx`、`apps/observer/frontend/src/views/renderTruthContract.test.tsx`。
+已随 2026-10-19 上传提交（`13ed879b`）；后续改动仍需 owner 明确授权。
