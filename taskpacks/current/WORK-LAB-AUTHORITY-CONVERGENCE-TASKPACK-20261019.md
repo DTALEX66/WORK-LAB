@@ -436,3 +436,44 @@ only GET requests were issued and every non-GET is refused with 405 by the sidec
 surface and was not launched here; if the owner wants the exe path proven rather than the loopback path,
 that is the next explicit grant.
 
+### 15.1 The interface half of "standalone run" (same day, owner: 界面呢，按最新规划更新完成)
+
+Measured gap, not an opinion: the frontend contract pins 22 v3 snapshot keys and the Observer's own source
+consumed 20 of them. `artifactHandles` and `artifactHandlesSummary` had **zero consumers** -- the sidecar
+was already publishing 200 projected handle rows (of 5,024 enumerated, 4,824 omitted, 231 sensitive names
+refused, 114 regenerable directories pruned, 40 rows carrying a digest and 160 not) and nothing rendered
+them. That is the definition of a declared fact that never reaches a reader.
+
+- Gate added: `scripts/ci/verify_snapshot_keys_rendered.py` reads the pinned key list out of
+  `apps/observer/frontend/src/contractConformance.ts` (it does not retype the list), ignores comment lines
+  and type/contract declarations, and counts only real reads (`.key`, `?.key`, bracket or destructure
+  form). Guard: `tests/ci/test_snapshot_keys_are_rendered.py` -- 6 cases, of which 4 are planted
+  falsifiers (an orphan key is named; a key mentioned only in a comment stays unrendered; a key mentioned
+  only in `apps/observer/frontend/src/types.ts` stays unrendered; the pinned list cannot be emptied silently). The suite's own
+  discovery reports 56 modules and includes this one, so it runs in CI without registration.
+- Interface change: the evidence lane now carries a handle block -- capacity line, neutral window
+  disclosure, refusal-bounded partial-failure card, surface/digest filters that live in the address, and
+  the row list with per-cell `data-origin` markers. Contract: `apps/observer/frontend/src/views/evidenceHandles.contract.test.tsx`
+  (26 cases) plus the pre-existing truth sweep; `npm run typecheck` clean, 43 cases green across the three
+  affected files.
+- Two defects found and fixed while looking at the painted result, both caught by the eye before any gate
+  existed: a by-design cap truncation was being announced with the red `partial-failure` card (the
+  vocabulary binds that state to `artifactHandlesSummary.refused`, so the card is now driven by refusals
+  and truncation is a neutral line), and the 21-cell bookkeeping grid sat above the rows and the filters.
+- Contract mismatch found on the way, still open: `apps/observer/frontend/src/types.ts` declared
+  `refused.droppedOnVerification` as `number` while the producer
+  `packages/client-neutral-core/scripts/artifact_handle_projection.py` publishes a `dict[str, int]`
+  (measured `{}` in the live snapshot). The interface type was corrected to `Record<string, number>`; the
+  producer-side naming stays as it is, and this line is the record that the two disagreed before it.
+- Render evidence: `scripts/audit/evidence_handles_render_via_headless_chromium.py` paints the lane in real
+  Chromium at 1280x820, 1280x2600 and the 900x600 floor and records every attempt, including the timeouts.
+  It deliberately claims nothing about fonts or geometry -- `--dump-dom` never returns while the event
+  stream is open, and a PNG byte count is not a populated-ness test; legibility and rects belong to
+  `scripts/audit/text_legibility_via_cdp.py` and `scripts/audit/topbar_geometry_via_cdp.py`.
+- Live-page probe against the running chain (real Chromium, populated): 160 rows rendered under
+  `handlesDigest=unrecorded`, which equals the backend's own `rowsWithoutDigest`; rows precede the fact
+  grid; minimum computed font size 12px; `data-origin` counts PROJECTED 821 / NULL_FIELD 161; no
+  content-read or retry control inside the block; the block also refused a bad filter value I put in the
+  URL and said so instead of silently ignoring it.
+
+

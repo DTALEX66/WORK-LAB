@@ -338,7 +338,7 @@ export interface ArtifactHandlesSummary {
     sensitiveNames: number
     reparseDirectories: number
     notRegularFiles: number
-    droppedOnVerification: number
+    droppedOnVerification: Record<string, number>
     unreadableEntries: number
     prunedRegenerableDirectories: number
   }

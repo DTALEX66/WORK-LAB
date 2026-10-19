@@ -129,7 +129,8 @@ export interface EvidenceAddress {
   wholeDigest: string | null
 }
 
-export const EVIDENCE_PARAM_NAMES = ['artifact', 'offset', 'limit', 'expectedDigest', 'wholeDigest'] as const
+export const EVIDENCE_PARAM_NAMES = ['artifact', 'offset', 'limit', 'expectedDigest', 'wholeDigest',
+  'handlesSurface', 'handlesDigest'] as const
 
 /** A Windows path is the normal handle shape here, so unlike a ledger id it carries separators, spaces and
  *  a drive letter. What it may not carry is a control character or an unbounded length. Absolute-ness,

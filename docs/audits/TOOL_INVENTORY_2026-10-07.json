@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-19T12:31:18Z",
+  "generatedAt": "2026-10-19T15:32:19Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 77,
+    "trackedTools": 78,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 77,
+    "referencedSomewhere": 78,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -301,6 +301,19 @@
         "docs/history/archive/ui-priority-20261009/CLOUD-AUDIT-INTAKE-2026-10-11.md",
         "taskpacks/current/error-ledger.json",
         "tests/ci/test_entry_baseline_projection.py"
+      ]
+    },
+    {
+      "path": "scripts/audit/evidence_handles_render_via_headless_chromium.py",
+      "sha256": "0b9d931acfaf04bd0f2c276509a7f916bf1cecd42af9af8ff3ec1eebf38c1cf0",
+      "bytes": 5301,
+      "lines": 110,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md"
       ]
     },
     {
@@ -862,7 +875,7 @@
       "lines": 820,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 11,
+      "citedByRecords": 12,
       "citedBy": [
         "apps/observer/frontend/DESIGN.md",
         "apps/observer/frontend/SCREEN_SPEC.md",
@@ -913,7 +926,7 @@
       "lines": 819,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 20,
+      "citedByRecords": 21,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         ".workbuddy/memory/2026-10-13.md",
