@@ -476,4 +476,68 @@ them. That is the definition of a declared fact that never reaches a reader.
   content-read or retry control inside the block; the block also refused a bad filter value I put in the
   URL and said so instead of silently ignoring it.
 
+### 15.2 The polish pass the owner asked for (same night: 界面呢…该修复的修复该更新的更新)
+
+Two independent reviews were run against the delivered block before polishing it, and both changed what
+I believed. The design review sampled pixels and found the `partial-failure` card is **not** red (ink-white
+title, primary-blue icon) — my own earlier reading of the screenshot had called it a red fault card, which
+was wrong; the real defect was that a page-level state shell gives a long-term norm full-screen weight.
+The refactor review read the code and found the file had grown to the repository's largest (1,042 lines,
+48% of it handle-specific), plus two truth defects and a URL-preservation hole.
+
+Delivered, each with its own assertion:
+- `apps/observer/frontend/src/views/EvidenceView.tsx` 1,042 → 525 lines; the handle block lives in
+  `apps/observer/frontend/src/views/EvidenceHandles.tsx` (557), following the existing precedent of
+  `apps/observer/frontend/src/views/AdapterCapabilityCards.tsx` rather than inventing a new layer.
+  The no-hardcoded-numbers check that reads the component source was re-pointed at the new file and proved
+  still sharp: pointing it back at the old file makes it exit 1.
+- Two truth defects fixed: the block claimed "this producer does not send surfaceRoot" while the measured
+  snapshot carries it on 200/200 rows; and an absent `droppedOnVerification` key printed as "0", turning a
+  missing field into a value. Both now have two-sided tests (present prints the value, absent prints 未提供).
+- Terminology unified for readers (handle is 把手 everywhere, not 句柄 in one panel and 把手 in another), and
+  the three meanings of 投影 were separated in prose: window rows, snapshot-delivered counts, and the
+  `PROJECTED` provenance marker. Identifiers and `data-*` values were not touched. Re-measured after the
+  commit: `句柄` occurs 0 times under `src/`, `把手` 17 times in the handle block, and the source-reading
+  check opens `apps/observer/frontend/src/views/EvidenceHandles.tsx`.
+- The refusal card gained a `compact` presentation on `ProductStateCard` (class only, no new colours); the
+  state, its label, counts, 依据 and 下一步 are unchanged, so the meaning cannot be softened by the styling.
+- `handlesSurface`/`handlesDigest`/`palette` are preserved when an evidence address is built, so clicking a
+  source no longer silently drops the filter; the artifact address deliberately does not inherit them.
+
+Docs corrected where they had rotted, not where they were merely ugly:
+`apps/observer/frontend/src/lib/legacyRoutes.ts` said "the 23 legacy routes" while 26 `seedId` rows are
+measured, so the count left the comment; `apps/observer/frontend/DESIGN.md` and
+`apps/observer/frontend/SCREEN_SPEC.md` now attribute the 12px floor and the AA ratios to the instrument and
+its receipt instead of restating a census number as a permanent fact;
+`docs/current/DOCUMENT-CENSUS.md` gained §14 and the
+`docs/current/authority-convergence-20261019/ROADMAP.md` table gained this round's rows;
+`docs/audits/TOOL_INVENTORY_2026-10-07.json` was re-measured and reissued in the
+same commit as the documents that cite it.
+
+A guard I wrote this round was itself found defective, by a clean checkout rather than by opinion:
+`tests/ci/test_observer_launcher_chain_is_runnable.py` asserted that `apps/observer/frontend/dist/index.html`
+exists, but `dist/` is gitignored, so a fresh clone reports a red that is about the environment, not the
+launcher (CI builds first, which is why the pipeline never showed it). The test now pins the launcher to the
+directory the build is configured to write, asserts the tracked Vite source root exists, and states
+explicitly when the bundle is simply not built. Re-planting the original defect in that disposable checkout
+convicts three cases and restores byte-identically.
+
+Verification, measured: `npm run typecheck` clean; 77 tests green across the four affected frontend files
+(33 of them the handle contract); `npm run build` ok; `scripts/ci/verify_snapshot_keys_rendered.py` still
+`rendered=22 unrendered=0`; the launcher guard 7 passed; the anti-re-index gate
+`STALE_SURFACE_PATHS_PASS scanned=1295 enforced=104 allowances=4`; the inventory-currency single case
+1 passed (147 s). The citation pass first reported `rewritten=11` against the paths written above, then
+`rewritten=0` once they were canonical -- this section is the proof that the guard bites my own prose.
+Locked as `2b7cf459e98ab9530c1cda11ef1f92889ffa8f6a` and pushed to `docs/handoff-20261018-qoder`.
+
+What the branch does to its own CI is now measured, not assumed: `.github/workflows/work-lab-gate.yml`
+declares `cancel-in-progress` for every ref except `main`, so a push closes the run of the head before it.
+The run at `5267882b` shows what that costs a reader: its `observer` and `token-monitor` jobs report
+`cancelled` while `workflow-assistance` reports `failure` and `aggregate` closes the run as `failure`. A
+verdict read at a superseded head therefore cannot separate "this surface is bad" from "this job was
+stopped", and a cancelled job carries no evidence about its own surface at all. The verdict that is readable
+and the verdict that is owed are both at the newest pushed head; a chain of per-head verdicts on this branch
+is not obtainable by waiting. Exact-SHA verdict blocks live in
+`docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md`, not here.
+
 

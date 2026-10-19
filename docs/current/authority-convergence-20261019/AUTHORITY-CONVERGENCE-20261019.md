@@ -369,3 +369,54 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 且必须有真实修复提交才可写）、executor registry pin、DSH 日期合同、派生审计幂等
 （未裁决的 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`）。
 本条判决之后的那个提交只是把这段证据写进报告，不再为它自己生成新的判决。
+
+### exact-SHA CI 证据（c22e5347，run 39279477980）
+
+结论 `failure`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；红作业：aggregate / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+红作业里点名的失败测试共 4 个：4 个属于本轮之前就存在的基线
+（test_deepseek_harness_keeps_its_older_dated_readback、test_regenerating_the_record_is_idempotent_apart_from_the_timestamp、test_the_pinned_registry_is_the_one_the_commit_carries、test_the_shipped_bindings_are_valid），本轮新增 0 个（零回归）。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中账本派生四件已随派生审计重发而消失，
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树有 1 处未提交改动。本轮界面改动（证据把手、启动链守卫、可读性滚动扫掠）在该 head 未引入任何新红：四条红全部是本轮之前就存在的基线项。
+
+### exact-SHA CI 证据（861d171f，run 39282431049）
+
+结论 `failure`；触发 `pull_request`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；
+红作业：aggregate / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+未发言步骤：workflow-assistance/Run workflow structural and contract gates——一个作业可以在第一个步骤就红掉，
+把后面装着其余套件的步骤整体跳过，于是"基线红不见了"是读数缺席而不是问题消失。
+红作业里点名的失败测试共 1 个：0 个属于本轮之前就存在的基线
+（（无）），本轮新增 1 个：test_the_shipped_inventory_describes_the_tree。
+基线里本 run 没有发言的项：test_deepseek_harness_keeps_its_older_dated_readback / test_regenerating_the_record_is_idempotent_apart_from_the_timestamp / test_the_pinned_registry_is_the_one_the_commit_carries / test_the_shipped_bindings_are_valid。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中账本派生四件已随派生审计重发而消失，
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树有 2 处未提交改动。该 head 的 workflow-assistance 在 preflight 步骤就红掉，红名是 `test_the_shipped_inventory_describes_the_tree`（文档输入迁档后未同批重发的工具清单投影），随后的 contract-gates 步骤被整体跳过，所以基线四项在这个 head 上没有发言——那是读数缺席，不是问题消失。同一支测试在 `2b7cf459` 本地 12 例全绿，即这枚红已由同批重发清单修掉；preflight 按 W03 的设计在十几秒内点了真实缺陷的名字，而不是等 2712 例治理批跑到一半才把它扮成"治理失败"。
+
+判定身份要说清：本 run 由 `pull_request` 触发（PR #178），工作流读到的 checkout 是 merge 提交 `5cff35026be8dbe61f482e0baede0edfd7cbc0b6`，分支 head `861d171f` 只是 PR 头；`.github/workflows/work-lab-gate.yml` 的 W01 注释写明分支 push 不再跑重作业，分支的证据本来就来自 PR run，所以这里的"exact-SHA"名义上绑的是 merge 提交而不是我推上去的那个 SHA。这不必靠说法成立，内容可以比：`origin/main` 现为 `f6077d18`，`git merge-base --is-ancestor f6077d18 2b7cf459` 为真（main 已被我这个 head 包含），PR #178 的 merge ref 现解析到 `d7ddf2368004438ab2a81f1a220e20de57be9eea`，而它的 tree 与 `2b7cf459` 的 tree 同为 `925222f753359e7761d94f10db7d952e0663ec22`——判的就是我这棵树。留一条给后来人：一旦 main 前进而分支没合，merge tree 就不再等于分支 head，那时"exact-SHA"名不副实，读红之前先比 tree。
+
+### exact-SHA CI 证据（2b7cf459，run 39285254929）
+
+结论 `failure`；触发 `pull_request`；绿作业：gate-plan / integration / token-monitor；
+红作业：aggregate / observer / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+未发言步骤：observer/Post Cache Rust build output (observer) / observer/Post Cache Rust dependency sources (observer) / observer/Post Pin Python (locked dependency truth)——一个作业可以在第一个步骤就红掉，
+把后面装着其余套件的步骤整体跳过，于是"基线红不见了"是读数缺席而不是问题消失。
+红作业里点名的失败测试共 5 个：4 个属于本轮之前就存在的基线
+（test_deepseek_harness_keeps_its_older_dated_readback、test_regenerating_the_record_is_idempotent_apart_from_the_timestamp、test_the_pinned_registry_is_the_one_the_commit_carries、test_the_shipped_bindings_are_valid），本轮新增 1 个：test_every_line_pointer_lands_on_the_code_it_quotes。
+基线里本 run 没有发言的项：（全部发言过）。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中账本派生四件已随派生审计重发而消失，
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树有 3 处未提交改动。本 head 是界面打磨批次：把手区块从 EvidenceView 拆出成独立组件并配 33 例契约测试、两条真相缺陷（surfaceRoot 声称与缺字段印成 0）就地修掉、过滤参数在构造证据地址时被保留、过期计数注释与 DESIGN/SCREEN_SPEC 的引用口径追正、启动链守卫改为不钉死构建产物、工具清单与它的文档输入同批重发。
+
+本轮新增的那一枚红是我自己造的：`test_every_line_pointer_lands_on_the_code_it_quotes` 点名
+`docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv` 的 B05 行把 `apps/observer/frontend/src/lib/evidenceRange.ts:132`
+钉在 `EVIDENCE_PARAM_NAMES` 的声明上，而我这个批次为了加两个过滤参数名在该行上面插了 8 行，声明于是走到 140 行。
+修法是重钉行号而不是改引文（该门比较的是引文前 48 个归一化字符，前后都对得上），
+重钉脚本先断言"这段前缀在新文件里只出现在唯一一行"才落笔；重钉后
+`tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py` 8 例全绿。
+教训照旧：行号指针会随文档一样腐烂，改代码上方就是在改别人引用的地址。
