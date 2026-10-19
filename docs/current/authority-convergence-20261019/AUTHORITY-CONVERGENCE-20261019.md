@@ -356,3 +356,16 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 上一条判决里那条假的"工作树干净"已在本提交内追正，生成器改为实测 `git status --porcelain -z` 的条数。
 **本轮的逐 head 证据到此为止**：再为"记录这段证据的那个提交"生成一条新判决，会让记录永远追自己的 CI，
 因此随后那个只追加本段的文档提交只由它自己的 run 判定，其结论在会话里读出，不再写进报告。
+
+### exact-SHA CI 证据（1a7db78f，run 39253227445）
+
+结论 `failure`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；红作业：aggregate / workflow-assistance。
+红作业里点名的失败测试共 4 个，其中 **4 个是本轮之前就存在的**（同一批在
+本轮起点 `6b6678c3` 的 run 里就已红：DSH 日期回读、executor registry pin、账本 274/276 派生三件、
+ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）。
+本地=远端 True，工作树干净。这个 head 是"派生投影重发"那一次：与上一个 head 的失败集合按名比对，恰好少 4 项且新增为 0——
+消失的四项全部是账本派生红（标签齐全、两次测量同 digest、计数分布、未绑定计数），
+剩余 4 项才是真·owner 决定项：ERR-276/ERR-277 的 `fixedCommit` 绑定（要写受保护账本，
+且必须有真实修复提交才可写）、executor registry pin、DSH 日期合同、派生审计幂等
+（未裁决的 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`）。
+本条判决之后的那个提交只是把这段证据写进报告，不再为它自己生成新的判决。
