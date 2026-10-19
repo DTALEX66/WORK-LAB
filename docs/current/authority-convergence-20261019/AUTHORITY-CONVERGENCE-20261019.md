@@ -320,7 +320,9 @@ AAOS 接通、exact-SHA CI）算作已完成。
 红作业里点名的失败测试共 8 个，其中 **8 个是本轮之前就存在的**（同一批在
 本轮起点 `6b6678c3` 的 run 里就已红：DSH 日期回读、executor registry pin、账本 274/276 派生三件、
 ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）。
-本地=远端 True，工作树干净。本轮引入过并已被抓住修掉的唯一回归是
+本地=远端 True（实测）。本行原文里的"工作树干净"是记录器模板常量，不是当次实测——事后核对该 head
+提交时工作树确为干净，所以这句话碰巧为真，但一条没量过的断言不该出现在收据里；模板已改为实测该字段。
+本轮引入过并已被抓住修掉的回归是
 `test_workspace_evidence_loads_plan_governance_and_history_as_typed_sources` 的 `KeyError: 'plan'`
 （归档迁移时把证据源指到了 671 B 的桩文件上），它在本 run 的失败清单里已不再出现。
 
@@ -330,7 +332,10 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 红作业里点名的失败测试共 9 个，其中 **8 个是本轮之前就存在的**（同一批在
 本轮起点 `6b6678c3` 的 run 里就已红：DSH 日期回读、executor registry pin、账本 274/276 派生三件、
 ERR-276 绑定、派生审计幂等），**本轮新增 1 个**：test_the_chain_is_normalised_not_merely_resolvable。
-本地=远端 True，工作树干净。本轮在这个 head 上确实引入并暴露了一个回归：`test_the_chain_is_normalised_not_merely_resolvable` 报
+本地=远端 True。**这条判决记下的"工作树干净"是假的**：记录当下工作树有 3 份未提交改动（就是下面这项修复
+的文档），模板把状态字段写成了常量而没有实测。生成器已改为读 `git status --porcelain -z` 的条数，
+后续判决不会再出现未量化的状态断言。
+本轮在这个 head 上确实引入并暴露了一个回归：`test_the_chain_is_normalised_not_merely_resolvable` 报
 `0 != 1 : 1 citation(s) are still shorthand`。原因是归档轮写进
 `docs/current/DOCUMENT-CENSUS.md` 的 owner 段落用裸文件名引用了派生脚本，引用规范化门（本地
 `tests/workflow-assistance/test_default_load_doc_citations_resolve.py` 与 CI 的 workflow-assistance 作业）

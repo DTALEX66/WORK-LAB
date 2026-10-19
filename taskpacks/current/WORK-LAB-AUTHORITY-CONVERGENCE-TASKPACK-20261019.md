@@ -369,6 +369,13 @@ measured rather than recalled:
   convergence report are unchanged by this round -- the pre-existing set was measured as eight failing
   tests on the run of this round's starting commit `6b6678c3` and the same set (minus anything this
   round introduced, which was fixed) on later runs.
+- **A third self-inflicted defect class: a receipt that asserts a state it never measured.** The round's CI
+  verdict generator wrote the sentence "工作树干净" as a template constant, so the record for head `263cb8f4`
+  stated a false worktree state (three files carrying the citation fix were uncommitted at that moment), and
+  the earlier record for `0045017a` stated something merely unmeasured that happened to be true. Both blocks
+  are corrected in place in the convergence report, and the generator now counts
+  `git status --porcelain -z` entries and prints the measured state plus the dirty count in its own verdict
+  line. A field nobody read is not evidence, even when it turns out to be correct.
 - **One regression this round created, and its own gate caught it.** The owner-item paragraph written into
   `docs/current/DOCUMENT-CENSUS.md` cited the triage producer by bare basename instead of its full path, so
   `tests/workflow-assistance/test_default_load_doc_citations_resolve.py` failed at head `263cb8f4` with
