@@ -73,10 +73,14 @@ class LiveTree(unittest.TestCase):
                     continue
                 target = ROOT / move["to"]
                 self.assertTrue(target.is_file(), f"moved file missing: {move['to']}")
-                raw = target.read_bytes()
-                self.assertEqual(move["sha256"], hashlib.sha256(raw).hexdigest(),
+                blob = MODULE.tracked_blob(ROOT, move["to"])
+                self.assertEqual(move["sha256"], hashlib.sha256(blob).hexdigest(),
                                  f"bytes differ from the move record: {move['to']}")
-                self.assertEqual(move["bytes"], len(raw), f"size differs: {move['to']}")
+                self.assertEqual(move["bytes"], len(blob), f"size differs: {move['to']}")
+                # A clean checkout materializes LF while this worktree may hold CRLF; the words must
+                # still be identical, which is the only cross-host statement a move record can make.
+                self.assertEqual(target.read_bytes().decode("utf-8").replace("\r\n", "\n"),
+                                 blob.decode("utf-8"), f"worktree text differs from the blob: {move['to']}")
 
     def test_the_consolidated_archive_is_whole_and_its_members_are_all_gone_from_the_tree(self) -> None:
         """Deletion is only defensible because one artifact holds every byte, provably."""

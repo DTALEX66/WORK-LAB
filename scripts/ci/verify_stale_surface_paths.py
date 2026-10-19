@@ -75,6 +75,22 @@ def in_scope(rel: str, manifest: dict) -> bool:
     return not any(rel.startswith(prefix) for prefix in excluded)
 
 
+def tracked_blob(root: Path, rel: str) -> bytes:
+    """The committed bytes of a tracked path, which are the same on every host.
+
+    Worktree bytes are not: `.gitattributes text=auto` stores LF and checks out CRLF on Windows, so a
+    hash taken from the working tree passes here and fails on a clean checkout. The move record is
+    read by CI, so it measures the blob. Measured on 2026-10-19: the normalization made two edited CSVs
+    differ by exactly their line terminators, and `tests/ci/test_stale_surface_paths_are_gone.py` went
+    red in a fresh worktree while staying green in this one.
+    """
+    result = subprocess.run(["git", "show", f"HEAD:{rel}"], cwd=root, capture_output=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"git show HEAD:{rel} failed: "
+                           f"{result.stderr.decode('utf-8', 'replace').strip()}")
+    return result.stdout
+
+
 def read_text(root: Path, rel: str) -> str | None:
     """Decoded text, or None when the file is not text this scan can judge."""
     try:

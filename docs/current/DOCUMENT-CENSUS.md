@@ -384,3 +384,13 @@ git-index blob sha256，本轮改过 9 份 `scripts/audit|maintenance` 工具后
 新门 `scripts/ci/verify_stale_surface_paths.py` 不在该清单口径内（清单只覆盖 `scripts/audit` 与
 `scripts/maintenance`），它的 CI 覆盖来自 `tests/ci/test_stale_surface_paths_are_gone.py` 被
 `scripts/ci/run_root_governance_suite.py` 按 glob 发现。
+**空签出复现抓出本门自己的两个缺陷（已修，登记在此）**：为了不在只信本地绿的前提下宣布完成，本轮用
+`git worktree add --detach .project-local/worktrees/ci-repro HEAD` 造了一份**没有 `.project-local/` 的干净签出**
+复跑 6 个定向模块。它立刻抓出 1 红：`docs/history/archive/MOVED-PATHS-20261019.json` 里的 sha256 是**工作树字节**的哈希，
+而 `.gitattributes text=auto` 在 Windows 签出 CRLF、在库里存 LF，于是两份本轮被编辑过的 CSV 在干净签出里
+必然与记录不符（同一文件两处哈希相差仅换行符）。修法是把计量基准改成 git blob——
+`scripts/ci/verify_stale_surface_paths.py` 新增 `tracked_blob(root, rel)`（`git show HEAD:<path>`），
+清单与测试都按 blob 比，并额外断言"工作树文本 == blob 文本（忽略换行符）"，这样跨主机成立的只有"字没变"这一件事。
+第二个缺陷同批暴露：重新生成清单会把具名豁免的 `minOccurrences` 退回脚本里手写的旧数（19 与 12），
+而实测是 8 与 6，门因此自判 `ALLOWANCE_UNMET`。修法是让生成器写完清单后立刻调用门自己的
+`--write-allowances` 以实测覆盖，豁免下限从此是**测量**而不是常量。两处修好后干净签出 16 例复跑 `OK`。

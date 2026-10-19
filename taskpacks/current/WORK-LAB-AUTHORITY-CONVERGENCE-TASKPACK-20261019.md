@@ -284,3 +284,15 @@ referencedSomewhere=77 unclaimed=0` and `tests/workflow-assistance/test_tool_inv
 re-ran `Ran 12 tests / OK`. The new stale-path gate is outside that inventory's scope (it covers
 `scripts/audit` and `scripts/maintenance` only); it reaches CI because
 `tests/ci/test_stale_surface_paths_are_gone.py` is discovered by `scripts/ci/run_root_governance_suite.py`.
+**A clean-checkout reproduction found two defects in the new control itself, both fixed here.** To avoid
+declaring green from local-only evidence, a detached worktree with no `.project-local/` was created and
+the six targeted modules re-run there. It immediately reported one failure: the move record's `sha256`
+values were computed over **worktree bytes**, while `.gitattributes text=auto` stores LF and checks out
+CRLF on Windows, so the two CSVs edited this round could never match on a fresh checkout. Fix: measure the
+git blob (`scripts/ci/verify_stale_surface_paths.py:tracked_blob`, via `git show HEAD:<path>`), compare the
+record against the blob, and additionally assert that the worktree text equals the blob text modulo line
+endings — the only cross-host claim is "the words did not change". Second defect found in the same pass:
+regenerating the record reset the named allowances' `minOccurrences` back to hand-written constants (19 and
+12) while the measurement is 8 and 6, so the gate convicted itself with `ALLOWANCE_UNMET`; the generator now
+calls the gate's own `--write-allowances` after writing, making the minimums a measurement instead of a
+constant. The clean worktree then re-ran `Ran 16 tests / OK`.
