@@ -342,3 +342,15 @@ ERR-276 绑定、派生审计幂等），**本轮新增 1 个**：test_the_chain
 都判红。修复只走工具自身的通道：`scripts/audit/normalise_doc_citations.py --apply` 改写那一个 token
 为 `scripts/audit/triage_unbound_ledger_records.py`，门恢复 9/9 绿、`rewritten=0 blocked=0`，随下一提交
 在其 exact SHA 上复验。
+
+### exact-SHA CI 证据（0aa6e2e7，run 39248107323）
+
+结论 `failure`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；红作业：aggregate / workflow-assistance。
+红作业里点名的失败测试共 8 个，其中 **8 个是本轮之前就存在的**（同一批在
+本轮起点 `6b6678c3` 的 run 里就已红：DSH 日期回读、executor registry pin、账本 274/276 派生三件、
+ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）。
+本地=远端 False（记录当下追正提交 `78a26488` 尚未推送，本地领先一格；推送后两端相等），工作树干净。这个 head 就是上一段那条新增红的修复提交：失败清单回到 8 个，全部为本轮之前既有的红，
+本轮新增为 0（`failures=8, skipped=13`，与起点 `6b6678c3` 的同名集合逐字相等）。
+上一条判决里那条假的"工作树干净"已在本提交内追正，生成器改为实测 `git status --porcelain -z` 的条数。
+**本轮的逐 head 证据到此为止**：再为"记录这段证据的那个提交"生成一条新判决，会让记录永远追自己的 CI，
+因此随后那个只追加本段的文档提交只由它自己的 run 判定，其结论在会话里读出，不再写进报告。
