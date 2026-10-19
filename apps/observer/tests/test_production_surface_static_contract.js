@@ -369,16 +369,27 @@ function run() {
     assert(/不伪造|保持 UNKNOWN 真相/.test(app), "App.tsx no longer states the no-fabrication rule");
   });
 
-  t("the compact surface keeps exactly the four contracted KPI cells", () => {
-    // Port of "compact R2 hierarchy keeps four KPIs". The dense project list half
-    // is a recorded drop, not an oversight: the HUD is a single-column strip and
-    // the project truth lives in the 项目 lane (see parity-matrix-u03.md step 4).
+  t("the compact surface keeps the four contracted truth readings", () => {
+    // Port of "compact R2 hierarchy keeps four KPIs". The 2026-10-19 HUD fusion
+    // retired the four-cell KPI strip: the same four truths now live in the hero
+    // (Token), the facts row (项目), the hero meta (质量) and the status bar
+    // (传输). The contract is the readings and their honest UNKNOWN paths, not
+    // the retired cell array, so this asserts the producers instead.
     const hud = fs.readFileSync(path.join(SRC, "views", "CompactHUD.tsx"), "utf-8");
-    const labels = [...hud.matchAll(/\{ k: '([^']+)', v:/g)].map((m) => m[1]);
-    assert(labels.length === 4, "expected 4 compact KPI cells, found " + labels.length + ": " + labels.join(", "));
-    for (const want of ["传输", "项目", "Token", "质量"]) {
-      assert(labels.includes(want), "compact KPI cell missing: " + want);
-    }
+    assert(/const total = tt\?\.totalTokens \?\? null/.test(hud),
+      "Token reading no longer comes from tokenSummary.totalTokens with a null fallback");
+    assert(/const totalLabel = fmtExactTokens\(total\)/.test(hud),
+      "Token reading no longer formats through fmtExactTokens");
+    assert(/tokenSummary 未报告/.test(hud),
+      "a missing token summary no longer prints its explicit UNKNOWN reason");
+    assert(/String\(snap\.projects\.length\)/.test(hud),
+      "项目 reading no longer comes from snap.projects");
+    assert(/' · 质量 ' \+ fmtCostQuality\(tt\?\.costQuality\)/.test(hud),
+      "质量 reading no longer comes from tokenTruth.costQuality");
+    assert(/transportTruth\(snap, live, error\)/.test(hud),
+      "传输 reading no longer comes from transportTruth");
+    assert(/\{transport\}/.test(hud),
+      "the transport reading is no longer rendered in the compact surface");
   });
 
   t("the shell collapses its grid layouts at its own declared breakpoints", () => {
