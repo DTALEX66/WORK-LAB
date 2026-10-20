@@ -17,6 +17,7 @@ Discovered dynamically by `run_quality_gate.py governance`.
 from __future__ import annotations
 
 import csv
+import json
 import os
 import re
 import subprocess
@@ -28,6 +29,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 MATRIX = ROOT / "docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv"
 CHECKLIST = ROOT / "docs/history/archive/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv"
+MOVE_RECORD = ROOT / "docs/history/archive/MOVED-PATHS-20261019.json"
 
 CITATION = re.compile(r"(?<![\w:./-])(ABSENT:)?([A-Za-z0-9_./\-]+\.(?:py|tsx|ts|json|yaml|yml|csv|md|js))(:\d+)?")
 # What must never decide whether a citation resolves: the runtime root (not checkout-verifiable),
@@ -176,10 +178,42 @@ def pointer_findings(files: dict[str, list[str]],
     return problems, checked
 
 
+def as_of_commits() -> dict[str, str]:
+    """The commit each archived table was certified at, read from the move record.
+
+    A dated record can only be judged against the tree it dates. This gate used to read the checkout, so it
+    demanded that two frozen CSVs track HEAD: every line added to any cited source ordered a rewrite of the
+    bytes that `docs/history/archive/FROZEN-MANIFEST.json` and
+    `docs/history/archive/MOVED-PATHS-20261019.json` both pin by hash (ERR-280). Checking the pointers
+    against `measuredAtHead` keeps the claim readable -- the table said real things about real files --
+    without making a frozen document expire.
+    """
+    doc = json.loads(MOVE_RECORD.read_text(encoding="utf-8"))
+    return {move["to"]: move["measuredAtHead"] for move in doc["moves"]
+            if move.get("measuredAtHead") and move.get("to")}
+
+
+def blob_lines(commit: str, rel: str) -> list[str]:
+    """The lines of one file as the recorded commit held it."""
+    probe = subprocess.run(["git", "cat-file", "-e", f"{commit}:{rel}"], cwd=ROOT, capture_output=True)
+    if probe.returncode != 0:
+        return []
+    shown = subprocess.run(["git", "-c", "core.quotePath=false", "show", f"{commit}:{rel}"],
+                           cwd=ROOT, capture_output=True, check=True)
+    return shown.stdout.decode("utf-8", "replace").splitlines()
+
+
 def tracked_file_bodies() -> dict[str, list[str]]:
-    """Line arrays for every path the tables cite, from the checkout rather than from memory."""
+    """Line arrays for every path the tables cite, from the commit each table was certified at."""
+    commits = as_of_commits()
     bodies: dict[str, list[str]] = {}
     for csv_path, _, _ in EXPECTED:
+        rel_csv = csv_path.relative_to(ROOT).as_posix()
+        commit = commits.get(rel_csv)
+        if commit is None:
+            raise AssertionError(f"{rel_csv} is frozen history but has no measuredAtHead in "
+                                 f"{MOVE_RECORD.relative_to(ROOT).as_posix()} -- that record is the only "
+                                 "place which can say what tree its citations were written against")
         with csv_path.open(encoding="utf-8-sig", newline="") as handle:
             for row in csv.DictReader(handle):
                 for field in CITED_FIELDS & set(row):
@@ -187,10 +221,9 @@ def tracked_file_bodies() -> dict[str, list[str]]:
                         rel = match.group(1)
                         if rel in bodies or rel.startswith(".project-local/"):
                             continue
-                        path = ROOT / rel
-                        if path.is_file():
-                            bodies[rel] = path.read_text(encoding="utf-8",
-                                                          errors="replace").splitlines()
+                        lines = blob_lines(commit, rel)
+                        if lines:
+                            bodies[rel] = lines
     return bodies
 
 
@@ -281,7 +314,8 @@ class UiV2CitationTests(unittest.TestCase):
         # so, which is `unresolved_citations` above.
 
     def test_every_line_pointer_lands_on_the_code_it_quotes(self) -> None:
-        """A `path:line` citation is a claim about a file, and a claim the gate can read."""
+        """A `path:line` citation is a claim about a file, and a claim the gate can read -- as of the tree
+        the table was certified against, because these two tables are frozen history (ERR-280)."""
         problems, checked = pointer_findings(tracked_file_bodies())
         self.assertGreaterEqual(checked, POINTER_FLOOR,
                                 f"only {checked} line pointers examined; below {POINTER_FLOOR} the empty "

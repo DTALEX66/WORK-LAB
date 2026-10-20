@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-20T17:54:41Z",
+  "generatedAt": "2026-10-20T18:12:47Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2555,
@@ -304,43 +304,43 @@
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 127,
+        "line": 129,
         "text": "if token.startswith(\".project-local/\"):"
       },
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 158,
+        "line": 160,
         "text": "if rel.startswith(\".project-local/\") or rel not in files:"
       },
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 188,
+        "line": 222,
         "text": "if rel in bodies or rel.startswith(\".project-local/\"):"
       },
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 259,
+        "line": 292,
         "text": "leaked = sorted(rel for rel in paths if rel.startswith(\".project-local/\"))"
       },
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 323,
+        "line": 357,
         "text": "its own `.project-local/` (CI writes gate logs there) reached the assertion with nothing cited-present"
       },
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 339,
+        "line": 373,
         "text": "if not token.startswith(\".project-local/\"):"
       },
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 348,
+        "line": 382,
         "text": "\"matcher or the fields it reads stopped reaching `.project-local/` paths\")"
       },
       {
@@ -9606,7 +9606,7 @@
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py",
-        "line": 319,
+        "line": 353,
         "text": "\"\"\"`.project-local/` citations are exempt in a fresh checkout but must not be fabricated here."
       },
       {
