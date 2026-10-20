@@ -9,14 +9,14 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 281,
+    "total": 282,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 87,
       "test_behavior_alignment": 38,
       "working_directory_recovery": 2,
       "evidence_state": 55,
-      "ci_configuration": 23,
+      "ci_configuration": 24,
       "feature_gap": 13,
       "config_downgrade": 3,
       "dead_entry": 4,
@@ -8540,6 +8540,42 @@
         "regressionCommand": "python -m unittest discover -s tests/ci -p test_sidecar_documented_launch.py -> 4 tests OK",
         "currentApplicability": "VERIFIED_LIVE_20261020",
         "fixedCommitBasis": "the commit that added release(), its two falsifiers and the in-boundary sandbox root"
+      }
+    },
+    {
+      "error_id": "ERR-283",
+      "date": "2026-10-21",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": "actions/checkout inputs + .gitattributes line-ending policy read by tests/ci/test_observer_launcher_chain_is_runnable.py and tests/ci/test_stale_surface_paths_are_gone.py",
+      "command": "python services/orchestration/run_quality_gate.py root-governance-suite",
+      "exit_code": 1,
+      "observed_error": "On the run of 2026-10-20T19:23Z the root suite reported two failing modules on the runner while the same modules were green in every Windows worktree of this session. test_observer_launcher_chain_is_runnable.py asserted `0 != 60` - sixty lone-LF lines in apps/observer/start-observer.cmd - and test_stale_surface_paths_are_gone.py reported 1 failure plus 2 errors reading docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip, whose contents on that host were a 135-byte LFS pointer rather than a ZIP. Both are properties of a clean Linux checkout, not of the tree: `* text=auto` stores the batch launcher as LF and hands LF back to a host without autocrlf, and the archive is routed to LFS by policy while the job's checkout asked for no large files.",
+      "root_cause": "Two claims were written against the author's machine instead of against the artifact. A launcher's line endings were treated as a checkout accident rather than as a shipped property, so nothing declared them; and routing large files to LFS in .gitattributes was decided without checking which job has to read those bytes. Neither could surface earlier because the workflow's structural step is one shell block that stops at its first failing command - root-governance-suite only began executing once governance and the security prose scan upstream were green.",
+      "fix": "Declared `*.cmd text eol=crlf` and `*.bat text eol=crlf`, measured afterwards as `i/lf w/crlf attr=text eol=crlf` for all three tracked batch launchers, so the CRLF the launcher needs is now a property of every checkout rather than of one host; added `lfs: true` to the checkout of the job that runs the root suite. Replaced the raw ZipFile opens with open_archive(), which names the missing precondition (LFS_NOT_FETCHED, ARCHIVE_MISSING) instead of letting one cause surface as two tracebacks and an unrelated hash mismatch. Extended the guard from the one file to the family and to the host-independence of the claim: the launcher test now also asserts the declared attribute, and a new test enumerates every tracked .cmd/.bat from the git index and requires both CRLF bytes and eol=crlf. Modules went 7 to 8 and 19 to 21 cases.",
+      "regression_test": "tests/ci/test_observer_launcher_chain_is_runnable.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tracked file carries the gate and its family enumeration",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "凡是断言「产物形状」（行尾、编码、二进制内容）的门，必须同时声明它与宿主无关的来源——.gitattributes 条目或 checkout 参数——否则这条门只在作者的机器上为真；把大文件路由给 LFS 时，必须同时查清哪些作业要读它的字节并让那些作业取回对象。链式步骤的绿只代表前面的都绿，本地按组逐个要判决。",
+      "remaining_boundary": "The runner-side confirmation - a Linux checkout that materializes CRLF and an LFS fetch that returns bytes - can only come from the next exact-SHA run; here the attribute is proven by git ls-files --eol rather than by a foreign host. The other jobs still check out without LFS, which is only acceptable while no test they run reads a large-file object, and nothing yet asserts that.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "2026-10-21 读 a012d073 的 exact-SHA 判决（root-governance-suite 明细因 ERR-281 的修复第一次可读）",
+      "related": [
+        "ERR-281 (the report that could not print these two modules before)",
+        "ERR-261 / ERR-263 / ERR-264 (the chain stops at its first red, which hid this for a day)",
+        "ERR-219 (the same family: a claim about shape that a green suite did not read)"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "9c285d711dd0b84ba8555b407442d41e7cdbb39d",
+        "verifiedCommit": null,
+        "affectedCapability": "One-click launcher reachability (five-dimension runtime baseline D1/D2) and the deletion evidence that the consolidated archive is the only copy of the retired handoff material",
+        "regressionCommand": "python -m unittest discover -s tests/ci -p test_observer_launcher_chain_is_runnable.py; python -m unittest discover -s tests/ci -p test_stale_surface_paths_are_gone.py",
+        "currentApplicability": "VERIFIED_LIVE_20261021",
+        "fixedCommitBasis": "the commit that declared the batch line endings, set lfs: true on the job, and turned both host-shaped claims into named-precondition guards"
       }
     }
   ],
