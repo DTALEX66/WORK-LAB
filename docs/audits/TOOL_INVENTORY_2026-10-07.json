@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-19T17:16:41Z",
+  "generatedAt": "2026-10-20T12:57:52Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -260,9 +260,10 @@
       "lines": 250,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/history/archive/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
@@ -310,8 +311,9 @@
       "lines": 110,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 3,
+      "citedByRecords": 4,
       "citedBy": [
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/authority-convergence-20261019/ROADMAP.md",
         "taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md"
@@ -324,14 +326,14 @@
       "lines": 211,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 12,
+      "citedByRecords": 13,
       "citedBy": [
         "docs/audits/ENTRY_BASELINE_2026-10-08.json",
         "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-07.json",
         "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-08.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json"
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md"
       ]
     },
     {
@@ -652,19 +654,19 @@
     },
     {
       "path": "scripts/audit/project_local_citation_audit.py",
-      "sha256": "cd3d8a06fdda63cd597b250b963dd2814d3a78528c6850ef631ca3dbe385f393",
-      "bytes": 22954,
-      "lines": 352,
+      "sha256": "42ef6925a585c11460bfb5bf83de09cb55ce25491f07bab36f3b1a4e104bd2ee",
+      "bytes": 24058,
+      "lines": 363,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 4,
-      "citedByRecords": 12,
+      "citedByRecords": 13,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
-        "docs/history/archive/MOVED-PATHS-20261019.json"
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md"
       ]
     },
     {
@@ -871,19 +873,19 @@
     },
     {
       "path": "scripts/audit/text_legibility_via_cdp.py",
-      "sha256": "b9c7724c9aaee3151c5df5c22a0e05e984811706f9640a52a94968274bd0676c",
-      "bytes": 51187,
-      "lines": 933,
+      "sha256": "9def2af52562d9f3be565abbb35b343b546b9be5ce911cd8926cd75fcf351650",
+      "bytes": 52429,
+      "lines": 948,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 14,
+      "citedByRecords": 15,
       "citedBy": [
         "apps/observer/frontend/DESIGN.md",
         "apps/observer/frontend/SCREEN_SPEC.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
-        "docs/current/authority-convergence-20261019/ROADMAP.md"
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md"
       ]
     },
     {

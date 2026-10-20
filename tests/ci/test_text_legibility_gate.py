@@ -347,6 +347,7 @@ class AllViewsVerdictTests(unittest.TestCase):
                 "coverage": {"atTop": max(1, len(nodes) // 2), "afterScroll": len(nodes),
                              "scrolledRegions": 1, "scrollWidth": 900, "innerWidth": 900,
                              "presentNodes": len(nodes) + 6, "sweepStopsUsed": 1, "sweepStopsNeeded": 2,
+                             "scrollRangeCovered": 100,
                              "scrollHeight": 2400, "innerHeight": 820}}
 
     @staticmethod
@@ -401,8 +402,21 @@ class AllViewsVerdictTests(unittest.TestCase):
         v = legibility.views_verdict("dark", self.collected(lanes))
         check = checks_of(v)["sampled_nodes_stay_within_the_measured_population"]
         self.assertTrue(check["pass"], json.dumps(v["checks"], ensure_ascii=False))
-        for token in ("sampled=", "present=", "sweep_stops="):
+        for token in ("sampled=", "present=", "not a row count"):
             self.assertIn(token, check["detail"])
+        self.assertTrue(checks_of(v)["every_scrollable_range_was_traversed"]["pass"])
+
+    def test_a_lane_whose_scroll_range_was_not_walked_is_a_failure_not_a_smaller_sample(self) -> None:
+        """Sampling budget that runs out mid-list leaves text nobody measured; that is the same class of
+        hole the floor and AA checks exist to catch, so it is convicted by name rather than disclosed."""
+        lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]
+        views = [self.view(lane) for lane in lanes]
+        views[11]["coverage"] = {**views[11]["coverage"], "scrollRangeCovered": 62}
+        v = legibility.views_verdict("dark", self.collected(lanes, views=views))
+        check = checks_of(v)["every_scrollable_range_was_traversed"]
+        self.assertFalse(check["pass"])
+        self.assertIn("lane11=62%", check["detail"])
+        self.assertFalse(v["passed"])
 
     def test_horizontal_overflow_is_named_per_lane_at_this_width(self) -> None:
         lanes = [f"lane{i}" for i in range(legibility.MIN_VIEWS)]

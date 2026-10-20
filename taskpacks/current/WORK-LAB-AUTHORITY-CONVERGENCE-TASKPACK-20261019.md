@@ -540,14 +540,21 @@ population -- 200 row children, 1,200 `data-origin` cells, a 23,031px-tall list,
 "投影 200 行 / 上限 200，省略 4912 行" and the first row carrying a real handle path. The sweep sampled 143
 text nodes on that lane, because its per-lane budget is 16 viewport-sized harvest steps and 23,031px at a
 748px viewport needs ~31. So "0 below the floor, 0 AA failures" was a verdict over a sample.
-That gap is now the instrument's own problem to state: every lane reports `presentNodes` (the same leaf
-predicate minus the viewport test) and `sweepStopsUsed`/`sweepStopsNeeded`, a lane omitting them is
-convicted by `coverage_was_reported`, and a lane whose sampled count exceeds what the page holds -- a
-double-counting merge -- is convicted by `sampled_nodes_stay_within_the_measured_population`. Re-run against
-the same bundle, both themes: **sampled 2,933 of 8,006 leaf texts, sweep stops 298 of 564**, receipt
-`.project-local/artifacts/standalone-run-20261019/22-legibility-sampling.json`. The rail's green now carries
-its denominator, so nobody can read it as "every row was looked at"; raising the budget to close that 37%
-is a separate decision with a runtime cost, and it is now a number rather than an assumption.
+
+The gap is closed and the closure is enforced, not promised. Every lane reports `presentNodes` (the same
+leaf predicate minus the viewport test), `sweepStopsUsed`/`sweepStopsNeeded` and `scrollRangeCovered`;
+`coverage_was_reported` convicts a lane that omits any of them,
+`sampled_nodes_stay_within_the_measured_population` convicts a sampled count above the leaf texts the page
+holds (a double-counting merge), and `every_scrollable_range_was_traversed` convicts by name any lane whose
+scroll range was not walked to the end -- a short sweep is now a red, not a smaller sample. Re-measured with
+the raised per-lane budget (96), both themes, same bundle: **565 of 565 needed stops executed, no lane
+short, 3,901 distinct readings against 8,006 leaf texts, 69 seconds** (46 s when the budget was 16 and only
+298 of 564 stops ran), receipt
+`.project-local/artifacts/standalone-run-20261019/24-legibility-budget96.json`. The sampled figure stays below
+the present figure by design and must not be read as a row count: the merge deduplicates on
+(path, text, size, weight, colour), so a 200-row table repeating the same cell strings legitimately yields
+few distinct readings. What the gate now guarantees is the property a floor/AA claim actually needs -- every
+pixel range of every lane was on screen at some harvest step.
 
 Verification, measured: `npm run typecheck` clean; 77 tests green across the four affected frontend files
 (33 of them the handle contract); `npm run build` ok; `scripts/ci/verify_snapshot_keys_rendered.py` still

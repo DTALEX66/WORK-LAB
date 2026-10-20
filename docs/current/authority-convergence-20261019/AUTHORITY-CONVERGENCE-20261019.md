@@ -296,7 +296,7 @@ WORK-LAB（工作流实验室 / Workflow Lab）是面向个人 AI 工作环境�
    `docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json` 的 unboundPass 94→96），受保护账本字节未动。
    本地门实测 `50 passed, 1 failed`：本轮之前 8 项红里的 4 项成因消除，仍属 owner 的是
    ERR-276/277 的 `fixedCommit` 绑定（必须有真实修复提交才可写）、executor registry pin、DSH 日期合同、
-   派生审计幂等（未裁决的 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`）。
+   派生审计幂等（2026-10-20 已裁决：那条引用是机器本地普查，见下节；当时未裁决）。
 
 ## 12. 包内 10 项验收标准逐项覆盖
 
@@ -367,7 +367,7 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 消失的四项全部是账本派生红（标签齐全、两次测量同 digest、计数分布、未绑定计数），
 剩余 4 项才是真·owner 决定项：ERR-276/ERR-277 的 `fixedCommit` 绑定（要写受保护账本，
 且必须有真实修复提交才可写）、executor registry pin、DSH 日期合同、派生审计幂等
-（未裁决的 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`）。
+（那一项在 2026-10-20 的追修里已解决，见下节；这里保留当时的判断原文）。
 本条判决之后的那个提交只是把这段证据写进报告，不再为它自己生成新的判决。
 
 ### exact-SHA CI 证据（c22e5347，run 39279477980）
@@ -528,3 +528,41 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 经 `git cat-file -t` 仍返回 `commit`，短期内可直接 `git stash apply <sha>` 找回。
 结果：`git stash list` 为 0 条，工作树 0 处改动，本地与 `origin/docs/handoff-20261018-qoder`
 同为 `bc304642`。
+
+## 13. 2026-10-20 追修与清理（owner：该修复的修复，该清理的清理）
+
+四项既有红先各自复现再分类，结论是**一项可自修、一项推导完成只差落笔、两项确实要外部动作**：
+
+- **派生审计幂等：已修。** 红因是 `scripts/audit/project_local_citation_audit.py` 的裁决表里剩一条
+  `UNADJUDICATED`：`.project-local/artifacts/wui-20261009/refs-census-20261018.json`。先量清它是什么
+  （889,298 B、sha256 前缀 `024d34786ef9feef`、2026-10-18T17:21:26Z 在 head `0369d349` 生成，
+  自述规则 `scripts/ci/verify_authority_index_paths.py:check()`，662 面：live 33/512/143 断链、
+  dated_archive 70/329/243、external_skill_copy 559/3,327/2,871），再按事实裁决：仓内没有生成它的那个驱动，
+  所以欠的是仪器而不是字节。裁决文本写进表里后
+  `tests/workflow-assistance/test_project_local_citation_audit.py` **12 例全绿**，审计重发为 676,778 B。
+- **ERR-276/277 的 `fixedCommit`：推导完成，等 owner 落笔。** 两条记录承诺的回归脚本
+  `scripts/ci/verify_error_ledger.py` 经 `git cat-file -e 13ed879b:scripts/ci/verify_error_ledger.py`
+  证实存在于出生提交 `13ed879b`，门要的两件事（提交存在 + 承诺脚本在该提交里）都成立。
+  写这两个字段要动受保护账本，按既定边界我不自填；此处给出可直接落笔的结论而不是笼统的"待裁"。
+- **executor registry pin：需要重跑探针。** `docs/audits/EXECUTOR_LIVE_PROBE_2026-10-07.json` 钉的
+  `2abffd09…` 是旧注册表字节，当前树是 `4be802ef…`。重钉只能靠真重跑 `scripts/audit/executor_live_probe.py`
+  （它会执行 codex / gh 的版本命令并对两个 GUI 入口各等 25 秒超时），不重跑而改摘要就是伪造快照。
+- **DSH 日期合同：需要写受保护注册表。** 门的断言是 `observed_at <= 2026-10-07`，而注册表现在是
+  `2026-10-13`——即那条读回被推后了日期却没有可重读的免启动来源。要么按合同退回旧日期，
+  要么补一个免启动来源并同步门的口径，两者都要动 `config/adapter-registry.json`。
+
+**顺带重发两份落后的派生审计**：`docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json`
+（bound 143→151、unboundPass 94→96）与上面那份引用审计——都是"改了被摘要的文件却没重发"的同一类。
+
+**仪器补强**：`scripts/audit/text_legibility_via_cdp.py` 每泳道滚动预算 16→96，并新增
+`every_scrollable_range_was_traversed`（没走完滚动范围按泳道点名判红）。实测从 298/564 站变成
+**565/565 站、无短程泳道**，代价 46 秒→69 秒；`tests/ci/test_text_legibility_gate.py` 57 例全绿。
+同时纠正我自己发布过的一个误读：`sampled/present` 不是行数覆盖率——合并按
+(path, text, size, weight, colour) 去重，200 行重复单元格本就只算一次；被保证的是每一段滚动范围都上过屏。
+
+**清理**：删除 8 个"没有任何仓内文件引用、且已被后续回执取代"的本机中间回执，回收 **74.7 MB**
+（`.project-local/artifacts` 451.3 MB → 376.6 MB），每个文件的 size+sha256 记在
+`.project-local/artifacts/cleanup-20261020-uncited-superseded.json`，且全部可用仓内仪器重生成。
+`.project-local/artifacts/LEGIBILITY_SIZES_D.json` 因被仓内引用而**保留**（删除脚本逐条复检引用面）。
+体积最大的单项 `.project-local/artifacts/dsh-backup-pre-deploy/DSH-Desktop.exe-pre-deploy-backup`
+（225.65 MB）**未动**：那是第三方旧版安装的回滚副本，不是本项目产物，只有 owner 能决定放弃那次回滚。

@@ -27,7 +27,7 @@
 | 9 | 验证一个真实最小闭环，不以模拟数据冒充接通 | DELIVERED（2026-10-19，`WORK-LAB-MINIMAL-LOOP-001`）：AG-06 能力门从红转绿；产品修复 `services/execution-federation/hermes_adapter.py`；12+49 回归测试；适配器 launchable 分支真实读回；固化 `SOLUTION-001`。AAOS 候选 NOT_SUBMITTED，exact-SHA CI 未跑 | 不是外部客户端采集来源，而是仓内可复现的能力门；Hermes 原生会话恢复仍不存在，也未声称存在 |
 | 10 | 本仓独立运行跑通（不依赖任何其它项目） | DELIVERED（2026-10-19 实测，非文档）：`services/orchestration/sidecar.py` 在随机回环端口 READY；`/healthz` = `{"ledgerOwner":"workflow-assistance","observerMutation":false,"readOnlyControl":true}`；`/api/v1/snapshot` 200、schema `workflow/snapshot/v3`、152,058 B；同一进程 `--frontend-root apps/observer/frontend/dist` 服务已构建 UI（200）；渲染出的 Observer 读数随快照前进（revision 7→12→17），缺数据保持 UNKNOWN。 | 缺口：一键入口 `apps/observer/start-observer.cmd` 原本指向不存在的路径且写死端口，已修并加守卫 `tests/ci/test_observer_launcher_chain_is_runnable.py`（6 例，种回原缺陷可判红）；Task Ledger 源 `.hermes/task-runtime/task-ledger/ledger.json` [no-tree-claim CLIENT_HOME ref=.hermes/task-runtime/task-ledger/ledger.json] 本机缺失→计数 UNKNOWN；Tauri 桌面 exe 与像素级视觉 QA 本轮未启动 |
 | 11 | 快照声明的每一项事实都要有界面消费（不许"后端有、界面不说"） | DELIVERED（2026-10-19 实测）：契约钉住 22 个 v3 键，界面源码此前只消费 20 个——`artifactHandles`/`artifactHandlesSummary` 零消费（快照已发 200 行把手、枚举 5024、省略 4824、敏感名拒 231、剪枝 114、有摘要 40/无摘要 160）。现补证据泳道把手块，并加机器门 `scripts/ci/verify_snapshot_keys_rendered.py` + `tests/ci/test_snapshot_keys_are_rendered.py`（6 例，其中 4 例是"必须能判红"的植入反例；套件自选发现 56 模块含此门）。 | 活链探针实测：按 unrecorded 过滤渲染 160 行=后端 rowsWithoutDigest、行先于事实格、最小计算字号 12px、无内容读取/重试控件、错误过滤值被显式拒绝 |
-| 12 | 界面仪器的绿必须带分母，不许把样本说成全量 | DELIVERED（2026-10-20 实测）：`scripts/audit/text_legibility_via_cdp.py` 每条泳道现报 `presentNodes` 与 `sweepStopsUsed`/`sweepStopsNeeded`，缺任一项由 `coverage_was_reported` 判红；新增 `sampled_nodes_stay_within_the_measured_population`（采样数超过页面实际存在的叶子文本即判红），`tests/ci/test_text_legibility_gate.py` 56 例全绿 | 一趟两主题 × 31 泳道实测 46 秒（17:09:39Z→17:10:25Z），报出 sampled 2,933 / present 8,006、sweep_stops 298/564；直接读 DOM 证明把手泳道实有 200 行 / 1,200 个 `data-origin` 格 / 23,031px 列表，而修好滚动后的扫掠只采到 143 个节点；把预算提到能覆盖全量仍未做，等 owner 对作业时长的取舍 |
+| 12 | 界面仪器的绿必须带分母，也不许把没走完的滚动当成看过 | DELIVERED（2026-10-20 实测）：`scripts/audit/text_legibility_via_cdp.py` 每条泳道现报 `presentNodes`、`sweepStopsUsed`/`sweepStopsNeeded` 与 `scrollRangeCovered`，缺任一项由 `coverage_was_reported` 判红；`sampled_nodes_stay_within_the_measured_population` 抓合并去重双计（采样数不得高于页面实际存在的叶子文本）；`every_scrollable_range_was_traversed` 把"没走到滚动范围尽头"按泳道点名判红；`tests/ci/test_text_legibility_gate.py` 57 例全绿 | 每泳道预算 16→96 后实测 565/565 站全部走完、无短程泳道，两主题一趟 69 秒（预算 16 时 46 秒、只走 298/564 站），distinct 读数 3,901 / 存在叶子文本 8,006，回执 `.project-local/artifacts/standalone-run-20261019/24-legibility-budget96.json`；直接读 DOM 另证把手泳道实有 200 行 / 1,200 个 `data-origin` 格 / 23,031px 列表。distinct 数低于存在数是对的——合并按 (path, text, size, weight, colour) 去重，重复单元格文本本就只算一次，所以它不是行数；被保证的是"每一段滚动范围都在某次采样里上过屏" |
 
 最小闭环的固定顺序：
 `发现 → 去重/关联 → 问题摘要 → 匹配历史方案 → 建议或 Agent 修复任务包 → 用户/授权策略交接 → Agent 实际修复 → 测试与运行读回 → 关闭或继续 → 方案固化 → 必要时 AAOS 知识候选`。
@@ -48,13 +48,8 @@
   `tests/ci/test_text_legibility_gate.py`（56 例）在 CI 里钉住，但它启动真浏览器量已构建产物的那一步不在任何
   作业里（CI 的浏览器步骤跑的是 `scripts/audit/topbar_geometry_via_cdp.py`）；
   `scripts/audit/evidence_handles_render_via_headless_chromium.py` 同样只是本机取证。接入会影响共享管道
-  （需要浏览器与时长预算），等 owner 点头再做。时长代价已有实测：一趟两主题 × 31 泳道（含逐屏滚动）
-  本机 46 秒，不是"接不起"的量级。
-- 扫掠的**采样预算**要按泳道内容量提高：现在每泳道最多 16 次视口级采样、每区域最多 6 站，
-  实测一趟报出 sampled 2,933 / present 8,006、sweep_stops 298/564，也就是全库只看到约 37% 的叶子文本；
-  把手泳道实有 200 行 / 1,200 个 `data-origin` 格 / 23,031px 列表，其中被采到的只有 143 个节点。
-  分母已经由仪器自己报出（`sampled_nodes_stay_within_the_measured_population`），
-  剩下的问题是把预算提到能覆盖，代价是作业时长——先由 owner 定"地板/AA 要覆盖到每一行"是不是本轮标准。
+  （需要浏览器与时长预算），等 owner 点头再做。时长代价已有实测：预算提到每泳道 96 站、全量走完之后，
+  一趟两主题 × 31 泳道在本机 69 秒（预算 16、只走 298/564 站时是 46 秒），不是"接不起"的量级。
 
 NEXT 不是实施承诺；启动任一项仍需用户明确 Task Grant 和独立验收。
 

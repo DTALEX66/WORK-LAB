@@ -439,17 +439,22 @@ def views_expression(size_key: str) -> str:
             "    const top = harvest();\n"
             "    let nodes = top.nodes;\n"
             "    const regions = scrollers().filter((el) => el.clientHeight > 200);\n"
-            "    // Sweep each scrollable region in viewport-sized steps, under a per-lane budget: jumping\n"
-            "    // straight to the bottom would sample the first and last screens and call the middle covered,\n"
-            "    // while an unbounded sweep of 31 lanes would never finish.\n"
-            "    let budget = 16;\n"
+            "    // Sweep each scrollable region in viewport-sized steps under a per-lane budget. The cap is\n"
+            "    // the remaining budget, not a fixed number of screens: a 23,031px handle list at a 748px\n"
+            "    // viewport needs ~82 steps across its regions, and a smaller constant left whole screens\n"
+            "    // untraversed while still reporting a clean floor/AA verdict.\n"
+            "    let budget = 96;\n"
             "    let sweepStopsUsed = 0;\n"
             "    let sweepStopsNeeded = 0;\n"
+            "    let scrolledPx = 0;\n"
+            "    let scrollablePx = 0;\n"
             "    for (const el of regions) {\n"
             "      const step = Math.max(200, Math.floor(el.clientHeight * 0.8));\n"
             "      const wanted = Math.max(1, Math.ceil(el.scrollHeight / step));\n"
-            "      const stops = Math.min(6, wanted);\n"
+            "      const stops = Math.min(wanted, budget);\n"
             "      sweepStopsNeeded += wanted;\n"
+            "      scrollablePx += Math.max(0, el.scrollHeight - el.clientHeight);\n"
+            "      scrolledPx += Math.min(stops * step, Math.max(0, el.scrollHeight - el.clientHeight));\n"
             "      for (let index = 1; index <= stops && budget > 0;\n"
             "           index += 1, budget -= 1, sweepStopsUsed += 1) {\n"
             "        el.scrollTop = index * step;\n"
@@ -465,6 +470,7 @@ def views_expression(size_key: str) -> str:
             "        coverage: { atTop: top.nodes.length, afterScroll: nodes.length, scrolledRegions: regions.length,\n"
             "            presentNodes: presentLeaves(), sweepStopsUsed: sweepStopsUsed,\n"
             "            sweepStopsNeeded: sweepStopsNeeded,\n"
+            "            scrollRangeCovered: scrollablePx ? Math.round(100 * scrolledPx / scrollablePx) : 100,\n"
             "            scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth,\n"
             "            scrollHeight: document.documentElement.scrollHeight,\n"
             "            innerHeight: window.innerHeight } });\n"
@@ -526,7 +532,8 @@ def views_verdict(theme: str, collected: dict, size: int | None = None,
     uncovered = [view["lane"] for view in views
                  if not all(key in (view.get("coverage") or {})
                             for key in ("atTop", "afterScroll", "scrolledRegions", "scrollWidth",
-                                        "presentNodes", "sweepStopsUsed", "sweepStopsNeeded"))]
+                                        "presentNodes", "sweepStopsUsed", "sweepStopsNeeded",
+                                        "scrollRangeCovered"))]
     add("coverage_was_reported", not uncovered,
         f"lanes_without_coverage={json.dumps(uncovered[:8])} -- the scroll sweep and the overflow reading "
         "come from the same harvest script, so a lane that reports neither means the below-the-fold "
@@ -546,10 +553,18 @@ def views_verdict(theme: str, collected: dict, size: int | None = None,
                     and len(scored.get(view["lane"]) or []) > view["coverage"]["presentNodes"]]
     add("sampled_nodes_stay_within_the_measured_population",
         present_total > 0 and not over_sampled,
-        f"sampled={sampled_total} present={present_total} sweep_stops={stops_used}/{stops_needed} "
-        f"over_sampled={json.dumps(over_sampled[:6])} -- a lane whose sampled count exceeds the leaf text "
-        "it contains means the harvest double-counted; the under-sampled lanes are named so that a green "
-        "on this rail is read as a verdict over a sample, not over every row")
+        f"sampled={sampled_total} present={present_total} over_sampled={json.dumps(over_sampled[:6])} "
+        "-- `sampled` counts distinct (path, text, size, weight, colour) readings after the merge, so it is "
+        "not a row count and must never be read as one: a table whose 200 rows repeat the same cell strings "
+        "legitimately yields few distinct readings. The inequality is the point -- a sampled count above the "
+        "leaf texts the page holds means the harvest double-counted.")
+    untraversed = [f"{view['lane']}={(view.get('coverage') or {}).get('scrollRangeCovered')}%"
+                   for view in views
+                   if (view.get("coverage") or {}).get("scrollRangeCovered", 100) < 100]
+    add("every_scrollable_range_was_traversed", not untraversed,
+        f"stops={stops_used}/{stops_needed} lanes_short={json.dumps(untraversed[:8])} -- a lane whose "
+        "scroll range was not walked to the end leaves text nobody measured, which is the same defect the "
+        "12px floor and AA checks exist to catch, just silent.")
     for view in views:
         coverage = view.get("coverage") or {}
         width_gap = (coverage.get("scrollWidth") or 0) - (coverage.get("innerWidth") or 0)
