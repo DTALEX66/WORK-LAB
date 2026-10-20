@@ -505,3 +505,26 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 本地=远端 True，工作树干净。这一 head 只含路线图 NEXT 的两条实测代价与 0108ec8b 的判决块，代码未变：preflight 绿、`observer` success、治理批红名单仍是四项既有基线、本轮新增 0。
 
 到这里，本轮每一次推送都有一份对应的 exact-SHA 判决被记进本文件：`2b7cf459`（新增 1，就是那枚行号指针腐烂，随后在 `3ee7fed5` 起消失）、`3ee7fed5`、`49ecdeb7`、`2b3e0f32`、`0108ec8b`、`7bce2e30`，后五份结论一致：红名单四项不变、新增 0。这条链的固有错位仍然成立——记录判决的那次推送本身，其判决要由下一次记录来读；本轮到此为止不再续推，`7bce2e30` 之后唯一的未读 head 就是这份记录产生的那个。
+
+### 本地独有工作物的清理：两条 stash（2026-10-20，owner 指示"有用就留着 没用就删除掉"）
+
+`git stash` 是本地对象，推送不会带走它，所以"云端本地一致"这句话必须单独检查它。仓库里有两条：
+`stash@{0}`（2026-10-07，消息自带 `discard-me`）与 `stash@{1}`（2026-09-25，token-monitor `lib.rs`）。
+先测再删，判据是逐行比对而不是印象：
+
+- `stash@{1}`：22 行新增，逐行在 `HEAD:apps/token-monitor/src-tauri/src/lib.rs` 里查找，
+  **22/22 已存在**，即它的全部内容早已随提交落地。
+- `stash@{0}`：35 文件 113 行新增，其中 52 行不在 HEAD。抽样归类成两类，都不是待上传的工作：
+  一类是把 `packages/client-neutral-core/` 前缀重复了一遍的双路径腐烂（写成 `…/packages/client-neutral-core/bin/…`，
+  这个目录从来不存在，此处只是引用被丢弃的写法，不是声明路径）；
+  一类是 2026-09 目录收敛之前的 `${HERMES_HOME}/packages/client-neutral-core/bin/...` 旧写法，
+  而现行 `config/config.yaml` 与 `docs/current/workflow-assistance/workflow/project-data-boundary.md`
+  用的都是收敛后的 `${HERMES_HOME}/bin/...`。它的 untracked 侧（`stash@{0}^3`）实测为空树。
+
+可恢复性先证明再动手：两条的 tracked 差异与头信息已导出为
+`.project-local/artifacts/stash-retirement-20261020/stash-{0,1}-tracked.patch`
+（`stash@{0}` 66,263 B / `stash@{1}` 3,365 B），drop 之后两个提交对象
+`fbb97053c23293889e7f9381a98dc98d851455e5`、`9d393d9ff7951c5f9358c23e20c9361309dce8e1`
+经 `git cat-file -t` 仍返回 `commit`，短期内可直接 `git stash apply <sha>` 找回。
+结果：`git stash list` 为 0 条，工作树 0 处改动，本地与 `origin/docs/handoff-20261018-qoder`
+同为 `bc304642`。
