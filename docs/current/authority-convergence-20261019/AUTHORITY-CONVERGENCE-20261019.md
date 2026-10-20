@@ -544,9 +544,10 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
   `scripts/ci/verify_error_ledger.py` 经 `git cat-file -e 13ed879b:scripts/ci/verify_error_ledger.py`
   证实存在于出生提交 `13ed879b`，门要的两件事（提交存在 + 承诺脚本在该提交里）都成立。
   写这两个字段要动受保护账本，按既定边界我不自填；此处给出可直接落笔的结论而不是笼统的"待裁"。
-- **executor registry pin：需要重跑探针。** `docs/audits/EXECUTOR_LIVE_PROBE_2026-10-07.json` 钉的
-  `2abffd09…` 是旧注册表字节，当前树是 `4be802ef…`。重钉只能靠真重跑 `scripts/audit/executor_live_probe.py`
-  （它会执行 codex / gh 的版本命令并对两个 GUI 入口各等 25 秒超时），不重跑而改摘要就是伪造快照。
+- **executor registry pin：当时判为"需要重跑探针"，本节末尾已被 `--no-launch` 解决。** 当时的判断是
+  重钉只能靠真重跑 `scripts/audit/executor_live_probe.py`，而它会执行 codex / gh 的版本命令并对两个
+  GUI 入口各等 25 秒超时；不重跑而改摘要就是伪造快照。这个结论方向没错——不能假造——但漏了
+  "只跑无界面那两项"这条路径，见本节末「registry pin 不需要拉起任何界面也能修」。
 - **DSH 日期合同：需要写受保护注册表。** 门的断言是 `observed_at <= 2026-10-07`，而注册表现在是
   `2026-10-13`——即那条读回被推后了日期却没有可重读的免启动来源。要么按合同退回旧日期，
   要么补一个免启动来源并同步门的口径，两者都要动 `config/adapter-registry.json`。
@@ -619,3 +620,61 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 CI 实测变化：红名单从四项基线缩到**三项**——`test_regenerating_the_record_is_idempotent_apart_from_the_timestamp` 在云端消失，即引用审计那一项的修复不只是本地绿，云端也认了。剩下三项仍是等 owner 的那三件：DSH 日期合同、executor registry pin、ERR-276/277 落笔（推导已完成）。新增红 0，`observer` success，无未发言作业或未发言步骤。
 
 顺带记一笔链条的自我消耗：`2ed1b50d`（修复批次本身）被这次推送取消，没有拿到判决；它的内容作为本 head 的祖先被完整覆盖，所以证据没有丢，丢的只是"那个 SHA 名字上的判决"。
+
+### registry pin 不需要拉起任何界面也能修（2026-10-20 追记）
+
+上一节把 executor registry pin 归给 owner，理由是"重跑探针会启动 GUI"。这个归类当时是对的，但只说了一半：
+`scripts/audit/executor_live_probe.py` 的七个 resolver 里只有两个是命令行
+（`packages/client-neutral-core/bin/codex.cmd` 与 `gh`），其余五个解析到 Electron/桌面二进制——
+2026-10-07 那次 hermes 与 deepseek-harness 各等满 25 秒超时，就是因为 `--version` 被 GUI 忽略而程序真的起来了。
+所以补了 `--no-launch`：只执行已被证明无界面的两项，其余按具名类别 `PROBE_SKIPPED_NO_LAUNCH` 记录，
+不解析、不执行、更不升级（回执里这些行没有 `command` 也没有 `probe`，门逐条断言这一点）。
+
+新回执 `docs/audits/EXECUTOR_LIVE_PROBE_2026-10-20.json`：`registrySha256` 与索引里的注册表**逐字节相符**
+（`4be802ef…`，basis=git-index），十行计数为 skipped 5 / VERSION_MOVED 2 / NOT_PROBED_DECLARATIVE_ONLY 3，
+`readOnly=true`。门改指最新回执，旧的 10-07/10-08 留在仓里作为它们那天的证据。
+`tests/workflow-assistance/test_executor_live_probe.py` 从 11 例涨到 **15 例全绿**，四例新增：
+被跳过的行必须像拒绝而不是像结果（无 `command`、无 `probe`）、无界面白名单只能是 codex 与 github
+且回执里被真正执行过的行不得越出它、带构建日期的声明不得被当成版本漂移、以及归一化之后真漂移仍要报红。
+
+顺手抓到一处仪器自己的错：注册表里 github 声明 `2.98.0 (2026-08-20)`（那是从 Windows 版本资源抄来的，
+带构建日期），而 `gh --version` 打印 `2.98.0`，旧的逐字符串比较把**同一套装成了漂移**。改为两侧都取
+版本 token 再比——它能让装饰对齐，但不会把 0.160.1 说成 0.163.0。种入假数（把 github 的观测改成 3.0.0）
+后门立刻点名判红，回执按 sha256 逐字节还原（`80b186441368e3c9…` 前后一致）。
+
+**一条真实的漂移发现，不粉饰**：codex 注册表声明 `0.160.1`，本机现在答
+`0.163.0-alpha.10.2`（exit 0）。这是五维基线第 3 维（官方标准 + 用户配置）该看见的事：包装器解析的还是
+同一个入口，但底下的 CLI 已经换到了 alpha 通道。是否把注册表的声明改成观测值，是 owner 对"声明基线"的
+决定，探针只记录不和解——两串都留在回执里。
+
+### exact-SHA CI 证据（2bbb8b99，run 39431220157）
+
+结论 `failure`；触发 `pull_request`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；
+红作业：aggregate / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+未发言步骤：（无）——一个作业可以在第一个步骤就红掉，
+把后面装着其余套件的步骤整体跳过，于是"基线红不见了"是读数缺席而不是问题消失。
+红作业里点名的失败测试共 3 个：3 个属于本轮之前就存在的基线
+（test_deepseek_harness_keeps_its_older_dated_readback、test_the_pinned_registry_is_the_one_the_commit_carries、test_the_shipped_bindings_are_valid），本轮新增 0 个（零回归）。
+基线里本 run 没有发言的项：（全部发言过）。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中 5 件已随各自的修复退役
+（账本派生四件随派生审计重发消失，引用审计幂等一件随 2026-10-20 的裁决消失并在 CI 里确认转绿），
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树有 4 处未提交改动。这一 head 只含判决记录与静态模式复测（3e409f56 的判决块、无后端 `--all-views` 实跑读数）。判决：红名单三项既有基线（DSH 日期、registry pin、ERR-276/277 落笔），新增红 0，`observer` success，无未发言作业或步骤。
+
+其中 registry pin 那一项在**本工作集里已被 `--no-launch` 解决**（新回执钉住当前注册表字节，门 15 例全绿），所以下一个 head 的名单预期只剩两项；这一项不是被放宽，而是被真正测了一遍。
+
+### 顺手量到的真实漂移：Hermes 又自升级了一次（2026-10-20，不粉饰也不就地掩盖）
+
+跑本轮门集时 `tests/workflow-assistance/test_adapter_version_readback.py` 里那条**只在有安装戳的机器上
+才执行**的复读断言转红：本机 `hermes_cli` 安装戳现在答 `0.21.7+472.gcba45e8`，而注册表与
+`docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json` 记的都是 `0.21.5+6948.gedd2476`。
+这正是 ERR-158/159 记过的同一类事——自更新机制每次写戳，声明基线就每次落后，而且**CI 看不见**：
+安装戳在仓库外，干净检出走的是具名 skip，所以云端名单里从来不会有这一条。
+
+处理方式是不动。把探针重跑一遍只会让回执变成 `0.21.7`，而注册表还钉着 `0.21.5`，于是"声明↔回执"那条门
+从绿转红——红被搬了个地方，漂移没有被解决；要真解决，得改 `config/adapter-registry.json` 的
+`version_readback`（受保护文件，且这是"声明基线跟不跟机器走"的 owner 决定）。所以这里只把两个字符串、
+复读命令和"CI 结构上看不到它"写清楚：复读 = `python scripts/audit/tool_version_metadata_probe.py`
+（免启动，读版本资源与安装戳），比对点 = 上述门文件的 `displayVersion` 断言。

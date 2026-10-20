@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-20T12:57:52Z",
+  "generatedAt": "2026-10-20T13:56:06Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -321,19 +321,19 @@
     },
     {
       "path": "scripts/audit/executor_live_probe.py",
-      "sha256": "70b6c991de76b3e22835b7c7d33d0cbbaa747c5a1320f298743d324a33d16d62",
-      "bytes": 10761,
-      "lines": 211,
+      "sha256": "eeaf387277a7af8ae5791429056e590411778105098d0a64f5576d24c7ca604e",
+      "bytes": 13040,
+      "lines": 245,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 13,
+      "citedByRecords": 14,
       "citedBy": [
         "docs/audits/ENTRY_BASELINE_2026-10-08.json",
         "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-07.json",
         "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-08.json",
+        "docs/audits/EXECUTOR_LIVE_PROBE_2026-10-20.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
-        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md"
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
       ]
     },
     {
@@ -782,7 +782,7 @@
       "lines": 153,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 9,
+      "citedByRecords": 10,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
         ".workbuddy/memory/2026-10-13.md",
@@ -827,7 +827,7 @@
       "lines": 218,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 10,
+      "citedByRecords": 11,
       "citedBy": [
         ".workbuddy/memory/2026-10-12.md",
         ".workbuddy/memory/2026-10-13.md",

@@ -15,8 +15,15 @@ decision can name a probed executor. This script is the probe half of that. It i
 
 Usage:
     python scripts/audit/executor_live_probe.py [--out docs/audits/EXECUTOR_LIVE_PROBE_2026-10-07.json]
+    python scripts/audit/executor_live_probe.py --no-launch --out <dated path>   # CLI entries only
 Exit: 0 always for a completed probe (an absent executor is a finding, not a crash); 2 if the
 registry cannot be read. The counts line is what a reader compares against the register row.
+
+`--no-launch` exists because two of these entries are Electron binaries: measured 2026-10-07,
+`hermes.exe --version` and `DeepSeek Harness.exe --version` never answered -- they hit the 25 s
+timeout, which on a desktop means the app started. Re-pinning a receipt should not require opening
+someone's applications, so the flag probes only the entries proven headless and records the rest as
+`PROBE_SKIPPED_NO_LAUNCH` -- a named category, never a silent absence and never an upgrade.
 """
 from __future__ import annotations
 
@@ -34,6 +41,12 @@ REPO = Path(__file__).resolve().parents[2]
 REGISTRY = REPO / "config" / "adapter-registry.json"
 VERSION_RE = re.compile(r"(\d+\.\d+[^\s)]*)")
 TIMEOUT_SECONDS = 25
+# Entries whose declared executable answers `--version` and exits without opening a window.
+# Measured 2026-10-07: codex answered 0.160.1 and gh answered 2.98.0, both exit 0; hermes and
+# deepseek-harness hit the 25 s timeout because an Electron binary ignores the flag and starts,
+# and the three desktop-shortcut clients resolve to GUI binaries too.
+HEADLESS_ENTRYPOINTS = frozenset({"codex", "github"})
+SKIPPED_STATE = "PROBE_SKIPPED_NO_LAUNCH"
 
 
 def run_readonly(argv: list[str]) -> dict:
@@ -113,6 +126,18 @@ RESOLVERS = {
 }
 
 
+def version_token(text: str) -> str:
+    """The comparable half of a version string.
+
+    A claim copied from a Windows version resource carries its build date (`2.98.0 (2026-08-20)`) while
+    `gh --version` prints the bare token, so comparing raw strings called an identical install
+    VERSION_MOVED. Extracting the same token from both sides is symmetric: it can align a decorated
+    claim with a bare observation, but it cannot turn 0.160.1 into 0.163.0.
+    """
+    found = VERSION_RE.search(text or "")
+    return (found.group(1) if found else (text or "")).split("+")[0].strip()
+
+
 def adjudicate(entry: dict, probe: dict) -> tuple[str, str]:
     claimed = ((entry.get("provenance") or {}).get("version") or "").strip()
     if not probe.get("invoked"):
@@ -128,7 +153,7 @@ def adjudicate(entry: dict, probe: dict) -> tuple[str, str]:
         return ("MEASURED_NO_CLAIM_TO_COMPARE" if observed else "PROBED_NO_VERSION_READBACK",
                 f"observed={observed or probe.get('versionLine','')[:60]!r}; registry claims "
                 f"{claimed!r} which is not a version string")
-    if claimed.split("+")[0] == (observed or "").split("+")[0]:
+    if version_token(claimed) == version_token(observed or ""):
         return "LIVE_VERIFIED", f"observed={observed} agrees with claimed={claimed}"
     return "VERSION_MOVED", f"observed={observed} claimed={claimed} — both kept, neither reconciled"
 
@@ -152,6 +177,9 @@ def registry_pin() -> tuple[str, str]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=None)
+    ap.add_argument("--no-launch", action="store_true",
+                    help="probe only the headless entries; record the GUI-bound ones as "
+                         f"{SKIPPED_STATE} instead of starting them")
     args = ap.parse_args()
     if not REGISTRY.is_file():
         print(f"EXECUTOR_PROBE_NOT_RUN REGISTRY_ABSENT {REGISTRY}")
@@ -165,6 +193,12 @@ def main() -> int:
         if resolver is None:
             results.append({"adapter": adapter_id, "state": "NOT_PROBED_DECLARATIVE_ONLY",
                             "detail": "no live entry point is declared for this support level"})
+            continue
+        if args.no_launch and adapter_id not in HEADLESS_ENTRYPOINTS:
+            results.append({"adapter": adapter_id, "state": SKIPPED_STATE,
+                            "detail": "--no-launch: the declared executable is a GUI binary, and "
+                                      "reading its version would have started it",
+                            "claimedVersion": (entry.get("provenance") or {}).get("version")})
             continue
         try:
             argv = resolver()
