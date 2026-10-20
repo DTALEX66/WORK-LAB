@@ -954,3 +954,15 @@ CI 把这套门全跑，本地挑着跑，差值就是这 4 枚红。`services/o
    于是"已 `git add` 但未提交"的复原会给出互相矛盾的判决（冻结门绿、移动记录门红）。
    这不是缺陷，但只要按本地部分绿就宣布收口，就会把一个还没生效的状态当成已生效。
 
+补一件当时还不知道的事：`bd043222` 之后 `governance` 全批又报出一枚红，说明对同一份字节提要求的不是两条门而是
+**三条**。第三处在 `tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py` 的
+`test_every_line_pointer_lands_on_the_code_it_quotes`——它读 checkout，所以它命令两份冻结表永远跟踪 HEAD。
+这一枚本地全批才量到、云端从未报过（还是第 5 步链停在第一枚红那个机制）。解法不是再改字节，也不是关掉这条门，
+而是**把判读基准换成这条记录自己的署期**：按 `docs/history/archive/MOVED-PATHS-20261019.json` 里每条移动各自记的
+`measuredAtHead`，用 `git cat-file -e` / `git show <commit>:<path>` 取当时的 blob 来验。断言因此从"今天也对"
+升级为更强的"这份有日期的记录在它署名那棵树上准确"（两份表的每一条行号引文在 `983bf571` 全部落在自己的引文上，
+8 例全绿）；若某条移动没有 `measuredAtHead`，测试直接 raise——没有署期就没有判读基准，不允许悄悄退回 checkout。
+这就是 §14 那条"数不对 / 读不到是两种状态"的同一形状：**"当时对" 与 "现在还追得上" 也是两种状态**，
+把它们混在一条门上，门就只能命令人去改历史。
+
+

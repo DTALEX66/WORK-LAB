@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-20T18:12:47Z",
+  "generatedAt": "2026-10-20T18:39:11Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2555,
     "distinctProjectLocalTokens": 625,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 625,
-    "citationsToAbsentTokens": 1843
+    "citationsToAbsentTokens": 1844
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -37,8 +37,8 @@
       "distinctPaths": 114
     },
     "negative_assertion_or_removal_record": {
-      "citations": 187,
-      "distinctPaths": 67
+      "citations": 188,
+      "distinctPaths": 68
     },
     "path_pattern_or_truncated_token": {
       "citations": 19,
@@ -10196,6 +10196,12 @@
         "file": "packages/client-neutral-core/scripts/adapter_verb_probe.py",
         "line": 33,
         "text": "Nothing here writes inside the repository except `.project-local/runs/qoder-agent-verbs/` (`--out` refuses"
+      },
+      {
+        "path": ".project-local/runs/sidecar-launch-tests",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 8521,
+        "text": "\"fix\": \"Replaced the implicit context-manager cleanup with a bounded release() (12 attempts at 0.25 s) that raises when the tree is still locked instead of ignoring the failure - silent residue would "
       },
       {
         "path": ".project-local/runs/skill-call-index.json",

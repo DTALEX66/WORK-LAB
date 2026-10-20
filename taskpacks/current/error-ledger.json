@@ -9,19 +9,19 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 278,
+    "total": 281,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 87,
-      "test_behavior_alignment": 37,
+      "test_behavior_alignment": 38,
       "working_directory_recovery": 2,
       "evidence_state": 55,
-      "ci_configuration": 22,
+      "ci_configuration": 23,
       "feature_gap": 13,
       "config_downgrade": 3,
       "dead_entry": 4,
       "path_boundary": 15,
-      "ci_tooling": 22,
+      "ci_tooling": 23,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 2
@@ -8435,6 +8435,111 @@
         "regressionCommand": "python scripts/ci/verify_error_ledger.py -> ERROR_LEDGER_PASS entries=278",
         "currentApplicability": "VERIFIED_LIVE_20261020",
         "fixedCommitBasis": "the commit that extended both rows and re-published the derived receipts; its tree carries scripts/ci/verify_error_ledger.py"
+      }
+    },
+    {
+      "error_id": "ERR-280",
+      "date": "2026-10-20",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_configuration",
+      "entrypoint": "scripts/ci/repoint_source_pointers.py default target and tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py vs docs/history/archive/FROZEN-MANIFEST.json and docs/history/archive/MOVED-PATHS-20261019.json",
+      "command": "python scripts/ci/run_root_governance_suite.py",
+      "exit_code": 1,
+      "observed_error": "Two machine contracts demanded opposite mutations of the same bytes. The pointer repointing tool's default target was docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv, while that file sits inside an archive pinned twice by hash - the freeze manifest and the move record, both recording 44,208 bytes at a1f5eb3be534. Following the pointer gate's own instruction (re-pin a rotted line number, which commit 3ee7fed5 did) turned both integrity gates red; keeping the integrity gates green left the pointer gate demanding the same edit again the next time any cited source gained a line. The contradiction was invisible in CI because the workflow's fifth step is a command chain that stops at its first failure, and governance failed before root-governance-suite ran.",
+      "root_cause": "The 2026-10-19 archive normalization moved the matrix into frozen history without re-aiming the tool whose default population was that file, and nothing asserts that a repair tool and a freeze record cannot both own the same path. A pointer claim inside an immutable document is unsatisfiable by construction: the record is a dated measurement, and keeping its line number 'current' would make it say something it never measured.",
+      "fix": "Chose the freeze. Restored the archived bytes to the value both records pin (proving first that the blobs at c76f5e2e and at 3ee7fed5^ equal it, and keeping the divergent bytes as a rollback copy in .project-local). Added the root guard inside the tool: any target whose path is pinned by the freeze manifest or the move record is refused with REPOINT_FROZEN_REFUSED and exit 1, so a pointer can never again be repaired by breaking a freeze. Replaced the hard-coded default population with the tracked live doc surface enumerated from the git index. The third demand on the same bytes turned out to be tests/workflow-assistance/test_ui_v2_csv_citations_resolve.py, which read the checkout and so required the frozen tables to track HEAD; it now judges each table against the move record's own measuredAtHead, which keeps the claim readable - every pointer in both CSVs lands on its quote as of 983bf571 - without making frozen history expire. 8 tests OK.",
+      "regression_test": "tests/ci/test_source_pointers_are_current.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tracked file carries the gate",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "任何会改写跟踪字节的修复工具都必须先声明它不能碰哪些路径：被哈希记录钉住的文件一律拒绝而不是修复；种群必须由 git index 枚举而不是手写清单，否则文件被搬进冻结历史之后，工具还在命令读者去破冻结。两条门对同一路径的要求必须在提交时相互检查，而不是等本地全量批跑才发现。",
+      "remaining_boundary": "The live population currently holds zero code citations (REPOINT citations=0 narrative=67), so a green over it proves nothing on its own - the planted drift falsifier is what keeps the gate armed. The 67 narrative pointers stay unverifiable by design; --drop-narrative and --attach-quotes remain the only ways to change that, and both now refuse frozen targets as well.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "2026-10-20 owner 指令「全部授权 实现真正闭环」之后的本地 root-governance-suite 批跑",
+      "related": [
+        "ERR-281 (the same batch could not print its own verdict)",
+        "ERR-282 (a Windows-only teardown race reported in the same batch)"
+      ],
+      "lifecycle": {
+        "introducedCommit": "c76f5e2e465f760ae4dc5ed40ffa04327321a512",
+        "fixedCommit": "4d57589774b938008bf00f7d3583e372fa2f2933",
+        "verifiedCommit": null,
+        "affectedCapability": "Frozen-surface integrity records and the line-pointer currency tool that shared a target with them",
+        "regressionCommand": "python -m unittest discover -s tests/ci -p test_source_pointers_are_current.py; python -m unittest discover -s tests/workflow-assistance -p test_ui_v2_csv_citations_resolve.py; python scripts/ci/repoint_source_pointers.py docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv must exit 1",
+        "currentApplicability": "VERIFIED_LIVE_20261020",
+        "fixedCommitBasis": "the commit that restored the frozen bytes, added REPOINT_FROZEN_REFUSED, moved the default population to the live surface and re-based the citation gate on measuredAtHead"
+      }
+    },
+    {
+      "error_id": "ERR-281",
+      "date": "2026-10-20",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/ci/run_root_governance_suite.py failure report",
+      "command": "python scripts/ci/run_root_governance_suite.py",
+      "exit_code": 1,
+      "observed_error": "The batch reported modules_failed=3 with only one module's detail and then died inside its own report loop: UnicodeEncodeError: 'gbk' codec can't encode character '\\ufffd' - the replacement character came from decoding a child process's output, which is correct and must survive. Two of three faults were therefore never readable, and the run's exit status could not be attributed.",
+      "root_cause": "services/orchestration/run_quality_gate.py reconfigures its own stdout to UTF-8 with errors='replace' and documents exactly this incident from 2026-10-10, but the child runners it invokes inherit the Windows console default. The fix was applied at one layer and never propagated to the layer that prints the details.",
+      "fix": "Reconfigured sys.stdout and sys.stderr in scripts/ci/run_root_governance_suite.py the same way, guarded against a stream that cannot be reconfigured, and cited the measured failure in the comment so the next reader knows why two lines exist. All three details printed on the next run.",
+      "regression_test": "tests/ci/test_root_governance_runner_refuses_silent_modules.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tracked file carries the runner gate",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "打印判决的每个进程都必须自己声明输出编码，不能继承控制台默认；修好父进程不等于修好子进程。任何「失败明细」若可能被一个字符打断，就必须用 errors='replace' 保护，因为打印不出来的判决不是判决。",
+      "remaining_boundary": "The runner still prints the child's already-replaced bytes rather than the raw ones, so a mojibake detail stays unreadable in the detail line even though the report now survives; the child scripts themselves are not forced to UTF-8 by this record.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "2026-10-20 root-governance-suite 批跑时报告自己崩在中途",
+      "related": [
+        "ERR-280 (the batch that exposed it)",
+        "ERR-261 / ERR-263 / ERR-264 (the CI blind spot this batch exists to close)"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "bd043222d70a900646b96db0214b2b83b5c129ba",
+        "verifiedCommit": null,
+        "affectedCapability": "Local root governance verdict readability - every test in tests/ci reported through this runner",
+        "regressionCommand": "python scripts/ci/run_root_governance_suite.py with a deliberately failing module must print every detail and exit 1",
+        "currentApplicability": "VERIFIED_LIVE_20261020",
+        "fixedCommitBasis": "the commit that reconfigured the runner's own streams"
+      }
+    },
+    {
+      "error_id": "ERR-282",
+      "date": "2026-10-20",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "test_behavior_alignment",
+      "entrypoint": "tests/ci/test_sidecar_documented_launch.py teardown",
+      "command": "python -m unittest discover -s tests/ci -p test_sidecar_documented_launch.py",
+      "exit_code": 1,
+      "observed_error": "The documented sidecar launch worked - WORKFLOW_SIDECAR_READY printed, /api/v1/snapshot answered 200 with a revision - and the test still reported an ERROR: PermissionError: [WinError 32] on '%TEMP%\\tmpXXXX\\runtime\\canonical.sqlite' while TemporaryDirectory cleanup tried to delete its own sandbox. Instrumented separately: the child is reaped at t=0 and its sqlite stays locked until roughly 250 ms later, so an immediate delete always loses. Linux unlinks open files, so exact-SHA CI cannot see this class at all.",
+      "root_cause": "The teardown assumed POSIX unlink semantics, and the assertion that was supposed to prove the documented entry point runs was hostage to a filesystem detail unrelated to the claim. Second, independent mistake: the sandbox was written to the user temp root, which this repo's own data-boundary contract forbids for content the project produces.",
+      "fix": "Replaced the implicit context-manager cleanup with a bounded release() (12 attempts at 0.25 s) that raises when the tree is still locked instead of ignoring the failure - silent residue would be invisible here and counted days later by the residue floor gate. Moved the sandbox to .project-local/runs/sidecar-launch-tests/. Added two falsifiers: a delete that fails twice must be retried until it succeeds, and a permanently locked tree must be reported by name.",
+      "regression_test": "tests/ci/test_sidecar_documented_launch.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tracked file carries the gate and its own falsifiers",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "断言「能不能启动」的测试不能被拆除时序决定成败：删除子进程留下的目录必须有界重试并且在耗尽预算时报错，禁止 ignore_errors 把残骸变隐形；本项目产生的任何运行目录必须落在 Git 根内，不得写 %TEMP%。只在 Windows 上红的判决必须能在本地读到，否则云端绿灯只是平台的错觉。",
+      "remaining_boundary": "The 250 ms figure is measured on this machine only; the budget is a ceiling on waiting, not a claim about Windows in general. CI remains unable to reproduce the race, so this guard is exercised locally and by the two planted falsifiers rather than by the shared pipeline.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "2026-10-20 root-governance-suite 明细修复后第一次可读的三条红之一",
+      "related": [
+        "ERR-281 (the report that hid it)",
+        "ERR-280 (same batch)"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "bd043222d70a900646b96db0214b2b83b5c129ba",
+        "verifiedCommit": null,
+        "affectedCapability": "The documented sidecar entry point readback (five-dimension runtime baseline D1) and the project data boundary",
+        "regressionCommand": "python -m unittest discover -s tests/ci -p test_sidecar_documented_launch.py -> 4 tests OK",
+        "currentApplicability": "VERIFIED_LIVE_20261020",
+        "fixedCommitBasis": "the commit that added release(), its two falsifiers and the in-boundary sandbox root"
       }
     }
   ],
