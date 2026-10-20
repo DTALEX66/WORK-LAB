@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-20T18:39:11Z",
+  "generatedAt": "2026-10-20T19:05:30Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2555,
@@ -8002,7 +8002,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 568,
+        "line": 572,
         "text": "（`.project-local/artifacts` 451.3 MB → 376.6 MB），每个文件的 size+sha256 记在"
       },
       {
@@ -8122,7 +8122,7 @@
       {
         "path": ".project-local/artifacts/LEGIBILITY_SIZES_D.json",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 570,
+        "line": 574,
         "text": "`.project-local/artifacts/LEGIBILITY_SIZES_D.json` 因被仓内引用而**保留**（删除脚本逐条复检引用面）。"
       },
       {
@@ -8218,7 +8218,7 @@
       {
         "path": ".project-local/artifacts/dsh-backup-pre-deploy/DSH-Desktop.exe-pre-deploy-backup",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 571,
+        "line": 575,
         "text": "体积最大的单项 `.project-local/artifacts/dsh-backup-pre-deploy/DSH-Desktop.exe-pre-deploy-backup`"
       },
       {
@@ -8290,19 +8290,19 @@
       {
         "path": ".project-local/artifacts/owner-decisions-20261020",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 774,
+        "line": 778,
         "text": "`.project-local/artifacts/owner-decisions-20261020/`。"
       },
       {
         "path": ".project-local/artifacts/owner-decisions-20261020/01-err-276-277-fixed-commit.patch",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 782,
+        "line": 786,
         "text": "一句 `git apply .project-local/artifacts/owner-decisions-20261020/01-err-276-277-fixed-commit.patch` 即可落地。"
       },
       {
         "path": ".project-local/artifacts/owner-decisions-20261020/02-03-version-rebaseline.evidence.txt",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 792,
+        "line": 796,
         "text": "`.project-local/artifacts/owner-decisions-20261020/02-03-version-rebaseline.evidence.txt`），"
       },
       {
@@ -8338,13 +8338,13 @@
       {
         "path": ".project-local/artifacts/standalone-run-20261019/25-legibility-static-views.json",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 565,
+        "line": 569,
         "text": "（回执 `.project-local/artifacts/standalone-run-20261019/25-legibility-static-views.json`）。"
       },
       {
         "path": ".project-local/artifacts/standalone-run-20261019/26-handle-latency.json",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 761,
+        "line": 765,
         "text": "每次都渲染出 200 行（回执 `.project-local/artifacts/standalone-run-20261019/26-handle-latency.json`），"
       },
       {
@@ -8386,7 +8386,7 @@
       {
         "path": ".project-local/artifacts/temp-residue-reclaim",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 903,
+        "line": 907,
         "text": "（`docs/audits` 之外，落在 `.project-local/artifacts/temp-residue-reclaim/` 的 manifest），再 `--apply` 释放："
       },
       {
@@ -8416,7 +8416,7 @@
       {
         "path": ".project-local/artifacts/wui-20261009/refs-census-20261018.json",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 537,
+        "line": 541,
         "text": "`UNADJUDICATED`：`.project-local/artifacts/wui-20261009/refs-census-20261018.json`。先量清它是什么"
       },
       {
@@ -8998,7 +8998,7 @@
       {
         "path": ".project-local/runs/sidecar-launch-tests",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 929,
+        "line": 933,
         "text": "而本仓的机器合同要求一切产物留在 Git 根内，现在写 `.project-local/runs/sidecar-launch-tests/`。"
       },
       {
@@ -9010,13 +9010,13 @@
       {
         "path": ".project-local/runs/standalone-20261019/geometry-after-fix.json",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 755,
+        "line": 759,
         "text": "`.project-local/runs/standalone-20261019/geometry-after-fix.json`）。"
       },
       {
         "path": ".project-local/runs/standalone-20261019/prepare_owner_patches.py",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 771,
+        "line": 775,
         "text": "工具 `.project-local/runs/standalone-20261019/prepare_owner_patches.py` 把该量的都重量了一遍，"
       },
       {
@@ -9696,7 +9696,7 @@
       {
         "path": ".project-local/artifacts/cleanup-20261020-uncited-superseded.json",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 569,
+        "line": 573,
         "text": "`.project-local/artifacts/cleanup-20261020-uncited-superseded.json`，且全部可用仓内仪器重生成。"
       },
       {
@@ -10406,7 +10406,7 @@
       {
         "path": ".project-local/artifacts/stash-retirement-20261020/stash-",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 525,
+        "line": 526,
         "text": "`.project-local/artifacts/stash-retirement-20261020/stash-{0,1}-tracked.patch`"
       },
       {

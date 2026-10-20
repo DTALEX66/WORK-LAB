@@ -509,23 +509,27 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 ### 本地独有工作物的清理：两条 stash（2026-10-20，owner 指示"有用就留着 没用就删除掉"）
 
 `git stash` 是本地对象，推送不会带走它，所以"云端本地一致"这句话必须单独检查它。仓库里有两条：
-`stash@{0}`（2026-10-07，消息自带 `discard-me`）与 `stash@{1}`（2026-09-25，token-monitor `lib.rs`）。
+第一条（旧列表索引 0，2026-10-07，消息自带 `discard-me`）与第二条（旧索引 1，2026-09-25，
+token-monitor 的 `apps/token-monitor/src-tauri/src/lib.rs`）。
 先测再删，判据是逐行比对而不是印象：
 
-- `stash@{1}`：22 行新增，逐行在 `HEAD:apps/token-monitor/src-tauri/src/lib.rs` 里查找，
+- 第二条：22 行新增，逐行在 `HEAD:apps/token-monitor/src-tauri/src/lib.rs` 里查找，
   **22/22 已存在**，即它的全部内容早已随提交落地。
-- `stash@{0}`：35 文件 113 行新增，其中 52 行不在 HEAD。抽样归类成两类，都不是待上传的工作：
+- 第一条：35 文件 113 行新增，其中 52 行不在 HEAD。抽样归类成两类，都不是待上传的工作：
   一类是把 `packages/client-neutral-core/` 前缀重复了一遍的双路径腐烂（写成 `…/packages/client-neutral-core/bin/…`，
   这个目录从来不存在，此处只是引用被丢弃的写法，不是声明路径）；
   一类是 2026-09 目录收敛之前的 `${HERMES_HOME}/packages/client-neutral-core/bin/...` 旧写法，
   而现行 `config/config.yaml` 与 `docs/current/workflow-assistance/workflow/project-data-boundary.md`
-  用的都是收敛后的 `${HERMES_HOME}/bin/...`。它的 untracked 侧（`stash@{0}^3`）实测为空树。
+  用的都是收敛后的 `${HERMES_HOME}/bin/...`。第一条的 untracked 侧（其第三个父提交）实测为空树。
 
 可恢复性先证明再动手：两条的 tracked 差异与头信息已导出为
 `.project-local/artifacts/stash-retirement-20261020/stash-{0,1}-tracked.patch`
-（`stash@{0}` 66,263 B / `stash@{1}` 3,365 B），drop 之后两个提交对象
+（第一条 66,263 B / 第二条 3,365 B），drop 之后两个提交对象
 `fbb97053c23293889e7f9381a98dc98d851455e5`、`9d393d9ff7951c5f9358c23e20c9361309dce8e1`
 经 `git cat-file -t` 仍返回 `commit`，短期内可直接 `git stash apply <sha>` 找回。
+这里按 SHA 称呼这两条而不是按 `@` 花括号简写，有两个理由：一、drop 之后旧索引已经不再指向任何东西，
+写索引号是一句现在读不出来的话；二、git 的 at-花括号 revision 简写不加引号会被 PowerShell 解析成哈希表字面量，
+本仓 hazard 扫描器把它当命令性文本拦（这条段落在 2026-10-20 的全批里被扫出 7 处并因此改掉）。
 结果：`git stash list` 为 0 条，工作树 0 处改动，本地与 `origin/docs/handoff-20261018-qoder`
 同为 `bc304642`。
 
@@ -966,3 +970,31 @@ CI 把这套门全跑，本地挑着跑，差值就是这 4 枚红。`services/o
 把它们混在一条门上，门就只能命令人去改历史。
 
 
+
+## 18. 上游红修好之后，下游那枚旧红才第一次露脸（2026-10-20，head `6f70e164`）
+
+`6f70e164` 的 exact-SHA 判决：`integration`、`token-monitor`、`supply-chain-security` 全部 success，
+`workflow-assistance` 仍然 failure。这一次红**不是任何一条测试成员**——作业上传的
+`ci-summary-workflow-assistance` 与 `gate-stages` 两份回执里 `failing_members=0`，
+而 `gate-stages` 的 `failed_gate` 写的是 `security`，判定身份是 PR #178 的合并提交
+`75a2193dc69d9abc55430eaaf06939585ead12df`（tree `c64afb0bc957a378221a5ab5211c07556acfbca3`）。
+本轮用来读红名单的那个脚本只匹配 `FAIL:` / `ERROR:` 两种行，对这种"非测试组失败"完全无感：
+**读不到成员不等于没有失败**，必须去读 `failed_gate` 那一个字段，这也是它自己报 exit=1 的地方。
+
+`security` 组在本机 0.8 秒复现，报出 7 处 git 的 at-花括号 revision 简写未加引号（PowerShell 会把它解析成
+哈希表字面量），全部在 §13 那段"两条本地 stash 的判据与退役"里——那是 2026-10-20 早上写下的文本。
+前面三次推送都没报它，原因还是 §17 第 0 条那个机制：**CI 第 5 步是一条 shell 链，停在第一枚红**，
+`governance` 一直先红，`security` 从未执行。我把上游修绿，它就把自己的旧红抬给我看。
+这和 ERR-261/263/264 记的是同一件事的第三个面：链式步骤的"绿"只代表"前面的都绿"。
+
+处理不是加引号糊过去，而是把两条 stash 改按**它们各自的提交对象**称呼（`fbb97053…` / `9d393d9f…`）：
+drop 之后旧索引号已经不再指向任何东西，写索引号是一句现在读不出来的话，而 SHA 是那句原意现在的真说法。
+改写过程自己又踩了一次——解释"为什么要避免这个形状"的那半句里把字面量原样写了出来，被同一把门第二次拦下，
+第二次才改成纯文字描述。这条教训值得留：**否定某个写法的句子，本身也可能是那个写法**。
+
+随后把 CI 第 5 步链上的组**逐个**跑（每组单独要一份判决，不再靠链的传递）：
+`security` / `compile` / `runtime-convergence` / `skill-provenance` / `context-pack` /
+`client-neutral-manifest` / `core-schemas` / `capability-matrix` / `model-registry-integrity` /
+`adapter-conformance` / `protected-drives-consistency` / `external-libraries-index` / `policy-coverage` /
+`observer-readonly-boundary` / `evidence-tiering` 十五组全部 `QUALITY_GATE_PASS`，
+`governance` 与 `root-governance-suite` 也各自在同一棵树上重跑通过。
