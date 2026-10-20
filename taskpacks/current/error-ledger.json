@@ -9,22 +9,22 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 276,
+    "total": 278,
     "by_classification": {
-      "boundary_leak": 2,
-      "ci_configuration": 22,
-      "ci_tooling": 22,
-      "config_downgrade": 3,
-      "contract_drift": 86,
-      "dead_entry": 4,
       "entrypoint": 7,
-      "evidence_state": 54,
-      "feature_gap": 13,
-      "path_boundary": 15,
-      "regression_contract": 8,
-      "sql_schema": 1,
+      "contract_drift": 87,
       "test_behavior_alignment": 37,
-      "working_directory_recovery": 2
+      "working_directory_recovery": 2,
+      "evidence_state": 55,
+      "ci_configuration": 22,
+      "feature_gap": 13,
+      "config_downgrade": 3,
+      "dead_entry": 4,
+      "path_boundary": 15,
+      "ci_tooling": 22,
+      "sql_schema": 1,
+      "regression_contract": 8,
+      "boundary_leak": 2
     },
     "repeat_prevention_required": true,
     "wl3_master2_batch": "2026-08-11: ERR-024..ERR-036; 2026-08-12: ERR-037..ERR-048 (workspace discovery, dashboard drift, tauri toolchain, CI freshness, skill absorption, Open Design network sandbox, supply-chain scan wording); 2026-08-14: ERR-050..ERR-051 (guard space-path truncation + ellipsis false positive, tracked two-way regression gap); 2026-08-14: ERR-052 (WLGM-230 canary: remote_identities sync gap); ERR-053..ERR-054 (v3 project/execution state conflation, WAL backup without checkpoint); 2026-08-15: ERR-061..ERR-064 (initial snapshot recovery, real SSE backoff, concurrent SSE connection truth, transport freshness evidence); ERR-065..ERR-069 (supervised producer lifecycle, collector health coverage, freshness projection, idempotent polling, post-merge documentation truth); ERR-070..ERR-071 (Observer offline truth, non-self-referential delivery documentation); ERR-072..ERR-073 (Windows stale sidecar PID liveness, retired dashboard fail-closed contract); ERR-074..ERR-077 (stable usage identity, complete collector coverage and shutdown fencing, awaited async tests, canonical v3-only fail-closed frontend); ERR-078 (supply-chain security job omitted from the only required aggregate check); ERR-079..ERR-083 (SSE cursor convergence, frontend epoch-fenced refresh, fresh collector/watcher evidence, aggregate plan trust boundary, standalone test imports); 2026-09-24: ERR-088 (DSH data-root session-freeze regression, ERR-087 sibling layer); 2026-09-30: ERR-093 (asset-inventory boundary spill), ERR-094 (audit-package digest basis: CRLF vs repository bytes), ERR-095 (codex global overlay/skill targets absent in live CODEX_HOME while the registry claims READBACK_VERIFIED), ERR-096 (Hermes managed skill live drift + stale skill-provenance records); ERR-092 is reserved by the unmerged branch g15-dsh-codex-registry-reconcile-20260930) 2026-10-06: ERR-101 (U19 GDI capture rectangle exceeded the measured client area by 25% and photographed the desktop, forging 375-722 colours on a blank window); ERR-102 (release binary paints only #08090a while the identical dist renders fully in Chrome: 3387 colours, 0.00% near-black, versus 41 colours, 100% near-black; root cause still open)."
@@ -8365,6 +8365,77 @@
         "ERR-088 (same layer as the DSH half of this round, opposite direction)",
         "ERR-087 (sibling layer: .lnk Target/Icon reset by NSIS silent installs)"
       ]
+    },
+    {
+      "error_id": "ERR-278",
+      "date": "2026-10-20",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "contract_drift",
+      "entrypoint": "config/adapter-registry.json declared client baselines vs the launch-free version readback in scripts/audit/tool_version_metadata_probe.py",
+      "command": "python scripts/audit/tool_version_metadata_probe.py --registry-lookup (every row launched=false); python -m unittest discover -s tests/workflow-assistance -p test_adapter_version_readback.py",
+      "exit_code": 1,
+      "observed_error": "Re-reading the managed desktop clients without launching any of them showed the registry describing a machine that no longer exists. DeepSeek Harness was declared 0.2.0-rc.2 while the uninstall entry and the installed executable's own version resource both read 0.2.1-rc.2, which the vendor feed has published since 2026-10-17. Hermes was declared 0.21.5+6948.gedd2476 while its install stamp, rewritten by the updater on 2026-10-13, reads 0.21.7+472.gcba45e8 - the third occurrence of this same drift, after ERR-158 and ERR-159. CC Switch was declared 3.20.0 against an installed 4.0.15. OpenHuman was declared 0.63.12 with no uninstall entry left and no top-level executable, so the probe returned no version at all rather than a wrong one. The guard that was supposed to keep the DeepSeek Harness pin honest demanded only that the observation not be older than the receipt, so the cheapest way to stay green was to keep quoting the stale receipt instead of re-reading the machine.",
+      "root_cause": "Declared baselines were written as durable facts and never re-read, while the guard was keyed on the age of the observation instead of the shape of its source. A date ceiling rewards an old reading and cannot tell 'this value came from a file the machine still has' apart from 'this value came from a receipt nobody refreshed'. The smaller, second cause: a client can genuinely disappear, and a vocabulary with no state for 'cannot be read' turns an absence into a data error and invites someone to edit the claim until the gate stops firing.",
+      "fix": "Re-pinned the three live values from the launch-free readback and moved each superseded value into version_historical plus superseded_observation instead of deleting it. CC Switch keeps status legacy_observe because observing what is installed is not a grant of active status. OpenHuman keeps its last verified value but is marked reproducible=false with not_reproducible_since=2026-10-20 and not_reproducible_verdict set to the verdict the probe actually returned, NOT_RESOLVED_AND_NOT_IN_UNINSTALL_REGISTRY. Both DeepSeek Harness pins in AGENTS.md were synced to 0.2.1-rc.2. The date rule was replaced in the readback gate by a source-shape rule - the source must be re-readable without launching anything and the registry must quote verbatim what the probe read - plus four planted falsifiers: a launch-based method, an identifier the probe never read, a removed superseded record, and a receipt that admits it launched something. A stale evidence sentence was also corrected: the 2026-10-13 note claimed the feed's size and sha512 equalled the installed build, which confused an NSIS installer (289,385,456 bytes) with the installed binary (246,343,144 bytes); the new record claims only that the installed executable's own resource and the uninstall key agree on the version the vendor currently publishes.",
+      "regression_test": "tests/workflow-assistance/test_adapter_version_readback.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tracked file carries the gate",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "任何写进 config/adapter-registry.json 的版本声明都必须指向一个免启动可复读的来源，注册表的值必须逐字等于探针当次读到的值；回执的日期不是资格的证明，来源的形状才是。客户端读不到时必须写成具名不可复读状态，绝不允许靠改动声明让门停止报红。",
+      "remaining_boundary": "config/client-evidence.json still carries the 2026-10-13 verbatim DeepSeek Harness observation as a dated snapshot and is read by no script or gate, so the declaration authority stays config/adapter-registry.json with the probe receipt behind it. verifiedCommit is unset until the exact-SHA CI readback at the re-pin commit, and OpenHuman's presence can only be re-established by a real install, never by editing this row.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "2026-10-20 owner 指令「全部授权 实现真正闭环」后的免启动重读扫掠",
+      "related": [
+        "ERR-158 / ERR-159 (the first two occurrences of the same Hermes updater drift)",
+        "ERR-277 (the Hermes build this round re-read from its install stamp)",
+        "ERR-276 (the DeepSeek Harness layer whose declared version went stale twice)"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "a9110584270842430e2818527a57c179bf1510c8",
+        "verifiedCommit": null,
+        "affectedCapability": "Declared client baselines + five-dimension runtime baseline D3 (official standard plus declared overlay, never a fabricated current value)",
+        "regressionCommand": "python scripts/audit/tool_version_metadata_probe.py --registry-lookup then the readback gate; every row must stay launched=false",
+        "currentApplicability": "VERIFIED_LIVE_20261020",
+        "fixedCommitBasis": "the commit that re-pinned the four declarations, marked OpenHuman unreadable, synced AGENTS.md and landed the 12-case readback gate"
+      }
+    },
+    {
+      "error_id": "ERR-279",
+      "date": "2026-10-20",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "EVIDENCE_CLOSEOUT",
+      "classification": "evidence_state",
+      "entrypoint": "taskpacks/current/error-ledger.json lifecycle.fixedCommit read by scripts/ci/verify_error_ledger.py",
+      "command": "python scripts/ci/verify_error_ledger.py",
+      "exit_code": 1,
+      "observed_error": "The commit that recorded the ERR-276/ERR-277 binding wrote fixedCommit as the eight-character form 13ed879b, copied from a git log line. The aggregate verifier requires introducedCommit, fixedCommit and verifiedCommit to be a full 40-hexadecimal commit or null, so it answered ERROR_LEDGER_FAIL ERR-276 fixedCommit must be a full 40-hex commit - the row written to record a binding had become the defect, and the push would have been judged red at .github/workflows/work-lab-gate.yml:485.",
+      "root_cause": "The value was transcribed from human-readable log output instead of being produced by the command that owns commit identity. The single-purpose binding gate that was re-run before committing resolves abbreviations itself, so it stayed green over exactly the field the wire-format gate refuses: re-running one guard for a field is not re-running the guards that read that field.",
+      "fix": "Extended both rows to the 40-character form generated by git rev-parse and asserted on write, then re-proved the binding with git cat-file -e against that tree and re-published the four index-derived receipts (LEDGER_FIX_COMMIT_BINDING, LEDGER_REGRESSION_COMMAND_TARGETS, PROJECT_LOCAL_CITATION_AUDIT, TOOL_INVENTORY) in the same commit.",
+      "regression_test": "scripts/ci/verify_error_ledger.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "tracked file carries the verifier",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "写进受保护记录的每一个提交号都必须由 git rev-parse 这类持有该身份的源命令生成，并当场断言长度与字符集，禁止从日志行手抄；改动一个字段就必须跑所有读该字段的门，尤其是聚合门，它通常比单项绑定检查更严格。",
+      "remaining_boundary": "The binding gate still accepts abbreviated commits because it resolves them, so the two guards do not yet agree on shape; tightening it to demand the wire format is a separate decision and is not taken here, because that gate's contract is identity rather than formatting.",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "2026-10-20 本地重跑聚合账本门（在去读云端判决之前）",
+      "related": [
+        "ERR-276 / ERR-277 (the rows written in the wrong shape)",
+        "ERR-278 (the same round's declaration drift)"
+      ],
+      "lifecycle": {
+        "introducedCommit": "a9110584270842430e2818527a57c179bf1510c8",
+        "fixedCommit": "503c6b43b331ab95fbc3bb628758994e04688f98",
+        "verifiedCommit": null,
+        "affectedCapability": "Error-ledger machine contract (scripts/ci/verify_error_ledger.py) and every CI job that runs it",
+        "regressionCommand": "python scripts/ci/verify_error_ledger.py -> ERROR_LEDGER_PASS entries=278",
+        "currentApplicability": "VERIFIED_LIVE_20261020",
+        "fixedCommitBasis": "the commit that extended both rows and re-published the derived receipts; its tree carries scripts/ci/verify_error_ledger.py"
+      }
     }
   ],
   "wlrReconciled": true,

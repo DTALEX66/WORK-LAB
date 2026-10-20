@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-20T16:46:28Z",
+  "generatedAt": "2026-10-20T16:57:48Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -9,7 +9,7 @@
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
     "trackedTools": 79,
-    "withLedgerPromise": 19,
+    "withLedgerPromise": 20,
     "referencedSomewhere": 79,
     "unclaimed": 0
   },
@@ -925,15 +925,15 @@
       "bytes": 11583,
       "lines": 235,
       "digestBasis": "git-index",
-      "citedByLedgerPromises": 0,
-      "citedByRecords": 8,
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 9,
       "citedBy": [
         "config/adapter-registry.json",
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json",
         "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "taskpacks/current/error-ledger.json"
+        "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json"
       ]
     },
     {

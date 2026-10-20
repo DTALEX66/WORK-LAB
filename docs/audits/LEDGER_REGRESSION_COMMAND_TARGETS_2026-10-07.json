@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-20T16:44:03Z",
+  "at": "2026-10-20T16:55:23Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 157,
+    "RESOLVES": 159,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
     "PATH_GONE": 38,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 190,
+    "RESOLVES": 192,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "PATH_GONE": 38,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 190,
-  "records": 276,
-  "stateDigest": "4dc25201a9bb45142f0009d9e11258c7538983279e38b399fb70d48e26114353",
+  "resolvedAfterApply": 192,
+  "records": 278,
+  "stateDigest": "8f853036b20b2387906a6a887a403d874fa563df1eaa73c90210a2d7a00a9b6a",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -5291,6 +5291,40 @@
       ],
       "state": "PATH_GONE",
       "reason": "no tracked file carries this basename"
+    },
+    {
+      "errorId": "ERR-278",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/workflow-assistance/test_adapter_version_readback.py",
+      "operands": [
+        {
+          "operand": "tests/workflow-assistance/test_adapter_version_readback.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/workflow-assistance/test_adapter_version_readback.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-279",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "scripts/ci/verify_error_ledger.py",
+      "operands": [
+        {
+          "operand": "scripts/ci/verify_error_ledger.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "scripts/ci/verify_error_ledger.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
     }
   ],
   "notClaimed": [
@@ -5300,5 +5334,5 @@
     "OUT_OF_REPO_TARGET claims are re-checkable only on the machine holding the live client home, which is why they are labelled instead of counted as resolved",
     "no record's status_after was changed by this tool"
   ],
-  "whyItMatters": "the ledger carries 240 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
+  "whyItMatters": "the ledger carries 242 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
 }
