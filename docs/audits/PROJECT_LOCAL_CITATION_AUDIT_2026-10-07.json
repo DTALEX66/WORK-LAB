@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-20T19:05:30Z",
+  "generatedAt": "2026-10-20T20:03:43Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2555,
@@ -8452,7 +8452,7 @@
       {
         "path": ".project-local/runs",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 336,
+        "line": 340,
         "text": "# fabricated PASS. Evidence lands in .project-local/runs/."
       },
       {
@@ -8752,25 +8752,25 @@
       {
         "path": ".project-local/runs/ci/desktop_capability.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 354,
+        "line": 358,
         "text": "run: python scripts/audit/desktop_capability_probe.py --json-out .project-local/runs/ci/desktop_capability.json"
       },
       {
         "path": ".project-local/runs/ci/desktop_capability.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 395,
+        "line": 399,
         "text": ".project-local/runs/ci/desktop_capability.json"
       },
       {
         "path": ".project-local/runs/ci/gate-stages.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 221,
+        "line": 225,
         "text": ".project-local/runs/ci/gate-stages.json"
       },
       {
         "path": ".project-local/runs/ci/gate-stages.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 393,
+        "line": 397,
         "text": ".project-local/runs/ci/gate-stages.json"
       },
       {
@@ -8782,13 +8782,13 @@
       {
         "path": ".project-local/runs/ci/geometry_gate.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 365,
+        "line": 369,
         "text": "run: python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json"
       },
       {
         "path": ".project-local/runs/ci/geometry_gate.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 394,
+        "line": 398,
         "text": ".project-local/runs/ci/geometry_gate.json"
       },
       {
@@ -10424,13 +10424,13 @@
       {
         "path": ".project-local/runs/ci/ci-summary-",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 220,
+        "line": 224,
         "text": ".project-local/runs/ci/ci-summary-*.json"
       },
       {
         "path": ".project-local/runs/ci/ci-summary-",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 392,
+        "line": 396,
         "text": ".project-local/runs/ci/ci-summary-*.json"
       },
       {

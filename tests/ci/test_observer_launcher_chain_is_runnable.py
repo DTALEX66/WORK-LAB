@@ -37,6 +37,34 @@ class LauncherShapeTests(unittest.TestCase):
         raw = LAUNCHER.read_bytes()
         lone = raw.count(b"\n") - raw.count(b"\r\n")
         self.assertEqual(0, lone, "a lone-LF line in a .cmd can silently skip its body")
+        # The bytes alone are a host property: an unattributed text file is stored LF and a Linux checkout
+        # hands back LF, which is how this assertion passed on every Windows worktree and failed on the
+        # 2026-10-20 exact-SHA run. The durable claim is the declared materialization, so assert it too.
+        attr = subprocess.run(["git", "check-attr", "text", "eol", "--",
+                               LAUNCHER.relative_to(ROOT).as_posix()],
+                              cwd=ROOT, capture_output=True, text=True, encoding="utf-8",
+                              errors="replace")
+        self.assertIn("eol: crlf", attr.stdout, attr.stdout + attr.stderr)
+
+    def test_every_tracked_batch_launcher_is_declared_crlf(self) -> None:
+        """One file was not the defect; the family was. Enumerate it from the index, not from memory.
+
+        `packages/client-neutral-core/bin/*.cmd` are the declared launchers behind the five-dimension
+        runtime baseline (one entry per software, reachable from the desktop shortcut). A lone-LF batch
+        there no-ops silently on double-click, the same failure already recorded for `.bat` files.
+        """
+        listed = subprocess.run(["git", "ls-files", "-z", "--", "*.cmd", "*.bat"],
+                                cwd=ROOT, capture_output=True, check=True)
+        batch = [p.decode("utf-8") for p in listed.stdout.split(b"\0") if p]
+        self.assertGreaterEqual(len(batch), 2, f"only {len(batch)} batch launchers tracked: {batch}")
+        for rel in batch:
+            raw = (ROOT / rel).read_bytes()
+            self.assertEqual(0, raw.count(b"\n") - raw.count(b"\r\n"),
+                             f"{rel} carries lone-LF lines")
+            attr = subprocess.run(["git", "check-attr", "eol", "--", rel],
+                                  cwd=ROOT, capture_output=True, text=True,
+                                  encoding="utf-8", errors="replace")
+            self.assertIn("eol: crlf", attr.stdout, f"{rel} is not declared CRLF: {attr.stdout}")
 
     def test_every_observer_path_the_launcher_names_exists_on_disk(self) -> None:
         """The original defect: the launcher opened a file that does not exist.

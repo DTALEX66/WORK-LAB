@@ -114,6 +114,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          # The consolidation archive that proves the 2026-10-19 deletions is LFS-routed by policy. Without
+          # its bytes the gate reads a 135-byte pointer, so the job that runs the root suite must fetch large
+          # files; the refusal is now named in the test, but a named red that could have run is still a red.
+          lfs: true
       - name: Install workflow validator dependencies
         run: python -m pip install --disable-pip-version-check --no-input --require-hashes -r packages/client-neutral-core/requirements.lock
       - name: Fast projection and contract-shape preflight

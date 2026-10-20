@@ -44,6 +44,27 @@ def _runtime_root() -> Path:
     return path
 
 
+LFS_POINTER = b"version https://git-lfs.github.com/spec/v1"
+
+
+def open_archive(path: Path) -> zipfile.ZipFile:
+    """Name a missing LFS object instead of letting `zipfile` invent a verdict for it.
+
+    Measured on the 2026-10-20 exact-SHA run: the consolidation archive is LFS-routed by policy, and a
+    checkout without `lfs: true` leaves a 135-byte pointer where the ZIP should be. What CI reported was
+    two tracebacks and a hash mismatch - three findings, none of which said the one thing that was wrong.
+    A red you cannot act on gets re-run; a red that names its precondition gets fixed.
+    """
+    if not path.is_file():
+        raise AssertionError(f"ARCHIVE_MISSING {path.relative_to(ROOT).as_posix()}")
+    if path.read_bytes()[:len(LFS_POINTER)] == LFS_POINTER:
+        raise AssertionError(
+            f"LFS_NOT_FETCHED {path.relative_to(ROOT).as_posix()} is still an LFS pointer, so the "
+            "deletion evidence cannot be read from it; the checkout must fetch large files "
+            "(actions/checkout with lfs: true)")
+    return zipfile.ZipFile(path)
+
+
 class LiveTree(unittest.TestCase):
     def test_the_live_tree_is_clean_and_the_verdict_is_named(self) -> None:
         self.assertEqual(0, MODULE.main([]))
@@ -66,7 +87,7 @@ class LiveTree(unittest.TestCase):
         """The hash chain runs root -> archive path -> ZIP member, and every link is checked."""
         manifest = MODULE.load_manifest(MANIFEST)
         archive = ROOT / manifest["consolidation"]["archive"]
-        with zipfile.ZipFile(archive) as bundle:
+        with open_archive(archive) as bundle:
             for move in manifest["moves"]:
                 if "removedInto" in move:
                     with bundle.open(move["to"]) as handle:
@@ -96,7 +117,7 @@ class LiveTree(unittest.TestCase):
         self.assertEqual(block["archiveSha256"], hashlib.sha256(archive.read_bytes()).hexdigest())
         self.assertEqual(block["members"], len(record["members"]))
         tracked = set(MODULE.tracked_files(ROOT))
-        with zipfile.ZipFile(archive) as bundle:
+        with open_archive(archive) as bundle:
             self.assertEqual(sorted(bundle.namelist()),
                              sorted(entry["path"] for entry in record["members"]))
             for entry in record["members"]:
@@ -301,6 +322,32 @@ class ManifestShape(unittest.TestCase):
         manifest = MODULE.load_manifest(MANIFEST)
         for fragment in ("旧的过时的冗余的陈旧的", "全部归档到该去汇总的地方", "防止再次索引路径到旧资料上"):
             self.assertIn(fragment, manifest["directive"], fragment)
+
+
+class ArchivePreconditionIsNamed(unittest.TestCase):
+    def test_an_unfetched_lfs_object_is_named_instead_of_crashing_the_zip_reader(self) -> None:
+        """Planted pointer bytes: the guard must fire with its own name, never as a BadZipFile.
+
+        Measured on the 2026-10-20 exact-SHA run, where one missing precondition surfaced as three separate
+        findings -- two tracebacks and a hash mismatch -- and the reader had to reconstruct the cause from
+        the wreckage instead of reading it.
+        """
+        fake = _runtime_root() / "lfs-pointer-probe.zip"
+        fake.write_bytes(b"version https://git-lfs.github.com/spec/v1\noid sha256:"
+                         + b"0" * 64 + b"\nsize 268142\n")
+        try:
+            with self.assertRaises(AssertionError) as caught:
+                open_archive(fake)
+            self.assertIn("LFS_NOT_FETCHED", str(caught.exception), str(caught.exception))
+        finally:
+            fake.unlink()
+
+    def test_a_missing_archive_is_reported_as_missing(self) -> None:
+        fake = _runtime_root() / "archive-that-was-never-written.zip"
+        fake.unlink(missing_ok=True)
+        with self.assertRaises(AssertionError) as caught:
+            open_archive(fake)
+        self.assertIn("ARCHIVE_MISSING", str(caught.exception), str(caught.exception))
 
 
 if __name__ == "__main__":

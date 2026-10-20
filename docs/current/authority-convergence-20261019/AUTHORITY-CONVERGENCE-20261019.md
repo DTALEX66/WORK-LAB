@@ -998,3 +998,39 @@ drop 之后旧索引号已经不再指向任何东西，写索引号是一句现
 `adapter-conformance` / `protected-drives-consistency` / `external-libraries-index` / `policy-coverage` /
 `observer-readonly-boundary` / `evidence-tiering` 十五组全部 `QUALITY_GATE_PASS`，
 `governance` 与 `root-governance-suite` 也各自在同一棵树上重跑通过。
+
+## 19. 两条门在作者的机器上为真、在干净检出上为假（2026-10-21，head `a012d073`）
+
+`a012d073` 的判决：`observer` / `integration` / `token-monitor` / `supply-chain-security` 全部 success，
+`workflow-assistance` 仍红，红的位置从 `gate-stages` 的 `failed_gate` 读出来是
+**`root-governance-suite`** ——也就是 §18 那条链再往下挪了一格才第一次执行到的组。
+明细这次是完整的（ERR-281 修好打印之后第一次能一次读全）：`modules_ran=55 modules_failed=2`。
+
+两枚红都不是逻辑错，而是**断言写在了作者的宿主上**：
+
+- `tests/ci/test_observer_launcher_chain_is_runnable.py`：`AssertionError: 0 != 60 —— a lone-LF line in a
+  .cmd can silently skip its body`。`apps/observer/start-observer.cmd` 在仓库里存的是 **LF**（blob 60 个
+  `\n`、0 个 `\r\n`），Windows 工作树里我看到的 60 个 CRLF 是 `core.autocrlf` 替我转换的结果；
+  `*.cmd` 没有 `.gitattributes` 条目，于是干净检出（Linux runner）拿到就是 LF —— 一键启动脚本在那台机器上
+  是真的会被 `cmd.exe` 跳掉正文的。这不是"测试太严"，是**被观察的产物本来就是坏的**，只是作者的宿主替它遮了一层。
+- `tests/ci/test_stale_surface_paths_are_gone.py`：1 failure + 2 errors，读的是
+  `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`。该文件按策略路由给 LFS
+  （`*.zip filter=lfs`），而 workflow 的 `actions/checkout` 没有 `lfs: true`，所以作业盘上那 135 字节是
+  **指针文本而不是 ZIP**：`zipfile` 抛两次异常，另外一处把成员哈希对不上。一件前置条件缺失，报成三件事。
+
+修的是宿主无关性，不是断言强度：`.gitattributes` 加 `*.cmd text eol=crlf` 与 `*.bat text eol=crlf`
+（改后 `git ls-files --eol` 对三个受跟踪的批处理入口都读出 `i/lf w/crlf attr=text eol=crlf`），
+跑 root suite 那个作业的 checkout 加 `lfs: true`；两个 ZipFile 直开换成 `open_archive()`，
+前置条件缺失时按名字报 `LFS_NOT_FETCHED` / `ARCHIVE_MISSING`。同时把"一个文件"扩成"一族"：
+新增的用例从 git index 枚举全部 `*.cmd` / `*.bat`，逐条要求工作树没有孤立 LF **且**声明了 `eol=crlf` ——
+后者是关键，因为字节是宿主的函数，属性才是树的函数。两个模块从 7 例、19 例变成 **8 例、21 例全绿**，
+另外补了两条植入反例（假指针文件、不存在的归档），证明新守卫会自己开火。
+CI 侧的 CRLF 与 LFS 取回只能由下一次 exact-SHA 判决证实，这条留在 ERR-283 的 `remaining_boundary` 里。
+
+最后把 CI 第 5 步那个 shell 块**拆成 46 条命令逐条要判决**（脚本读 workflow 的 YAML，把 `python ...` 行
+全部单独跑一遍；第一次跑 46 条全红，因为我把带空格的解释器路径插进了 shell 字符串 —— 修成 argv 之后才是真数据）：
+`red=3`，三条同因 —— 我改了跟踪字节而没重发 `.project/governance/generated/CURRENT_STATE.json`，
+于是 `test_current_state_projection_is_fresh`、`--check-current` 以及引用它的
+`tests/ci/test_ci_invoked_verifiers_have_a_local_route.py` 一起报 `source-digest-mismatch`。
+这正是 §16/§17 写过两遍的那件事的第三次显形：**改了字节就要重发所有读它的记录**，
+这次轮到界面投影自己。重发后三条一起转绿。
