@@ -678,3 +678,45 @@ CI 实测变化：红名单从四项基线缩到**三项**——`test_regenerati
 `version_readback`（受保护文件，且这是"声明基线跟不跟机器走"的 owner 决定）。所以这里只把两个字符串、
 复读命令和"CI 结构上看不到它"写清楚：复读 = `python scripts/audit/tool_version_metadata_probe.py`
 （免启动，读版本资源与安装戳），比对点 = 上述门文件的 `displayVersion` 断言。
+
+### DSH 的红是**真漂移**：我准备放宽门之前先量了一次，结果推翻了自己的判断（2026-10-20）
+
+看到 `test_deepseek_harness_keeps_its_older_dated_readback` 要求 `observed_at <= 2026-10-07`
+而注册表写 `2026-10-13` 时，我的假设是"这条日期钉过时了"——因为该行的 method
+`windows-installer-registry-and-start-menu-shortcut-readback` 是免启动可复读的，而同一个门正是用这条理由
+豁免了 Hermes。**动手改门之前先问机器**，两次独立读法给出同一个答案：
+
+- 仓内仪器 `scripts/audit/tool_version_metadata_probe.py` 的函数：verdict
+  `LIVE_VERSION_FROM_FILE_METADATA`，`fileVersion = 0.2.1-rc.2`，`launched = False`；
+- 直接 PowerShell 读 HKCU 卸载键与 exe 版本资源：`DisplayName = DeepSeek Harness 0.2.1-rc.2`、
+  `DisplayVersion = 0.2.1-rc.2`、`FileVersion = 0.2.1-rc.2`、`ProductVersion = 0.2.1.0`，
+  安装根仍是 `C:\Users\ALEX\AppData\Local\Programs\DeepSeek Harness`。
+
+注册表与 `AGENTS.md` 钉的官方构建都是 **0.2.0-rc.2**，而本机已自升级到 **0.2.1-rc.2**。
+所以那枚红是仪器在报它该报的事，我的假设被证伪，**门一行没改**。这也说明日期钉在这里没有冤枉谁：
+被推后的日期背后是一次没有对齐声明的自升级。
+
+给 owner 的选择题因此变清楚了，两条都是可执行的一次改动：
+(1) 接受 0.2.1-rc.2 为新声明基线——改 `config/adapter-registry.json` 的 `provenance.version` 与
+`version_readback`（observed_at / verified_version / native_readback），并同步 `AGENTS.md` 里
+"official build `0.2.0-rc.2`"那句声明（不写行号，行号会腐烂）；或 (2) 退回 0.2.0-rc.2 重装，声明不动、把这次升级当作越界事件记 ERR。
+两条都碰受保护文件，我不自填。顺带一条读数事实供决策：该 exe **有**版本资源（不是 hermes 那种
+`FILE_EXISTS_WITHOUT_VERSION_RESOURCE`），所以无论选哪条，复读都不需要启动界面。
+
+### exact-SHA CI 证据（c3e4a6b3，run 39435328246）
+
+结论 `failure`；触发 `pull_request`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；
+红作业：aggregate / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+未发言步骤：（无）——一个作业可以在第一个步骤就红掉，
+把后面装着其余套件的步骤整体跳过，于是"基线红不见了"是读数缺席而不是问题消失。
+红作业里点名的失败测试共 2 个：2 个属于本轮之前就存在的基线
+（test_deepseek_harness_keeps_its_older_dated_readback、test_the_shipped_bindings_are_valid），本轮新增 0 个（零回归）。
+基线里本 run 没有发言的项：test_the_pinned_registry_is_the_one_the_commit_carries。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中 5 件已随各自的修复退役
+（账本派生四件随派生审计重发消失，引用审计幂等一件随 2026-10-20 的裁决消失并在 CI 里确认转绿），
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树有 1 处未提交改动。这一 head 含 executor 探针的 `--no-launch` 与重钉后的回执、Hermes 漂移记录、2bbb8b99 判决块。
+
+判决：红名单从三项缩到**两项**——`test_the_pinned_registry_is_the_one_the_commit_carries` 在云端消失，即 registry pin 那枚红被真测量修掉（没有启动任何 GUI）。剩下两项是 DSH 日期合同（本轮已证明是真漂移：本机 0.2.1-rc.2 对声明 0.2.0-rc.2）与 ERR-276/277 落笔。新增红 0，`observer` success，无未发言作业或未发言步骤。
