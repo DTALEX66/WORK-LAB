@@ -765,3 +765,34 @@ runner 上到底是哪种形状，下一次跑会直接把 `shape=` 写在明细
 首次 31 ms、中位 15 ms、165,108 B、200 行把手俱在——**生产者不是瓶颈**，那 3.26 秒几乎全在页面一侧
 （加载 + 挂载 + 应用自己的首帧节奏）。所以指标的正确写法是"把手区块可见中位 3.26 s，其中快照获取
 ≤31 ms"，具体扣在页面哪一步还没归因，这一条留给下一轮，不写成结论。
+
+### 三项待批决定的准备状态（2026-10-20，全部"只备不做"）
+
+工具 `.project-local/runs/standalone-20261019/prepare_owner_patches.py` 把该量的都重量了一遍，
+并在结尾断言三个受保护权威文件的 sha256 **一字未变**（输出
+`TRACKED_AUTHORITY_FILES_MODIFIED: none`）。产物在
+`.project-local/artifacts/owner-decisions-20261020/`。
+
+1. **ERR-276 / ERR-277 的 `fixedCommit`——补丁已就绪并验证可干净套用。**
+   证据：两条记录 `status_after=PASS`、`date=2026-10-13`、`lifecycle.fixedCommit=null`；
+   出生提交 `13ed879b` 存在，且门要求的承诺脚本 `scripts/ci/verify_error_ledger.py`
+   确在该提交内（`git cat-file -e` 两项均 0）。
+   补丁 `01-err-276-277-fixed-commit.patch`（1,622 B）先把账表按 `json.dumps(indent=2)` 往返证明逐字节可复原，
+   才生成差异，因此它只加两个字段、不重排任何一行；`git apply --check` 通过（只检查，未落笔）。
+   一句 `git apply .project-local/artifacts/owner-decisions-20261020/01-err-276-277-fixed-commit.patch` 即可落地。
+2. **DSH 声明基线——数据已备，方向归你。** 免启动重读（`exe_under` + 版本资源）给出
+   `fileVersion=0.2.1-rc.2`、`verdict=LIVE_VERSION_FROM_FILE_METADATA`、`launched=false`，
+   而注册表声明 `0.2.0-rc.2`。选"跟机器"就改 `provenance.version` 与 `version_readback`
+   的 `observed_at/verified_version/native_readback`，并同步 `AGENTS.md` 里
+   "official build `0.2.0-rc.2`"那句；选"守声明"就重装 0.2.0-rc.2 并把这次自升级记成 ERR。
+   两条都会让门变绿，但说的是两件不同的事，所以我不替你选。
+3. **Hermes 声明基线——同上，且这次连累了一条 CI 看不见的断言。** 安装戳重读
+   `displayVersion=0.21.7+472.gcba45e8`（`baseVersion 0.21.7`、`distance 472`、
+   `commit cba45e8a…`；戳在仓库外，由 `install_stamp_for()` 按二进制路径解析，完整路径记在
+   `.project-local/artifacts/owner-decisions-20261020/02-03-version-rebaseline.evidence.txt`），
+   注册表与回执都是 `0.21.5+6948.gedd2476`。这是同类漂移的**再一次**：ERR-158/159 记录时那已经是
+   第二次（第一次由 AG-07 `a676e63` 从 0.21.2 纠正），现在是其后的第三次。
+   注意：这条在云端不可见（干净检出没有仓库外的戳，走具名 skip），所以它不会靠 CI 变绿来提醒你。
+
+选定 2 / 3 之后，我可以用同一个工具生成与第 1 项同等质量的补丁（往返验证 + `git apply --check`），
+仍然不自动落笔。
