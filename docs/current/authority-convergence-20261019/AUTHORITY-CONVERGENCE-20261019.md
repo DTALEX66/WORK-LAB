@@ -720,3 +720,48 @@ CI 实测变化：红名单从四项基线缩到**三项**——`test_regenerati
 本地=远端 True，工作树有 1 处未提交改动。这一 head 含 executor 探针的 `--no-launch` 与重钉后的回执、Hermes 漂移记录、2bbb8b99 判决块。
 
 判决：红名单从三项缩到**两项**——`test_the_pinned_registry_is_the_one_the_commit_carries` 在云端消失，即 registry pin 那枚红被真测量修掉（没有启动任何 GUI）。剩下两项是 DSH 日期合同（本轮已证明是真漂移：本机 0.2.1-rc.2 对声明 0.2.0-rc.2）与 ERR-276/277 落笔。新增红 0，`observer` success，无未发言作业或未发言步骤。
+
+### exact-SHA CI 证据（d30dc80f，run 39444153610）
+
+结论 `failure`；触发 `pull_request`；绿作业：gate-plan / integration / supply-chain-security / token-monitor；
+红作业：aggregate / observer / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+未发言步骤：observer/Post Cache Rust build output (observer) / observer/Post Cache Rust dependency sources (observer) / observer/Post Pin Python (locked dependency truth)——一个作业可以在第一个步骤就红掉，
+把后面装着其余套件的步骤整体跳过，于是"基线红不见了"是读数缺席而不是问题消失。
+红作业里点名的失败测试共 2 个：2 个属于本轮之前就存在的基线
+（test_deepseek_harness_keeps_its_older_dated_readback、test_the_shipped_bindings_are_valid），本轮新增 0 个（零回归）。
+基线里本 run 没有发言的项：test_the_pinned_registry_is_the_one_the_commit_carries。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中 5 件已随各自的修复退役
+（账本派生四件随派生审计重发消失，引用审计幂等一件随 2026-10-20 的裁决消失并在 CI 里确认转绿），
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树有 3 处未提交改动。这一 head 是纯文档（DSH 真漂移记录 + c3e4a6b3 判决块），但它的 `observer` 作业转红了——不是界面坏了，是几何门自己崩了：`verdict()` 在拼 PASS 明细时写 `measured['.top-actions'][0]`，而 runner 上那次采集返回的不是盒子列表，于是抛 `KeyError: 0`，整个作业带着"什么也没说"就下去了。修法与反例见下一节；本地同一条门 `GEOMETRY_GATE_PASS`。
+
+治理批的红名单仍是两项既有基线，本轮新增 0。
+
+### 门自己崩了比界面坏了更难发现：几何门的形状防御 + 把手可见延迟仪器（2026-10-20）
+
+`d30dc80f` 是纯文档提交，`observer` 作业却转红。不是界面坏了：`scripts/audit/topbar_geometry_via_cdp.py`
+在拼一条 PASS 明细时写 `measured['.top-actions'][0]`，而 runner 上那次采集回来的不是盒子列表，
+于是 `KeyError: 0` 把整个作业带下去，**回执里一个关于界面的字都没有**。同一函数里还有第二处同族脆弱点：
+`actions["display"]` 在一个元素没有 `display` 键时同样会抛。
+
+修法是把"读不懂"变成具名判红，而不是把门放宽：`_first()` 之后一律用 `.get()`；
+`.top-actions` 若不是列表，`action_row_inside_viewport` 直接判红并把 `shape=<类型> rows=<数量>` 写进明细，
+说明"采集回来的东西读不出盒子，门拒绝把读不懂当作通过"。反例进
+`tests/ci/test_topbar_geometry_gate.py`：字典形状必须判红且点名，空列表必须不崩且判绿，
+带 `gapToViewportRight: -40` 的列表必须判红——该模块 47 例 → **48 例全绿**，
+本地同一条门对已构建包重跑 `GEOMETRY_GATE_PASS`（回执
+`.project-local/runs/standalone-20261019/geometry-after-fix.json`）。
+runner 上到底是哪种形状，下一次跑会直接把 `shape=` 写在明细里，不用再猜。
+
+另起一支把度量蓝图里最后那条"should"欠账做掉了：新仪器
+`scripts/audit/handle_block_visibility_via_cdp.py` 用真实链路（`u19.start_sidecar()` 出真快照，
+不是桩）量"证据把手区块多久才可见"。实测 5 次全新加载：中位 **3,260 ms**、最差 3,294 ms、
+每次都渲染出 200 行（回执 `.project-local/artifacts/standalone-run-20261019/26-handle-latency.json`），
+采样粒度 20 ms 写进收据，因为不看仪器分辨率的阈值就是猜。
+
+这个数字第一版差点被我错标成"渲染慢"。拆开量了一次：同一个 sidecar 的 `/api/v1/snapshot`
+首次 31 ms、中位 15 ms、165,108 B、200 行把手俱在——**生产者不是瓶颈**，那 3.26 秒几乎全在页面一侧
+（加载 + 挂载 + 应用自己的首帧节奏）。所以指标的正确写法是"把手区块可见中位 3.26 s，其中快照获取
+≤31 ms"，具体扣在页面哪一步还没归因，这一条留给下一轮，不写成结论。

@@ -420,18 +420,25 @@ def verdict(measured: dict, view: str) -> dict:
         f"brand={brand and brand['width']}")
 
     actions = _first(measured, ".top-actions")
-    add("actions_visible", bool(actions) and actions["display"] != "none",
-        f"display={actions and actions['display']}")
+    add("actions_visible", bool(actions) and actions.get("display") != "none",
+        f"display={actions.get('display') if actions else None}")
 
     clipped = [e for e in (measured.get(".winctl-btn") or []) if isinstance(e, dict)
                and e.get("gapToViewportRight", 0) < -1]
     add("window_controls_reachable", bool(measured.get(".winctl-btn")) and not clipped,
         f"clipped={json.dumps(clipped, ensure_ascii=False)[:200]}")
 
-    clipped_actions = [e for e in (measured.get(".top-actions") or []) if isinstance(e, dict)
-                       and e.get("gapToViewportRight", 0) < -1]
-    add("action_row_inside_viewport", not clipped_actions,
-        f"gap={measured.get('.top-actions') and measured['.top-actions'][0].get('gapToViewportRight')}")
+    raw_actions = measured.get(".top-actions")
+    action_rows = [e for e in (raw_actions if isinstance(raw_actions, list) else [])
+                   if isinstance(e, dict)]
+    unexpected_actions = raw_actions is not None and not isinstance(raw_actions, list)
+    clipped_actions = [e for e in action_rows if e.get("gapToViewportRight", 0) < -1]
+    first_actions = _first(measured, ".top-actions")
+    add("action_row_inside_viewport", not clipped_actions and not unexpected_actions,
+        f"gap={first_actions and first_actions.get('gapToViewportRight')} "
+        f"shape={type(raw_actions).__name__} rows={len(action_rows)}"
+        + (" -- the harvest returned something that is not a list of boxes; the gate cannot read it and "
+           "refuses to call an unreadable shape a pass" if unexpected_actions else ""))
 
     fit = measured.get("__actionsFit") or {}
     if fit:

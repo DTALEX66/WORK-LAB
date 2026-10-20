@@ -162,6 +162,25 @@ class VerdictTests(unittest.TestCase):
         self.assertFalse([c for c in geometry.verdict(measured, "full")["checks"]
                           if c["check"] == "actions_visible"][0]["pass"])
 
+    def test_an_unreadable_action_row_shape_fails_instead_of_taking_the_job_down(self) -> None:
+        """Measured 2026-10-20 on the runner: the observer job died with `KeyError: 0` inside `verdict`,
+        because the PASS detail interpolated `measured['.top-actions'][0]` while the harvest had returned
+        something that is not a list of boxes. A gate that raises reports nothing about the surface it was
+        sent to measure, so an unreadable shape has to come back as a named failure."""
+        measured = good_measured("full")
+        measured[".top-actions"] = {"display": "flex"}
+        check = [c for c in geometry.verdict(measured, "full")["checks"]
+                 if c["check"] == "action_row_inside_viewport"][0]
+        self.assertFalse(check["pass"])
+        self.assertIn("not a list of boxes", check["detail"])
+        for shape in ([], [{"gapToViewportRight": -40}]):
+            measured = good_measured("full")
+            measured[".top-actions"] = shape
+            verdict = geometry.verdict(measured, "full")
+            row = [c for c in verdict["checks"] if c["check"] == "action_row_inside_viewport"][0]
+            self.assertEqual(bool(shape), not row["pass"],
+                             f"shape {shape!r} must {'fail' if shape else 'pass'} without raising")
+
     def test_a_stacked_topbar_fails_the_height_bound(self) -> None:
         # the measured phone-shape defect: four action buttons stacked one per row at 320px CSS.
         measured = good_measured("full")

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-20T13:56:06Z",
+  "generatedAt": "2026-10-20T15:25:10Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 78,
+    "trackedTools": 79,
     "withLedgerPromise": 19,
-    "referencedSomewhere": 78,
+    "referencedSomewhere": 79,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -425,6 +425,18 @@
       "citedBy": [
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/handle_block_visibility_via_cdp.py",
+      "sha256": "725103bc1ad988ab17bc4ee462a7ba266a3ce0699be3e5b3adad578a5359273d",
+      "bytes": 7179,
+      "lines": 151,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 1,
+      "citedBy": [
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md"
       ]
     },
     {
@@ -912,24 +924,24 @@
       "lines": 235,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 7,
+      "citedByRecords": 8,
       "citedBy": [
         "config/adapter-registry.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/audits/TOOL_VERSION_METADATA_PROBE_2026-10-07.json",
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
         "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "taskpacks/current/error-ledger.json",
-        "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md"
+        "taskpacks/current/error-ledger.json"
       ]
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "6b66deb96b45dcf34f593e9ee155d166f06036c89136ff31d3d6372d616ba50b",
-      "bytes": 43783,
-      "lines": 819,
+      "sha256": "aa3ed97a3bcc82acaeb97b0f746819c9ee3081fdbc40aef8f70271bb2649384e",
+      "bytes": 44305,
+      "lines": 826,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 22,
+      "citedByRecords": 23,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         ".workbuddy/memory/2026-10-13.md",
