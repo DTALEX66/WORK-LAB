@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-20T16:55:27Z",
+  "generatedAt": "2026-10-20T17:54:41Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2555,
-    "distinctProjectLocalTokens": 624,
+    "distinctProjectLocalTokens": 625,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 624,
-    "citationsToAbsentTokens": 1841
+    "tokensAbsent": 625,
+    "citationsToAbsentTokens": 1843
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -33,8 +33,8 @@
       "distinctPaths": 476
     },
     "machine_local_runtime_pointer": {
-      "citations": 225,
-      "distinctPaths": 113
+      "citations": 227,
+      "distinctPaths": 114
     },
     "negative_assertion_or_removal_record": {
       "citations": 187,
@@ -5396,13 +5396,13 @@
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
-        "line": 1436,
+        "line": 1434,
         "text": "\"operand\": \".project-local/runs/p0c-oracle-20261006/probe_oracle.py\","
       },
       {
         "path": ".project-local/runs/p0c-oracle-20261006/probe_oracle.py",
         "file": "docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json",
-        "line": 1437,
+        "line": 1435,
         "text": "\"command\": \"python .project-local/runs/p0c-oracle-20261006/probe_oracle.py must keep observing snapshot and events requests from the\","
       },
       {
@@ -8384,6 +8384,12 @@
         "text": "改法：只写目录 `.project-local/artifacts/temp-residue-reclaim/`，并明确\"不写具体文件名，因为名字带时刻后缀、写进正文既不可读也迟早过期\"。"
       },
       {
+        "path": ".project-local/artifacts/temp-residue-reclaim",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 903,
+        "text": "（`docs/audits` 之外，落在 `.project-local/artifacts/temp-residue-reclaim/` 的 manifest），再 `--apply` 释放："
+      },
+      {
         "path": ".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json",
         "file": ".project/governance/migration-status.json",
         "line": 28,
@@ -8988,6 +8994,12 @@
         "file": "apps/observer/frontend/src/views/EvidenceView.test.tsx",
         "line": 31,
         "text": "const HANDLE = 'D:/All projects/WORK-LAB/.project-local/runs/qoder-agent-ui/evidence.log'"
+      },
+      {
+        "path": ".project-local/runs/sidecar-launch-tests",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 929,
+        "text": "而本仓的机器合同要求一切产物留在 Git 根内，现在写 `.project-local/runs/sidecar-launch-tests/`。"
       },
       {
         "path": ".project-local/runs/skill-call-index.json",

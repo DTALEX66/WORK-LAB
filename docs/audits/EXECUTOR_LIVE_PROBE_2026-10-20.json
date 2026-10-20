@@ -1,9 +1,9 @@
 {
   "schemaVersion": "work-lab/executor-live-probe/v1",
-  "at": "2026-10-20T21:50:59+0800",
+  "at": "2026-10-21T01:08:12+0800",
   "tool": "scripts/audit/executor_live_probe.py",
   "readOnly": true,
-  "registrySha256": "4be802ef4cb3cc04c7daabbe7e78a5d9fa53a7aab94e19af9843672fc58e3d3d",
+  "registrySha256": "a4499aa068d3ba6adf2396cef462043246376470395a31f0fb57b3bd5cf0b525",
   "registryDigestBasis": "git-index",
   "counts": {
     "PROBE_SKIPPED_NO_LAUNCH": 5,
@@ -16,7 +16,7 @@
       "adapter": "hermes",
       "state": "PROBE_SKIPPED_NO_LAUNCH",
       "detail": "--no-launch: the declared executable is a GUI binary, and reading its version would have started it",
-      "claimedVersion": "0.21.5+6948.gedd2476"
+      "claimedVersion": "0.21.7+472.gcba45e8"
     },
     {
       "adapter": "codex",
@@ -42,7 +42,7 @@
       "adapter": "cc-switch",
       "state": "PROBE_SKIPPED_NO_LAUNCH",
       "detail": "--no-launch: the declared executable is a GUI binary, and reading its version would have started it",
-      "claimedVersion": "3.20.0"
+      "claimedVersion": "4.0.15"
     },
     {
       "adapter": "github",
@@ -77,7 +77,7 @@
       "adapter": "deepseek-harness",
       "state": "PROBE_SKIPPED_NO_LAUNCH",
       "detail": "--no-launch: the declared executable is a GUI binary, and reading its version would have started it",
-      "claimedVersion": "0.2.0-rc.2"
+      "claimedVersion": "0.2.1-rc.2"
     },
     {
       "adapter": "cursor",

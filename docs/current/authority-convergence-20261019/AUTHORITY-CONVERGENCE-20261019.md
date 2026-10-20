@@ -856,3 +856,101 @@ ERR-279 值得单独记，因为它不是"运气不好被抓"：**a9110584 已�
 （第一次断言就因为我漏了文件末尾那个换行而失败，没有把整份账本按生成器的形状重写），
 确认这是"只在数组尾部加两项 + 改 summary 计数"的最小改动，而不是格式化重写。
 `ERROR_LEDGER_PASS entries=278 classifications=14 counts_consistent=true`。
+
+## 16. 云端判决把同一课教了两遍：改过的字节，所有读它的回执都要重测（2026-10-20）
+
+三次推送的判决逐份对齐（红名单来自作业自己上传的 `ci-summary-*` 回执，不是猜的）：
+
+| head | workflow-assistance 红成员 | integration |
+| --- | --- | --- |
+| `5c54b5f6` | `test_deepseek_harness_keeps_its_older_dated_readback`、`test_the_shipped_bindings_are_valid`（共 2） | 红 |
+| `a9110584` | `test_registry_is_fail_closed_and_traceable`、`test_the_pinned_registry_is_the_one_the_commit_carries`、`test_the_unbound_count_is_the_ledger_own`、`test_records_with_a_gone_guard_are_named_not_absorbed`（共 4） | 红 |
+| `ea7fa3a0` | 同上 4 个成员，逐字一致 | **绿** |
+
+先说好消息：`5c54b5f6` 的两枚基线红被 `a9110584` 真的修掉了（日期钉换成来源形状规则、
+ERR-276/277 落了 `fixedCommit`），`integration` 作业在 `ea7fa3a0` 转绿——这两件都有回执可查。
+再说这一课的第二次：那 4 枚红**没有一枚是产品缺陷，全是"我改了字节却没重测读这些字节的回执"**，
+和 §15 那条 ERR-279 是同一件事，只是换了字段。逐条归因（每条都在本地先复现再修）：
+
+- `tests/workflow-assistance/test_adapter_registry.py`：`ADAPTER_REGISTRY_FAIL Additional properties
+  are not allowed ('reproducible', 'not_reproducible_since', 'not_reproducible_verdict' were
+  unexpected)`。这是四处里唯一一处**必须改合同**的：`ERR-278` 立的是"读不到要写成具名状态"，
+  而 `packages/contracts/schemas/workflow/adapter-registry.schema.json` 的 `version_readback`
+  是 `additionalProperties: false`——门要求的那个字段，合同不许存在。于是在 schema 里把三兄弟
+  按各自语义声明出来（`reproducible` 布尔、另两个是必须非空的字符串，描述里写清"这是
+  '数不对' 之外的第二种状态"）。改完 `CONTRACT_CATALOG_PASS contracts=45` 与
+  `CONTRACT_SSOT_PASS` 不受影响，说明这三个属性落在既有 contract 之内、没有新增影子合同。
+- `tests/workflow-assistance/test_executor_live_probe.py`：回执把 `registrySha256` 钉在改钉之前的
+  注册表上（`4be802ef…` 对不上树里的 `a4499aa0…`）。这条门当初就是为了"回执必须说得上是这份注册表"
+  而写的，这次它正确地拒绝了我自己的新声明：用 `--no-launch` 重跑 `scripts/audit/executor_live_probe.py`
+  重发 `docs/audits/EXECUTOR_LIVE_PROBE_2026-10-20.json`——GUI 客户端记成 `PROBE_SKIPPED_NO_LAUNCH`，
+  仍然没有拉起任何界面。
+- `tests/workflow-assistance/test_ledger_unbound_triage.py`（两枚）：ERR-276/277 拿到 `fixedCommit`
+  之后，"PASS 但没有绑定"的池子从 96 缩到 94，而 `docs/audits/LEDGER_UNBOUND_TRIAGE_2026-10-07.json`
+  还写着 96。重跑 `scripts/audit/triage_unbound_ledger_records.py` 后 `unboundPass 94`，
+  PATH_GONE 那一组也跟着对上。
+
+顺序教训不再是道德劝告，而是有名字的：**`tests/ci/test_shipped_projections_are_current.py`（11 例）覆盖的
+那几张回执我重测了，没覆盖的两张（执行器探针、未绑定分诊）就没测**，而它们各自都有一条门在读——
+CI 把这套门全跑，本地挑着跑，差值就是这 4 枚红。`services/orchestration/run_quality_gate.py governance`
+这一批是把 `tests/workflow-assistance` 下全部强制模块一次跑完的组，改到账本/注册表/schema 这类
+多消费者字节之后，该跑的是它而不是自选清单；本轮已在同一棵树跑过一次并把结果记在下面。
+
+在同一棵树上把 `governance` 这一批跑完：**`Ran 2742 tests`，只有 1 枚红**，而且是一枚只在本地存在的红——
+`tests/workflow-assistance/test_temp_fixture_residue_is_bounded.py` 的
+`test_no_orphaned_fixture_is_older_than_the_floor` 报出 62 个超过 6 小时地板仍未认领的临时 fixture 根
+（`a174`、`h175`、`nf23-install-*`、`nf24-tree-*`，1.7 MiB，`nested_git=0`）。先跑 dry-run 拿到清单
+（`docs/audits` 之外，落在 `.project-local/artifacts/temp-residue-reclaim/` 的 manifest），再 `--apply` 释放：
+`TEMP_RESIDUE_RECLAIM applied=1 dirs=62 freed_bytes=1775959 failures=0`，该模块随后 5 例全绿。
+另外必须记一句我自己的操作错误：第一次跑这批的时候我在它运行期间编辑了本文档，回执因此写的是
+`GATE_SOURCE_DRIFT=yes`——一次带漂移的 PASS/FAIL 都不能当作终审，清理完 residue 之后必须在不再改动的前提下重跑。
+
+## 17. 两条门要的东西互相矛盾，本轮把它量出来并选了一边（2026-10-20）
+
+`services/orchestration/run_quality_gate.py root-governance-suite` 在本地报出 **3 枚红**，而云端从没报过它们——
+原因正是 CI 第 5 步那条命令链停在第一枚红（`governance` 先跑、先红），后面的组根本不执行。
+第一次跑连"3 枚"都读不全：`scripts/ci/run_root_governance_suite.py` 在打印失败明细时自己死于
+`UnicodeEncodeError: 'gbk' codec can't encode character '\ufffd'`，`modules_failed=3` 后面只跟着一条明细。
+这和 `services/orchestration/run_quality_gate.py` 开头记的是同一个坑，修法也一样：父进程把 stdout/stderr
+重设为 UTF-8 且 `errors="replace"`（子进程输出里的替换字符是**解码结果**，必须保住；错的只是控制台编码）。
+判决打印不出来就不是判决。补完之后 3 条明细才第一次同时可见。
+
+三条各自的判据：
+
+1. **`tests/ci/test_sidecar_documented_launch.py`**：文档里那条 sidecar 启动命令其实跑通了
+   （`WORKFLOW_SIDECAR_READY`、`/api/v1/snapshot` 回 200），红在**拆除**：
+   `PermissionError: [WinError 32] ... canonical.sqlite`。仪器量了时序——子进程在 t=0 被收尸，
+   它的 `runtime/canonical.sqlite` 仍然锁到约 **250 ms** 之后才释放，于是立即删目录必输。
+   Linux 允许删除仍被打开的文件，所以云端永远看不见这一类红。
+   修法不是加一句 sleep：`release()` 有界重试（12 × 0.25 s），**预算用完仍然锁着就 raise**，
+   不 `ignore_errors`——静默留下的残骸在这里不可见，几天后由
+   `tests/workflow-assistance/test_temp_fixture_residue_is_bounded.py` 的地板门替我数。
+   同一处还顺手纠正一个边界违规：它把沙箱写在 `%TEMP%`（`C:\Users\ALEX\AppData\Local\Temp\tmp*`），
+   而本仓的机器合同要求一切产物留在 Git 根内，现在写 `.project-local/runs/sidecar-launch-tests/`。
+   两条反例把"有牙"证明出来：只失败一次的删除必须重试到成功（恰好 3 次），永远锁着必须 raise 并报出目录名。
+2. **`tests/ci/test_frozen_surfaces_are_intact.py` 与 `tests/ci/test_stale_surface_paths_are_gone.py`**
+   一起红，且是**同一处内容改动**造成的：`3ee7fed5` 把
+   `docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv` 里一个腐烂的行号指针
+   （`apps/observer/frontend/src/lib/evidenceRange.ts:132`→`:140`）就地重钉了。而这个归档被两份哈希记录
+   分别钉住（`docs/history/archive/FROZEN-MANIFEST.json`、`docs/history/archive/MOVED-PATHS-20261019.json`），
+   同时 `scripts/ci/repoint_source_pointers.py` 的**默认目标就是这份已冻结的文件**——
+   也就是说：一条门要求行号指针永远跟代码对齐，另一条门要求这些字节永远不许变。**两者不可能同时为真**，
+   只要源码往上加一行，指针门就会命令我去破冻结门。这正是
+   `docs/history/archive/MOVED-PATHS-20261019.json` 自己写的判据
+   （frozen history 的旧路径是那句话的历史宾语，"改它会让一条有日期的记录说不实的话，所以移出扫描种群"）
+   被违反的现场。
+   本轮选的边：**冻结优先**，把 CSV 字节按两份记录共同的 `a1f5eb3be534…`（44,208 B）复原，
+   复原前先 `git cat-file` 证明 `3ee7fed5^` 与 `c76f5e2e` 两个 blob 都等于该值、并把当前字节留成
+   可回滚副本。根因守卫加在工具里：被任一哈希记录钉住的路径一律
+   `REPOINT_FROZEN_REFUSED` 并退出 1——指针可以修，但不能用破冻结的方式修；默认种群改成
+   **由 git index 枚举的活文档面**（`docs/current/**`、`taskpacks/current/**`、`WORK-LAB-AUTHORITY.md`），
+   手写清单从此不再是输入来源。
+   今天这个活文档面里"带引号的代码引文"是 0 条（`REPOINT citations=0 landed=0 drift=0 narrative=67`），
+   所以一条对空种群的绿什么也没证明——新加的植入反例把牙找回来了：写一条行号错位但引文可定位的活引文，
+   检查模式必须 `DRIFT` 且退出 1。另两条反例断言默认种群不含 `docs/history/`、且那份 CSV 确实还在
+   冻结集合里。`tests/ci/test_source_pointers_are_current.py` 由 3 例变 **5 例全绿**，
+   两份冻结门随后也绿。
+3. 一处读数陷阱值得留字：这三条完整性门**不同源**——两条读暂存区 blob，一条读 `git show HEAD:path`。
+   于是"已 `git add` 但未提交"的复原会给出互相矛盾的判决（冻结门绿、移动记录门红）。
+   这不是缺陷，但只要按本地部分绿就宣布收口，就会把一个还没生效的状态当成已生效。
+

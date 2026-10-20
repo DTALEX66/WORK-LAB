@@ -7,20 +7,20 @@
   "whyItMatters": "a PASS record without fixedCommit claims an outcome with no pinned cause; this splits that debt into what a commit can actually answer for and what it cannot",
   "clearWindowDays": 3,
   "counts": {
-    "unboundPassRecords": 96,
+    "unboundPassRecords": 94,
     "byState": {
       "RESOLVES": 36,
       "NO_FILE_OPERAND_IN_COMMAND": 42,
-      "PATH_GONE": 17,
+      "PATH_GONE": 15,
       "OUT_OF_REPO_TARGET": 1
     },
     "clearCandidates": 0,
     "resolvesGuardUndatedRecord": 32,
     "resolvesGuardDistant": 4,
-    "noResolvableOperand": 60,
+    "noResolvableOperand": 58,
     "bindableByBirthCommit": 0,
     "inWindowButUncommittedRecord": 0,
-    "bornInAnImportCommit": 88
+    "bornInAnImportCommit": 86
   },
   "clearCandidates": [],
   "heldForUncommittedRecord": [],
@@ -111,9 +111,7 @@
     "ERR-091",
     "ERR-099",
     "ERR-104",
-    "ERR-111",
-    "ERR-276",
-    "ERR-277"
+    "ERR-111"
   ],
   "resolvesGuardUndatedRecord": [
     "ERR-001",
@@ -1506,32 +1504,6 @@
       "birthAddedRecords": 1,
       "birthTouchesNamedPath": [],
       "birthContainsPromisedScript": true
-    },
-    {
-      "errorId": "ERR-276",
-      "date": "2026-10-13",
-      "state": "PATH_GONE",
-      "operand": "scripts/ci/verify_error_ledger.py",
-      "command": "scripts/ci/verify_error_ledger.py must read back ERR-276; the live state it records: user-scope DSH_HOME absent; C:\\User",
-      "birthCommit": "13ed879b",
-      "birthSubject": "feat(hud)+fix(acp)+docs(authority): HUD 融合 + Hermes resume 假能力修复 + 权威收敛闭环（全部上传）",
-      "birthAddedRecords": 2,
-      "birthTouchesNamedPath": [
-        "config/client-evidence.json"
-      ],
-      "birthContainsPromisedScript": null
-    },
-    {
-      "errorId": "ERR-277",
-      "date": "2026-10-13",
-      "state": "PATH_GONE",
-      "operand": "scripts/ci/verify_error_ledger.py",
-      "command": "scripts/ci/verify_error_ledger.py must read back ERR-277; and a live readback must still show: %LOCALAPPDATA%/hermes/her",
-      "birthCommit": "13ed879b",
-      "birthSubject": "feat(hud)+fix(acp)+docs(authority): HUD 融合 + Hermes resume 假能力修复 + 权威收敛闭环（全部上传）",
-      "birthAddedRecords": 2,
-      "birthTouchesNamedPath": [],
-      "birthContainsPromisedScript": null
     }
   ]
 }
