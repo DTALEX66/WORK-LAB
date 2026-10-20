@@ -1034,3 +1034,47 @@ CI 侧的 CRLF 与 LFS 取回只能由下一次 exact-SHA 判决证实，这条�
 `tests/ci/test_ci_invoked_verifiers_have_a_local_route.py` 一起报 `source-digest-mismatch`。
 这正是 §16/§17 写过两遍的那件事的第三次显形：**改了字节就要重发所有读它的记录**，
 这次轮到界面投影自己。重发后三条一起转绿。
+
+## 20. 这一轮的红数落到 0：`9fbaf09a` 的 exact-SHA 判决（2026-10-21）
+
+`gh run view 39490182776`（event=pull_request，head `9fbaf09aae9ec8e942df8883bffdfcabe4cff04c`）：
+**七个作业全 success** —— `gate-plan`、`workflow-assistance`、`integration`、`observer`、`token-monitor`、
+`supply-chain-security`、`aggregate`。`gate-stages` 回执写 `exit=0`、`failed_gate=null`，
+判定身份是 PR #178 的合并提交 `bfdf2003245884d63df523121b34bc5468af1b91`，
+其 tree 为 `9125bffda55f0738785ba79b212c044ab4ca2a2d`，与 head 自己的 tree **逐字相同**
+（`gh api repos/.../commits/9fbaf09a` 读出同一个 tree），所以判的就是这棵树，不是别的合并结果。
+这一条等价关系必须写在记录里：只看"作业绿"不够，绿的可能是一个含别人改动的 merge tree。
+
+从 `5c54b5f6` 到这里的红数变化，逐份可对账（红名单来自各 head 自己上传的 `ci-summary-*` 与 `gate-stages`）：
+
+| head | 红在 | 成员数 / 组 |
+| --- | --- | --- |
+| `5c54b5f6` | workflow-assistance | 2 个测试成员（integration 在这一格还是绿的） |
+| `a9110584` | workflow-assistance + integration | 4 个测试成员（改字节未重发回执） |
+| `ea7fa3a0` | workflow-assistance | 同样 4 个成员；integration 转绿 |
+| `6f70e164` | workflow-assistance | `failing_members=0`，红在 `failed_gate=security`（散文里的 PowerShell 危害形状） |
+| `a012d073` | workflow-assistance | `failed_gate=root-governance-suite`，`modules_failed=2`（宿主相关断言 + 未取回的 LFS 对象） |
+| `9fbaf09a` | —— | **0** |
+
+值得留的是最后两格的**形状**：它们不再是某条测试失败，而是"整组失败但没有成员名"——
+读红名单的工具只认 `FAIL:` / `ERROR:` 两种行，对组级失败完全无感，必须去读 `gate-stages` 的
+`failed_gate`。把这条写进门的设计里，下一轮遇到同类红时不会又"读出一张空表"当作"读过了"。
+
+本轮还留了三条对"链式步骤"的实证（§17 ①、§18、§19 末段）：CI 第 5 步是一条会在第一枚红处停住的 shell 块，
+所以一个 head 的"绿"只说明它前面的都绿；我因此把那个块拆成 46 条命令逐条要判决，
+才在同一轮里把 `security`、`root-governance-suite`、CURRENT_STATE 陈旧这三件一次看全。
+
+本地配套读数要说清是哪棵树：`governance 全批 Ran 2742 tests 0 红`、`root-governance-suite 55 模块 PASS`
+是在 `9c285d71` 之前那一次（修完 host-shape 断言、写 §19 之前）量的；最后的 `9fbaf09a` 之后我只重跑了受改动
+直接读取的那些门（绑定 10、分诊 8、探针 15、投影当前性 11、清单覆盖 12、引用审计 12、
+`ERROR_LEDGER_PASS entries=282 classifications=14`、LIVE_DOC_PATHS 831 missing=0、
+DOC_CITATIONS rewritten=0 blocked=0）。**整链的全量批跑是在云端那一棵树上完成的**，
+`workflow-assistance` 绿即代表 CI 第 5 步那条链上我从 YAML 解析出的 46 条 python 命令在 `9fbaf09a` 的树上
+全部退出 0（那个块会在第一枚红处停住，所以走完 = 每条都返回 0）——
+这比本地再跑一遍同一条链更强，因为它跑的是判定身份那棵树。
+本地与 `origin/docs/handoff-20261018-qoder` 同步：本次提交之前的 HEAD 即 `9fbaf09a`，无未推送提交。
+
+仍未闭合的（都不是本轮可以自行批准的）：PR #178 合入 `main` 由 owner 决定；
+浏览器扫掠接入 CI（实测一趟 69 秒）与继续提高采样预算由 owner 决定；
+`config/client-evidence.json` 里 DSH 的 2026-10-13 逐字观测保持为历史快照，理由写在 ERR-278 的
+`remaining_boundary`；DSH 那份 225.65 MB 的安装回滚副本删除仍属 owner。
