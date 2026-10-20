@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-19T12:21:39Z",
+  "at": "2026-10-20T16:33:28Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -5246,7 +5246,7 @@
     {
       "errorId": "ERR-276",
       "statusAfter": "PASS",
-      "hasFixedCommit": false,
+      "hasFixedCommit": true,
       "command": "scripts/ci/verify_error_ledger.py must read back ERR-276; the live state it records: user-scope DSH_HOME absent; C:\\Users\\ALEX\\.dsh\\sessions holding 15 session.v4.jsonl.zstd and advancing; D:\\All proj",
       "operands": [
         {
@@ -5268,7 +5268,7 @@
     {
       "errorId": "ERR-277",
       "statusAfter": "PASS",
-      "hasFixedCommit": false,
+      "hasFixedCommit": true,
       "command": "scripts/ci/verify_error_ledger.py must read back ERR-277; and a live readback must still show: %LOCALAPPDATA%/hermes/hermes-agent exists as a git checkout with a commit, hermes --version resolving fro",
       "operands": [
         {

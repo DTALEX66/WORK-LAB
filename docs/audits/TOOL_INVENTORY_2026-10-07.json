@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-20T15:25:10Z",
+  "generatedAt": "2026-10-20T16:25:08Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -434,8 +434,10 @@
       "lines": 151,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 1,
+      "citedByRecords": 3,
       "citedBy": [
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md"
       ]
     },

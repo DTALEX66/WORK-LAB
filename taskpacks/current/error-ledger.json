@@ -8318,11 +8318,12 @@
       "regressionTestVerifiabilityReason": "no tracked file carries this basename",
       "lifecycle": {
         "introducedCommit": null,
-        "fixedCommit": null,
+        "fixedCommit": "13ed879b",
         "verifiedCommit": null,
         "affectedCapability": "DSH data-root resolution + entry uniqueness (five-dimension runtime baseline D1/D2/D3)",
         "regressionCommand": "fresh-logon readback: DSH_HOME absent from the user scope, C:\\Users\\ALEX\\.dsh is the advancing root, D: archive static",
-        "currentApplicability": "VERIFIED_LIVE_20261013"
+        "currentApplicability": "VERIFIED_LIVE_20261013",
+        "fixedCommitBasis": "birth commit of the record; it carries the promised regression script scripts/ci/verify_error_ledger.py; written into this protected file under the owner blanket authorization of 2026-10-20"
       },
       "related": [
         "ERR-088 (same layer, opposite direction: DSH_HOME frozen out of the live session)",
@@ -8353,11 +8354,12 @@
       "regressionTestVerifiabilityReason": "no tracked file carries this basename",
       "lifecycle": {
         "introducedCommit": null,
-        "fixedCommit": null,
+        "fixedCommit": "13ed879b",
         "verifiedCommit": null,
         "affectedCapability": "Hermes official update + five-dimension runtime baseline D1/D2 (single entry, desktop entry)",
         "regressionCommand": "hermes --version; Test-Path apps/desktop/release/win-unpacked/Hermes.exe; WScript.Shell TargetPath + Test-Path on both Hermes.lnk",
-        "currentApplicability": "VERIFIED_LIVE_20261013"
+        "currentApplicability": "VERIFIED_LIVE_20261013",
+        "fixedCommitBasis": "birth commit of the record; it carries the promised regression script scripts/ci/verify_error_ledger.py; written into this protected file under the owner blanket authorization of 2026-10-20"
       },
       "related": [
         "ERR-088 (same layer as the DSH half of this round, opposite direction)",

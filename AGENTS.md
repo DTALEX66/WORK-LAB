@@ -54,7 +54,7 @@ legacy `10-workflow/workflow-assistance` path was split out at the 2026-09
 directory convergence and is no longer tracked. The
 managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
 OpenHuman, plus any future AI software through the same Adapter contract.
-DSH (DeepSeek Harness, official build `0.2.0-rc.2`, installed at the vendor DEFAULT per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness` — resolve the install root from the uninstall registry entry or the shortcut TargetPath, never hardcode a drive letter; NSIS silent installs reset desktop .lnk TargetPath+IconLocation to the temp install dir — after ANY upgrade re-pin all .lnk fields per skill `dsh-administration` and error-ledger ERR-087) is a managed agent runtime client
+DSH (DeepSeek Harness, official build `0.2.1-rc.2`, installed at the vendor DEFAULT per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness` — resolve the install root from the uninstall registry entry or the shortcut TargetPath, never hardcode a drive letter; NSIS silent installs reset desktop .lnk TargetPath+IconLocation to the temp install dir — after ANY upgrade re-pin all .lnk fields per skill `dsh-administration` and error-ledger ERR-087) is a managed agent runtime client
 through the same Adapter contract. CC Switch is LEGACY_OBSERVE (observe-only;
 no active writes) unless evidence restores it to active status.
 Open Design is an external *client* (`nexu-io/open-design`); the separate
@@ -154,7 +154,7 @@ following baseline, owned by the enhancement module:
    Hermes: official desktop app (`apps/desktop/release/win-unpacked/Hermes.exe`,
    Electron) + `hermes` CLI; Codex: single wrapper (`bin/codex` bash +
    `packages/client-neutral-core/bin/codex.cmd`, identical versioned-glob resolution to the official
-   runtime); DSH: official DeepSeek Harness `0.2.0-rc.2` (Electron, installed at the
+   runtime); DSH: official DeepSeek Harness `0.2.1-rc.2` (Electron, installed at the
    vendor default per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness\DeepSeek Harness.exe`;
    the install root is RESOLVED from the uninstall registry entry or the shortcut
    TargetPath, never hardcoded — the earlier community DSH Desktop 2.0.13 build and its

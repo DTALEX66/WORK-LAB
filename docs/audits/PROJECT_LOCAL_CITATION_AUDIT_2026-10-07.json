@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-20T12:19:55Z",
+  "generatedAt": "2026-10-20T16:25:13Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2553,
-    "distinctProjectLocalTokens": 615,
+    "trackedFilesScanned": 2555,
+    "distinctProjectLocalTokens": 624,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 615,
-    "citationsToAbsentTokens": 1829
+    "tokensAbsent": 624,
+    "citationsToAbsentTokens": 1841
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,7 +21,7 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 331,
+      "citations": 332,
       "distinctPaths": 116
     },
     "machine_field_pointing_at_absent_path": {
@@ -33,12 +33,12 @@
       "distinctPaths": 476
     },
     "machine_local_runtime_pointer": {
-      "citations": 215,
-      "distinctPaths": 103
+      "citations": 225,
+      "distinctPaths": 113
     },
     "negative_assertion_or_removal_record": {
-      "citations": 186,
-      "distinctPaths": 66
+      "citations": 187,
+      "distinctPaths": 67
     },
     "path_pattern_or_truncated_token": {
       "citations": 19,
@@ -792,6 +792,12 @@
         "file": "scripts/audit/evidence_handles_render_via_headless_chromium.py",
         "line": 27,
         "text": "ARTIFACTS = ROOT / \".project-local/artifacts/standalone-run-20261019\""
+      },
+      {
+        "path": ".project-local/artifacts/standalone-run-20261019",
+        "file": "scripts/audit/handle_block_visibility_via_cdp.py",
+        "line": 3,
+        "text": "Closes the metric blueprint's remaining \"should\" gap (`.project-local/artifacts/standalone-run-20261019/"
       },
       {
         "path": ".project-local/artifacts/task-artifacts",
@@ -2814,10 +2820,10 @@
         "text": "receipt `.project-local/artifacts/standalone-run-20261019/21-legibility-after-split.json`. The below-the-fold"
       },
       {
-        "path": ".project-local/artifacts/standalone-run-20261019/22-legibility-sampling.json",
+        "path": ".project-local/artifacts/standalone-run-20261019/24-legibility-budget96.json",
         "file": "taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md",
-        "line": 548,
-        "text": "`.project-local/artifacts/standalone-run-20261019/22-legibility-sampling.json`. The rail's green now carries"
+        "line": 553,
+        "text": "`.project-local/artifacts/standalone-run-20261019/24-legibility-budget96.json`. The sampled figure stays below"
       },
       {
         "path": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917",
@@ -7995,6 +8001,12 @@
       },
       {
         "path": ".project-local/artifacts",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 568,
+        "text": "（`.project-local/artifacts` 451.3 MB → 376.6 MB），每个文件的 size+sha256 记在"
+      },
+      {
+        "path": ".project-local/artifacts",
         "file": "docs/current/workflow-assistance-README.md",
         "line": 87,
         "text": "| Context Pack | repomix/gitingest 风格的安全上下文包，输出到项目 `.project-local/artifacts/`，用于新会话与 Codex handoff | `packages/client-neutral-core/scripts/build_context_pack.py`、`docs/current/workflow-assistance/wor"
@@ -8108,6 +8120,12 @@
         "text": "`.project-local/artifacts/LEGIBILITY_REACHABLE_1.json`; the earlier 4-width sweep including the"
       },
       {
+        "path": ".project-local/artifacts/LEGIBILITY_SIZES_D.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 570,
+        "text": "`.project-local/artifacts/LEGIBILITY_SIZES_D.json` 因被仓内引用而**保留**（删除脚本逐条复检引用面）。"
+      },
+      {
         "path": ".project-local/artifacts/NARROW_BAND_ATTEMPT_20261008.diff",
         "file": "apps/observer/frontend/DESIGN.md",
         "line": 525,
@@ -8198,6 +8216,12 @@
         "text": "come from `.project-local/artifacts/design-qa-20261008/` (screenshots at six widths,"
       },
       {
+        "path": ".project-local/artifacts/dsh-backup-pre-deploy/DSH-Desktop.exe-pre-deploy-backup",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 571,
+        "text": "体积最大的单项 `.project-local/artifacts/dsh-backup-pre-deploy/DSH-Desktop.exe-pre-deploy-backup`"
+      },
+      {
         "path": ".project-local/artifacts/error-ledger-20260806.json",
         "file": "docs/current/workflow-assistance/workflow/error-governance.md",
         "line": 17,
@@ -8264,6 +8288,24 @@
         "text": "另有一份工作树副本放在 `.project-local/artifacts/observer-web-retired-20261007/`（48 文件）。"
       },
       {
+        "path": ".project-local/artifacts/owner-decisions-20261020",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 774,
+        "text": "`.project-local/artifacts/owner-decisions-20261020/`。"
+      },
+      {
+        "path": ".project-local/artifacts/owner-decisions-20261020/01-err-276-277-fixed-commit.patch",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 782,
+        "text": "一句 `git apply .project-local/artifacts/owner-decisions-20261020/01-err-276-277-fixed-commit.patch` 即可落地。"
+      },
+      {
+        "path": ".project-local/artifacts/owner-decisions-20261020/02-03-version-rebaseline.evidence.txt",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 792,
+        "text": "`.project-local/artifacts/owner-decisions-20261020/02-03-version-rebaseline.evidence.txt`），"
+      },
+      {
         "path": ".project-local/artifacts/qoder-handoff-20261007/QODER_新规划前后端完整后续任务提示词.txt",
         "file": ".project/governance/taskpack-authority-index.json",
         "line": 290,
@@ -8286,6 +8328,24 @@
         "file": "docs/current/DOCUMENT-CENSUS.md",
         "line": 479,
         "text": "（`.project-local/artifacts/standalone-run-20261019/05-artifact-handles-shape.json` 里 surfaceRoot 200/200）；"
+      },
+      {
+        "path": ".project-local/artifacts/standalone-run-20261019/24-legibility-budget96.json",
+        "file": "docs/current/authority-convergence-20261019/ROADMAP.md",
+        "line": 30,
+        "text": "| 12 | 界面仪器的绿必须带分母，也不许把没走完的滚动当成看过 | DELIVERED（2026-10-20 实测）：`scripts/audit/text_legibility_via_cdp.py` 每条泳道现报 `presentNodes`、`sweepStopsUsed`/`sweepStopsNeeded` 与 `scrollRangeCovered`，缺任一项由 `coverage"
+      },
+      {
+        "path": ".project-local/artifacts/standalone-run-20261019/25-legibility-static-views.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 565,
+        "text": "（回执 `.project-local/artifacts/standalone-run-20261019/25-legibility-static-views.json`）。"
+      },
+      {
+        "path": ".project-local/artifacts/standalone-run-20261019/26-handle-latency.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 761,
+        "text": "每次都渲染出 200 行（回执 `.project-local/artifacts/standalone-run-20261019/26-handle-latency.json`），"
       },
       {
         "path": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917",
@@ -8350,14 +8410,8 @@
       {
         "path": ".project-local/artifacts/wui-20261009/refs-census-20261018.json",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 299,
-        "text": "派生审计幂等（未裁决的 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`）。"
-      },
-      {
-        "path": ".project-local/artifacts/wui-20261009/refs-census-20261018.json",
-        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 370,
-        "text": "（未裁决的 `.project-local/artifacts/wui-20261009/refs-census-20261018.json`）。"
+        "line": 537,
+        "text": "`UNADJUDICATED`：`.project-local/artifacts/wui-20261009/refs-census-20261018.json`。先量清它是什么"
       },
       {
         "path": ".project-local/artifacts/wui-20261009/sse-revision.json",
@@ -8940,6 +8994,18 @@
         "file": "docs/decisions/global-execution-standard.md",
         "line": 52,
         "text": "1. 先查项目技能调用索引（.project-local/runs/skill-call-index.json）"
+      },
+      {
+        "path": ".project-local/runs/standalone-20261019/geometry-after-fix.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 755,
+        "text": "`.project-local/runs/standalone-20261019/geometry-after-fix.json`）。"
+      },
+      {
+        "path": ".project-local/runs/standalone-20261019/prepare_owner_patches.py",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 771,
+        "text": "工具 `.project-local/runs/standalone-20261019/prepare_owner_patches.py` 把该量的都重量了一遍，"
       },
       {
         "path": ".project-local/runs/tmp",
@@ -9614,6 +9680,12 @@
         "file": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 215,
         "text": "| GREENING-20261007 | P1 | 1.62_GB_RECOVERED / KEEP_LIST_VERIFIED / 6_FILES_LOST_BY_MY_BUG | 按\"清单先行\"清理：先测得并落盘 `.project-local/artifacts/cleanup-20261007/manifest.json`，再删除**纯可再生**项 —— `apps/observer/s"
+      },
+      {
+        "path": ".project-local/artifacts/cleanup-20261020-uncited-superseded.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 569,
+        "text": "`.project-local/artifacts/cleanup-20261020-uncited-superseded.json`，且全部可用仓内仪器重生成。"
       },
       {
         "path": ".project-local/artifacts/current-state-ci.json",
@@ -11067,7 +11139,7 @@
     "reviewQueue": 7,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 326
+    "presentOnThisMachine": 335
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
