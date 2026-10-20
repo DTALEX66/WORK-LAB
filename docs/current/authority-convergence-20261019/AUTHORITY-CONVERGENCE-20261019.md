@@ -566,3 +566,33 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 `.project-local/artifacts/LEGIBILITY_SIZES_D.json` 因被仓内引用而**保留**（删除脚本逐条复检引用面）。
 体积最大的单项 `.project-local/artifacts/dsh-backup-pre-deploy/DSH-Desktop.exe-pre-deploy-backup`
 （225.65 MB）**未动**：那是第三方旧版安装的回滚副本，不是本项目产物，只有 owner 能决定放弃那次回滚。
+
+### exact-SHA CI 证据（bc304642，run 39345008690）
+
+结论 `failure`；触发 `pull_request`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；
+红作业：aggregate / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+未发言步骤：（无）——一个作业可以在第一个步骤就红掉，
+把后面装着其余套件的步骤整体跳过，于是"基线红不见了"是读数缺席而不是问题消失。
+红作业里点名的失败测试共 4 个：4 个属于本轮之前就存在的基线
+（test_deepseek_harness_keeps_its_older_dated_readback、test_regenerating_the_record_is_idempotent_apart_from_the_timestamp、test_the_pinned_registry_is_the_one_the_commit_carries、test_the_shipped_bindings_are_valid），本轮新增 0 个（零回归）。
+基线里本 run 没有发言的项：（全部发言过）。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中账本派生四件已随派生审计重发而消失，
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树干净。这一 head 只含"本地 stash 退役"的记录（两条本地独有工作物按逐行比对判为已被取代，补丁与 SHA 先导出再 drop）。判决：`observer` success、红名单仍是四项既有基线、本轮新增 0。
+
+### exact-SHA CI 证据（fd310522，run 39413261299）
+
+结论 `failure`；触发 `pull_request`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；
+红作业：aggregate / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+未发言步骤：（无）——一个作业可以在第一个步骤就红掉，
+把后面装着其余套件的步骤整体跳过，于是"基线红不见了"是读数缺席而不是问题消失。
+红作业里点名的失败测试共 4 个：4 个属于本轮之前就存在的基线
+（test_deepseek_harness_keeps_its_older_dated_readback、test_regenerating_the_record_is_idempotent_apart_from_the_timestamp、test_the_pinned_registry_is_the_one_the_commit_carries、test_the_shipped_bindings_are_valid），本轮新增 0 个（零回归）。
+基线里本 run 没有发言的项：（全部发言过）。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中账本派生四件已随派生审计重发而消失，
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树有 1 处未提交改动。这一 head 只含 7bce2e30 的判决块（把"每一次推送对应一份判决"这条链补齐到当时最新的那个 head）。判决：`observer` success、红名单仍是四项既有基线、本轮新增 0。
