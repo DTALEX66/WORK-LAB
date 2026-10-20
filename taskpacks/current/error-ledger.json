@@ -8318,7 +8318,7 @@
       "regressionTestVerifiabilityReason": "no tracked file carries this basename",
       "lifecycle": {
         "introducedCommit": null,
-        "fixedCommit": "13ed879b",
+        "fixedCommit": "13ed879becab40e8f5bfec745e3f94bdf0dc6149",
         "verifiedCommit": null,
         "affectedCapability": "DSH data-root resolution + entry uniqueness (five-dimension runtime baseline D1/D2/D3)",
         "regressionCommand": "fresh-logon readback: DSH_HOME absent from the user scope, C:\\Users\\ALEX\\.dsh is the advancing root, D: archive static",
@@ -8354,7 +8354,7 @@
       "regressionTestVerifiabilityReason": "no tracked file carries this basename",
       "lifecycle": {
         "introducedCommit": null,
-        "fixedCommit": "13ed879b",
+        "fixedCommit": "13ed879becab40e8f5bfec745e3f94bdf0dc6149",
         "verifiedCommit": null,
         "affectedCapability": "Hermes official update + five-dimension runtime baseline D1/D2 (single entry, desktop entry)",
         "regressionCommand": "hermes --version; Test-Path apps/desktop/release/win-unpacked/Hermes.exe; WScript.Shell TargetPath + Test-Path on both Hermes.lnk",
