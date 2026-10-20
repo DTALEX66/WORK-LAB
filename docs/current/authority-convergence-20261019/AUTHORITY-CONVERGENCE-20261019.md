@@ -559,6 +559,9 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 **565/565 站、无短程泳道**，代价 46 秒→69 秒；`tests/ci/test_text_legibility_gate.py` 57 例全绿。
 同时纠正我自己发布过的一个误读：`sampled/present` 不是行数覆盖率——合并按
 (path, text, size, weight, colour) 去重，200 行重复单元格本就只算一次；被保证的是每一段滚动范围都上过屏。
+两条新门不会误伤静态消费者，这一点是量出来的不是推的：`scripts/audit/reseal_wui_evidence.py` 会以无后端
+模式调 `--all-views`，实跑一趟 `sampled 1,957 / present 1,984`、`stops 217/217`、无短程泳道、退出码 0
+（回执 `.project-local/artifacts/standalone-run-20261019/25-legibility-static-views.json`）。
 
 **清理**：删除 8 个"没有任何仓内文件引用、且已被后续回执取代"的本机中间回执，回收 **74.7 MB**
 （`.project-local/artifacts` 451.3 MB → 376.6 MB），每个文件的 size+sha256 记在
@@ -596,3 +599,23 @@ ERR-276 绑定、派生审计幂等），**本轮新增 0 个**（零回归）�
 基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中账本派生四件已随派生审计重发而消失，
 所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
 本地=远端 True，工作树有 1 处未提交改动。这一 head 只含 7bce2e30 的判决块（把"每一次推送对应一份判决"这条链补齐到当时最新的那个 head）。判决：`observer` success、红名单仍是四项既有基线、本轮新增 0。
+
+### exact-SHA CI 证据（3e409f56，run 39427706258）
+
+结论 `failure`；触发 `pull_request`；绿作业：gate-plan / integration / observer / supply-chain-security / token-monitor；
+红作业：aggregate / workflow-assistance；
+未发言作业：（无）——被取消或跳过的作业**没有测过它自己那块界面**，
+所以本轮的红点名单只覆盖仍然跑完的作业，不能据此说"全链已判定"。
+未发言步骤：（无）——一个作业可以在第一个步骤就红掉，
+把后面装着其余套件的步骤整体跳过，于是"基线红不见了"是读数缺席而不是问题消失。
+红作业里点名的失败测试共 3 个：3 个属于本轮之前就存在的基线
+（test_deepseek_harness_keeps_its_older_dated_readback、test_the_pinned_registry_is_the_one_the_commit_carries、test_the_shipped_bindings_are_valid），本轮新增 0 个（零回归）。
+基线里本 run 没有发言的项：（全部发言过）。
+基线本身是本轮起点 `6b6678c3` 那次 run 实测出来的 8 项；其中 5 件已随各自的修复退役
+（账本派生四件随派生审计重发消失，引用审计幂等一件随 2026-10-20 的裁决消失并在 CI 里确认转绿），
+所以这里只列出**本 run 仍然红的那几项**，不复制历史清单。
+本地=远端 True，工作树干净。这一 head 含本轮的修复与清理批次（派生审计裁决、扫掠预算 16→96 与两条新覆盖门、两份派生审计重发、74.7 MB 未引用中间回执的退役）。
+
+CI 实测变化：红名单从四项基线缩到**三项**——`test_regenerating_the_record_is_idempotent_apart_from_the_timestamp` 在云端消失，即引用审计那一项的修复不只是本地绿，云端也认了。剩下三项仍是等 owner 的那三件：DSH 日期合同、executor registry pin、ERR-276/277 落笔（推导已完成）。新增红 0，`observer` success，无未发言作业或未发言步骤。
+
+顺带记一笔链条的自我消耗：`2ed1b50d`（修复批次本身）被这次推送取消，没有拿到判决；它的内容作为本 head 的祖先被完整覆盖，所以证据没有丢，丢的只是"那个 SHA 名字上的判决"。
