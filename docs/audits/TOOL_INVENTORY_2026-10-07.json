@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-20T20:33:54Z",
+  "generatedAt": "2026-10-21T16:24:30Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -429,16 +429,17 @@
     },
     {
       "path": "scripts/audit/handle_block_visibility_via_cdp.py",
-      "sha256": "725103bc1ad988ab17bc4ee462a7ba266a3ce0699be3e5b3adad578a5359273d",
-      "bytes": 7179,
-      "lines": 151,
+      "sha256": "73452332e33f7da7e9c34c2b9c29d5a5c2fe36569c63ff1af80c5f7f9192c00f",
+      "bytes": 21563,
+      "lines": 410,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 3,
+      "citedByRecords": 4,
       "citedBy": [
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md"
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "tests/ci/test_handle_latency_attribution.py"
       ]
     },
     {
@@ -892,14 +893,14 @@
       "lines": 948,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 15,
+      "citedByRecords": 16,
       "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
         "apps/observer/frontend/DESIGN.md",
         "apps/observer/frontend/SCREEN_SPEC.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/DOCUMENT-CENSUS.md",
-        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md"
+        "docs/current/DOCUMENT-CENSUS.md"
       ]
     },
     {

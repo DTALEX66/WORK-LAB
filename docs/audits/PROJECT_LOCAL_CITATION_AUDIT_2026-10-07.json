@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-20T20:31:34Z",
+  "generatedAt": "2026-10-21T16:24:34Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2555,
-    "distinctProjectLocalTokens": 625,
+    "trackedFilesScanned": 2557,
+    "distinctProjectLocalTokens": 628,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 625,
-    "citationsToAbsentTokens": 1844
+    "tokensAbsent": 628,
+    "citationsToAbsentTokens": 1847
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -22,7 +22,7 @@
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
       "citations": 332,
-      "distinctPaths": 116
+      "distinctPaths": 117
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 15,
@@ -33,8 +33,8 @@
       "distinctPaths": 476
     },
     "machine_local_runtime_pointer": {
-      "citations": 227,
-      "distinctPaths": 114
+      "citations": 230,
+      "distinctPaths": 116
     },
     "negative_assertion_or_removal_record": {
       "citations": 188,
@@ -388,7 +388,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
-        "line": 62,
+        "line": 72,
         "text": "DEFAULT_EVIDENCE_ROOTS = (\".project-local/artifacts\", \".project-local/runs\")"
       },
       {
@@ -508,13 +508,13 @@
       {
         "path": ".project-local/artifacts",
         "file": "tests/workflow-assistance/test_evidence_range_reader.py",
-        "line": 239,
+        "line": 292,
         "text": "self.assertEqual(self.read(str(self.path), evidence_roots=(\".project-local/artifacts\",))[\"reason_code\"],"
       },
       {
         "path": ".project-local/artifacts",
         "file": "tests/workflow-assistance/test_evidence_range_reader.py",
-        "line": 245,
+        "line": 298,
         "text": "self.assertIn(\".project-local/artifacts\", declared)"
       },
       {
@@ -794,10 +794,10 @@
         "text": "ARTIFACTS = ROOT / \".project-local/artifacts/standalone-run-20261019\""
       },
       {
-        "path": ".project-local/artifacts/standalone-run-20261019",
+        "path": ".project-local/artifacts/standalone-run-20261019/metric.json",
         "file": "scripts/audit/handle_block_visibility_via_cdp.py",
         "line": 3,
-        "text": "Closes the metric blueprint's remaining \"should\" gap (`.project-local/artifacts/standalone-run-20261019/"
+        "text": "Closes the metric blueprint's \"should\" gap (`.project-local/artifacts/standalone-run-20261019/metric.json`,"
       },
       {
         "path": ".project-local/artifacts/task-artifacts",
@@ -1042,7 +1042,7 @@
       {
         "path": ".project-local/runs",
         "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
-        "line": 62,
+        "line": 72,
         "text": "DEFAULT_EVIDENCE_ROOTS = (\".project-local/artifacts\", \".project-local/runs\")"
       },
       {
@@ -1216,7 +1216,7 @@
       {
         "path": ".project-local/runs",
         "file": "tests/workflow-assistance/test_evidence_range_reader.py",
-        "line": 246,
+        "line": 299,
         "text": "self.assertIn(\".project-local/runs\", declared)"
       },
       {
@@ -1798,7 +1798,7 @@
       {
         "path": ".project-local/runs/tmp",
         "file": "tests/workflow-assistance/test_evidence_range_reader.py",
-        "line": 175,
+        "line": 228,
         "text": "project binds TMP/TEMP/TMPDIR into `.project-local/runs/tmp`, i.e. inside the repository, and"
       },
       {
@@ -8080,7 +8080,7 @@
       {
         "path": ".project-local/artifacts",
         "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
-        "line": 59,
+        "line": 69,
         "text": "# `.project-local/artifacts` and `.project-local/runs` are what the boundary declaration names as evidence"
       },
       {
@@ -8290,19 +8290,19 @@
       {
         "path": ".project-local/artifacts/owner-decisions-20261020",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 778,
+        "line": 810,
         "text": "`.project-local/artifacts/owner-decisions-20261020/`。"
       },
       {
         "path": ".project-local/artifacts/owner-decisions-20261020/01-err-276-277-fixed-commit.patch",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 786,
+        "line": 818,
         "text": "一句 `git apply .project-local/artifacts/owner-decisions-20261020/01-err-276-277-fixed-commit.patch` 即可落地。"
       },
       {
         "path": ".project-local/artifacts/owner-decisions-20261020/02-03-version-rebaseline.evidence.txt",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 796,
+        "line": 828,
         "text": "`.project-local/artifacts/owner-decisions-20261020/02-03-version-rebaseline.evidence.txt`），"
       },
       {
@@ -8386,8 +8386,20 @@
       {
         "path": ".project-local/artifacts/temp-residue-reclaim",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 907,
+        "line": 939,
         "text": "（`docs/audits` 之外，落在 `.project-local/artifacts/temp-residue-reclaim/` 的 manifest），再 `--apply` 释放："
+      },
+      {
+        "path": ".project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 779,
+        "text": "的单调时钟 `performance.now()` 打点（`.project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json`，"
+      },
+      {
+        "path": ".project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json",
+        "file": "tests/ci/test_handle_latency_attribution.py",
+        "line": 7,
+        "text": "page's rows at ~208 ms (`.project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json`)."
       },
       {
         "path": ".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json",
@@ -8626,7 +8638,7 @@
       {
         "path": ".project-local/runs",
         "file": "packages/client-neutral-core/scripts/evidence_range_reader.py",
-        "line": 59,
+        "line": 69,
         "text": "# `.project-local/artifacts` and `.project-local/runs` are what the boundary declaration names as evidence"
       },
       {
@@ -8758,7 +8770,7 @@
       {
         "path": ".project-local/runs/ci/desktop_capability.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 399,
+        "line": 411,
         "text": ".project-local/runs/ci/desktop_capability.json"
       },
       {
@@ -8770,7 +8782,7 @@
       {
         "path": ".project-local/runs/ci/gate-stages.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 397,
+        "line": 409,
         "text": ".project-local/runs/ci/gate-stages.json"
       },
       {
@@ -8788,8 +8800,14 @@
       {
         "path": ".project-local/runs/ci/geometry_gate.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 398,
+        "line": 410,
         "text": ".project-local/runs/ci/geometry_gate.json"
+      },
+      {
+        "path": ".project-local/runs/ci/legibility_sweep.json",
+        "file": ".github/workflows/work-lab-gate.yml",
+        "line": 381,
+        "text": "run: python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json"
       },
       {
         "path": ".project-local/runs/ci/plan.json",
@@ -8998,7 +9016,7 @@
       {
         "path": ".project-local/runs/sidecar-launch-tests",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 933,
+        "line": 965,
         "text": "而本仓的机器合同要求一切产物留在 Git 根内，现在写 `.project-local/runs/sidecar-launch-tests/`。"
       },
       {
@@ -9016,7 +9034,7 @@
       {
         "path": ".project-local/runs/standalone-20261019/prepare_owner_patches.py",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "line": 775,
+        "line": 807,
         "text": "工具 `.project-local/runs/standalone-20261019/prepare_owner_patches.py` 把该量的都重量了一遍，"
       },
       {
@@ -10430,7 +10448,7 @@
       {
         "path": ".project-local/runs/ci/ci-summary-",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 396,
+        "line": 408,
         "text": ".project-local/runs/ci/ci-summary-*.json"
       },
       {
@@ -11157,7 +11175,7 @@
     "reviewQueue": 7,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 335
+    "presentOnThisMachine": 337
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

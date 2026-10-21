@@ -149,7 +149,7 @@ export function EvidenceView({
     reader({
       handle: address.handle,
       offset: address.offset, limit: address.limit,
-      expectedDigest: address.expectedDigest, wholeDigest: address.wholeDigest,
+      expectedDigest: address.expectedDigest,
     }).then((outcome) => { if (!cancelled) setState({ kind: 'DONE', outcome }) })
     return () => { cancelled = true }
   }, [addressKey, hasReader])
@@ -225,7 +225,7 @@ export function EvidenceView({
                 {shelf.items.map((item, index) => {
                   const handle = item.path
                   const rowAddress: EvidenceAddress | null = handle
-                    ? { handle, offset: null, limit: null, expectedDigest: null, wholeDigest: null }
+                    ? { handle, offset: null, limit: null, expectedDigest: null }
                     : null
                   const href = evidenceHref(rowAddress, initialSearch)
                   const active = handle !== null && address?.handle === handle
@@ -288,7 +288,7 @@ export function EvidenceView({
             <div className="list">
               <Dim label="判定住在 body" value={`status / reason_code；HTTP 200 不等于读取成功（当前 schema ${EVIDENCE_RANGE_SCHEMA_VERSION}）`} />
               <Dim label="拒绝时的内容" value="REFUSED / OUT_OF_RANGE 携带 content=null，本视图不渲染内容块，也不留空白" />
-              <Dim label="地址" value="artifact / offset / limit / expectedDigest / wholeDigest 全部走 ?view=evidence 同一条链接机制，没有手填入口" />
+              <Dim label="地址" value="artifact / offset / limit / expectedDigest 全部走 ?view=evidence 同一条链接机制，没有手填入口" />
               <Dim label="未提供" value="结果里没有的字段显示 未提供，不补 0，也不补 false" />
               <Dim label="上限" value={`单次 ${EVIDENCE_MAX_LIMIT.toLocaleString('en-US')} 字节：超限由后端拒绝（LIMIT_TOO_LARGE），这一侧不做静默截断`} />
             </div>
@@ -409,7 +409,7 @@ function EvidenceColumns({
           <CardHeader><span>身份 · Identity</span></CardHeader>
           <CardContent>
             <Field label="handle" value={address?.handle ?? null} missing="地址未被解析" />
-            <Field label="记录摘要" value={address?.expectedDigest ?? null} missing="地址未提供 expectedDigest" />
+            <Field label="钉住摘要" value={address?.expectedDigest ?? null} missing="地址未提供 expectedDigest" />
             <Field label="大小" value={null} missing="未送达，没有实测大小" />
           </CardContent>
         </Card>
@@ -446,7 +446,8 @@ function EvidenceColumns({
   const cost = item.cost
   const digest = digestVerdictOf(item)
   const sizeBytes = typeof identity?.sizeBytes === 'number' ? identity.sizeBytes : (typeof cost?.fileSize === 'number' ? cost.fileSize : null)
-  const recordedDigest = text(address?.expectedDigest) ?? text(identity?.wholeDigest)
+  const pinnedDigest = text(identity?.expectedDigest) ?? text(address?.expectedDigest)
+  const measuredDigest = text(identity?.wholeDigest)
   const isOk = item.status === 'OK'
 
   return (
@@ -455,7 +456,8 @@ function EvidenceColumns({
         <CardHeader><span>身份 · Identity</span></CardHeader>
         <CardContent>
           <Field field="handle" label="handle" value={text(item.handle) ?? text(address?.handle)} missing="结果未回传把手" />
-          <Field field="recordedDigest" label="记录摘要（调用方提供）" value={recordedDigest} missing="地址未提供 expectedDigest，后端也没有可比的 wholeDigest" />
+          <Field field="pinnedDigest" label="钉住摘要（调用方声明）" value={pinnedDigest} missing="地址未提供 expectedDigest，本次没有请求身份核验" />
+          <Field field="measuredDigest" label="实测摘要（读取器计算）" value={measuredDigest} missing="读取器未实测整文件摘要，身份未核验" />
           <Field field="digestSource" label="摘要来源" value={text(identity?.digestSource)} missing="该判定未走到摘要核对" />
           <Field field="size" label="大小" value={sizeBytes !== null ? fmtBytes(sizeBytes) : null} missing="结果未携带文件大小" />
         </CardContent>

@@ -367,6 +367,18 @@ jobs:
       - name: Desktop geometry gate (CDP measurement of the built shell)
         working-directory: .
         run: python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json
+      # LEG-2: the legibility sweep's arithmetic has been pinned in CI by tests/ci/test_text_legibility_gate.py
+      # (57 cases) since it was written, but the step that drives a real browser over the built bundle was never
+      # run by any job -- so the numeric clauses DESIGN.md and SCREEN_SPEC.md state (12px floor, 4.5:1 / 3:1 AA,
+      # both themes) were measured only on the author's machine, and a runner-side regression would have stayed
+      # invisible. Cost is measured, not guessed: `--all-views --live-backend --sizes 1280` at both themes took
+      # 70 s wall on 2026-10-21 on the development host (31 lanes, 566/566 scroll stops, bundle
+      # assets/index-C1tK2WFi.js sha256 8e793275…), and the receipt stamps the bytes it loaded.
+      # Exit 3 is NOT_RUN (no browser, no dist, an unsettled sample) and is left to fail the job on purpose:
+      # an unmeasured standard is not a passing one.
+      - name: Text legibility sweep (CDP, both themes, every rail lane)
+        working-directory: .
+        run: python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json
       # W10: the four frontend stages exist because W02 split one combined step; the artifact is what makes
       # that split readable after the run, without opening the log.
       - name: Assemble the run summary

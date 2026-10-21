@@ -10,8 +10,11 @@ This module reads an exact interval and reports enough identity to trust it:
 * the handle must resolve inside a declared evidence surface — an absolute path outside the repository, a
   path that is inside the repository but not evidence, a credential-shaped name, a missing file, a
   directory, and an unreadable file are each their own typed failure, never an empty success;
-* the caller may pin the expected whole-file digest; a mismatch is DIGEST_MISMATCH and returns NO content,
-  because showing bytes from a file that is not the recorded one is worse than showing nothing;
+* the caller may pin the expected whole-file digest; the reader then MEASURES the file itself and compares
+  its own measurement against that pin — a caller-supplied "actual" digest is never the basis of a verdict,
+  because comparing one caller input with another proves only that the caller repeated itself. A mismatch is
+  DIGEST_MISMATCH and returns NO content, because showing bytes from a file that is not the recorded one is
+  worse than showing nothing;
 * `sliceDigest` is a digest of exactly the bytes returned, so an interval can be cited without shipping
   the whole artifact;
 * cost is measured and reported (bytes read against file size), because the point of the feature is that a
@@ -38,6 +41,11 @@ SCHEMA_VERSION = "worklab/evidence-range-result/v1"
 MAX_LIMIT = 4 * 1024 * 1024          # 4 MiB per read; larger requests are refused, not silently capped
 DEFAULT_LIMIT = 64 * 1024
 DIGEST_HEX_LENGTH = 64
+# Verifying an identity means hashing the whole artifact, so an expected_digest costs one full read.
+# That is bounded on purpose: past this size the reader says it cannot verify instead of reading a
+# multi-gigabyte log to answer a range request. Unmeasurable names itself; it never becomes a pass.
+WHOLE_HASH_MAX_BYTES = 16 * 1024 * 1024
+WHOLE_HASH_CHUNK_BYTES = 1 * 1024 * 1024
 
 STATUS_OK = "OK"
 STATUS_OUT_OF_RANGE = "OUT_OF_RANGE"
@@ -51,9 +59,11 @@ REFUSALS = {
     "NOT_A_FILE": "handle 不指向普通文件（不存在、目录或特殊文件）。",
     "UNREADABLE": "handle 存在但读不了；这是实测到的失败，不是没有内容。",
     "LIMIT_TOO_LARGE": f"单次读取上限 {MAX_LIMIT} 字节，超限拒绝而不是静默截断。",
-    "DIGEST_MISMATCH": "期望摘要与实际文件不符：返回的字节不属于被记录的那份产物，因此不返回内容。",
+    "DIGEST_MISMATCH": "期望摘要与读取器实测的整文件摘要不符：返回的字节不属于被记录的那份产物，因此不返回内容。",
     "DIGEST_SHAPE": "expected_digest 必须是 64 位十六进制 sha256。",
-    "DIGEST_UNAVAILABLE": "调用方给了 expected_digest 却没有可比的摘要来源，无法判定一致性；不返回内容。",
+    "IDENTITY_TOO_LARGE_TO_MEASURE": (
+        f"核对身份需要实测整文件摘要，而文件超过 {WHOLE_HASH_MAX_BYTES} 字节上限："
+        "身份未核验，因此不返回内容；这不是读取失败，也不是通过。"),
 }
 
 # `.project-local/artifacts` and `.project-local/runs` are what the boundary declaration names as evidence
@@ -123,6 +133,43 @@ def _sha256_slice(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _measure_whole_digest(path: Path, size: int) -> str | None:
+    """Hash the whole artifact, or return None when the reader refuses to.
+
+    Only called when a caller asked for identity verification, so the full read is the caller's own price,
+    not something the cheap range path pays.
+    """
+    if size > WHOLE_HASH_MAX_BYTES:
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while chunk := stream.read(WHOLE_HASH_CHUNK_BYTES):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _identity(*, expected: str | None, measured: str | None, size: int | None) -> dict[str, Any]:
+    """The identity block, and the only place its provenance vocabulary is spelled.
+
+    `wholeDigest` is ever a measurement made by this reader, never a value the caller supplied: an earlier
+    shape put a caller argument in this field and the interface then compared it with another caller
+    argument and called the result AGREE.
+    """
+    if measured:
+        source = "measured-by-reader"
+    elif expected:
+        source = "not-measurable"
+    else:
+        source = "not-requested"
+    return {
+        "expectedDigest": expected,
+        "wholeDigest": measured,
+        "sizeBytes": size,
+        "digestSource": source,
+        "verified": bool(expected and measured and measured == expected),
+    }
+
+
 def _refusal(code: str, *, handle: str, detail: str = "") -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
@@ -136,13 +183,18 @@ def _refusal(code: str, *, handle: str, detail: str = "") -> dict[str, Any]:
 
 
 def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT_LIMIT,
-               expected_digest: str | None = None, whole_digest: str | None = None,
+               expected_digest: str | None = None,
                evidence_roots: tuple[str, ...] = DEFAULT_EVIDENCE_ROOTS) -> dict[str, Any]:
     """Read `limit` bytes at `offset` from a declared evidence artifact inside this project.
 
     `evidence_roots` are relative to `root` and default to the surfaces the boundary declaration names as
     evidence and runtime storage. Passing an explicit tuple narrows the surface; passing () refuses
     everything, because an unset surface is not the same as an unrestricted one.
+
+    `expected_digest` is the ONLY identity input: the reader measures the file itself and refuses to return
+    bytes when its measurement disagrees. There is deliberately no parameter for the caller to supply the
+    file's "actual" digest — that input could only ever be compared against another caller input, and an
+    identity check whose both sides come from the same untrusted party is not a check.
     """
     # Containment is decided from TEXT first (path_text), because `resolve()`/`is_relative_to` consult the
     # host: on the Linux runner a Windows-shaped handle has no drive, so posixpath reads it as relative and
@@ -211,20 +263,26 @@ def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT
             "cost": {"bytesRead": 0, "fileSize": size, "wholeFileWasRead": False},
         }
 
+    measured: str | None = None
     if expected_digest is not None:
         if len(expected_digest) != DIGEST_HEX_LENGTH or any(
                 character not in "0123456789abcdefABCDEF" for character in expected_digest):
             return _refusal("DIGEST_SHAPE", handle=str(handle), detail=expected_digest[:16])
-        if not whole_digest:
-            # Verifying identity against the recorded artifact is the caller's input, never this reader's
-            # job: hashing the whole file here would silently turn a cheap range read into a full read.
-            return _refusal("DIGEST_UNAVAILABLE", handle=str(handle),
-                            detail="expected_digest 已给出但没有 whole_digest 可比")
-        if whole_digest != expected_digest:
-            result = _refusal("DIGEST_MISMATCH", handle=str(handle),
-                              detail=f"expected={expected_digest[:12]}… actual={whole_digest[:12]}…")
+        try:
+            measured = _measure_whole_digest(path, size)
+        except OSError as error:
+            return _refusal("UNREADABLE", handle=str(handle), detail=type(error).__name__)
+        if measured is None:
+            result = _refusal("IDENTITY_TOO_LARGE_TO_MEASURE", handle=str(handle),
+                              detail=f"size={size} > {WHOLE_HASH_MAX_BYTES}")
             result["cost"]["fileSize"] = size
-            result["identity"] = {"wholeDigest": whole_digest, "sizeBytes": size}
+            result["identity"] = _identity(expected=expected_digest, measured=None, size=size)
+            return result
+        if measured != expected_digest:
+            result = _refusal("DIGEST_MISMATCH", handle=str(handle),
+                              detail=f"expected={expected_digest[:12]}… measured={measured[:12]}…")
+            result["cost"]["fileSize"] = size
+            result["identity"] = _identity(expected=expected_digest, measured=measured, size=size)
             return result
 
     try:
@@ -248,8 +306,7 @@ def read_range(*, handle: str, root: Path, offset: int = 0, limit: int = DEFAULT
         "eofReached": end >= size,
         "content": data.decode("utf-8", errors="replace"),
         "sliceDigest": _sha256_slice(data),
-        "identity": {"wholeDigest": whole_digest, "sizeBytes": size,
-                     "digestSource": "caller-supplied" if whole_digest else "not-supplied"},
+        "identity": _identity(expected=expected_digest, measured=measured, size=size),
         "cost": {"bytesRead": len(data), "fileSize": size,
                  "wholeFileWasRead": end >= size and offset == 0 and len(data) == size},
     }

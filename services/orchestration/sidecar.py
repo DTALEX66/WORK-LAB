@@ -674,7 +674,6 @@ def create_server(
                     offset=offset,
                     limit=limit,
                     expected_digest=(query.get("expectedDigest") or [None])[0],
-                    whole_digest=(query.get("wholeDigest") or [None])[0],
                     evidence_roots=evidence_range_reader.declared_evidence_roots(sidecar.project_root),
                 ))
             elif path == "/api/v1/events":
