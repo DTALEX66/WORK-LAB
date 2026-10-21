@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-21T16:24:34Z",
+  "generatedAt": "2026-10-21T16:47:07Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2557,
-    "distinctProjectLocalTokens": 628,
+    "trackedFilesScanned": 2558,
+    "distinctProjectLocalTokens": 630,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 628,
-    "citationsToAbsentTokens": 1847
+    "tokensAbsent": 630,
+    "citationsToAbsentTokens": 1850
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,12 +29,12 @@
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 960,
-      "distinctPaths": 476
+      "citations": 961,
+      "distinctPaths": 477
     },
     "machine_local_runtime_pointer": {
-      "citations": 230,
-      "distinctPaths": 116
+      "citations": 232,
+      "distinctPaths": 118
     },
     "negative_assertion_or_removal_record": {
       "citations": 188,
@@ -6132,6 +6132,12 @@
         "text": "| D2 | USER AUTH | OPEN (owner decision: delete the archived .bak or register it as an exception; the suffix class is now machine-checked) | 2026-09-23 full-repo scan: 0 tracked .bak/.orig/.backup; th"
       },
       {
+        "path": ".project-local/runs/wl02-repro-20261021/digest-witness-backend-local.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 8590,
+        "text": "\"observed_error\": \"证据区间读取的身份核对可以在两层同时假通过。后端 read_range 把调用方给的 expected_digest 与同样是调用方给的 whole_digest 相比，从不哈希文件本身；services/orchestration/sidecar.py 的两个值都取自 URL query，所以整条链是「调用方 vs 调用方」。前端 digestVerdict"
+      },
+      {
         "path": ".project-local/runs/workflow/canonical.sqlite",
         "file": "docs/audits/FULL-AUDIT-20261018.md",
         "line": 80,
@@ -8402,6 +8408,12 @@
         "text": "page's rows at ~208 ms (`.project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json`)."
       },
       {
+        "path": ".project-local/artifacts/wl02-and-handle-20261021/legibility-ci-shape.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 1176,
+        "text": "（回执 `.project-local/artifacts/wl02-and-handle-20261021/legibility-ci-shape.json`，"
+      },
+      {
         "path": ".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json",
         "file": ".project/governance/migration-status.json",
         "line": 28,
@@ -9084,6 +9096,12 @@
         "file": "docs/future/WORK-LAB-BLUEPRINT-COVERAGE.md",
         "line": 49,
         "text": "| T03 | Windows Tauri U19 E2E | sidecar、Snapshot/SSE、Tauri、React、重连与隔离 | PASS | SUPERSEDED | `apps/observer/scripts/u19_webview_e2e.py`<br>`taskpacks/current/error-ledger.json` | Observed by the owner"
+      },
+      {
+        "path": ".project-local/runs/wl02-repro-20261021/digest-witness-backend-local.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 1141,
+        "text": "`.project-local/runs/wl02-repro-20261021/digest-witness-backend-local.json`）。"
       },
       {
         "path": ".project-local/runs/workflow",
@@ -11175,7 +11193,7 @@
     "reviewQueue": 7,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 337
+    "presentOnThisMachine": 339
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

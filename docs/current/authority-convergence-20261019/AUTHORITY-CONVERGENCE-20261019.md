@@ -1118,7 +1118,7 @@ DOC_CITATIONS rewritten=0 blocked=0）。**整链的全量批跑是在云端那�
 owner 本轮指令逐字：「全部授权 静默执行 不要打扰我要授权 以闭环为目标 完成所有未完成的任务」。
 上一轮交接的 7 项待办因此全部推进，其中 2 项以「按实测改判」闭合而不是以动作闭合，逐条写明。
 
-**先复测基线**：`HEAD == @{u} == a5f14d6980cf82898fa9965f6902f5b2ed8d9512`、tree
+**先复测基线**：`HEAD == origin/docs/handoff-20261018-qoder == a5f14d6980cf82898fa9965f6902f5b2ed8d9512`、tree
 `76ca3f4dc27b92d7ec2801f09f39cefe9b697dd2`、脏改 0、stash 0、`main == origin/main == f6077d18…`、
 `feat/w06… == 8f6540df…`。两处交接数字要更正：run 39493527142 的 check-run 是 **12 枚全 success**（不是 10），
 `tests/ci/test_text_legibility_gate.py` 是 **57 例**（`unittest discover` 实测 `Ran 57 tests / OK`，不是 12），
