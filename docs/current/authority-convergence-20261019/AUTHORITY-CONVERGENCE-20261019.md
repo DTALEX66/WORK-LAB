@@ -1192,13 +1192,16 @@ DSH 的 225.65 MB 安装回滚副本：**未能定位，故不删除**。按 ERR
 
 ### 本轮验证与提交形状
 
-三个提交：`04eec5ec…`（产品修复 + 仪器 + 守卫 + 文档更正 + CI 步骤 + 同批重发的派生记录）、
+到写这一段为止是三个提交：`04eec5ec…`（产品修复 + 仪器 + 守卫 + 文档更正 + CI 步骤 + 同批重发的派生记录）、
 `c1f38188…`（审计包登记 + 入库归档不走 LFS 的有范围例外）、
 以及账本提交（`ERR-284`、`ERR-285`，两条 fixedCommit 都指向第一个提交，
 `LEDGER_FIX_COMMIT_BINDING` 读回 `promiseInTree=True / verified=PENDING`）。
-改跟踪字节前跑的门与改后重发的记录：`TOOL_INVENTORY`（`trackedTools=79 withLedgerPromise=20 unclaimed=0`）、
+推送后 runner 又量出一条新的红，追加的两个提交与它的归因见 §22。
+改跟踪字节前跑的门与改后重发的记录：`TOOL_INVENTORY`（初量 `trackedTools=79 withLedgerPromise=20 unclaimed=0`，
+本轮结束时实测为 `withLedgerPromise=21`，见 §22——同一个数在自己一轮里就变了两次，
+这就是"派生记录必须由最后一个写者重发"的实证）、
 `PROJECT_LOCAL_CITATION_AUDIT`、`CURRENT_STATE`、三个账本派生审计；
-`ERROR_LEDGER_PASS entries=284 classifications=14`；前端 `npm run typecheck` 干净、
+`ERROR_LEDGER_PASS entries=284 classifications=14`（§22 又加了一条，终值 285）；前端 `npm run typecheck` 干净、
 `vitest` 68 文件 826 例全绿；后端定向模块 `tests/workflow-assistance/test_evidence_range_reader.py` 30 例、
 `tests/ci/test_handle_latency_attribution.py` 15 例、`tests/ci/test_evidence_reason_codes_are_one_list.py` 6 例全绿。
 `scripts/maintenance/release_temp_fixture_residue.py --apply` 释放 3 个孤儿临时根共 2.0 MiB（清单落盘），
@@ -1207,3 +1210,52 @@ DSH 的 225.65 MB 安装回滚副本：**未能定位，故不删除**。按 ERR
 
 仍待 owner 的只剩两件：PR #178 合入 `main` 之后的 main-SHA 重锚，以及把手块 200 行是否改成
 窗口化/默认可达（本轮只加断言与几何事实，没动布局）。
+
+## 22. 合入与合并后的独立判决：中间那枚红是 runner 的冷启动（2026-10-22）
+
+PR #178 于 2026-10-21T17:59:36Z 合入，合并提交 `b6f41e99d8ecf53a2c7e33458f9c7ff1f46ee5fc`。
+合入方式是一次有理由的偏离：本仓此前四个已合并 PR 的合并提交都只有一个父提交（squash），本轮改用
+merge commit。原因是 exact-SHA 判决的可追溯性——CI 判绿的是 `c0f5bf21`，squash 会把它替换成一个
+CI 从未运行过的新 SHA 放进 main，而"合并后不得沿用分支 CI 冒充合并后的验证"正是本轮要守的那条；
+merge commit 让被判绿的整串提交留在 main 的祖先里。逐个实测确认：
+`git merge-base --is-ancestor <sha> origin/main` 对 `04eec5ec`、`c1f38188`、`bf097f45`、`79f48a54`、
+`6f753f19`、`c0f5bf21` 六枚全部为真；分支未删除，账本按 SHA 引用它们。
+
+**中间那枚红不在产品里，在仪器的等待里。** 第一个推送的 head `79f48a54` 的 run 39642405874 判 failure：
+observer 作业里既有的几何门第一步 exit 1，`full` 视图所有选择器量不到东西
+（topbar `element=MISSING`、brand=None、rail=None、content `{absent:true}`），
+而同一个作业里紧随其后的 compact 与 floor 两个会话在同一份包体上量到正常数字（gap=130 / gap=404），
+同一份包体在本机三视图全绿。根因是共享引导 `serve_and_eval` 用固定 sleep 代替就绪条件
+（2.0 s 等端口 + 0.4 s 等 reflow + 1.0 s 就 evaluate），预算写的是开发机的启动时间，
+487 kB 的包在冷 runner 上还没挂载就被量。记为 ERR-286（分类 ci_tooling），修成有界就绪轮询
+（等 `.app` 出现，预算 24 s、0.5 s 一跳，超时必须返回 False），并把等待本身随数字返回
+（`readyWait={ms,mounted,selector,budgetMs}`）。守卫 `tests/ci/test_cdp_harness_waits_for_mount.py` 10 例，
+其中一条结构断言钉住 `serve_and_eval` 仍保留截图分支——第一版草稿把那行 `sleep` 连同 `shot` 分支
+一起删掉了，这条断言正是为抓住它写的，也确实抓到了。本机重跑三视图 `GEOMETRY_GATE_PASS`，
+`readyWait.ms=0 / mounted=true`（本机本来就快，量不出等待是正常结果而不是缺陷）。
+诚实的边界：runner 侧那一步究竟等了多久，没有任何上传产物能回答（这一步的收据不在
+`ci-summary-observer` 里），能引用的只有"同一步骤、同一族包体，`79f48a54` 红、`c0f5bf21` 与
+`b6f41e99` 绿"这一条前后对照。
+
+**新接进 CI 的扫掠第一次在 runner 上给出判决**：`Text legibility sweep` 于 2026-10-21T18:17:02Z
+`LEGIBILITY_GATE_PASS`，`every_scrollable_range_was_traversed stops=501/501 lanes_short=[]`、
+`no_text_below_the_type_floor offenders=0`、`every_text_node_meets_AA aa_failures=0 invisible=0`、
+`sampled=3574 present=6674`。runner 的分母与本机（566/566 站、3,923/8,006）不同，这是两个宿主上
+两次独立的量，不是同一个数被抄了两遍——引用的时候必须带宿主。
+
+**合并后的重锚**：`origin/main` 自己的 push 触发 run 39648708283（work-lab-gate）
+与 39648708412（wlr-060-production-gates）均 conclusion=success，前者 7/7 作业绿
+（`gate-plan / workflow-assistance / integration / observer / token-monitor / supply-chain-security / aggregate`），
+几何门 18:15:38 判绿。`ERR-284`、`ERR-285`、`ERR-286` 的 `verifiedCommit` 钉到 `b6f41e99`——
+钉之前先断言每行的 fixedCommit 都是它的祖先、该对象在库、非尾部行未移动、summary 计数未动，
+再由
+`scripts/audit/ledger_binding_readback.py` 读回三行 `verified=b6f41e99… promiseInTree=True`，
+`ERROR_LEDGER_PASS entries=285 classifications=14 counts_consistent=true`。
+main 的 SHA 不写进任何权威文件当常量：`project-authority-index.json` 的
+`currentMainMustBeResolvedDynamically=true` 就是为这一刻准备的，读者自己 `git rev-parse origin/main`。
+
+§21 里那两个后来变动的数（`withLedgerPromise=20`→21、账本 284→285）已在原段就地标注终值，
+没有把它们改回"看起来一直对"的样子。
+
+仍不在本轮范围内、留给 owner 的只剩一件：把手块 200 行 / 23,056 px 列表是否改成窗口化或默认可达。
+本轮交付的是断言与几何事实，不是布局决定。
