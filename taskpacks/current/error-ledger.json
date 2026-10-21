@@ -8606,7 +8606,7 @@
       "lifecycle": {
         "introducedCommit": null,
         "fixedCommit": "04eec5eca32d9ab3f90b51d0b87ff276fe4ec5db",
-        "verifiedCommit": null,
+        "verifiedCommit": "b6f41e99d8ecf53a2c7e33458f9c7ff1f46ee5fc",
         "affectedCapability": "修复验收与方案证据的可信度（问题闭环的「测试与运行读回」段）；界面证据泳道的身份列",
         "regressionCommand": "python -m unittest discover -s tests/workflow-assistance -p test_evidence_range_reader.py; python -m unittest discover -s tests/ci -p test_evidence_reason_codes_are_one_list.py",
         "currentApplicability": "VERIFIED_LIVE_20261022",
@@ -8641,7 +8641,7 @@
       "lifecycle": {
         "introducedCommit": null,
         "fixedCommit": "04eec5eca32d9ab3f90b51d0b87ff276fe4ec5db",
-        "verifiedCommit": null,
+        "verifiedCommit": "b6f41e99d8ecf53a2c7e33458f9c7ff1f46ee5fc",
         "affectedCapability": "度量蓝图的延迟类指标可信度；Observer 证据泳道首屏可达性的判断依据",
         "regressionCommand": "python -m unittest discover -s tests/ci -p test_handle_latency_attribution.py; python scripts/audit/handle_block_visibility_via_cdp.py --samples 4",
         "currentApplicability": "VERIFIED_LIVE_20261022",
@@ -8677,7 +8677,7 @@
       "lifecycle": {
         "introducedCommit": null,
         "fixedCommit": "6f753f19c5412fec111209d788e07a3e39a92cd8",
-        "verifiedCommit": null,
+        "verifiedCommit": "b6f41e99d8ecf53a2c7e33458f9c7ff1f46ee5fc",
         "affectedCapability": "CI 判定的可信度：几何门、逐泳道扫掠与把手延迟探针共用同一个采集引导",
         "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py; python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json",
         "currentApplicability": "VERIFIED_LIVE_20261022",
