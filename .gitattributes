@@ -18,6 +18,14 @@
 *.psd filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
+# Owner inbound archives stay plain blobs. Measured 2026-10-21: the four archives already under
+# docs/history/owner-inputs/ are stored as full bytes (`i/lf w/-text`), and
+# tests/workflow-assistance/test_material_catalog_uses_repository_bytes.py + `owner_material_catalog.py verify`
+# hash the archived bytes to prove a last copy survived. Routing a NEW inbound zip to LFS would hand those
+# readers a pointer file instead of the ZIP bytes wherever `lfs: true` is not set on the checkout — the ERR-283
+# shape, where a green local run and a red foreign host were the same commit. Largest inbound archive is
+# 94 kB, so LFS buys nothing here.
+docs/history/owner-inputs/**/*.zip -filter -diff -text
 # Immutable 2026-10-09 input/snapshot bytes: preserve original line endings and hashes.
 taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/** -text -diff
 docs/history/owner-inputs/20261009/ui-readable/** -text -diff

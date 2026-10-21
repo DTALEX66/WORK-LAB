@@ -2636,6 +2636,36 @@
       "contentId": "sha256:36a2614dff217c1f9ad96838ba0304ac3d734e23ad9ebb3e86bb00e2114be2a0",
       "deduplication": "CANONICAL_ORIGINAL",
       "intakeNote": "2026-10-19 owner decision: all other tasks frozen; this package is the current authority and closed-loop goal. Package documents carry no extra execution grant; no program in it was run. Archive bytes are identical to the supplied ZIP."
+    },
+    {
+      "id": "WL-REC-0106",
+      "sourceRelativePath": "WORK-LAB_独立闭环审计包_20261021.zip",
+      "sourceMember": null,
+      "archivePath": "docs/history/owner-inputs/20261021/WORK-LAB_独立闭环审计包_20261021.zip",
+      "archiveMemberChain": [],
+      "bytes": 72322,
+      "sha256": "09e16ad383cf82d000ee9d45a43d245816de2a916824052bce6420034e0bb4f3",
+      "ownership": "WORK_LAB",
+      "classificationBasis": "Owner-supplied 2026-10-21 independent closed-loop audit of WORK-LAB at candidate head a5f14d6980cf82898fa9965f6902f5b2ed8d9512; nine findings (WL-01..WL-07, IF-01, OSS-01) with per-finding acceptance clauses, plus the stage-by-stage closed-loop judgement and raw verification evidence for both main and the candidate",
+      "category": "AUDIT",
+      "status": "CURRENT_INPUT_NOT_IMPLEMENTATION",
+      "keywords": [
+        "WORK-LAB_独立闭环审计包_20261021.zip",
+        "独立闭环审计",
+        "independent closed loop audit",
+        "WL-02",
+        "digestVerdictOf",
+        "evidence_range_reader",
+        "问题中心",
+        "SOLUTION-001",
+        "a5f14d6"
+      ],
+      "contentIdentity": "EXACT_BYTES",
+      "suppliedProgramsExecuted": false,
+      "storageKind": "FILE",
+      "contentId": "sha256:09e16ad383cf82d000ee9d45a43d245816de2a916824052bce6420034e0bb4f3",
+      "deduplication": "CANONICAL_ORIGINAL",
+      "intakeNote": "2026-10-21 audit pack. Findings were re-verified on the owner's host before any of them was acted on: WL-02 (evidence-digest false pass) reproduced independently — a fixture whose real sha256 is e679f17a328e34b0… returned status OK under expected_digest=whole_digest=a×64, and the interface's digestVerdictOf compared one field with itself, so AGREE was true by construction; WL-01 measured as ahead=50 / 260 changed files of which 100 are non-document bytes. The pack also states tests/ci/test_text_legibility_gate.py has 12 related cases; the file measures 57 and already runs in CI, so that figure was not carried forward. Source document only, no execution authority; nothing in it was run. Its evidence/ subtree was read, not extracted into the repository."
     }
   ],
   "deduplicationReport": "docs/history/owner-inputs/RECORD-DEDUPLICATION.json",
