@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-21T17:11:27Z",
+  "generatedAt": "2026-10-21T17:39:16Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2558,
-    "distinctProjectLocalTokens": 630,
+    "trackedFilesScanned": 2559,
+    "distinctProjectLocalTokens": 631,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 630,
-    "citationsToAbsentTokens": 1850
+    "tokensAbsent": 631,
+    "citationsToAbsentTokens": 1853
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 961,
-      "distinctPaths": 477
+      "citations": 964,
+      "distinctPaths": 478
     },
     "machine_local_runtime_pointer": {
       "citations": 232,
@@ -2988,6 +2988,12 @@
         "text": "参考：本轮执行的真实证据在 `.project-local/runs/dsh-codex-live-probe-20260930.json`、`.project-local/artifacts/upgrade-runbook-dsh-codex-20260930.md`、提交 `6c944fb`（分支 `g15-dsh-codex-registry-reconcile-20260930`）、`.p"
       },
       {
+        "path": ".project-local/artifacts/wl02-and-handle-20261021/geometry-on-new-bundle.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 8660,
+        "text": "\"observed_error\": \"run 39642405874（head 79f48a54cc4920cae52662a313cee02c3f74b556）的 observer 作业里这一步 exit 1：full 视图所有选择器都量不到东西——topbar_measured FAIL height=None element=MISSING、brand=None、rail=None、cont"
+      },
+      {
         "path": ".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json",
         "file": "docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json",
         "line": 98,
@@ -3916,6 +3922,18 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 4386,
         "text": "\"command\": \"python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json\","
+      },
+      {
+        "path": ".project-local/runs/ci/geometry_gate.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 8658,
+        "text": "\"command\": \"python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json\","
+      },
+      {
+        "path": ".project-local/runs/ci/geometry_gate.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 8682,
+        "text": "\"regressionCommand\": \"python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py; python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.js"
       },
       {
         "path": ".project-local/runs/ci/geometry_gate.json",
@@ -11193,7 +11211,7 @@
     "reviewQueue": 7,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 339
+    "presentOnThisMachine": 340
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

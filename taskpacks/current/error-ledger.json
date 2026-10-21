@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 284,
+    "total": 285,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 87,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 4,
       "path_boundary": 15,
-      "ci_tooling": 23,
+      "ci_tooling": 24,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 2
@@ -8646,6 +8646,42 @@
         "regressionCommand": "python -m unittest discover -s tests/ci -p test_handle_latency_attribution.py; python scripts/audit/handle_block_visibility_via_cdp.py --samples 4",
         "currentApplicability": "VERIFIED_LIVE_20261022",
         "fixedCommitBasis": "重写仪器为页面内打点、绑定包体哈希、加 15 例守卫并更正权威叙事的那次提交"
+      }
+    },
+    {
+      "error_id": "ERR-286",
+      "date": "2026-10-22",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/audit/topbar_geometry_via_cdp.py::serve_and_eval",
+      "command": "python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json",
+      "exit_code": 1,
+      "observed_error": "run 39642405874（head 79f48a54cc4920cae52662a313cee02c3f74b556）的 observer 作业里这一步 exit 1：full 视图所有选择器都量不到东西——topbar_measured FAIL height=None element=MISSING、brand=None、rail=None、content_clears_topbar FAIL topbar={\"absent\": true}，而同一作业里紧随其后的 compact 与 floor 两个会话在同一份包体上量到正常数字（gap=130 shape=list rows=1 / gap=404），同一份包体在本机三视图全绿（回执 .project-local/artifacts/wl02-and-handle-20261021/geometry-on-new-bundle.json）。共享采集器在求值前只按固定节奏等：2.0 s 等 CDP 端口、0.4 s 等 reflow、1.0 s 然后 evaluate，这个预算写的是开发机的启动时间；487 kB 的包在冷 runner 上还没挂载就被量，于是 runner 的竞态被报成产品红。门本身的行为是对的——读不到的形状它拒绝给通过——缺的是等。",
+      "root_cause": "把「等一会儿」当成「等到就绪」。固定 sleep 的预算属于作者的宿主，不属于 runner，而且它不留任何痕迹：收据里没有等待时长，也没有「等到没等到」这个位，所以一次冷启动竞态与一次真实渲染缺陷在外部看是同一条 FAIL。",
+      "fix": "serve_and_eval 改为有界轮询挂载标志（wait_for_mount：默认选择器 .app、预算 24 s、0.5 s 一跳），将等待本身随数字返回（结果体加 readyWait={ms, mounted, selector, budgetMs}），超时必须返回 False，所以这条改动不可能把真坏了的渲染洗成绿。新增 tests/ci/test_cdp_harness_waits_for_mount.py（10 例）：立即挂载即返回、False 继续轮询、会话不回答算未挂载而不是异常、预算到点给 False、预算是时间上限而不是尝试次数、选择器被引号包进探针文本；另有结构断言钉住 serve_and_eval 仍保留截图分支与 readyWait 落进收据。",
+      "regression_test": "tests/ci/test_cdp_harness_waits_for_mount.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "纯函数化后用假 CDP 直接驱动四种答案序列；结构断言用 ast 读 serve_and_eval 自己的源码，第一次草稿把 shot 分支连同固定 sleep 一起删掉时，这条断言就是为抓住它而写的（也确实抓到了）",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "任何驱动真浏览器的采集器必须等「被测对象出现」而不是等「过了几秒」：固定 sleep 的预算属于作者的宿主，不属于 runner；等待本身还必须把时长与是否等到写进收据，否则冷启动竞态与真实渲染缺陷在外部不可区分，下一次只会重跑一次运气而不是一条判决。",
+      "remaining_boundary": "本轮的判决权在 runner：修复后的 exact-SHA 运行是否让 full 视图转绿，只能在下一个 head 的 CI 上读到；本机只能证明同一包体三视图全绿且 readyWait={ms:0, mounted:true}（本机本来就快）。24 s 是新写的预算，若 runner 更慢仍会超时，但那时收据会写明 mounted=false 与等待毫秒数，而不是一串读不出原因的 MISSING。同一作业里 desktop capability probe 的 session=FAIL （SESSIONNAME=null）与 U19 的 SKIPPED_HEADLESS 是既有环境性质，本行不改变它们。",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "本轮自己推送的 head 79f48a54 的 exact-SHA 判决（observer 作业）",
+      "related": [
+        "ERR-283（同一族：断言写在作者的宿主上，干净检出第一次执行就把它量出来）",
+        "ERR-264（链式步骤的绿只代表前面的都绿）",
+        "ERR-285（同一批改具：仪器的等待与产品的快慢混为一谈）"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "6f753f19c5412fec111209d788e07a3e39a92cd8",
+        "verifiedCommit": null,
+        "affectedCapability": "CI 判定的可信度：几何门、逐泳道扫掠与把手延迟探针共用同一个采集引导",
+        "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py; python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json",
+        "currentApplicability": "VERIFIED_LIVE_20261022",
+        "fixedCommitBasis": "把固定 sleep 换成有界就绪轮询、并让等待本身进入收据与守卫的那次提交"
       }
     }
   ],
