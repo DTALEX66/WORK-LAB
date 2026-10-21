@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-21T19:06:08Z",
+  "generatedAt": "2026-10-21T20:47:14Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2559,
     "distinctProjectLocalTokens": 631,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 631,
-    "citationsToAbsentTokens": 1854
+    "citationsToAbsentTokens": 1856
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,7 +29,7 @@
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 965,
+      "citations": 967,
       "distinctPaths": 479
     },
     "machine_local_runtime_pointer": {
@@ -3951,6 +3951,18 @@
         "path": ".project-local/runs/ci/legibility_sweep.json",
         "file": "taskpacks/current/error-ledger.json",
         "line": 8694,
+        "text": "\"command\": \"python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json\","
+      },
+      {
+        "path": ".project-local/runs/ci/legibility_sweep.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 8730,
+        "text": "\"command\": \"python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json\","
+      },
+      {
+        "path": ".project-local/runs/ci/legibility_sweep.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 8766,
         "text": "\"command\": \"python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json\","
       },
       {

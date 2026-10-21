@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-regression-command-targets/v3",
-  "at": "2026-10-21T19:05:45Z",
+  "at": "2026-10-21T20:46:46Z",
   "tool": "scripts/audit/ledger_regression_command_targets.py",
   "scope": "every record in taskpacks/current/error-ledger.json; file operands are extracted from the `regression_test` COMMAND and matched against `git ls-files` only, so the verdict cannot move with local disk state (ERR-142). Patterns, bare words, flags and env assignments are not treated as file promises.",
   "states": [
@@ -45,22 +45,22 @@
     }
   },
   "counts": {
-    "RESOLVES": 167,
+    "RESOLVES": 169,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "REPOINTED_20261007": 34,
     "PATH_GONE": 38,
     "OUT_OF_REPO_TARGET": 3
   },
   "measuredStates": {
-    "RESOLVES": 200,
+    "RESOLVES": 202,
     "NO_FILE_OPERAND_IN_COMMAND": 44,
     "PATH_GONE": 38,
     "OUT_OF_REPO_TARGET": 3,
     "REPOINTED_20261007": 1
   },
-  "resolvedAfterApply": 200,
-  "records": 286,
-  "stateDigest": "b6e91010959f470318c5f48c6158f2df07f244ff292479f88685b66487c4d12e",
+  "resolvedAfterApply": 202,
+  "records": 288,
+  "stateDigest": "b65a3c432240f1a0c036836bb610e81a62e2cce8a2251771e6af1f6f90c15079",
   "repointMap": {
     ".../codex.cmd": "packages/client-neutral-core/bin/codex.cmd",
     "./bin/codex": "packages/client-neutral-core/bin/codex",
@@ -5461,6 +5461,40 @@
       ],
       "state": "RESOLVES",
       "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-288",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/ci/test_cdp_harness_waits_for_mount.py",
+      "operands": [
+        {
+          "operand": "tests/ci/test_cdp_harness_waits_for_mount.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/ci/test_cdp_harness_waits_for_mount.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
+    },
+    {
+      "errorId": "ERR-289",
+      "statusAfter": "PASS",
+      "hasFixedCommit": true,
+      "command": "tests/ci/test_cdp_harness_waits_for_mount.py",
+      "operands": [
+        {
+          "operand": "tests/ci/test_cdp_harness_waits_for_mount.py",
+          "category": "RESOLVES",
+          "candidates": [
+            "tests/ci/test_cdp_harness_waits_for_mount.py"
+          ]
+        }
+      ],
+      "state": "RESOLVES",
+      "reason": "every operand resolves against git ls-files"
     }
   ],
   "notClaimed": [
@@ -5470,5 +5504,5 @@
     "OUT_OF_REPO_TARGET claims are re-checkable only on the machine holding the live client home, which is why they are labelled instead of counted as resolved",
     "no record's status_after was changed by this tool"
   ],
-  "whyItMatters": "the ledger carries 250 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
+  "whyItMatters": "the ledger carries 252 PASS records; a promise whose file no longer exists cannot be re-run, so each record now says which of the six states it is in"
 }

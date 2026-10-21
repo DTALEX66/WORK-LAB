@@ -35,6 +35,7 @@ import json
 import math
 import re
 import sys
+import traceback
 import time
 from pathlib import Path
 
@@ -836,6 +837,34 @@ def crossfade_measure(root: Path, browser: str, u19, geometry) -> dict:
     return raw
 
 
+def run_views_session(geometry, root, browser, u19, path, window, size, expr, theme, api,
+                      attempts=2):
+    """Open the whole-rail sweep in its own browser session, retrying a bounded number of times.
+
+    Measured twice on the runner and never on the development host: the session dies within seconds of the
+    geometry gate's own session closing (`LEGIBILITY_GATE_NOT_RUN views/dark at 1280px TimeoutError` 16 s
+    after a green geometry step at 9513c216; the light theme at ed7b8fa6), while the same bundle sweeps clean
+    in three other runs. A second session is the cheapest honest discriminator: a page or product defect
+    repeats, a launch race does not. Every attempt is printed with its traceback and counted in the receipt,
+    so a retry is a recorded fact, not a hidden re-roll — and if all attempts fail this still raises, and the
+    step still exits 3 as NOT_RUN.
+    """
+    last: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            collected = geometry.serve_and_eval(root, path, window, expr, browser, u19,
+                                                viewport=(size, 820),
+                                                evaluate_timeout_s=SWEEP_EVALUATE_TIMEOUT_S)
+        except Exception as exc:  # noqa: BLE001 -- every attempt is reported before it is retried
+            last = exc
+            print(f"LEGIBILITY_SWEEP_ATTEMPT {theme} {size}px attempt={attempt}/{attempts} {exc!r}")
+            traceback.print_exc()
+            continue
+        collected["sweepAttempts"] = attempt
+        return collected
+    raise last if last is not None else RuntimeError("no sweep attempt was made")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=str(ROOT))
@@ -904,12 +933,10 @@ def main() -> int:
                         path = (f"/index.html?view=overview&theme={theme}&api={api}" if api
                                 else f"/index.html?view=overview&mode=UNKNOWN&theme={theme}&shell=tauri")
                         try:
-                            collected = geometry.serve_and_eval(root, path, window,
-                                                            views_expression(f"{size}px"),
-                                                            browser, u19,
-                                                            viewport=(size, 820),
-                                                            evaluate_timeout_s=SWEEP_EVALUATE_TIMEOUT_S)
-                        except Exception as exc:  # noqa: BLE001
+                            collected = run_views_session(geometry, root, browser, u19, path, window,
+                                                          size, views_expression(f"{size}px"),
+                                                          theme, api)
+                        except Exception as exc:  # noqa: BLE001 — a failed measurement is NOT_RUN, never a pass
                             print(f"LEGIBILITY_GATE_NOT_RUN views/{theme} at {size}px {exc!r}")
                             return 3
                         reports.append({"theme": f"{theme}-views-{size}px",
@@ -922,6 +949,7 @@ def main() -> int:
                     harvest = harvest_settled(root, browser, u19, geometry, theme, api=api)
                 except Exception as exc:  # noqa: BLE001 — a failed measurement is NOT_RUN, never a silent pass
                     print(f"LEGIBILITY_GATE_NOT_RUN {theme} {exc!r}")
+                    traceback.print_exc()
                     return 3
                 reports.append({"theme": theme, "verdict": verdict(theme, harvest),
                                 "harvest": harvest, "browser": browser})

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-21T19:08:28Z",
+  "generatedAt": "2026-10-21T20:46:27Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -891,9 +891,9 @@
     },
     {
       "path": "scripts/audit/text_legibility_via_cdp.py",
-      "sha256": "7fab30b5fc79a5d5ba6d9c78b431efdde16d50cd2c18b55ed3dabf43d0da5326",
-      "bytes": 53186,
-      "lines": 956,
+      "sha256": "457aa11f2a7275ed98420e0841a4dba13c5b96a3d9db14dfdfeceae941af9623",
+      "bytes": 54814,
+      "lines": 984,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 17,
@@ -942,9 +942,9 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "fd8aa27277c0a9d31f96c62172dabe9fd746ccde8ed4c9a7598df9aab8c07020",
-      "bytes": 47116,
-      "lines": 871,
+      "sha256": "23d2092fd32426377c2e16af97518f16905a00dd88f62e4fb9799c68cbe8711a",
+      "bytes": 47738,
+      "lines": 877,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 2,
       "citedByRecords": 24,

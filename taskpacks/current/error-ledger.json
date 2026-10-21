@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 286,
+    "total": 288,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 87,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 4,
       "path_boundary": 15,
-      "ci_tooling": 25,
+      "ci_tooling": 27,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 2
@@ -8701,7 +8701,7 @@
       "regressionTestVerifiabilityReason": "守卫自己先错了一次并被纠正：第一版按短语定位拒收点，匹配到的正是我在另一处注释里引用的同一句话，于是它永远不会失败；改成按 print 语句定位后，删掉 return 3 即判红。扫掠判定模块 57 例不变仍绿",
       "evidence_level": "local-focused",
       "repeat_prevention": "把一段采集接进 CI 之前，必须同时说出它每一次求值的应答上限是多少、以及这个数字属于被测范围的哪一层；凡共享引导里存在「为 A 设计的默认值」，接 B 之前必须让 B 自己声明，而不是继承 A 的上限。守卫定位代码时不能只匹配短语——短语也出现在自己的散文里，匹配到散文的守卫不可能失败。",
-      "remaining_boundary": "300 秒仍是经验值：本机一趟两主题约 70 秒，runner 观测到单主题 35 秒附近，若 runner 慢到单主题超过 300 秒，这一步会再次 NOT_RUN——那时收据会写明用掉的预算与泳道，而不是静默缩样。verifiedCommit 留空：这条要在 main 重新变绿的那次运行之后才能力证，本轮先把判决权交给 CI。同一作业里 DESKTOP_CAPABILITY_FAIL(session=FAIL, SESSIONNAME=null) 与 U19 的 SKIPPED_HEADLESS 是runner 无桌面的既有性质，本行不改变它们。",
+      "remaining_boundary": "【归因已被 traceback 推翻，见 ERR-289】不是应答预算：ChromeCDP 建连时 socket 的每次读超时写死 10 秒，self.timeout 只管跳帧循环的 deadline，所以把外层提到 300 秒对一次超过 10 秒的静默期毫无作用。预算参数化仍然有价值（它进收据、真实超时仍 exit 3），但那次红的机制是两层阈值不一致。",
       "status_before": "FAIL",
       "status_after": "PASS",
       "intakeSource": "本轮自己合入后 main 的 head ed7b8fa6 的 push 触发运行（work-lab-gate）",
@@ -8718,6 +8718,79 @@
         "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py; python -m unittest discover -s tests/ci -p test_text_legibility_gate.py",
         "currentApplicability": "VERIFIED_LIVE_20261022",
         "fixedCommitBasis": "把应答预算参数化、由扫掠自己声明并写进取收据的那次提交"
+      }
+    },
+    {
+      "error_id": "ERR-288",
+      "date": "2026-10-22",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/audit/text_legibility_via_cdp.py（整轨扫掠的会话引导与两处拒收点）",
+      "command": "python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json",
+      "exit_code": 3,
+      "observed_error": "main 的第二个 head 9513c216（run 39663107318）再次判红，还是这一步：同一作业里几何门 19:52:33 GEOMETRY_GATE_PASS，扫掠 19:52:49 报 `LEGIBILITY_GATE_NOT_RUN views/dark at 1280px TimeoutError('timed out')`，相差 16 秒；上一个 head ed7b8fa6 是 light 主题同形状。两次都发生在 main 上、都不在 PR head 上、开发机一次都没复现。而拒收点写成只 print 异常的 repr：连着两次 main 红无法归因——判决存在，证据不存在，这正是 ERR-281 记过的「报告打不出自己的明细」。",
+      "root_cause": "三个叠在一起。(a) 归因被抢跑：ERR-287 只凭「本机 35 秒 / 默认 60 秒」就把红解释成应答预算不足，没有先拿到 raise 的位置；预算参数化是对的，把它当成原因就是无证据推断。(b) 拒收路径丢掉栈，一个自己不打明细的门红了也只能靠重跑碰运气。(c) 同一份字节在 runner 上时好时坏，且失败发生在另一个浏览器会话刚关闭的几秒内——这是启动竞态的形状，不是被测页面的形状。",
+      "fix": "两处拒收点补 traceback.print_exc()，下一次红能指出 raise 在哪一层；整轨会话包一层有界重试 run_views_session(attempts=2)：每次失败打印 attempt=i/n 与栈，成功那次把 collected.sweepAttempts 写进取收据，两次都失败仍然抛出、步骤仍然 exit 3 报 NOT_RUN。重试不是重掷硬币：它是有记录的事实，也是区分「页面坏了」（两次都失败）与「启动竞态」（第二次就成）最便宜的判据。同时把 ERR-287 的 remaining_boundary 改成记录它自己被证伪，而不是悄悄改写那条断言。",
+      "regression_test": "tests/ci/test_cdp_harness_waits_for_mount.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "14→18 例：重试计数进回执、持续失败仍抛出最后一个错、attempts=1 不得变成静默、两处拒收点必须 print traceback（计数断言）。本机复跑两主题 LEGIBILITY_GATE_PASS 且 sweepAttempts=1，证明快路径没有被重试掩盖。",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "凡自己会判红的门必须先交出 raise 的位置再谈原因：只有 repr(exception) 的拒收点等于让下一次红不可归因。修一次没修对时，必须回答「我的证据支持到哪一步」，不能把一次有用的参数化写成原因。接进 CI 的浏览器步骤必须能区分启动竞态与被测缺陷，而且区分方式要留在收据里（第几次尝试），不允许静默重跑。",
+      "remaining_boundary": "【本行“启动竞态”的假设同样被推翻，见 ERR-289】traceback 显示 raise 在 _recv_text → one_frame → recv，且 attempt=1/2 与 attempt=2/2 抛出完全相同的 TimeoutError：那是确定性阈值，不是竞态。补 traceback 这条改动是本次能归因的唯一原因，保留；有界重试没有救下任何东西，只是被证明无害。为什么 PR head 绿、main 红也由同一机制解释：这条路径的快慢决定静默期是否越过 10 秒，与分支无关。",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "本轮自己合入后 main 的第二个 head 9513c216 的 push 触发运行（work-lab-gate）",
+      "related": [
+        "ERR-287（被本行证伪的上一次归因）",
+        "ERR-281（报告打不出明细）",
+        "ERR-286（同族：把宿主的快慢当成判决条件）"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "5758d5a4d7f76e98cf5f9c5f9fb1bdc25724ad37",
+        "verifiedCommit": null,
+        "affectedCapability": "CI 判定的可归因性与稳定性：本轮接入的逐泳道扫掠作业",
+        "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py",
+        "currentApplicability": "VERIFIED_LIVE_20261022",
+        "fixedCommitBasis": "补 traceback 与有记录重试的那次提交"
+      }
+    },
+    {
+      "error_id": "ERR-289",
+      "date": "2026-10-22",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/audit/topbar_geometry_via_cdp.py::ChromeCDP.__init__",
+      "command": "python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json",
+      "exit_code": 3,
+      "observed_error": "补上 traceback 之后红变得可读，也就当场推翻了 ERR-287 与 ERR-288 两次的解释。ff3348bf （run 39668208804）的栈：run_views_session → serve_and_eval 的 raw = cdp.evaluate(expr) → send → _recv_text → one_frame → ws.recv → TimeoutError: timed out；attempt=1/2 与 attempt=2/2 抛出完全相同的异常。机制是：ChromeCDP 建连时 create_connection(..., timeout=10) 把 socket 每次读的超时写死成 10 秒，而 self.timeout 只用于跳帧循环的 deadline。整轨扫掠的表达式在 runner 上存在 >10 秒不吐 websocket 帧的静默期，于是任何一次 recv 到点就抛，外层提到 300 秒毫无作用。开发机没有这个静默期，所以本机永远复现不了——这也解释了 PR head 与 main 的差别只在于当时宿主快慢，与分支无关。",
+      "root_cause": "同一个语义被两处各自实现：一处声明“能等多久”，另一处硬编码“每次读只等 10 秒”，而且较紧的那一层不可见。ERR-287 修的是可见的那层，所以修不动；两次归因（预算不足、启动竞态）都是在没有 raise 位置的情况下猜的，第二次猜得更具体，因此错得更明显。",
+      "fix": "应答预算只留一个数：socket 的每次读超时就是声明的 timeout（create_connection(timeout=timeout)），删除硬编码的 10 秒。守卫 tests/ci/test_cdp_harness_waits_for_mount.py 18→21 例：声明 300 时 socket 必须是 300、cdp.timeout 与 socket 超时必须相等、默认 60 仍是 60、ChromeCDP 构造里不得再出现 timeout=10。把 timeout=timeout 换回 timeout=10 后 3 例判红，随后逐字节恢复。ERR-287 与 ERR-288 的被推翻之处按各自 remaining_boundary 就地标注，不改写原始断言。",
+      "regression_test": "tests/ci/test_cdp_harness_waits_for_mount.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "用 unittest.mock 打桩 socket.create_connection 记录真实传入的 timeout，并把 ChromeCDP 的 handshake 需求喂满，因此断言的是构造期的实际值而不是源码字符串；反向植入 timeout=10 立刻判红 3 例",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "同一个“能等多久”的语义只能有一个来源：任何声明的预算都必须一直走到真正阻塞的那一层（socket 的读、循环的 deadline、进程的 wait），中间不允许出现第二处硬编码常量。没有 raise 位置之前不得写归因：本仓在同一条红上连续错了两次。",
+      "remaining_boundary": "本地复跑几何门与整轨扫掠均 PASS，但 runner 上是否彻底不再红只能由下一个 exact-SHA 判决说明，因此本行与 ERR-287、ERR-288 的 verifiedCommit 都留空。另外这层改动让一次真正卡死的表达式现在可以等满 300 秒才失败——CI 时间代价由 40 分钟作业上限兜住，尚未按 runner 观测重算扫掠的墙钟耗时。",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "本轮 PR #181 head ff3348bf 的 exact-SHA 运行里新打出的 traceback",
+      "related": [
+        "ERR-287（被本行推翻的预算归因）",
+        "ERR-288（被本行推翻的竞态归因）",
+        "ERR-281（打不出明细就无法归因）",
+        "ERR-286（同一引导里的另一处宿主常量）"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "8504aa305a7b7bab7f891168c592f2be91cb57a8",
+        "verifiedCommit": null,
+        "affectedCapability": "CI 判定的正确性与可归因性：所有经 CDP 求值的仪器（几何门、逐泳道扫掠、把手延迟）",
+        "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py",
+        "currentApplicability": "VERIFIED_LIVE_20261022",
+        "fixedCommitBasis": "把 socket 每次读的超时并入声明的应答预算、去掉硬编码 10 秒的那次提交"
       }
     }
   ],
