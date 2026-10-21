@@ -20,6 +20,7 @@ missing measurement into a number:
 """
 from __future__ import annotations
 
+import ast
 import importlib.util
 import re
 import unittest
@@ -46,6 +47,7 @@ def good_sample(**over) -> dict:
         "readbackAtMs": 3535,
         "rowsAtMs": 208,
         "rowCount": 200,
+        "snapshotHandleRows": 200,
         "rowsRect": {"top": 884, "bottom": 23940, "height": 23056},
         "viewport": {"width": 1262, "height": 668},
         "belowFoldAtCommit": True,
@@ -140,6 +142,74 @@ class ProblemsTests(unittest.TestCase):
         found = instrument.problems(good_sample(), 200)
         self.assertTrue(any("exceeds the stated budget 200 ms" in p for p in found), str(found))
         self.assertEqual([], instrument.problems(good_sample(), 1000))
+
+    def test_rows_without_a_snapshot_denominator_are_convicted(self) -> None:
+        found = instrument.problems(good_sample(snapshotHandleRows=None), None)
+        self.assertEqual(1, len(found), str(found))
+        self.assertIn("no denominator", found[0])
+
+    def test_more_dom_rows_than_the_snapshot_served_is_a_fabrication(self) -> None:
+        found = instrument.problems(good_sample(rowCount=240), None)
+        self.assertEqual(1, len(found), str(found))
+        self.assertIn("invented", found[0])
+        self.assertIn("240 rows while the snapshot served 200", found[0])
+
+    def test_a_taller_than_the_viewport_list_that_was_never_scrolled_is_convicted(self) -> None:
+        found = instrument.problems(good_sample(scrollOutcome="NO_SCROLL_HOOK", visibleAfterScroll=None),
+                                    None)
+        self.assertEqual(1, len(found), str(found))
+        self.assertIn("23056px inside a 668px viewport", found[0])
+        self.assertIn("34.5", found[0], "the receipt must say how many screens of rows it is talking about")
+
+    def test_a_short_list_needs_no_scroll_evidence(self) -> None:
+        # The conviction is about an un-windowed tail nobody reached, not about rects in general: a list that
+        # fits the viewport is fully on screen at commit, and demanding a scroll for it would be a false red.
+        sample = good_sample(rowsRect={"top": 20, "bottom": 500, "height": 480},
+                             scrollOutcome="NO_SCROLL_HOOK", visibleAfterScroll=None,
+                             belowFoldAtCommit=False)
+        self.assertEqual([], instrument.problems(sample, None))
+
+
+class GeometryIsPrintedTests(unittest.TestCase):
+    """The 23,056px figure may only live in a receipt that computed it."""
+
+    def test_the_report_carries_the_geometry_of_every_sample(self) -> None:
+        source = INSTRUMENT.read_text(encoding="utf-8")
+        self.assertIn('"handleGeometry": [handle_geometry(s) for s in samples]', source,
+                      "a receipt without the row count, the list height and the viewport height cannot back "
+                      "a claim about an un-windowed list")
+
+    def test_the_printed_line_names_the_numbers_a_reader_needs(self) -> None:
+        source = INSTRUMENT.read_text(encoding="utf-8")
+        for token in ("listPx", "viewportPx", "pxPerRow", "screens", "servedRows", "domRows"):
+            self.assertIn(token, source, f"the summary line dropped {token}, so the geometry is only in the JSON")
+
+    def test_handle_geometry_divides_by_real_numbers_and_not_by_assumptions(self) -> None:
+        self.assertEqual({"rowsInDom": 200, "rowsServedBySnapshot": 200, "listHeightPx": 23056,
+                          "viewportHeightPx": 668, "pxPerRow": 115.3, "viewportsOfScrolling": 34.5},
+                         instrument.handle_geometry(good_sample()))
+        empty = instrument.handle_geometry(good_sample(rowCount=0, rowsRect=None))
+        self.assertIsNone(empty["pxPerRow"], "a division by zero would invent a per-row cost")
+
+
+class CallSiteNameTests(unittest.TestCase):
+    """A helper that unit tests reach directly and the real call site cannot is the worst kind of green.
+
+    The shipped instrument crashed on its own report line because `main()` rebinds the name `geometry` to
+    the imported harness module; the guard suite stayed green because it only ever called the function.
+    """
+
+    def test_no_module_level_helper_is_shadowed_by_a_local_in_main(self) -> None:
+        tree = ast.parse(INSTRUMENT.read_text(encoding="utf-8"))
+        helpers = {node.name for node in tree.body if isinstance(node, ast.FunctionDef)}
+        main = next(node for node in tree.body
+                    if isinstance(node, ast.FunctionDef) and node.name == "main")
+        bound = {target.id for node in ast.walk(main) for target in ast.walk(node)
+                 if isinstance(target, ast.Name) and isinstance(target.ctx, ast.Store)}
+        bound |= {arg.arg for arg in main.args.args}
+        self.assertEqual(set(), helpers & bound,
+                         f"main() rebinds {sorted(helpers & bound)}, so a call to that name inside main() "
+                         "resolves to something else than the module-level helper")
 
 
 class AggregateTests(unittest.TestCase):

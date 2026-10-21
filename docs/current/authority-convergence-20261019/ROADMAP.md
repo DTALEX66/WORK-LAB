@@ -44,13 +44,18 @@
   `contentIncluded`、`enumerationScope`、`digestIndex` 子键、`order` 与 `orderingKey` 的一致性），
   之后才能撤掉 `apps/observer/frontend/src/contractConformance.ts` 里对 `artifactHandlesSummary.refused`
   的豁免行。这是**跨模块**改动（生产者在 workflow-assistance 侧），需要一张显式跨模块任务卡。
-- 把逐泳道的**浏览器扫掠**接进 CI 作业：`scripts/audit/text_legibility_via_cdp.py` 的算术与判定已由
-  `tests/ci/test_text_legibility_gate.py`（实测 57 例，`unittest discover` 计数，2026-10-21 重量；此处曾写 56）
-  在 CI 里钉住，但它启动真浏览器量已构建产物的那一步不在任何
-  作业里（CI 的浏览器步骤跑的是 `scripts/audit/topbar_geometry_via_cdp.py`）；
-  `scripts/audit/evidence_handles_render_via_headless_chromium.py` 同样只是本机取证。接入会影响共享管道
-  （需要浏览器与时长预算），等 owner 点头再做。时长代价已有实测：预算提到每泳道 96 站、全量走完之后，
-  一趟两主题 × 31 泳道在本机 69 秒（预算 16、只走 298/564 站时是 46 秒），不是"接不起"的量级。
+- 把逐泳道的**浏览器扫掠**接进 CI 作业 —— **已交付并有 runner 判决（2026-10-22，owner 本轮授权）**：
+  `.github/workflows/work-lab-gate.yml` 的 observer 作业新增 `Text legibility sweep` 一步
+  （`--all-views --live-backend --sizes 1280`，应答预算由调用方显式声明），
+  在 `bf3e189c` 上 `LEGIBILITY_GATE_PASS`：两主题各 `stops=501/501`、`sampled=3573` 与 `3575`、
+  `present=6674`、地板与 AA 零违例，墙钟约 84 秒；算术与判定仍由 `tests/ci/test_text_legibility_gate.py`
+  （实测 57 例，`unittest discover` 计数，2026-10-21 重量；此处曾写 56）钉住。
+  这一步接入后连着红过三次，两次归因（应答预算、启动竞态）都被下一次红推翻，机制最后落在"同一个
+  等待语义在两层各有一份实现、紧的那层看不见"——见收敛报告 §22 末与 `ERR-287/288/289`。
+  `scripts/audit/evidence_handles_render_via_headless_chromium.py` 仍只是本机取证，未接入。
+- 手区块的无虚拟化几何已进回执（收敛报告 §23：`rowsInDom`/`rowsServedBySnapshot`/`listHeightPx`/
+  `viewportHeightPx`/`pxPerRow`/`viewportsOfScrolling` 六个数与三条判红断言）。**留下的不是断言而是决定**：
+  200 行 ≈34 屏的列表要不要窗口化或默认可达，属 owner 的产品判断，本轮不动布局。
 
 NEXT 不是实施承诺；启动任一项仍需用户明确 Task Grant 和独立验收。
 
