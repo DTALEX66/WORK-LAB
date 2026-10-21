@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 285,
+    "total": 286,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 87,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 4,
       "path_boundary": 15,
-      "ci_tooling": 24,
+      "ci_tooling": 25,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 2
@@ -8682,6 +8682,42 @@
         "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py; python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json",
         "currentApplicability": "VERIFIED_LIVE_20261022",
         "fixedCommitBasis": "把固定 sleep 换成有界就绪轮询、并让等待本身进入收据与守卫的那次提交"
+      }
+    },
+    {
+      "error_id": "ERR-287",
+      "date": "2026-10-22",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/audit/text_legibility_via_cdp.py + scripts/audit/topbar_geometry_via_cdp.py",
+      "command": "python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json",
+      "exit_code": 3,
+      "observed_error": "main 的 head ed7b8fa6（run 39655934262）observer 作业判红：本轮新接入 CI 的那一步报 `LEGIBILITY_GATE_NOT_RUN views/light at 1280px TimeoutError('timed out')`，日志里另有 sidecar 静态服务线程的 WinError 10054/10053 连接复位；同一作业的几何门在同一时刻判绿。red 不在产品里，也不在「文本能不能读」这件事里——它在这一步从来没被给过一份属于整轨扫掠的应答预算：一次会话要点完 31 条泳道并把每条泳道的每一段滚动范围走完，本机一个主题约 35 秒，ChromeCDP 的默认 60 秒是为「量一个壳」设计的，runner 只要慢过一倍就撞上它。同一个步骤在 c0f5bf21、b6f41e99、66b710b2 三次判绿、在 ed7b8fa6 判红，也是这个形状：它取决于宿主快慢而不是字节差别。",
+      "root_cause": "把共享引导的默认 socket 应答超时当成所有调用者的预算。§22 已经把同一族的「固定 sleep 属于作者的宿主」记成 ERR-286 并修掉，但同一份引导里还有第二个隐式宿主常量没被显式化：等答案的 60 秒。新作业接进 CI 时我只量了「本机 70 秒」这一个数，没有回答「单次求值的上限是多少」。",
+      "fix": "应答预算改成调用方显式声明并落到收据：connect_with_retry 与 serve_and_eval 接受 evaluate_timeout_s，把用掉的值写进结果体（readyWait.evaluateTimeoutS），扫掠侧声明 SWEEP_EVALUATE_TIMEOUT_S=300；真实超时的拒收路径一字未改（仍 print LEGIBILITY_GATE_NOT_RUN … 且 return 3），不会把没量完缩成小样本冒充通过。本机复跑两主题 LEGIBILITY_GATE_PASS 且收据里 evaluateTimeoutS=300.0，证明预算确实到了等答案的那个 socket。守卫 tests/ci/test_cdp_harness_waits_for_mount.py 从 10 例增到 14 例：预算是参数而不是硬编码默认、它进收据、扫掠声明一个大于 60 且小于 900 的值并把常量传下去、拒收点必须按 print 语句定位。",
+      "regression_test": "tests/ci/test_cdp_harness_waits_for_mount.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "守卫自己先错了一次并被纠正：第一版按短语定位拒收点，匹配到的正是我在另一处注释里引用的同一句话，于是它永远不会失败；改成按 print 语句定位后，删掉 return 3 即判红。扫掠判定模块 57 例不变仍绿",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "把一段采集接进 CI 之前，必须同时说出它每一次求值的应答上限是多少、以及这个数字属于被测范围的哪一层；凡共享引导里存在「为 A 设计的默认值」，接 B 之前必须让 B 自己声明，而不是继承 A 的上限。守卫定位代码时不能只匹配短语——短语也出现在自己的散文里，匹配到散文的守卫不可能失败。",
+      "remaining_boundary": "300 秒仍是经验值：本机一趟两主题约 70 秒，runner 观测到单主题 35 秒附近，若 runner 慢到单主题超过 300 秒，这一步会再次 NOT_RUN——那时收据会写明用掉的预算与泳道，而不是静默缩样。verifiedCommit 留空：这条要在 main 重新变绿的那次运行之后才能力证，本轮先把判决权交给 CI。同一作业里 DESKTOP_CAPABILITY_FAIL(session=FAIL, SESSIONNAME=null) 与 U19 的 SKIPPED_HEADLESS 是runner 无桌面的既有性质，本行不改变它们。",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "本轮自己合入后 main 的 head ed7b8fa6 的 push 触发运行（work-lab-gate）",
+      "related": [
+        "ERR-286（同族另一半：等就绪修好了，等答案的上限还留着）",
+        "ERR-283（断言写在作者的宿主上，干净检出第一次执行就量出来）",
+        "ERR-281（链式步骤只报第一个红，掩盖其余）"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "47fde48f0db1250603f090f818551e19352972a1",
+        "verifiedCommit": null,
+        "affectedCapability": "CI 判定的稳定性与可读性：本轮接入的逐泳道 legibility 扫掠作业",
+        "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py; python -m unittest discover -s tests/ci -p test_text_legibility_gate.py",
+        "currentApplicability": "VERIFIED_LIVE_20261022",
+        "fixedCommitBasis": "把应答预算参数化、由扫掠自己声明并写进取收据的那次提交"
       }
     }
   ],

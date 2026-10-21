@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-21T18:26:20Z",
+  "generatedAt": "2026-10-21T19:08:28Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -891,12 +891,12 @@
     },
     {
       "path": "scripts/audit/text_legibility_via_cdp.py",
-      "sha256": "9def2af52562d9f3be565abbb35b343b546b9be5ce911cd8926cd75fcf351650",
-      "bytes": 52429,
-      "lines": 948,
+      "sha256": "7fab30b5fc79a5d5ba6d9c78b431efdde16d50cd2c18b55ed3dabf43d0da5326",
+      "bytes": 53186,
+      "lines": 956,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 16,
+      "citedByRecords": 17,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "apps/observer/frontend/DESIGN.md",
@@ -942,9 +942,9 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "bb8d980bb2387fd4a3a740abb9f7230efa97e2f13c55dcc90aaf14ec52368ff5",
-      "bytes": 46708,
-      "lines": 866,
+      "sha256": "fd8aa27277c0a9d31f96c62172dabe9fd746ccde8ed4c9a7598df9aab8c07020",
+      "bytes": 47116,
+      "lines": 871,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 2,
       "citedByRecords": 24,
