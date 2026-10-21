@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-21T20:08:14Z",
+  "generatedAt": "2026-10-21T20:46:27Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -942,9 +942,9 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "fd8aa27277c0a9d31f96c62172dabe9fd746ccde8ed4c9a7598df9aab8c07020",
-      "bytes": 47116,
-      "lines": 871,
+      "sha256": "23d2092fd32426377c2e16af97518f16905a00dd88f62e4fb9799c68cbe8711a",
+      "bytes": 47738,
+      "lines": 877,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 2,
       "citedByRecords": 24,
