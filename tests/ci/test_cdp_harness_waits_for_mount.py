@@ -17,11 +17,13 @@ from __future__ import annotations
 
 import ast
 import importlib.util
+import re
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HARNESS = ROOT / "scripts" / "audit" / "topbar_geometry_via_cdp.py"
+SWEEP = ROOT / "scripts" / "audit" / "text_legibility_via_cdp.py"
 
 
 def _load():
@@ -123,6 +125,48 @@ class HarnessStructureTests(unittest.TestCase):
         self.assertEqual(".app", harness.MOUNT_SELECTOR)
         self.assertGreaterEqual(harness.MOUNT_BUDGET_S, 20.0,
                                 "the bound is a runner's cold boot; the development host's 3.4 s is not it")
+
+
+
+class EvaluateBudgetTests(unittest.TestCase):
+    """The runner that judged main red at `ed7b8fa6` hit the harness's ANSWER timeout, not a product fault.
+
+    One sweep session clicks 31 rail lanes and walks every scroll range of every view, so the 60 s that
+    fits a single shell is not a budget for it. The fix declares the number where it is used and keeps the
+    refusal: a genuine timeout is still NOT_RUN, never a smaller sample.
+    """
+
+    def setUp(self) -> None:
+        self.harness_src = HARNESS.read_text(encoding="utf-8")
+        self.sweep_src = SWEEP.read_text(encoding="utf-8")
+
+    def test_the_answer_budget_is_a_parameter_not_a_hardcoded_socket_default(self) -> None:
+        self.assertIn("evaluate_timeout_s: float = 60.0", self.harness_src)
+        self.assertIn("connect_with_retry(cdp_port, evaluate_timeout_s=evaluate_timeout_s)",
+                      self.harness_src, "the budget must reach the socket that waits for the answer")
+
+    def test_the_budget_travels_into_the_receipt(self) -> None:
+        self.assertIn('"evaluateTimeoutS": evaluate_timeout_s', self.harness_src,
+                      "a verdict must state which budget it was produced under")
+
+    def test_the_sweep_declares_its_own_larger_budget_and_passes_it(self) -> None:
+        declared = re.search(r"^SWEEP_EVALUATE_TIMEOUT_S = ([0-9.]+)", self.sweep_src, re.M)
+        self.assertIsNotNone(declared, "the sweep never declares an answer budget")
+        self.assertGreater(float(declared.group(1)), 60.0,
+                           "the sweep inherits the single-shell default it already timed out against")
+        self.assertLess(float(declared.group(1)), 900.0,
+                        "an unbounded wait turns one hung session into a hung job")
+        self.assertIn("evaluate_timeout_s=SWEEP_EVALUATE_TIMEOUT_S", self.sweep_src)
+
+    def test_a_timeout_still_refuses_instead_of_shrinking_the_sample(self) -> None:
+        # Located by the statement, not by the phrase: the comment above declares that phrase too, and a
+        # guard that matches its own prose is a guard that can never fail.
+        lines = [ln for ln in self.sweep_src.splitlines()
+                 if 'LEGIBILITY_GATE_NOT_RUN views/' in ln and ln.lstrip().startswith("print(")]
+        self.assertEqual(1, len(lines), f"expected one refusal site, found {len(lines)}")
+        site = self.sweep_src.index(lines[0])
+        self.assertIn("return 3", self.sweep_src[site:site + 200],
+                      "a failed sweep must exit NOT_RUN, not continue with fewer lanes")
 
 
 if __name__ == "__main__":
