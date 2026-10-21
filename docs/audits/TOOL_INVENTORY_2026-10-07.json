@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-21T16:24:30Z",
+  "generatedAt": "2026-10-21T17:13:47Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -9,7 +9,7 @@
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
     "trackedTools": 79,
-    "withLedgerPromise": 20,
+    "withLedgerPromise": 21,
     "referencedSomewhere": 79,
     "unclaimed": 0
   },
@@ -433,12 +433,14 @@
       "bytes": 21563,
       "lines": 410,
       "digestBasis": "git-index",
-      "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByLedgerPromises": 1,
+      "citedByRecords": 6,
       "citedBy": [
+        "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "taskpacks/current/error-ledger.json",
         "tests/ci/test_handle_latency_attribution.py"
       ]
     },
@@ -1147,14 +1149,14 @@
       "lines": 335,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 14,
+      "citedByRecords": 15,
       "citedBy": [
+        ".gitattributes",
         ".workbuddy/memory/2026-10-16.md",
         "AGENTS.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "docs/future/WORK-LAB-SUPER-ENTRY-COMMAND-CENTER-LAB-ROUTER-2026-09-27.md"
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md"
       ]
     },
     {
@@ -1265,14 +1267,14 @@
       "lines": 149,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 10,
+      "citedByRecords": 11,
       "citedBy": [
         ".workbuddy/memory/2026-10-13.md",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
         "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "packages/client-neutral-core/scripts/project_temp.py",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     }
   ]
