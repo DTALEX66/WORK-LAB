@@ -41,6 +41,11 @@ import bundle_provenance  # noqa: E402  # every receipt names the bytes the brow
 OBS = ROOT / "apps" / "observer"
 DIST = OBS / "frontend" / "dist"
 OUT_DIR = ROOT / ".project-local" / "runs" / "geometry-gate"
+# The shell root both this gate and the legibility probe measure, and the bound they will wait for it.
+# 24 s, not 3.4 s: the budget is the runner's cold boot, not the development host's.
+MOUNT_SELECTOR = ".app"
+MOUNT_BUDGET_S = 24.0
+MOUNT_POLL_S = 0.5
 
 SELECTORS = [".app", ".topbar", ".search", ".top-actions", ".topbar-brand", ".winctl",
              ".winctl-btn", ".sidebar", ".main", ".kpi-grid", "body"]
@@ -634,9 +639,37 @@ def connect_with_retry(port: int, attempts: int = 6):
                        f"last_error={last_exc!r}")
 
 
+def wait_for_mount(cdp, selector: str, budget_s: float, poll_s: float) -> tuple[int, bool]:
+    """Poll until the shell root exists, and report how long that took.
+
+    Measured 2026-10-21 at `79f48a54` on windows-latest: the FIRST session of the geometry job returned every
+    selector as `{"absent": true}` — topbar, brand, rail, content — while the two sessions that followed it on
+    the same bundle measured normally, and the same bundle passes all three views locally. The fixed 2.0 s +
+    0.4 s + 1.0 s wait was written against the development host's boot time; on a cold runner a 487 kB bundle
+    had not mounted yet when the expression ran, so a runner-side race came back as a product red. The gate
+    refused, which is the correct behaviour for an unreadable shape — the missing piece was waiting.
+
+    The wait is bounded and a timeout still returns False, so this cannot turn a genuinely broken render
+    green: the selectors stay absent and the gate still reds, only now it also says how long it waited.
+    """
+    started = time.monotonic()
+    probe = f"!!document.querySelector({json.dumps(selector)})"
+    while True:
+        try:
+            if cdp.evaluate(probe) is True:
+                return int((time.monotonic() - started) * 1000), True
+        except Exception:  # noqa: BLE001 -- a session that has not answered yet is still "not mounted"
+            pass
+        elapsed = time.monotonic() - started
+        if elapsed >= budget_s:
+            return int(elapsed * 1000), False
+        time.sleep(poll_s)
+
+
 def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: str,
                    u19, shot: Path | None = None, viewport: tuple[int, int] | None = None,
-                   scale_factor: float = 1.0, serve_url: str | None = None) -> dict:
+                   scale_factor: float = 1.0, serve_url: str | None = None,
+                   mount_selector: str = MOUNT_SELECTOR) -> dict:
     """Serve the built `dist` and evaluate one expression in a headless Chrome.
 
     This is the browser bootstrap, not a topbar-specific step: a second instrument (the legibility
@@ -720,12 +753,19 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
                              {"width": viewport[0], "height": viewport[1],
                               "deviceScaleFactor": scale_factor, "mobile": False})
                     time.sleep(0.4)   # the reflow has to land before anything is measured
-                time.sleep(1.0)
+                waited_ms, mounted = wait_for_mount(cdp, mount_selector,
+                                                    MOUNT_BUDGET_S, MOUNT_POLL_S)
                 raw = cdp.evaluate(expr)
                 if shot is not None:
                     data = cdp.send("Page.captureScreenshot", {"format": "png"}).get("data", "")
                     shot.write_bytes(base64.b64decode(data))
-                return json.loads(raw)
+                parsed = json.loads(raw)
+                if isinstance(parsed, dict):
+                    # The wait travels with the numbers, so a later red can be told apart from a cold runner.
+                    parsed["readyWait"] = {"ms": waited_ms, "mounted": mounted,
+                                           "selector": mount_selector,
+                                           "budgetMs": int(MOUNT_BUDGET_S * 1000)}
+                return parsed
             finally:
                 cdp.close()
         finally:
