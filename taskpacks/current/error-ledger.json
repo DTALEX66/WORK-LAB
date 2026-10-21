@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 286,
+    "total": 287,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 87,
@@ -21,7 +21,7 @@
       "config_downgrade": 3,
       "dead_entry": 4,
       "path_boundary": 15,
-      "ci_tooling": 25,
+      "ci_tooling": 26,
       "sql_schema": 1,
       "regression_contract": 8,
       "boundary_leak": 2
@@ -8701,7 +8701,7 @@
       "regressionTestVerifiabilityReason": "守卫自己先错了一次并被纠正：第一版按短语定位拒收点，匹配到的正是我在另一处注释里引用的同一句话，于是它永远不会失败；改成按 print 语句定位后，删掉 return 3 即判红。扫掠判定模块 57 例不变仍绿",
       "evidence_level": "local-focused",
       "repeat_prevention": "把一段采集接进 CI 之前，必须同时说出它每一次求值的应答上限是多少、以及这个数字属于被测范围的哪一层；凡共享引导里存在「为 A 设计的默认值」，接 B 之前必须让 B 自己声明，而不是继承 A 的上限。守卫定位代码时不能只匹配短语——短语也出现在自己的散文里，匹配到散文的守卫不可能失败。",
-      "remaining_boundary": "300 秒仍是经验值：本机一趟两主题约 70 秒，runner 观测到单主题 35 秒附近，若 runner 慢到单主题超过 300 秒，这一步会再次 NOT_RUN——那时收据会写明用掉的预算与泳道，而不是静默缩样。verifiedCommit 留空：这条要在 main 重新变绿的那次运行之后才能力证，本轮先把判决权交给 CI。同一作业里 DESKTOP_CAPABILITY_FAIL(session=FAIL, SESSIONNAME=null) 与 U19 的 SKIPPED_HEADLESS 是runner 无桌面的既有性质，本行不改变它们。",
+      "remaining_boundary": "【本行的归因已被下一个 main head 证伪，见 ERR-288】300 秒不是那 16 秒的解释：9513c216（run 39663107318）同一作业里几何门 19:52:33 判绿、扫掠 19:52:49 报 TimeoutError，相差 16 秒，远小于任何一层的应答预算。当时给出的「runner 慢一倍就撞上 60 秒」是错的归因。把预算参数化本身仍然有用（它写进取收据，真实超时仍 exit 3），但它不是那次红的原因；原因要等 traceback 可见才可判，而那时拒收点只 print(repr(exc))。",
       "status_before": "FAIL",
       "status_after": "PASS",
       "intakeSource": "本轮自己合入后 main 的 head ed7b8fa6 的 push 触发运行（work-lab-gate）",
@@ -8718,6 +8718,42 @@
         "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py; python -m unittest discover -s tests/ci -p test_text_legibility_gate.py",
         "currentApplicability": "VERIFIED_LIVE_20261022",
         "fixedCommitBasis": "把应答预算参数化、由扫掠自己声明并写进取收据的那次提交"
+      }
+    },
+    {
+      "error_id": "ERR-288",
+      "date": "2026-10-22",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "ci_tooling",
+      "entrypoint": "scripts/audit/text_legibility_via_cdp.py（整轨扫掠的会话引导与两处拒收点）",
+      "command": "python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json",
+      "exit_code": 3,
+      "observed_error": "main 的第二个 head 9513c216（run 39663107318）再次判红，还是这一步：同一作业里几何门 19:52:33 GEOMETRY_GATE_PASS，扫掠 19:52:49 报 `LEGIBILITY_GATE_NOT_RUN views/dark at 1280px TimeoutError('timed out')`，相差 16 秒；上一个 head ed7b8fa6 是 light 主题同形状。两次都发生在 main 上、都不在 PR head 上、开发机一次都没复现。而拒收点写成只 print 异常的 repr：连着两次 main 红无法归因——判决存在，证据不存在，这正是 ERR-281 记过的「报告打不出自己的明细」。",
+      "root_cause": "三个叠在一起。(a) 归因被抢跑：ERR-287 只凭「本机 35 秒 / 默认 60 秒」就把红解释成应答预算不足，没有先拿到 raise 的位置；预算参数化是对的，把它当成原因就是无证据推断。(b) 拒收路径丢掉栈，一个自己不打明细的门红了也只能靠重跑碰运气。(c) 同一份字节在 runner 上时好时坏，且失败发生在另一个浏览器会话刚关闭的几秒内——这是启动竞态的形状，不是被测页面的形状。",
+      "fix": "两处拒收点补 traceback.print_exc()，下一次红能指出 raise 在哪一层；整轨会话包一层有界重试 run_views_session(attempts=2)：每次失败打印 attempt=i/n 与栈，成功那次把 collected.sweepAttempts 写进取收据，两次都失败仍然抛出、步骤仍然 exit 3 报 NOT_RUN。重试不是重掷硬币：它是有记录的事实，也是区分「页面坏了」（两次都失败）与「启动竞态」（第二次就成）最便宜的判据。同时把 ERR-287 的 remaining_boundary 改成记录它自己被证伪，而不是悄悄改写那条断言。",
+      "regression_test": "tests/ci/test_cdp_harness_waits_for_mount.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "14→18 例：重试计数进回执、持续失败仍抛出最后一个错、attempts=1 不得变成静默、两处拒收点必须 print traceback（计数断言）。本机复跑两主题 LEGIBILITY_GATE_PASS 且 sweepAttempts=1，证明快路径没有被重试掩盖。",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "凡自己会判红的门必须先交出 raise 的位置再谈原因：只有 repr(exception) 的拒收点等于让下一次红不可归因。修一次没修对时，必须回答「我的证据支持到哪一步」，不能把一次有用的参数化写成原因。接进 CI 的浏览器步骤必须能区分启动竞态与被测缺陷，而且区分方式要留在收据里（第几次尝试），不允许静默重跑。",
+      "remaining_boundary": "真正的 raise 位置要等下一个 runner 的 traceback；若重试后仍红，收据会带着两次尝试与栈，归因就不再靠猜。为什么同一个 workflow 在 PR head 绿、在 main 红（`cancel-in-progress` 只作用于非 main ref，还是 main 与别的作业抢资源）尚未证实，本轮不下结论。ERR-287 与本行的 verifiedCommit 都留空，等 main 重新变绿的那次运行。",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "本轮自己合入后 main 的第二个 head 9513c216 的 push 触发运行（work-lab-gate）",
+      "related": [
+        "ERR-287（被本行证伪的上一次归因）",
+        "ERR-281（报告打不出明细）",
+        "ERR-286（同族：把宿主的快慢当成判决条件）"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "5758d5a4d7f76e98cf5f9c5f9fb1bdc25724ad37",
+        "verifiedCommit": null,
+        "affectedCapability": "CI 判定的可归因性与稳定性：本轮接入的逐泳道扫掠作业",
+        "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py",
+        "currentApplicability": "VERIFIED_LIVE_20261022",
+        "fixedCommitBasis": "补 traceback 与有记录重试的那次提交"
       }
     }
   ],
