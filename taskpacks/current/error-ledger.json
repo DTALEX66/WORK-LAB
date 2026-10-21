@@ -9,13 +9,13 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 282,
+    "total": 284,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 87,
       "test_behavior_alignment": 38,
       "working_directory_recovery": 2,
-      "evidence_state": 55,
+      "evidence_state": 57,
       "ci_configuration": 24,
       "feature_gap": 13,
       "config_downgrade": 3,
@@ -8576,6 +8576,76 @@
         "regressionCommand": "python -m unittest discover -s tests/ci -p test_observer_launcher_chain_is_runnable.py; python -m unittest discover -s tests/ci -p test_stale_surface_paths_are_gone.py",
         "currentApplicability": "VERIFIED_LIVE_20261021",
         "fixedCommitBasis": "the commit that declared the batch line endings, set lfs: true on the job, and turned both host-shaped claims into named-precondition guards"
+      }
+    },
+    {
+      "error_id": "ERR-284",
+      "date": "2026-10-22",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": "packages/client-neutral-core/scripts/evidence_range_reader.py + apps/observer/frontend/src/lib/evidenceRange.ts",
+      "command": "python -m unittest discover -s tests/workflow-assistance -p test_evidence_range_reader.py",
+      "exit_code": 1,
+      "observed_error": "证据区间读取的身份核对可以在两层同时假通过。后端 read_range 把调用方给的 expected_digest 与同样是调用方给的 whole_digest 相比，从不哈希文件本身；services/orchestration/sidecar.py 的两个值都取自 URL query，所以整条链是「调用方 vs 调用方」。前端 digestVerdictOf 更直接：recorded 与 expected 读的是同一个表达式 result.identity?.wholeDigest，两者按构造相等，于是任何 status=OK 的响应都得到 AGREE，界面文案写「返回字节属于被记录的那份产物」。本机复现：写一个真实 sha256 为 e679f17a328e34b0… 的 fixture，两个参数都传 a×64，status=OK、内容照常返回，界面判 AGREE（回执 .project-local/runs/wl02-repro-20261021/digest-witness-backend-local.json）；审计包在 Linux 容器与候选 head 上量到同一件事。既有测试还把这条同义反复钉成期望（test_a_matching_digest_is_carried_into_the_result 把同一个摘要传两遍；EvidenceView.test.tsx 断言 AGREE），所以绿是在为缺陷作证。",
+      "root_cause": "「廉价的区间读不该顺带全量哈希」被实现成「让调用方自己声明实测摘要」。省 IO 的约束是对的，但它把身份的证据来源交给了唯一想要伪造它的那一方；而界面把「两个字段相等」写成了「字节属于被记录的产物」——同一个字段读两遍永远相等，这句话没有任何可证伪的内容。",
+      "fix": "读取器在 expected_digest 给出时自己流式实测整文件摘要（新增 _measure_whole_digest，1 MiB 分块），比较基准只有一个来源：实测值；调用方再没有供给「实际摘要」的参数（read_range 的 whole_digest 形参删除，sidecar 不再读该 query）。超过 16 MiB 不静默全量读，改为 IDENTITY_TOO_LARGE_TO_MEASURE 拒绝且不返回字节。identity 拆成 expectedDigest（声明）/ wholeDigest（实测）/ digestSource（measured-by-reader | not-requested | not-measurable）/ verified，来源词表只在一个函数里拼。前端 digestVerdictOf 改判两侧不同字段，AGREE 需要「钉住值存在 + 读取器确实实测 + 两者相等」；界面把「记录摘要」一格拆成「钉住摘要（调用方声明）」与「实测摘要（读取器计算）」两格。删除已不可达的 DIGEST_UNAVAILABLE，新增 tests/ci/test_evidence_reason_codes_are_one_list.py（6 例）钉住两侧码表不漂移——它正是会发现「客户端还注册着一个后端已经发不出的码」的那种门。",
+      "regression_test": "tests/workflow-assistance/test_evidence_range_reader.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "25→30 例，判决数是实测的：把读取器的实测基准换回调用方 supplied 的摘要后 7 例判红（含审计包原探针、改文件后旧身份失效、路由真 URL 复现、无钉住时报 not-requested、超限自报不可核验、用 TypeError 断言whole_digest 参数不能回来；真 HTTP 路由另有一例复现原 URL。前端 29 例含「只有一个摘要的响应体不得判 AGREE」与「实测≠钉住即 MISMATCH」；把旧的同一字段自比植入回去，2 例立刻判红后逐字节恢复（sha256 前缀 0a029b58）",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "身份/来源类断言必须写明每一侧证据的**生产者**：两侧都来自同一个不被信任的输入的比较不是核验，是回声。凡是界面要说出「这块字节属于那份产物」，必须先有一方真的去量过它；做不到就显示未核验，不许给一致。",
+      "remaining_boundary": "实测摘要把「请求身份核验」变成一次全文件读，16 MiB 之上的证据产物目前只能得到「不可核验」而不是结论；在登记录入时持有摘要（producer-side）才是长期解，落在 ROADMAP NEXT 的把手 schema 条目上。真实快照里 40/200 行带 digest、160 行不带，界面在未核验行显式显示未请求核对。",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "owner 2026-10-21 送达 WORK-LAB_独立闭环审计包_20261021.zip（WL-REC-0106，sha256 09e16ad3…）P0 条目 WL-02，本机独立复现后修复",
+      "related": [
+        "ERR-285（同一批：一个把没量到的东西报成数字的仪器）",
+        "ERR-219 / ERR-264（绿门为缺陷作证的同族）"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "04eec5eca32d9ab3f90b51d0b87ff276fe4ec5db",
+        "verifiedCommit": null,
+        "affectedCapability": "修复验收与方案证据的可信度（问题闭环的「测试与运行读回」段）；界面证据泳道的身份列",
+        "regressionCommand": "python -m unittest discover -s tests/workflow-assistance -p test_evidence_range_reader.py; python -m unittest discover -s tests/ci -p test_evidence_reason_codes_are_one_list.py",
+        "currentApplicability": "VERIFIED_LIVE_20261022",
+        "fixedCommitBasis": "把摘要基准改为读取器实测、拆开两侧字段并补上两侧码表漂移门的那次提交"
+      }
+    },
+    {
+      "error_id": "ERR-285",
+      "date": "2026-10-22",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "evidence_state",
+      "entrypoint": "scripts/audit/handle_block_visibility_via_cdp.py + scripts/audit/topbar_geometry_via_cdp.py",
+      "command": "python scripts/audit/handle_block_visibility_via_cdp.py --samples 4",
+      "exit_code": 1,
+      "observed_error": "把手区块「首屏可见中位 3,260 ms」是仪器自己的 sleep，不是页面延迟，而它已经被写进当前权威叙事。旧实现从求值那一刻起做 20 ms 轮询，但共享的 serve_and_eval 把 URL 写在 Chrome 命令行上（导航从那里开始），随后固定 sleep(2.0) 等 CDP 端口、再 sleep(1.0) 才求值，所以最早一次观察已在导航之后约 3.2 秒。样本自己就供出了矛盾：5 次加载 rowsMs 与 capacityMs **每次都相等**（循环第一次迭代就 break），同样本 domContentLoadedMs 只有约 140 ms，极差 14 ms 是一个 sleep() 的形状。docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md 据此写下「那 3.26 秒几乎全在页面一侧」，把仪器缺陷转述成了产品结论。",
+      "root_cause": "时间戳取自「仪器什么时候看」而不是「页面什么时候出现」。轮询没有回答「我第一次看的时候事情是否已经发生」这个问题，而它报出的数字与答案无关；文档又把这个数抄成产品事实，门里没有任何一条断言检查观察必须早于事件。",
+      "fix": "仪器改为在导航**之前**用 Page.addScriptToEvaluateOnNewDocument 把记录器装进页面，所有边界用页面自己的单调时钟 performance.now() 打点：MutationObserver 抓行列表首个子节点，Response.prototype.json 与 JSON.parse 两侧都包（SSE 帧也能喂渲染，只包 fetch 会把因果配错、量出负的提交段——本机真的出现过 -3 ms），可见性按行元素**自身** rect 判（第一版观察 closest('section') 得到 ratio=1 与 belowFold=true 并存）。回执绑定 bundle_provenance.describe 的包体哈希（兄弟门一直这么做，这支没有）。实测（1280×820→CSS 视口 1262×668，真 sidecar，4 次全新加载，包体 assets/index-C1tK2WFi.js sha256 前缀 8e793275）：A 快照解析 150/161 ms、B React 提交 59.5/66 ms、C 到首可见 54.5/58 ms、合计 207.5/222 ms，同次读数 readbackAtMs=3535——仪器比事件晚 3.3 秒看。更正叙事原文并把「首屏不可见」改归为几何问题（提交时行列表 rect.top=884 而视口高 668，列表高 23,056 px 未虚拟化，滚后仅 2.2% 可见）。",
+      "regression_test": "tests/ci/test_handle_latency_attribution.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "15 例，判决函数保持纯函数以便植入：记录器没装上→只报「没量到」不给数字；rowsAt 不早于读数→点名「recorded at read time」；段缺失或为负→按名判红并指明是仪器坏；屏下却报 0 ms 滚动→矛盾；回执无包体哈希→不得被引用；必测段名从页面表达式里解析，改名即判红；再断言 addScriptToEvaluateOnNewDocument 早于 Page.navigate、且旧的 20 ms 轮询表达式不许回来",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "任何「延迟」类仪器必须自己回答「我看到的时候，事情是否已经发生」：时间戳要由被测方在生产时刻记录，读数只是取回；样本里两个本应不同的标记完全相等、或极差小得像常量，先怀疑仪器而不是怀疑产品。",
+      "remaining_boundary": "本机的 headless Chrome 与 owner 桌面不是同一台机器，绝对毫秒数不可跨宿主引用，可引用的只有形状与量级；sidecar 不发 content-length 导致 responseStart=0，「纯服务端耗时」仍不可测，仪器按 unmeasurable 上报；把手块首屏不可见是否要改成窗口化/默认可达，是产品判断，本轮只把事实与断言落下来，没有改界面布局。",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "本轮待办 1（上一轮交接提示词 §2 第 1 项，标注【可直接做】）",
+      "related": [
+        "ERR-284（同一批审计包送来的第二条）",
+        "ERR-281（报告打不出明细，使这类「绿而没量」多活了一天）"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "04eec5eca32d9ab3f90b51d0b87ff276fe4ec5db",
+        "verifiedCommit": null,
+        "affectedCapability": "度量蓝图的延迟类指标可信度；Observer 证据泳道首屏可达性的判断依据",
+        "regressionCommand": "python -m unittest discover -s tests/ci -p test_handle_latency_attribution.py; python scripts/audit/handle_block_visibility_via_cdp.py --samples 4",
+        "currentApplicability": "VERIFIED_LIVE_20261022",
+        "fixedCommitBasis": "重写仪器为页面内打点、绑定包体哈希、加 15 例守卫并更正权威叙事的那次提交"
       }
     }
   ],

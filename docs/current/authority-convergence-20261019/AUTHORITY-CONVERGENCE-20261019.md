@@ -1110,3 +1110,100 @@ DOC_CITATIONS rewritten=0 blocked=0）。**整链的全量批跑是在云端那�
 浏览器扫掠接入 CI（实测一趟 69 秒）与继续提高采样预算由 owner 决定；
 `config/client-evidence.json` 里 DSH 的 2026-10-13 逐字观测保持为历史快照，理由写在 ERR-278 的
 `remaining_boundary`；DSH 那份 225.65 MB 的安装回滚副本删除仍属 owner。
+**这一段的前三项已被 §21（2026-10-22）按 owner 的全量授权闭合，第四项按实测改判为「对象未能定位，
+不删除」；保留原文是为了让读者看到判断是怎么变的，而不是把它抹平。**
+
+## 21. 全量授权轮次：两条缺陷修到产品里，一条被证伪的结论被更正（2026-10-22）
+
+owner 本轮指令逐字：「全部授权 静默执行 不要打扰我要授权 以闭环为目标 完成所有未完成的任务」。
+上一轮交接的 7 项待办因此全部推进，其中 2 项以「按实测改判」闭合而不是以动作闭合，逐条写明。
+
+**先复测基线**：`HEAD == @{u} == a5f14d6980cf82898fa9965f6902f5b2ed8d9512`、tree
+`76ca3f4dc27b92d7ec2801f09f39cefe9b697dd2`、脏改 0、stash 0、`main == origin/main == f6077d18…`、
+`feat/w06… == 8f6540df…`。两处交接数字要更正：run 39493527142 的 check-run 是 **12 枚全 success**（不是 10），
+`tests/ci/test_text_legibility_gate.py` 是 **57 例**（`unittest discover` 实测 `Ran 57 tests / OK`，不是 12），
+而且这 57 例已经在 CI 里跑（`.github/workflows/work-lab-gate.yml` 的 root-governance-suite 按 glob 自选发现）。
+
+**owner 送来的独立闭环审计包**（登记为 `WL-REC-0106`，sha256 `09e16ad3…`，72,322 B，包内 28 个成员逐个登记）
+先按登记规程比对：与登记册既有 105 条 SHA-256 无一碰撞，是新来源不是别名。包里 9 条 findings 逐条复核：
+WL-01 成立（`compare main…a5f14d6` = ahead 50 / 变更 260 个文件，其中 100 个非文档字节，而 PR #178 标题仍写
+docs(handoff)）；WL-03/04/05/07、IF-01、OSS-01 的数字全部对上（Control 13 个操作只有 3 个 implemented，
+来源账 17 条 = 2 local-verified + 15 not-implemented，跨模块 33 条全未实现，导航 9 组 31 入口且初始全展开）；
+包内程序一个都没执行。
+
+### WL-02（P0）：证据摘要假通过，修在产品里
+后端 `packages/client-neutral-core/scripts/evidence_range_reader.py` 把调用方给的 `expected_digest`
+与同样是调用方给的 `whole_digest` 相比，从不哈希文件本身；`services/orchestration/sidecar.py` 的两个值都取自
+URL query，所以整条链是「调用方 vs 调用方」。前端 `apps/observer/frontend/src/lib/evidenceRange.ts` 更直接：
+判定函数把结果体里同一个字段读两遍当作两侧，于是任何 status OK 的响应都得 AGREE，界面还写
+「返回字节属于被记录的那份产物」。本机独立复现：写一个真实 sha256 为 `e679f17a328e34b0…` 的 fixture，
+两个参数都传 `a×64`，照常返回内容并判 AGREE（回执
+`.project-local/runs/wl02-repro-20261021/digest-witness-backend-local.json`）。
+
+修法是取消「调用方可以声明实际摘要」这件事本身：读取器在被要求核对身份时自己流式实测整文件摘要，
+比较基准只有这一个来源；超过 16 MiB 明说不可核验（新增 `IDENTITY_TOO_LARGE_TO_MEASURE` 拒绝并返回空内容），
+而不是静默读全量。结果体把声明值、实测值、来源、verified 拆成四个字段，界面分两格显示
+「钉住摘要（调用方声明）」与「实测摘要（读取器计算）」。删除了因这次改动才变得不可达的旧拒绝码，
+并补 `tests/ci/test_evidence_reason_codes_are_one_list.py`（6 例）——两侧判定码表此前没有任何东西钉住，
+客户端手抄一份镜像，这正是旧码能活到今天的原因。
+
+守卫数量是实测的，不是承诺的：把读取器的实测基准换回调用方提供的摘要，**7 例判红**（含审计包原探针、
+改文件后旧身份失效、真 HTTP 路由复现），随后逐字节恢复（sha256 前缀 `b4ee5218`）；
+把前端判定改回同一字段自比，**2 例判红**后逐字节恢复（前缀 `0a029b58`）。
+
+### §20 那条「3.26 秒在页面一侧」被自己的仪器量死了
+
+见上一节「门自己崩了比界面坏了更难发现」里的更正：真实三段是 A 快照解析 150/161 ms、B React 提交 59.5/66 ms、
+C 到首可见 54.5/58 ms，合计 navStart→行在 DOM 207.5/222 ms，而仪器第一次能看页面是 3.2 秒之后。
+顺带量到的产品事实不是延迟而是几何：把手块提交时行列表起点在视口下方 216 px，列表高 23,056 px 未虚拟化，
+滚过去之后可见比例只有 2.2%。本轮把这条**判成几何问题并加断言**，没有擅自改界面布局——把 200 行改成
+窗口化渲染是产品决定，落在 §21 末尾的待批清单里。
+
+### 采样预算：以证据闭合，不再追问 owner
+
+上一轮交接把它列为「owner 定标准」。实测读回可以直接回答：`every_scrollable_range_was_traversed`
+已把「每一段滚动范围都在某个采样步骤上过屏」变成判红条件，本轮重跑仍是 **566/566 站全部走完、无短程泳道**。
+把手块的 200 行生活在同一个可滚动范围里，被走完就等价于每一行都上过屏，所以「地板与 AA 覆盖到每一行」
+这条标准**已经成立且被门保护**；而 3,923 个 distinct 读数对 8,006 条存在叶子文本的比例不是覆盖率——
+合并按（路径、文本、字号、字重、颜色）去重，重复单元格文本本就该只算一次，把它当行数看是误读。
+据此判定：不再提高预算，distinct 数继续作为报告量而不是验收量。
+
+### 逐泳道浏览器扫掠接入 CI
+
+`.github/workflows/work-lab-gate.yml` 的 observer 作业在几何门之后新增一步
+`python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280`。
+代价是实测的而不是估的：本机两主题 × 31 泳道 × 566 站 = **70 秒**
+（回执 `.project-local/artifacts/wl02-and-handle-20261021/legibility-ci-shape.json`，
+全部判绿：0 低于地板、0 AA 失败、0 不可解析颜色、0 短程泳道）。
+exit 3 是 NOT_RUN 且**故意让它红**——没量到的标准不算通过。回执自己绑包体哈希，
+所以判决说的是它加载过的那份字节。
+
+### 两条按实测改判、不执行的动作
+
+`config/client-evidence.json`：本轮用只读检索确认它除文档与账本引用外**无任何脚本或门读取**，
+顶层 `generated_at` 仍是 2026-09-02，现行声明唯一权威仍是 `config/adapter-registry.json` 加免启动探针回执。
+把它"现行化"要凭空造第二份真相，因此**保持原样**，判定记在这里与 ERR-278 的 `remaining_boundary`。
+
+DSH 的 225.65 MB 安装回滚副本：**未能定位，故不删除**。按 ERR-087 的解析方法读卸载注册表项，
+`InstallLocation` 就是活安装根 `C:\Users\ALEX\AppData\Local\Programs\DeepSeek Harness`（0.2.1-rc.2），
+该根下只有 `locales` 48.30 MiB 与 `resources` 675.36 MiB，合计 1,043.31 MiB，没有 `$Uninstall` 目录，
+也没有任何接近 225.65 MiB 的对象；在 `%LOCALAPPDATA%` 与 `%TEMP%` 的有界扫描里同样没有。
+一个找不到对象、收益只有磁盘、且不可逆的动作不在本轮执行——这是按证据改判，不是没做。
+
+### 本轮验证与提交形状
+
+三个提交：`04eec5ec…`（产品修复 + 仪器 + 守卫 + 文档更正 + CI 步骤 + 同批重发的派生记录）、
+`c1f38188…`（审计包登记 + 入库归档不走 LFS 的有范围例外）、
+以及账本提交（`ERR-284`、`ERR-285`，两条 fixedCommit 都指向第一个提交，
+`LEDGER_FIX_COMMIT_BINDING` 读回 `promiseInTree=True / verified=PENDING`）。
+改跟踪字节前跑的门与改后重发的记录：`TOOL_INVENTORY`（`trackedTools=79 withLedgerPromise=20 unclaimed=0`）、
+`PROJECT_LOCAL_CITATION_AUDIT`、`CURRENT_STATE`、三个账本派生审计；
+`ERROR_LEDGER_PASS entries=284 classifications=14`；前端 `npm run typecheck` 干净、
+`vitest` 68 文件 826 例全绿；后端定向模块 `tests/workflow-assistance/test_evidence_range_reader.py` 30 例、
+`tests/ci/test_handle_latency_attribution.py` 15 例、`tests/ci/test_evidence_reason_codes_are_one_list.py` 6 例全绿。
+`scripts/maintenance/release_temp_fixture_residue.py --apply` 释放 3 个孤儿临时根共 2.0 MiB（清单落盘），
+`§12` 里那条长期红的 `tests/workflow-assistance/test_project_local_citation_audit.py` 本轮 **12 例转绿**——按文档顺序
+「先重发派生审计再清残料」做完，而不是绕过它。
+
+仍待 owner 的只剩两件：PR #178 合入 `main` 之后的 main-SHA 重锚，以及把手块 200 行是否改成
+窗口化/默认可达（本轮只加断言与几何事实，没动布局）。
