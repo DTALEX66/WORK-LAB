@@ -345,7 +345,13 @@ class ChromeCDP:
     def __init__(self, ws_url: str, timeout: float = 60.0) -> None:
         parts = urllib.parse.urlsplit(ws_url)
         host, _, port = parts.netloc.partition(":")
-        self.sock = socket.create_connection((host, int(port or 9222)), timeout=10)
+        # The socket's per-read timeout IS the answer budget. It used to be a hardcoded 10 s while
+        # `self.timeout` (the frame-skipping loop's deadline) was 60 s, so a caller could raise its budget
+        # to 300 s and still die inside a single `recv`: a long expression that emits no websocket frame for
+        # >10 s (the whole-rail sweep does this on a runner) produced `TimeoutError: timed out` from
+        # `_recv_text`/`one_frame`, twice in a row and identically — a threshold, not a race.
+        # Measured 2026-10-21 at ff3348bf (run 39668208804), where the traceback named those two frames.
+        self.sock = socket.create_connection((host, int(port or 9222)), timeout=timeout)
         key = base64.b64encode(os.urandom(16)).decode()
         path = parts.path + ("?" + parts.query if parts.query else "")
         request = (f"GET {path} HTTP/1.1\r\nHost: {parts.netloc}\r\nUpgrade: websocket\r\n"

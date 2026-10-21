@@ -227,3 +227,58 @@ class SweepRetryTests(unittest.TestCase):
         src = SWEEP.read_text(encoding="utf-8")
         self.assertGreaterEqual(src.count("traceback.print_exc()"), 2,
                                 "a swallowed traceback is why the two main-head reds could not be attributed")
+
+
+class OneBudgetAcrossBothLayersTests(unittest.TestCase):
+    """The answer budget must be ONE number that governs both layers, not two that disagree.
+
+    `ChromeCDP` kept a loop deadline in `self.timeout` and a hardcoded 10 s socket timeout from
+    `create_connection`. Raising the first (ERR-287) therefore changed nothing for a caller whose
+    expression is quiet for longer than 10 s: `_recv_text` -> `one_frame` -> `recv` timed out and the
+    sweep died identically on both attempts at ff3348bf. Two thresholds, one of them invisible, is how a
+    "fixed" gate stays red.
+    """
+
+    class FakeSock:
+        def __init__(self) -> None:
+            self.sent = 0
+
+        def sendall(self, data: bytes) -> None:
+            self.sent += 1
+
+        def recv(self, _n: int) -> bytes:
+            return b"HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\n\r\n"
+
+        def close(self) -> None:
+            pass
+
+    def _connect_timeout(self, timeout: float):
+        import unittest.mock
+        recorded: dict = {}
+        sock = self.FakeSock()
+
+        def fake_create_connection(address, timeout=None, **kwargs):
+            recorded["address"] = address
+            recorded["timeout"] = timeout
+            return sock
+
+        with unittest.mock.patch.object(harness.socket, "create_connection", fake_create_connection):
+            cdp = harness.ChromeCDP("ws://127.0.0.1:9222/devtools/page/X", timeout=timeout)
+        return recorded, cdp
+
+    def test_the_socket_read_timeout_follows_the_declared_answer_budget(self) -> None:
+        recorded, cdp = self._connect_timeout(300.0)
+        self.assertEqual(300.0, recorded["timeout"],
+                         "the socket read kept its own ceiling, so a bigger declared budget was a lie")
+        self.assertEqual(cdp.timeout, recorded["timeout"], "one budget, two layers, must be the same number")
+
+    def test_the_default_is_still_bounded(self) -> None:
+        recorded, _cdp = self._connect_timeout(60.0)
+        self.assertEqual(60.0, recorded["timeout"])
+
+    def test_the_hardcoded_ten_second_read_is_gone(self) -> None:
+        src = HARNESS.read_text(encoding="utf-8")
+        init = src[src.index("class ChromeCDP"):]
+        init = init[:init.index("def send(")]
+        self.assertNotIn("timeout=10)", init,
+                         "a per-read timeout below the declared answer budget re-creates the silent 10 s wall")
