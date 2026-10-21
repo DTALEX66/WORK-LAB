@@ -18,8 +18,12 @@ from pathlib import Path
 import re
 from typing import Any
 
-PLAN_PATH = Path("taskpacks/current/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md")
-R2_STATUS_PATH = Path("taskpacks/current/WORK-LAB-OBSERVER-VISUAL-ASSETS-R2-STATUS.md")
+# The projection needs the approval package's original table (statuses, WL3-… task ids, approvals).
+# That text survives only in the byte-frozen 2026-10-09 cutover copy; `taskpacks/current/` held it until
+# 2026-10-19, and the archived stub at taskpacks/history/pre-convergence-20261019/ is a 671 B pointer,
+# not the document. Reading the frozen copy keeps the evidence real instead of silently dropping the source.
+PLAN_PATH = Path("taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md")
+R2_STATUS_PATH = Path("taskpacks/history/WORK-LAB-OBSERVER-VISUAL-ASSETS-R2-STATUS.md")
 CURRENT_STATE_PATH = Path(".project/governance/generated/CURRENT_STATE.json")
 ERROR_LEDGER_PATH = Path("taskpacks/current/error-ledger.json")
 

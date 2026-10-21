@@ -8,6 +8,7 @@ import type {
 import { fmtTokens, fmtCostQuality, fmtTimestamp, stateTone, activityTone } from '@/lib/api'
 import { AdapterCapabilityCards } from '@/views/AdapterCapabilityCards'
 import { StateMatrixCard } from '@/components/ui/states'
+import { CollectorDeliverySummary } from '@/components/ui/collector-delivery'
 
 type Snap = SnapshotV3 | null
 
@@ -397,6 +398,12 @@ export function MonitoringView({ snap }: { snap: Snap }) {
             test, so no user could ever see which of the eight states the projection can answer. The
             diagnostics lane is where that reference belongs. */}
         <StateMatrixCard />
+      </CardContent></Card>
+      <Card><CardHeader><span>采集器交付与拒绝（快照级）</span><span className="text-[12px] text-muted">与设置页同一读法</span></CardHeader><CardContent>
+        {/* The matrix states which answers the projection can give; this card is the one
+            producer-backed answer behind 局部故障. Same component as Settings, so the two
+            surfaces cannot drift into different wording for the same rows. */}
+        <CollectorDeliverySummary collectors={snap?.collectors} />
       </CardContent></Card>
       <Card><CardHeader><span>说明</span></CardHeader><CardContent className="text-xs text-muted">
         服务健康 = 传输真值，不是伪造的 healthy。LIVE 仅当 live-gate verdict 为 LIVE；canonical readback 失败回退 DELAYED/OFFLINE。Observer 严格只读。

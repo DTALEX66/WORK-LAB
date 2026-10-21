@@ -403,7 +403,6 @@ def _canonical_doc_paths(root: Path) -> list[Path]:
         ".project/governance/contracts/contract-catalog.json",
         "README.md",
         "knowledge-staging/README.md",
-        "taskpacks/current/WORK-LAB-EXECUTION-EFFICIENCY-REPAIR-HANDOFF.md",
         "packages/client-neutral-core/workflow-manifest.yaml",
         "packages/client-neutral-core/README.md",
     ]

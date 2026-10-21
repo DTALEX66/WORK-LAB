@@ -272,6 +272,13 @@ export default function App() {
     // vanish on the first lane switch.
     const shell = params.get('shell')
     if (shell) p.set('shell', shell)
+    // The compact HUD's own view state (tab + selected source) is written by
+    // CompactHUD itself; this writer must carry it through a theme/layout change
+    // instead of silently dropping the face the owner is looking at.
+    const hud = params.get('hud')
+    if (hud) p.set('hud', hud)
+    const agent = params.get('agent')
+    if (agent) p.set('agent', agent)
     // P1-02: the focused record survives refresh, back/forward and copy-paste exactly like the lane.
     writeRecordFocus(p, focus)
     // REQ-RANGE-20261007: an addressed evidence slice is the same kind of deep link. It is preserved while

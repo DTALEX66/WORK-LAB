@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "work-lab/executor-live-probe/v1",
+  "at": "2026-10-21T01:08:12+0800",
+  "tool": "scripts/audit/executor_live_probe.py",
+  "readOnly": true,
+  "registrySha256": "a4499aa068d3ba6adf2396cef462043246376470395a31f0fb57b3bd5cf0b525",
+  "registryDigestBasis": "git-index",
+  "counts": {
+    "PROBE_SKIPPED_NO_LAUNCH": 5,
+    "VERSION_MOVED": 1,
+    "LIVE_VERIFIED": 1,
+    "NOT_PROBED_DECLARATIVE_ONLY": 3
+  },
+  "results": [
+    {
+      "adapter": "hermes",
+      "state": "PROBE_SKIPPED_NO_LAUNCH",
+      "detail": "--no-launch: the declared executable is a GUI binary, and reading its version would have started it",
+      "claimedVersion": "0.21.7+472.gcba45e8"
+    },
+    {
+      "adapter": "codex",
+      "command": [
+        "cmd.exe",
+        "/d",
+        "/c",
+        "D:\\All projects\\WORK-LAB\\packages\\client-neutral-core\\bin\\codex.cmd",
+        "--version"
+      ],
+      "state": "VERSION_MOVED",
+      "detail": "observed=0.163.0-alpha.10.2 claimed=0.160.1 — both kept, neither reconciled",
+      "probe": {
+        "invoked": true,
+        "exitCode": 0,
+        "outputSha256": "7340c8bbe8b5bb886770f0f608cad06978bad881369879cb31b4af372fc02c0c",
+        "versionLine": "codex-cli 0.163.0-alpha.10.2",
+        "observedVersion": "0.163.0-alpha.10.2"
+      },
+      "claimedVersion": "0.160.1"
+    },
+    {
+      "adapter": "cc-switch",
+      "state": "PROBE_SKIPPED_NO_LAUNCH",
+      "detail": "--no-launch: the declared executable is a GUI binary, and reading its version would have started it",
+      "claimedVersion": "4.0.15"
+    },
+    {
+      "adapter": "github",
+      "command": [
+        "C:\\Program Files\\GitHub CLI\\gh.EXE",
+        "--version"
+      ],
+      "state": "LIVE_VERIFIED",
+      "detail": "observed=2.98.0 agrees with claimed=2.98.0 (2026-08-20)",
+      "probe": {
+        "invoked": true,
+        "exitCode": 0,
+        "outputSha256": "63737ad9f9a2bf673d515b80287e619712f744cc5373974fd043c5402ec80863",
+        "versionLine": "gh version 2.98.0 (2026-08-20)",
+        "observedVersion": "2.98.0"
+      },
+      "claimedVersion": "2.98.0 (2026-08-20)"
+    },
+    {
+      "adapter": "openhuman",
+      "state": "PROBE_SKIPPED_NO_LAUNCH",
+      "detail": "--no-launch: the declared executable is a GUI binary, and reading its version would have started it",
+      "claimedVersion": "0.63.12"
+    },
+    {
+      "adapter": "open-design",
+      "state": "PROBE_SKIPPED_NO_LAUNCH",
+      "detail": "--no-launch: the declared executable is a GUI binary, and reading its version would have started it",
+      "claimedVersion": "0.24.1"
+    },
+    {
+      "adapter": "deepseek-harness",
+      "state": "PROBE_SKIPPED_NO_LAUNCH",
+      "detail": "--no-launch: the declared executable is a GUI binary, and reading its version would have started it",
+      "claimedVersion": "0.2.1-rc.2"
+    },
+    {
+      "adapter": "cursor",
+      "state": "NOT_PROBED_DECLARATIVE_ONLY",
+      "detail": "no live entry point is declared for this support level"
+    },
+    {
+      "adapter": "claude-code",
+      "state": "NOT_PROBED_DECLARATIVE_ONLY",
+      "detail": "no live entry point is declared for this support level"
+    },
+    {
+      "adapter": "workbuddy",
+      "state": "NOT_PROBED_DECLARATIVE_ONLY",
+      "detail": "no live entry point is declared for this support level"
+    }
+  ],
+  "note": "LIVE_VERIFIED requires exit 0 and agreement with the version the registry already claims. This script mutates nothing: it reports, and a human or a follow-up change decides whether a registry entry's evidence_state moves."
+}

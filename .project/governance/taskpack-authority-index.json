@@ -1,21 +1,25 @@
 {
   "schemaVersion": "workflow/taskpack-authority-index/v1",
-  "generatedAt": "2026-10-09",
-  "currentTaskpack": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+  "generatedAt": "2026-10-19",
+  "currentTaskpack": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
   "authority": {
     "owner": "DTALEX66",
-    "created": "2026-10-09",
+    "created": "2026-10-19",
     "expires": "unbounded (main is sole authority; superseded only by a newer registered CURRENT)",
-    "taskpack": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+    "taskpack": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
     "topAuthority": "WORK-LAB-AUTHORITY.md",
     "topMachineAuthority": ".project/governance/project-authority-index.json",
-    "supersedes": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-    "baseline_main": "cd4daa83e107afab8438c0e85f63a10e75314d5a",
-    "baseline_tree": "a36e97ecbcb951e53a4c877e14244aa626d70fc8"
+    "supersedes": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
+    "baseline_main": "f6077d18cfc76d588d9315ec0ac82769c3009d9a",
+    "baseline_tree": "6dcb2094ffa5fdb693e959de5aaa870eea8b1f78",
+    "baseline_local_head": "0369d349d46b75c7048b884331bb40a0f42d4e34",
+    "baseline_local_tree": "d2a0222992f0171e0fc999dd6bb032ccbd40ed1f",
+    "baseline_worktree": "dirty at convergence start (59 porcelain entries); prior uncommitted work preserved",
+    "currentRoadmap": "docs/current/authority-convergence-20261019/ROADMAP.md"
   },
   "classification": {
     "CURRENT": [
-      "WORK-LAB-UI-PRIORITY-TASKPACK-20261009"
+      "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019"
     ],
     "SUPERSEDED": [
       "WORK-LAB-FORWARD-RECONCILIATION-2026-08-20",
@@ -40,7 +44,8 @@
       "INT-002-006-READONLY-EVIDENCE-PROJECTION",
       "AGENT-WORKFLOW-ENHANCEMENTS-20260812",
       "WORK-LAB-WLR-FINAL-TASKPACK-2026-08-25",
-      "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918"
+      "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
+      "WORK-LAB-UI-PRIORITY-TASKPACK-20261009"
     ],
     "HISTORICAL": [
       "WORK-LAB-DSH-HANDOFF-2026-08-15",
@@ -140,11 +145,11 @@
       "zip_sha256": "71cd76b461f1bc6acd9624685cb3489e7733e2c42aa65ee3b68b5f62f1093c39",
       "internal_manifest": "SHA256SUMS.txt (21 files, all verified OK on 2026-09-17)",
       "archive_location": ".project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/HERMES-UPDATE-20260917.zip",
-      "entry_record": "taskpacks/current/HERMES-UPDATE-AND-FIXES-20260917.md",
+      "entry_record": "taskpacks/history/pre-convergence-20261019/HERMES-UPDATE-AND-FIXES-20260917.md",
       "mode": "plan_only",
       "role": "maintenance record and static handoff view for the Hermes v0.21.2 -> v0.21.3 update and the 2026-09-17 defect fixes; NOT a runtime task store, NOT an auto-executor, NOT a new authority",
       "supersedes": null,
-      "note": "currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this view reports a completed maintenance round (update to v0.21.3 (2026.9.14), 21/21 managed assets CONVERGED, 38/38 gates, hooks healthy) plus the decided curator fold-back policy. Deliverables: taskpacks/current/HERMES-UPDATE-AND-FIXES-20260917.md and .project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/. Evidence stays inside the ignored per-project boundary per AGENTS.md.",
+      "note": "currentTaskpack (R1) remains authoritative until its 2026-09-24 expiry; this view reports a completed maintenance round (update to v0.21.3 (2026.9.14), 21/21 managed assets CONVERGED, 38/38 gates, hooks healthy) plus the decided curator fold-back policy. Deliverables: taskpacks/history/pre-convergence-20261019/HERMES-UPDATE-AND-FIXES-20260917.md and .project-local/artifacts/task-artifacts/HERMES-UPDATE-20260917/. Evidence stays inside the ignored per-project boundary per AGENTS.md.",
       "execution_authorized": false,
       "grants_new_permissions": false,
       "superseded_by_current": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
@@ -152,23 +157,11 @@
     },
     {
       "id": "HERMES-UPDATE-AND-MAINTENANCE-20260927",
-      "entry_record": "taskpacks/current/HERMES-UPDATE-AND-MAINTENANCE-20260927.md",
+      "entry_record": "taskpacks/history/pre-convergence-20261019/HERMES-UPDATE-AND-MAINTENANCE-20260927.md",
       "mode": "plan_only",
       "role": "maintenance record and static handoff view for the Hermes v0.21.3 -> v0.21.5+3115.g10938a7 (origin/main @ 10938a7c) update on 2026-09-27; NOT a runtime task store, NOT an auto-executor, NOT a new authority",
       "supersedes": null,
       "note": "currentTaskpack remains authoritative; this view reports a completed maintenance round (official `hermes update --yes --backup`: 8183 new commits, config v45 -> v46, desktop entry real-launch readback PASS, hooks healthy). The 5 managed-overlay drift items found after the update were ALL REPAIRED in the same round (2 live additions folded to the repository, 1 deleted managed unit rebuilt from the repository, 2 weaker live versions REJECTED in favour of the stronger repository versions), ending at 21/21 CONVERGED and curator drift 0. Predecessor: HERMES-UPDATE-20260917 (v0.21.2 -> v0.21.3). Evidence stays inside the ignored per-project boundary per AGENTS.md: .project-local/runs/hermes-update-20260927/ + .project-local/artifacts/curator-foldback/.",
-      "execution_authorized": false,
-      "grants_new_permissions": false,
-      "superseded_by_current": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-      "is_authority": false
-    },
-    {
-      "id": "HERMES-UPDATE-HANDOFF-20260927",
-      "entry_record": "taskpacks/current/HERMES-UPDATE-HANDOFF-20260927.md",
-      "mode": "plan_only",
-      "role": "handoff summary for the 2026-09-27 Hermes maintenance round, written for the NEXT agent/model/session that touches Hermes in this project: current identity and paths, the 5 verification commands, restore material, limits and traps; NOT a runtime task store, NOT an auto-executor, NOT a new authority",
-      "supersedes": null,
-      "note": "Companion of HERMES-UPDATE-AND-MAINTENANCE-20260927 (the full record). Net state at handoff: Hermes v0.21.5+3115.g10938a7 (2026.9.24), config v46, managed overlay 21/21 CONVERGED, curator drift 0, hooks healthy. Read before running any Hermes maintenance; it restates the documented traps (HERMES_HOME writes need wider file permissions, run generate_current_state --check-current before committing skill-provenance changes, install rides origin/main ahead of the release tag).",
       "execution_authorized": false,
       "grants_new_permissions": false,
       "superseded_by_current": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
@@ -189,8 +182,8 @@
   "decisions": [
     {
       "id": "BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917",
-      "path": "taskpacks/current/BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md",
-      "ledger": "taskpacks/current/BRANCH-RETIREMENT-LEDGER-20260917.json",
+      "path": "taskpacks/history/pre-convergence-20261019/BRANCH-CONVERGENCE-ANTI-REGRESSION-20260917.md",
+      "ledger": "taskpacks/history/pre-convergence-20261019/BRANCH-RETIREMENT-LEDGER-20260917.json",
       "status": "EXECUTED_20260917",
       "note": "Branch convergence + anti-regression rules fully executed: residual audit (0 live-code residuals), 52 legacy branches -> wl-retire-20260917/* tags + deleted, PR#124 squash-merged main to r4 (6bd0bd5), PR#125 recorded cutover_event, r4 retired. main is sole ACTIVE/AUTHORITATIVE branch (ac323a2).",
       "evidence": [
@@ -198,12 +191,12 @@
         "github PR#125 MERGED (ledger record)",
         "52x wl-retire-20260917/* tags on origin",
         "wl-cutover-evidence-20260917 tag",
-        "taskpacks/current/BRANCH-RETIREMENT-LEDGER-20260917.json cutover_event"
+        "taskpacks/history/pre-convergence-20261019/BRANCH-RETIREMENT-LEDGER-20260917.json cutover_event"
       ]
     },
     {
       "id": "WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918",
-      "path": "taskpacks/current/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md",
+      "path": "taskpacks/history/pre-convergence-20261019/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md",
       "role": "SUPERSEDED historical execution plan, no current dispatch",
       "status": "SUPERSEDED_20261009",
       "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER.md (single live register; dated OPEN-TASK-REGISTER-20260917.md frozen to taskpacks/history/ as a pre-convergence artifact)",
@@ -214,12 +207,23 @@
     },
     {
       "id": "WORK-LAB-UI-PRIORITY-TASKPACK-20261009",
-      "path": "taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md",
-      "role": "single CURRENT UI-first plan",
-      "status": "ADOPTED_PLANNING_20261009",
+      "path": "taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md",
+      "role": "SUPERSEDED UI-first plan; retained for history and its unresolved rows",
+      "status": "SUPERSEDED_20261019",
       "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER.md",
       "evidence": [
-        "docs/current/ui-priority-20261009/CONVERSATION-DECISIONS.md"
+        "docs/history/archive/ui-priority-20261009/CONVERSATION-DECISIONS.md"
+      ]
+    },
+    {
+      "id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "path": "taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md",
+      "role": "single CURRENT authority-convergence plan: positioning, roadmap, capability map, freeze and minimal-loop baseline; product implementation not authorized",
+      "status": "CURRENT_20261019",
+      "open_task_register": "taskpacks/current/OPEN-TASK-REGISTER.md",
+      "evidence": [
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "docs/history/owner-inputs/20261019/WORK-LAB_权威收敛任务包_20261019.zip"
       ]
     }
   ],
@@ -256,14 +260,14 @@
   "frozenTaskCards": [
     {
       "id": "WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925",
-      "path": "taskpacks/current/WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925.md",
+      "path": "taskpacks/history/pre-convergence-20261019/WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925.md",
       "role": "subordinate current task card: planning record for the Product UI / Control Surface roadmap; grants no execution authority (feature scope frozen)",
       "disposition": "FROZEN_PLANNING_WITH_REQUIREMENTS_MAPPED",
       "archivePath": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925.md"
     },
     {
       "id": "ORCA-PILOT-TASK-CARD-20260925",
-      "path": "taskpacks/current/ORCA-PILOT-TASK-CARD-20260925.md",
+      "path": "taskpacks/history/pre-convergence-20261019/ORCA-PILOT-TASK-CARD-20260925.md",
       "registry_entry": "FUT-001",
       "role": "subordinate current task card: Orca Pilot round-1 plan; execution individually authorized per operation",
       "disposition": "FROZEN_PLANNING_WITH_REQUIREMENTS_MAPPED",
@@ -271,49 +275,14 @@
     },
     {
       "id": "WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001",
-      "path": "taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md",
+      "path": "taskpacks/history/pre-convergence-20261019/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md",
       "role": "subordinate current task card: verified-gap delta table + work breakdown (AG-01..AG-20) derived from the 2026-09-29 Master Atlas snapshot and re-verified against live main cd4daa8; planning record only, grants no execution authority",
       "disposition": "FROZEN_PLANNING_WITH_REQUIREMENTS_MAPPED",
       "archivePath": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md"
     },
     {
-      "id": "WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007",
-      "path": "taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md",
-      "role": "subordinate current task card: executes the owner's UI prompt pack (P1-P8) on the isolated ui-commercial-polish-20261007 branch; supersedes the 2026-09-25 card's no-UI-code limit, keeps cross-project boundaries, single-writer rule, and the no-commit/no-push/no-PR delivery limit for UI code",
-      "register_row": "UI-PRODUCT-PROMPT-20261007",
-      "sources_pinned": [
-        {
-          "file": "WORKLAB_CODEX_PROMPT.md",
-          "bytes": 6501,
-          "sha256": "31bfdba2bfc2fad9e2dee6b8ea03d0da63dfd4f4154bc5e7628d46d92dd6effd",
-          "mtime": "2026-10-07T00:58:35Z"
-        },
-        {
-          "file": "UI_KIT_AUDIT.md",
-          "bytes": 10181,
-          "sha256": "1eaf44826132b2f0e8b8cd62a67202b0982aa49fb603061347b5de569e7645de",
-          "mtime": "2026-10-07T00:58:55Z"
-        },
-        {
-          "file": "UI_COMPONENT_ADOPTION_PLAN.md",
-          "bytes": 6397,
-          "sha256": "5e6b472a0d0ca5d30baff11aa83b1b7da8e453b472d59db8775fa3bf7f4b04ae",
-          "mtime": "2026-10-07T00:59:00Z"
-        },
-        {
-          "file": "WORK-LAB_UI开发资料总包_按批次.zip",
-          "bytes": 37048117,
-          "sha256": "c94ff634dad3fa47cd843493c5f3b59c946fd987295085b8c821febba13eef48",
-          "mtime": "2026-10-07T00:54:42Z"
-        }
-      ],
-      "supersedes": "WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925 (only its 'does NOT authorize writing UI code' limit)",
-      "disposition": "FROZEN_PLANNING_WITH_REQUIREMENTS_MAPPED",
-      "archivePath": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/WORK-LAB-UI-PROMPT-PACK-EXECUTION-TASKCARD-20261007.md"
-    },
-    {
       "id": "WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007",
-      "path": "taskpacks/current/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
+      "path": "taskpacks/history/pre-convergence-20261019/WORK-LAB-QODER-FULLSTACK-EXECUTION-CROSS-MODULE-TASKCARD-20261007.md",
       "role": "subordinate cross-module execution task card: carries the owner's dated 2026-10-07 full-stack prompt (batches A-F, in-repo only) and the explicit-cross-task-only writes module-ownership.json requires; registers no new authority, grants no commit/push/PR/merge/release/install/global-write, keeps Observer strictly read-only",
       "register_row": "QODER-FULLSTACK-20261007",
       "sources_pinned": [
@@ -330,20 +299,34 @@
   ],
   "currentSourceInputs": [
     {
+      "path": "docs/history/owner-inputs/20261019/WORK-LAB_权威收敛任务包_20261019.zip",
+      "sha256": "36a2614dff217c1f9ad96838ba0304ac3d734e23ad9ebb3e86bb00e2114be2a0",
+      "id": "WL-REC-0105",
+      "role": "owner authority-convergence package; source document only, no execution authority"
+    },
+    {
       "path": "docs/history/owner-inputs/20261009/WORK-LAB_UI前端更新任务包_20261009.zip",
       "sha256": "fe5afa5328c7530723f492a6188ea19dfa6fb2269b2400b77174c1a42f72fd45",
-      "role": "owner input not implementation evidence"
+      "role": "owner input not implementation evidence; UI tasks frozen 2026-10-19"
     },
     {
       "path": "docs/history/owner-inputs/20261009/WORK-LAB_本对话最终任务包_20261009.zip",
       "sha256": "3740f98aadfce5e13a046f09773bbad362f0d3bceb32d65a0951065dd21237f7",
-      "role": "owner input not implementation evidence"
+      "role": "owner input not implementation evidence; UI tasks frozen 2026-10-19"
     }
   ],
   "legacyTaskFreeze": {
     "date": "2026-10-09",
     "archive": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json",
-    "reconciliation": "docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
+    "reconciliation": "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
     "noNewExecutionGrant": true
+  },
+  "currentFreeze": {
+    "date": "2026-10-19",
+    "source": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+    "scope": "all tasks except WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019, including all WUI rows and prior UI/blueprint/Atlas/ORCA plans",
+    "state": "FROZEN_NO_DISPATCH",
+    "statusPreservation": "existing task statuses and evidence stay as recorded; nothing is closed by this freeze",
+    "unfreeze": "roadmap gate plus a new explicit user Task Grant; see docs/current/authority-convergence-20261019/ROADMAP.md"
   }
 }

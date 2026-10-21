@@ -1,4 +1,6 @@
-// WUI-13 · the 23 legacy routes, each with a recorded disposition.
+// WUI-13 · the legacy routes, each with a recorded disposition. The population is whatever the table below
+// holds — no count is restated in prose, because this file's own header claimed "23" for a table that had
+// already grown to 26, which is the drift the note below this header warns about.
 //
 // The owner's seed table is `docs/history/owner-inputs/20261009/final-readable/inputs/
 // frontend_route_mapping.proposed.csv`. It is a SEED, not a migrated fact, and the route doc is explicit

@@ -53,7 +53,8 @@ export interface GovernanceFamily {
 }
 
 export interface SnapshotGovernance {
-  state: string
+  /** The schema enum, and the three values `_governance_projection` can compute for a family set. */
+  state: FamilyState
   families: {
     rules: GovernanceFamily
     skills: GovernanceFamily
@@ -93,6 +94,13 @@ export interface CiRun {
   sourceRef: string | null
 }
 
+/** A project's CI rows are selected from the same whole rows by `projectId` (`snapshot_api.py:268`), so
+ *  each one carries the key that selected it. That key is a string, not a nullable one: a row without it
+ *  can never equal a project id and therefore never reaches this list. */
+export interface ProjectCiRun extends CiRun {
+  projectId: string
+}
+
 export interface Project {
   projectId: string
   displayName: string | null
@@ -108,7 +116,7 @@ export interface Project {
   repositories: unknown[]
   git: ProjectGit
   token: ProjectToken
-  ci: CiRun[]
+  ci: ProjectCiRun[]
   executionIds: string[]
   sourceRefs: string[]
 }
@@ -129,9 +137,11 @@ export interface Execution {
 // cross the read-only boundary — the projection carries whether a checkpoint exists, its key names,
 // and a digest that moves when it changes.
 export interface TaskRecord {
-  taskId: string | null
-  projectId: string | null
-  status: string | null
+  // `canonical_store.tasks` declares task_id PRIMARY KEY and project_id/status NOT NULL, so a projected
+  // row never carries null here; the earlier `| null` made the hand model wider than the schema.
+  taskId: string
+  projectId: string
+  status: string
   createdAt: string | null
   updatedAt: string | null
   leaseHolder: string | null
@@ -314,6 +324,10 @@ export interface SoftwareIdentity {
  * the byte-range read endpoint is the only way to reach content.
  */
 export interface ArtifactHandlesSummary {
+  // The producer emits both keys on every summary (`artifact_handle_projection.py`), and the schema
+  // requires them; they were the two facts the hand model could not name.
+  schemaVersion: string
+  orderingKey: string
   enumeratedCount: number
   projectedCount: number
   omittedCount: number
@@ -324,7 +338,7 @@ export interface ArtifactHandlesSummary {
     sensitiveNames: number
     reparseDirectories: number
     notRegularFiles: number
-    droppedOnVerification: number
+    droppedOnVerification: Record<string, number>
     unreadableEntries: number
     prunedRegenerableDirectories: number
   }
@@ -353,10 +367,25 @@ export interface CollectorDelivery {
   fresh: boolean
 }
 
+/** One row of `artifactHandles` (`artifact_handle_projection.py::_verify`/projected): identity metadata
+ *  only. The schema names these seven fields, so the generator can project them instead of collapsing
+ *  the list to `unknown[]`. */
+export interface ArtifactHandle {
+  handle: string
+  surface: string
+  kind: string
+  sizeBytes?: number | null
+  modifiedAt?: string | null
+  surfaceRoot?: string
+  digestRecorded?: boolean
+}
+
 export interface SnapshotV3 {
   schemaVersion: SchemaVersion
   revision: number
-  generatedAt: string | null
+  /** `build_snapshot` substitutes `_now()` when no source timestamp is passed, and the schema requires
+   *  an RFC3339 string; `null` was a front-only allowance the producer never emitted. */
+  generatedAt: string
   sourceWatermark: string | null
   transport: SnapshotTransport
   coverage: SnapshotCoverage
@@ -380,10 +409,9 @@ export interface SnapshotV3 {
   // declared sources) is reported as a source gap, not as "no adapters".
   adapterCapabilities?: AdapterCapabilityCard[]
   // WUI-15: emitted by `snapshot_api.py:114-115` and validated by
-  // `snapshot_validator.py:364-372`, but the frontend type did not carry either, so the UI could not
-  // read the projection's own truncation/refusal report. The item shape stays `unknown` deliberately:
-  // no view consumes it yet, and declaring fields nobody renders is how a type becomes folklore.
-  artifactHandles?: unknown[]
+  // `snapshot_validator.py:364-372`. The item fields are the schema's seven; `unknown[]` could not be
+  // assigned to the generated row once the schema named them, and the producer really emits them.
+  artifactHandles?: ArtifactHandle[]
   artifactHandlesSummary?: ArtifactHandlesSummary
   // WUI-18(e)/WUI-11: per-collector delivery and refusal counts. ABSENT means the health table could not be
   // read; an empty list means it was read and no collector is registered. The diagnostics lane renders the
@@ -428,5 +456,7 @@ export interface OperationProgressRecord {
   last_trusted_progress: { state: string | null; at: string | null; basis: string }
   transport_state: string | null
   producer_gaps: string[]
-  target_behaviour: unknown
+  // Absent unless a reconciled external effect answered it (`operation_progress.py`); null is the
+  // explicit "no producer" record. `unknown` here could not be handed to the generated field.
+  target_behaviour?: Record<string, unknown> | null
 }

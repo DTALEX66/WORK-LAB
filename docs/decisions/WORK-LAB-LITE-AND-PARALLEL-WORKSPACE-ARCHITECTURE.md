@@ -2,7 +2,7 @@
 
 **Status:** LANDED — CURRENT planning layer (GOAL §34 D)
 **Authority:** `/WORK-LAB-AUTHORITY.md` (top) → this doc is a planning/architecture layer under it.
-**Task:** `WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925.md` (taskpacks/current)
+**Task:** `taskpacks/history/pre-convergence-20261019/WORK-LAB-PRODUCT-UI-CONTROL-SURFACE-TASKCARD-20260925.md` (archived 2026-10-19; originally in `taskpacks/current/`)
 
 > This document lands the **architecture** of the WORK-LAB product direction.
 > It is a planning/decision record — it does NOT build UI code and does NOT
@@ -150,7 +150,7 @@ WORK-LAB → Open Workspace → Orca → current project/worktree
 ```
 
 验证四件：`project launch / worktree identity / task correlation /
-exit/readback`。任务卡：`ORCA-PILOT-TASK-CARD-20260925.md`（F 落仓）。
+exit/readback`。任务卡：`taskpacks/history/pre-convergence-20261019/ORCA-PILOT-TASK-CARD-20260925.md`（F 落仓；2026-10-19 归档）。
 
 定位对照：Omnigent = 未来机器编排层（DEFERRED）；Argos = ACP/MCP/Skills
 多模型桌面对照组（DEFERRED）；OpenHands Agent Canvas = 平行工作台候选

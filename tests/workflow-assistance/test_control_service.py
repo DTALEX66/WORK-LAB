@@ -382,22 +382,25 @@ class ControlPlaneTestCase(unittest.TestCase):
     def test_the_diff_reads_the_declared_case_not_the_folded_path(self) -> None:
         """The CI failure at 7ca2fd45: containment folds case, I/O must not.
 
-        `UI_IMPLEMENTATION_REPORT.md` is a tracked file whose NAME is uppercase, so the folded path
-        `ui_implementation_report.md` does not exist on a case-sensitive filesystem while opening it
-        succeeds on Windows. Asserting the echoed target keeps the declared case is what makes this
-        falsifiable on one machine: before the fix the readback reported the folded name on every host.
+        `NOTICE.md` is a tracked file whose NAME is uppercase, so the folded path
+        `notice.md` does not exist on a case-sensitive filesystem while opening it
+        succeeds on Windows. (The earlier fixture was `UI_IMPLEMENTATION_REPORT.md`, which moved to
+        `docs/history/archive/root-ui-records-20261019/` on 2026-10-19; `docs/` is a non-diffable root,
+        so a root-level uppercase file is required.) Asserting the echoed target keeps the declared
+        case is what makes this falsifiable on one machine: before the fix the readback reported the
+        folded name on every host.
         """
         result = self.plane.execute(request_payload(
             operation="config.diff",
-            payload={"target_file": "UI_IMPLEMENTATION_REPORT.md",
+            payload={"target_file": "NOTICE.md",
                      "field": "schema_version", "value": "whatever"}))
         self.assertEqual("PLANNED", result["status"], result["reason"])
-        self.assertEqual("UI_IMPLEMENTATION_REPORT.md", result["readback"]["target"],
+        self.assertEqual("NOTICE.md", result["readback"]["target"],
                          "the readback echoed a case-folded path, which no case-sensitive host has")
         # a key that is genuinely present must read as present; FILE_ABSENT here is the folded-path bug
         present = self.plane.execute(request_payload(
             operation="config.diff",
-            payload={"target_file": "UI_IMPLEMENTATION_REPORT.md",
+            payload={"target_file": "NOTICE.md",
                      "field": "Control", "value": "x"}))
         self.assertNotEqual("FILE_ABSENT", present["readback"]["changes"][0]["presenceBasis"],
                             "the document was read as absent: the folded path does not exist on Linux")

@@ -59,7 +59,8 @@ PowerShell/POSIX 命令不兼容和文档定位不一致，完整的错误、根
 [`docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md`](docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-07-28.md)。
 
 Token Monitor 本轮的交接、验证证据、错误根因、剩余事项和恢复顺序见
-[`docs/current/workflow-assistance/workflow/token-monitor-handoff.md`](docs/current/workflow-assistance/workflow/token-monitor-handoff.md)。
+[`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`](docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip)（成员 token-monitor-handoff-2026-08-05）
+（已归档，2026-08-05，非现行规范）。
 
 GitHub Actions 曾报告 action 自身的 Node.js 20 runtime 弃用提示；它是非阻断上游维护提示。
 本项目不在 workflow 中硬编码 Node 版本，也不为了消除提示随意替换 action；若后续处理，必须
@@ -203,7 +204,7 @@ backup → staging → atomic promotion 流程；`config/.env.template` 只列�
 Provider、模型、认证、Token、会话、私有记忆、Desktop 内部状态、CC Switch 路由或 Open
 Design 的设计能力配置。上面那条恢复顺序就是当前的流程；下面这份是 2026-08-13 那一轮的
 基线结论与已处理事项记录，仅作归档参考，不是当前规范：
-[`docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`](docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md)。
+[`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`](docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip)（成员 workflow-baseline-and-recovery-handoff-2026-08-13）。
 
 ## 模型切换与路由诊断
 
@@ -587,7 +588,7 @@ python packages/client-neutral-core/scripts/security/scan_agent_rules.py templat
 - `docs/current/workflow-assistance/workflow/github-delivery-accelerator.md`：GitHub 交付加速器使用说明；
 - `docs/current/workflow-assistance/workflow/local-quality-gates.md`：本地 canonical quality gate runner、Justfile 快捷入口和 CI 对齐方式；
 - `docs/current/workflow-assistance/workflow/active-authority-index.md`：活跃权威/兼容/历史分类索引（WLG-110），README 只链接权威文件；
-- `docs/current/workflow-assistance/workflow/wlg130-delivery-verdict.md`：WLG-130 交付裁决（Authority Matrix、批次状态、GO/NO-GO）；
+- `docs/history/archive/workflow-assistance/audit/wlg130-delivery-verdict-2026-08-13.md`：WLG-130 交付裁决（Authority Matrix、批次状态、GO/NO-GO；已归档，2026-08-13，非现行规范）；
 - `docs/current/workflow-assistance/workflow/ui-skin-system.md`：UI/Skin 分层、主题 token、Agent UI 状态表达与 runtime-neutral 边界；
 - `docs/current/workflow-assistance/workflow/project-data-boundary.md`：项目任务数据归属、迁移、保留与 fail-closed 执行器；
 - `docs/current/workflow-assistance/workflow/token-monitor.md`：本地 Token Monitor 的真实 usage 口径、启动方式和 Codex OAuth 限制；
@@ -604,7 +605,7 @@ python packages/client-neutral-core/scripts/security/scan_agent_rules.py templat
 - `docs/history/archive/workflow-assistance/error-fixes/memory-compaction-2026-08-13.md`：Hermes 记忆压缩与优化归档（合并策略、精简记录、记忆治理规则）（已归档：那一轮的记录，不是现行规范）；
 - `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-08-14-guard.md`：pre_tool_call 终端守卫正则防护三缺陷（路径穿越绕过、含空格路径误拦、scheme:// URL 误判）修复归档（已归档：那一轮的记录，不是现行规范）；
 - `docs/history/archive/workflow-assistance/error-fixes/error-fixes-2026-08-14-r2.md`：R2 重审计修复批次错误归档（Guard 前缀两连坑、zizmor Docker action、schema 四方同步、SQL 表名、fail-closed 契约、验证脚本 bug、graphql 瞬断、cargo 检测）（已归档：那一轮的记录，不是现行规范）；
-- `docs/history/archive/workflow-assistance/handoffs/audit-r2-fixes-handoff-2026-08-14.md`：R2 修复批次交接（PR #97~#101、验证证据、剩余事项与恢复顺序）；
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 audit-r2-fixes-handoff-2026-08-14）：R2 修复批次交接（PR #97~#101、验证证据、剩余事项与恢复顺序）；
 - `docs/current/workflow-assistance/workflow/wloss-reference-decisions.md`：WLOSS-100/300/510 开源能力处理决定（OPA/Conftest=REFERENCE、in-toto=DERIVE、Cosign/Promptfoo=REFERENCE、Superpowers=方法吸收）；
 - `docs/current/workflow-assistance/mcp/workflow-mcp-stack.md`：MCP 默认策略；
 - `docs/current/workflow-assistance/mcp/mcp-catalog-governance.md`：MCP 候选审计 schema、阻断规则和默认启用边界；
@@ -613,12 +614,12 @@ python packages/client-neutral-core/scripts/security/scan_agent_rules.py templat
 - `docs/history/archive/workflow-assistance/audit/hermes-workflow-recovery-2026-07-22.md`：Hermes Desktop、CC Switch、Codex、GitHub 全链路故障、执行错误、恢复过程和数据保护证据；
 - `docs/history/archive/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.md`：模型/API 中立 Agent Harness 审计；
 - `docs/history/archive/workflow-assistance/audit/model-neutral-agent-harness-absorption-2026-07.yaml`：固定来源和本地落点的机器可读证据；
-- `docs/history/archive/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.md`：本次项目数据边界审计、交接、错误总结和上传前验证；
-- `docs/history/archive/workflow-assistance/audit/project-data-boundary-handoff-2026-08-02.json`：本次审计的机器可读 manifest；
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 project-data-boundary-handoff-2026-08-02）：本次项目数据边界审计、交接、错误总结和上传前验证；
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 project-data-boundary-handoff-2026-08-02）：本次审计的机器可读 manifest；
 - `docs/history/archive/workflow-assistance/audit/workflow-baseline-audit-2026-08-06.md`：官方 Hermes 基线、全局规则、技能/插件部署、同步边界与 Windows 目录锁的脱敏综合审计；
 - `docs/history/archive/workflow-assistance/handoffs/workflow-assistance-2026-07-23.md`：无密阶段交接、恢复顺序、已发布基线与会话卫生边界；
 - `docs/history/archive/workflow-assistance/handoffs/hermes-desktop-source-root-repair-2026-07-24.md`：Desktop source-root/canonical runtime 修复的无密 Codex 交接、验证与回滚边界。
-- `docs/history/archive/workflow-assistance/handoffs/audit-prevention-controls-handoff-2026-08-13.md`：供应链、配置最小写入、Hermes 路径围栏和全局/项目所有权边界的交接；明确本地候选验证与 PR/CI/跨机器验证的证据分级。
+- `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 audit-prevention-controls-handoff-2026-08-13）：供应链、配置最小写入、Hermes 路径围栏和全局/项目所有权边界的交接；明确本地候选验证与 PR/CI/跨机器验证的证据分级。
 
 - `docs/current/workflow-assistance-TROUBLESHOOTING.md`：常见部署、代理、认证和工具链问题。
 

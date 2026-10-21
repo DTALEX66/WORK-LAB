@@ -2,14 +2,17 @@
 
 **找资料先看：[历史资料与原件总入口](docs/history/owner-inputs/INDEX.md)**（文件名/别名/压缩包成员检索、归档登记、去重与历史摘要）。
 
-`DTALEX66/WORK-LAB` 是软件中立、本地优先的 **AI工作观测与配置治理工作台**。外部AI软件执行业务，
-本方默认按项目观察参与软件、活动、阻碍、资源与新鲜度，并评价能力、适配用户选定目标、验证目标及维护受管版本。
-规则统一意图，保护用户原生配置与编辑；AAOS和DESIGN-LAB独立负责知识学习及专业设计。
+`DTALEX66/WORK-LAB` 是面向个人 AI 工作环境的、客户端中立的 **工作流管理、治理、运行监测与问题闭环系统**。
+它连接和管理用户使用的 AI Agent、开发工具、工作流软件、模型服务、插件及运行环境，发现并汇总问题，
+生成解决建议或可交给现有 Agent 的修复任务包，跟踪验证修复结果，固化可复用方案，并把知识候选提交 AAOS
+正式审核。它不是 Agent、通用 Agent Runtime、模型网关、通用聊天客户端或全项目专业审计官。
 
-**2026-10-09当前任务：UI优先，仅桌面；手机端不做，也没有手机延后/冻结任务。**
-完整后续交接：[docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md](docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md)。
-唯一CURRENT：`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`；旧任务有用要求并账，无用冻结归档，不再独立派工。
-本轮完成任务整理和归档，产品代码未开始实现。实现状态与本机/CI/发布证据分别读回。
+**2026-10-19 当前任务：权威与路线图收敛；其他任务冻结，未来能力冻结/延期。**
+唯一 CURRENT：[taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md](taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md)；
+路线图：[docs/current/authority-convergence-20261019/ROADMAP.md](docs/current/authority-convergence-20261019/ROADMAP.md)；
+收敛报告：[docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md](docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md)。
+UI优先任务包已 SUPERSEDED，WUI 及其他任务不再独立派工；冻结不等于关闭，既有状态与证据保留。
+本轮完成权威、路线图、索引与来源登记，产品代码未开始实现；实现状态与本机/CI/发布证据分别读回。
 
 > **规范 Authority 与唯一入口（必读顺序）**：`WORK-LAB-AUTHORITY.md`（顶层人类权威）→
 > `.project/governance/project-authority-index.json`（顶层机器权威）→ `AGENTS.md` →
@@ -33,7 +36,7 @@
 
 ## 当前任务与历史范围
 
-当前WUI任务状态见`taskpacks/current/OPEN-TASK-REGISTER.md`，当前执行输入见唯一CURRENT。
+当前任务状态见`taskpacks/current/OPEN-TASK-REGISTER.md`，当前执行输入见唯一CURRENT（权威收敛）。WUI 行保留但已冻结。
 原件与历史归档：`docs/history/owner-inputs/20261009/SOURCE-INTEGRITY.json`、`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`。
 旧蓝图、Atlas、UI/Qoder/ORCA等计划已冻结为历史或逐条继承，不作为当前首版义务；有效实现与安全门保留。
 历史coverage投影仍可用于追溯，不产生当前派工；候选名录保留证据，不授安装/部署权限。
@@ -124,5 +127,5 @@ dirty ownership, boundary violations or incomplete required jobs fail closed.
 
 See `docs/decisions/PROJECT_POSITIONING.md`, `.project/governance/projects.json`,
 module `AGENTS.md` files, and
-`taskpacks/current/WORK-LAB-UNIFIED-PRODUCT-CONVERGENCE-TASKPACK-20260918.md` for the
+`taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md` for the
 current positioning and migration record.

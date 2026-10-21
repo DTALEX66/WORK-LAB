@@ -1,0 +1,129 @@
+"""Gate: the shared CDP harness waits for the page to mount, and still takes its screenshots.
+
+`scripts/audit/topbar_geometry_via_cdp.serve_and_eval` is the browser bootstrap behind three instruments
+(the geometry gate, the legibility sweep, the handle-latency probe). It used to wait with fixed sleeps
+(2.0 s for the endpoint, 0.4 s for the reflow, 1.0 s before evaluating) whose budget was the development
+host's boot time. Measured 2026-10-21 at `79f48a54` on windows-latest: the FIRST session of the geometry job
+came back with every selector `{"absent": true}` while the two sessions that followed it, on the same bundle,
+measured normally — and the same bundle passes all three views locally. A cold runner was being reported as
+a product red.
+
+The wait is now bounded and observable. These cases prove the two ways it could be wrong: a wait that never
+gives up (it would hang the job), and a wait that gives up but reports success (it would turn a broken render
+green). The structural cases guard the code path around it, because the first draft of this fix silently
+deleted the screenshot branch while replacing the sleep.
+"""
+from __future__ import annotations
+
+import ast
+import importlib.util
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+HARNESS = ROOT / "scripts" / "audit" / "topbar_geometry_via_cdp.py"
+
+
+def _load():
+    spec = importlib.util.spec_from_file_location("geometry_harness", HARNESS)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+harness = _load()
+
+
+class FakeCdp:
+    """Answers a mount probe with a scripted sequence; `None` means "raise like a dead session"."""
+
+    def __init__(self, answers):
+        self.answers = list(answers)
+        self.calls = 0
+        self.evaluated = []
+
+    def evaluate(self, expression):
+        self.calls += 1
+        self.evaluated.append(expression)
+        if not self.answers:
+            return True
+        answer = self.answers.pop(0)
+        if answer is None:
+            raise RuntimeError("no CDP response")
+        return answer
+
+
+class WaitForMountTests(unittest.TestCase):
+    def test_a_mounted_page_returns_immediately_with_the_time_it_took(self) -> None:
+        cdp = FakeCdp([True])
+        waited, mounted = harness.wait_for_mount(cdp, ".app", budget_s=5, poll_s=0.01)
+        self.assertTrue(mounted)
+        self.assertLess(waited, 1000)
+        self.assertEqual(1, cdp.calls)
+        self.assertIn('querySelector(".app")', cdp.evaluated[0])
+
+    def test_it_keeps_polling_until_the_subject_exists(self) -> None:
+        cdp = FakeCdp([False, False, True])
+        _waited, mounted = harness.wait_for_mount(cdp, ".app", budget_s=5, poll_s=0.01)
+        self.assertTrue(mounted)
+        self.assertEqual(3, cdp.calls, "a single look is the fixed sleep this replaced")
+
+    def test_a_session_that_is_not_answering_yet_is_not_mounted_not_an_error(self) -> None:
+        cdp = FakeCdp([None, None, True])
+        _waited, mounted = harness.wait_for_mount(cdp, ".app", budget_s=5, poll_s=0.01)
+        self.assertTrue(mounted)
+        self.assertEqual(3, cdp.calls)
+
+    def test_the_wait_gives_up_and_says_so(self) -> None:
+        cdp = FakeCdp([False] * 500)
+        waited, mounted = harness.wait_for_mount(cdp, ".app", budget_s=0.2, poll_s=0.01)
+        self.assertFalse(mounted, "timeout must never be reported as mounted")
+        self.assertLessEqual(waited, 2000, "the bound is milliseconds, not an unbounded retry")
+
+    def test_the_budget_is_a_real_time_bound_not_an_attempt_count(self) -> None:
+        # 500 scripted answers would outlive the budget; a loop keyed on attempts would run all of them.
+        cdp = FakeCdp([False] * 500)
+        harness.wait_for_mount(cdp, ".app", budget_s=0.15, poll_s=0.01)
+        self.assertLess(cdp.calls, 500)
+
+    def test_a_selector_is_quoted_into_the_probe_rather_than_interpolated_raw(self) -> None:
+        # The probe text is executed by the page; a selector must not be able to break out of the string.
+        cdp = FakeCdp([True])
+        harness.wait_for_mount(cdp, 'a"b', budget_s=1, poll_s=0.01)
+        self.assertIn('a\\"b', cdp.evaluated[0])
+
+
+class HarnessStructureTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tree = ast.parse(HARNESS.read_text(encoding="utf-8"))
+        self.funcs = {n.name: n for n in ast.walk(self.tree)
+                      if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+
+    def _source(self, node) -> str:
+        return ast.get_source_segment(HARNESS.read_text(encoding="utf-8"), node) or ""
+
+    def test_the_bootstrap_still_captures_the_screenshot_it_was_given(self) -> None:
+        body = self._source(self.funcs["serve_and_eval"])
+        self.assertIn("shot is not None", body,
+                      "serve_and_eval lost its screenshot branch — a silent capability loss in every "
+                      "instrument that passes `shot`")
+        self.assertIn("Page.captureScreenshot", body)
+
+    def test_the_fixed_pre_evaluate_sleep_is_gone(self) -> None:
+        body = self._source(self.funcs["serve_and_eval"])
+        self.assertNotIn("time.sleep(1.0)\n                raw = cdp.evaluate", body.replace("\r\n", "\n"),
+                         "a fixed 1 s wait immediately before evaluating is the cold-runner defect")
+
+    def test_the_wait_reports_itself_into_the_result(self) -> None:
+        body = self._source(self.funcs["serve_and_eval"])
+        self.assertIn("readyWait", body,
+                      "the wait must travel with the numbers or a later red cannot be told from a cold runner")
+
+    def test_the_module_declares_the_bound_once(self) -> None:
+        self.assertEqual(".app", harness.MOUNT_SELECTOR)
+        self.assertGreaterEqual(harness.MOUNT_BUDGET_S, 20.0,
+                                "the bound is a runner's cold boot; the development host's 3.4 s is not it")
+
+
+if __name__ == "__main__":
+    unittest.main()

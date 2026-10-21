@@ -32,7 +32,7 @@ function realSnap(): SnapshotV3 {
   } as SnapshotV3['transport']
   s.coverage = { numerator: 1, denominator: 1, scope: 'workflow' }
   s.governance = {
-    state: 'OK',
+    state: 'CLEAN',
     families: {
       rules: { state: 'CLEAN', current: null, drift: 0 },
       skills: { state: 'CLEAN', current: null, drift: 0 },
@@ -58,7 +58,7 @@ function realSnap(): SnapshotV3 {
     },
     token: { inputTokens: 1000, outputTokens: 500, totalTokens: 1500, costQuality: 'UNKNOWN' },
     ci: [{
-      runId: '36258547707', workflow: 'wlr-060', headSha: '20f42df111111111111111111111111111111111',
+      runId: '36258547707', projectId: 'work-lab', workflow: 'wlr-060', headSha: '20f42df111111111111111111111111111111111',
       status: 'success', conclusion: 'success', sourceRef: null,
     }],
     executionIds: ['ex-1'], sourceRefs: ['git:origin/main@279e80e'],

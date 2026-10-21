@@ -10,6 +10,9 @@ import './skins/b10.css'
 // unlayered B10 skin needs (rail visibility + compact grid). Loaded last so it
 // beats both index.css and the B10 skin.
 import './skins/l10b-shell.css'
+// 2026-10-18: the compact HUD's phenotype layer. New `.hud-*` classes only;
+// loaded after the shell so its tokens are the ones already in effect.
+import './skins/hud-phenotype.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

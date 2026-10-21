@@ -28,7 +28,9 @@ Exit codes: 0 = every citation lands on its quote and no narrative pointer remai
 from __future__ import annotations
 
 import argparse
+import json
 import re
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -138,9 +140,43 @@ def rewrite(citing: Path, findings: list[Finding], *, drop_narrative: bool) -> s
     return text
 
 
+LIVE_SURFACES = ("docs/current/*.md", "docs/current/**/*.md", "taskpacks/current/*.md",
+                 "taskpacks/current/**/*.md", "WORK-LAB-AUTHORITY.md")
+
+
+def live_pointer_surface(root: Path) -> list[Path]:
+    """The documents that are still allowed to move, enumerated from the git index.
+
+    2026-10-20: the default target used to be the UI-V2 interface-binding matrix, which now sits inside the
+    frozen archive. A tool that rewrites line numbers cannot aim at bytes two hash-bound records promise not
+    to change, so the population moved to live docs and is enumerated rather than hand-listed, so a document
+    that lands next week is covered the day it lands.
+    """
+    listed = subprocess.run(["git", "ls-files", "--", *LIVE_SURFACES], cwd=root,
+                            capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if listed.returncode != 0:
+        raise SystemExit(f"REPOINT_FAIL cannot enumerate the live surface: {listed.stderr.strip()}")
+    return [root / line for line in listed.stdout.splitlines() if line.strip()]
+
+
+def frozen_paths(root: Path) -> set[str]:
+    """Every repo-relative path whose bytes are pinned by a published hash-bound record."""
+    pinned: set[str] = set()
+    manifest = root / "docs/history/archive/FROZEN-MANIFEST.json"
+    moves = root / "docs/history/archive/MOVED-PATHS-20261019.json"
+    if manifest.is_file():
+        for entry in json.loads(manifest.read_text(encoding="utf-8")).get("files", []):
+            pinned.add(str(entry.get("path", "")).replace("\\", "/"))
+    if moves.is_file():
+        for move in json.loads(moves.read_text(encoding="utf-8")).get("moves", []):
+            pinned.add(str(move.get("to", "")).replace("\\", "/"))
+    return {p for p in pinned if p}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Repoint path:LINE citations to where the quoted code now is.")
-    parser.add_argument("files", nargs="*", help="Citing files (default: the UI-V2 pointer matrix).")
+    parser.add_argument("files", nargs="*", help="Citing files (default: the tracked live doc surface; "
+                                                "frozen archive bytes are refused, never repaired).")
     parser.add_argument("--apply", action="store_true", help="Rewrite drifted citations in place.")
     parser.add_argument("--drop-narrative", action="store_true",
                         help="Replace narrative `path:LINE` with `path`. Used only where a quote cannot be "
@@ -152,13 +188,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--root", type=Path, default=ROOT)
     args = parser.parse_args(argv)
 
-    targets = [Path(f) for f in args.files] or [
-        ROOT / "docs/current/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv",
-    ]
+    targets = [Path(f) for f in args.files] or live_pointer_surface(args.root)
     targets = [t if t.is_absolute() else ROOT / t for t in targets]
     missing = [t for t in targets if not t.is_file()]
     if missing:
         print(f"REPOINT_FAIL missing citing file(s): {[str(m) for m in missing]}")
+        return 1
+    frozen = frozen_paths(args.root)
+    pinned = []
+    for target in targets:
+        try:
+            rel = target.resolve().relative_to(args.root.resolve()).as_posix()
+        except ValueError:
+            continue
+        if rel in frozen:
+            pinned.append(rel)
+    if pinned:
+        print(f"REPOINT_FROZEN_REFUSED {len(pinned)} target(s) are pinned by a hash-bound record "
+              f"(docs/history/archive/FROZEN-MANIFEST.json or docs/history/archive/"
+              f"MOVED-PATHS-20261019.json). Rewriting a line pointer inside them would break the freeze, "
+              f"which is the defect this refuses: {pinned}. Repair the claim in a live surface instead.")
         return 1
 
     all_findings: list[Finding] = []

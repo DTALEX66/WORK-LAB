@@ -31,12 +31,34 @@ Models and explicit provider/source labels are grouped as:
 
 The default dashboard is **本次新增**: after monitoring starts, it subtracts the initial historical snapshot and shows only usage added while the monitor is running. Use **历史累计** to inspect all recognized records in the selected sources.
 
-The window uses an Apple-inspired light desktop surface (SF Pro/system font stack, white translucent cards, quiet gray hierarchy, blue primary action) and can be hidden to the Windows notification area. Closing the window hides it; use the tray menu to show it again or exit.
+## HUD view
+
+The default surface is the **Hermes HUD**: a dark glass panel with per-provider
+rings, colored bot glyphs, a top status glow, large tabular totals, 14-day
+sparklines, and a selected-provider detail card. Rings encode **token share**,
+not quota or remaining balance, and are labeled `份额`.
+
+- **紧凑 / 展开** switches between a floating summary and the full HUD.
+- Selecting a ring filters the detail card without changing any data.
+- `—` means unknown; `0` is shown only when the value is known to be zero.
+- **仪表盘** opens the original light dashboard; **HUD 视图** returns here.
+- View and mode travel in the URL (`?view=hud&mode=compact`); web storage is not used.
+
+When the app is opened in a plain browser (no Tauri runtime), it serves
+deterministic sample data and never reads local files: use
+`?demo=1&view=hud&mode=compact` for the compact phenotype or
+`?demo=1&view=hud&empty=1` for the unknown/empty state.
+
+The light dashboard remains available as the secondary surface (SF Pro/system
+font stack, white translucent cards, quiet gray hierarchy, blue primary action).
+Closing the window hides it to the Windows notification area; use the tray menu
+to show it again or exit.
 
 ## Development
 
 ```powershell
 npm install
+npm test
 npm run build
 npm run tauri dev
 ```

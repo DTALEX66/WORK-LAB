@@ -35,7 +35,7 @@ export const EVIDENCE_BACKEND_REASON_CODES = [
   'LIMIT_TOO_LARGE',
   'DIGEST_MISMATCH',
   'DIGEST_SHAPE',
-  'DIGEST_UNAVAILABLE',
+  'IDENTITY_TOO_LARGE_TO_MEASURE',
   'LIMIT_NON_POSITIVE',
   'OFFSET_NEGATIVE',
   'OFFSET_PAST_END',
@@ -57,10 +57,15 @@ export interface EvidenceRangeCost {
 }
 
 export interface EvidenceRangeIdentity {
+  /** The digest the CALLER pinned (`?expectedDigest=`). A claim, never a measurement. */
+  expectedDigest?: string | null
+  /** The digest the reader measured off the file's own bytes. Never a caller echo (ERR-284). */
   wholeDigest?: string | null
   sizeBytes?: number | null
-  /** 'caller-supplied' | 'not-supplied' on a success; absent on the DIGEST_MISMATCH variant. */
+  /** 'measured-by-reader' | 'not-requested' | 'not-measurable'. */
   digestSource?: string | null
+  /** True only when a pin existed and the reader's measurement equalled it. */
+  verified?: boolean | null
 }
 
 export interface EvidenceRangeResult {
@@ -81,7 +86,10 @@ export interface EvidenceRangeResult {
   cost?: EvidenceRangeCost
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
+/** A plain object (not null, not an array). Exported because the handle lane reads the same runtime
+ *  shapes — a sub-record that is absent is a source gap, one that is an array is a shape mismatch, and
+ *  the two must not be folded into each other by a lane-local copy of this predicate. */
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
 const str = (value: unknown): string | null =>
@@ -126,17 +134,24 @@ export interface EvidenceAddress {
   offset: number | null
   limit: number | null
   expectedDigest: string | null
-  wholeDigest: string | null
 }
 
-export const EVIDENCE_PARAM_NAMES = ['artifact', 'offset', 'limit', 'expectedDigest', 'wholeDigest'] as const
+/** The two names the handle block's filter state travels under. Declared once, here, and re-used by
+ *  `EVIDENCE_PARAM_NAMES` below and by both link builders — the lane's own copy of this list is what
+ *  drifted out of step (WUI-15 review ⑤/⑥). */
+export const HANDLES_PARAM_NAMES = ['handlesSurface', 'handlesDigest'] as const
+
+export const EVIDENCE_PARAM_NAMES = ['artifact', 'offset', 'limit', 'expectedDigest',
+  ...HANDLES_PARAM_NAMES] as const
 
 /** A Windows path is the normal handle shape here, so unlike a ledger id it carries separators, spaces and
  *  a drive letter. What it may not carry is a control character or an unbounded length. Absolute-ness,
  *  surface membership and credential-shaped names are the reader's decisions — the UI must not pre-empt
  *  them, because the typed refusal is the thing the panel exists to show. */
 const MAX_HANDLE_LENGTH = 512
-const CONTROL_CHARS = /[\u0000-\u001f\u007f]/
+/** Exported: the handle filter lane validates its URL value with this same rule, and one regex per
+ *  character class is what keeps the two refusals worded the same way. */
+export const CONTROL_CHARS = /[\u0000-\u001f\u007f]/
 
 export type AddressVerdict =
   | { kind: 'absent' }
@@ -177,15 +192,21 @@ export function readEvidenceAddress(search: string): AddressVerdict {
     return value
   }
   const expectedDigest = digest(params.get('expectedDigest'), 'expectedDigest')
-  const wholeDigest = digest(params.get('wholeDigest'), 'wholeDigest')
   if (reasons.length > 0) return { kind: 'rejected', reasons }
   return {
     kind: 'addressed',
-    address: { handle, offset, limit, expectedDigest, wholeDigest },
+    address: { handle, offset, limit, expectedDigest },
   }
 }
 
-const PRESERVED_PARAMS = ['theme', 'layout', 'api', 'shell', 'taskId', 'executionId']
+/** What a lane link must carry over. `palette` is a theme channel the shell reads off the address, and
+ *  the two handle-filter names are that block's state — it lives in the URL because web storage is
+ *  forbidden here, so dropping them is how one click on a source silently reset a filter the reader had
+ *  just set (WUI-15 review ⑥). The artifact address itself is deliberately NOT preserved: `evidenceHref`
+ *  writes it from the address it is handed, and copying a previous `offset`/`limit` onto a new handle
+ *  would read bytes nobody asked for. */
+const PRESERVED_PARAMS = ['theme', 'layout', 'palette', 'api', 'shell', 'taskId', 'executionId',
+  ...HANDLES_PARAM_NAMES] as const
 
 /** The shareable address for one slice: the same single `?view=` mechanism the shell already uses. */
 export function evidenceHref(address: EvidenceAddress | null, search: string, laneId = 'evidence'): string {
@@ -201,7 +222,6 @@ export function evidenceHref(address: EvidenceAddress | null, search: string, la
     if (address.offset !== null) params.set('offset', String(address.offset))
     if (address.limit !== null) params.set('limit', String(address.limit))
     if (address.expectedDigest) params.set('expectedDigest', address.expectedDigest)
-    if (address.wholeDigest) params.set('wholeDigest', address.wholeDigest)
   }
   const qs = params.toString()
   return `${window.location.pathname}${qs ? '?' + qs : ''}`
@@ -216,7 +236,6 @@ export interface EvidenceSliceRequest {
   offset?: number | null
   limit?: number | null
   expectedDigest?: string | null
-  wholeDigest?: string | null
 }
 
 export type EvidenceSliceOutcome =
@@ -235,7 +254,6 @@ export function evidenceQuery(request: EvidenceSliceRequest): string {
   if (request.offset !== null && request.offset !== undefined) params.set('offset', String(request.offset))
   if (request.limit !== null && request.limit !== undefined) params.set('limit', String(request.limit))
   if (request.expectedDigest) params.set('expectedDigest', request.expectedDigest)
-  if (request.wholeDigest) params.set('wholeDigest', request.wholeDigest)
   return params.toString()
 }
 
@@ -303,24 +321,34 @@ export interface DigestVerdict {
   detail: string
 }
 
-/** Whether the CALLER-SUPPLIED whole digest agrees with what the reader measured. The reader never hashes
- *  the whole file itself (that would turn a cheap range read into a full read), so an absent input is
- *  `NOT_REQUESTED` — it is not a pass and it is not a mismatch. */
+/** Whether the reader's own measurement matches the digest the caller pinned.
+ *
+ *  ERR-284: this function used to read `identity.wholeDigest` twice — once as the "recorded" value and once
+ *  as the "expected" one — so the two were equal by construction and every successful read came back AGREE
+ *  under the words "返回字节属于被记录的那份产物". The two sides now come from different fields with
+ *  different provenance: `expectedDigest` is the caller's claim, `wholeDigest` is what the reader hashed off
+ *  the file. AGREE needs both, and needs the reader to have actually measured.
+ */
 export function digestVerdictOf(result: EvidenceRangeResult): DigestVerdict {
-  const recorded = str(result.identity?.wholeDigest ?? null)
+  const pinned = str(result.identity?.expectedDigest ?? null)
+  const measured = str(result.identity?.wholeDigest ?? null)
+  const source = str(result.identity?.digestSource ?? 'UNKNOWN')
   if (result.reason_code === 'DIGEST_MISMATCH') {
-    return { kind: 'MISMATCH', detail: '期望摘要与文件实测摘要不一致，因此后端没有返回字节' }
+    return { kind: 'MISMATCH', detail: '读取器实测的整文件摘要与地址里钉住的摘要不一致，因此后端没有返回字节' }
   }
-  if (result.reason_code === 'DIGEST_SHAPE' || result.reason_code === 'DIGEST_UNAVAILABLE') {
-    return { kind: 'UNDETERMINED', detail: '核对输入本身不合格，一致性无从判定' }
+  if (result.reason_code === 'DIGEST_SHAPE') {
+    return { kind: 'UNDETERMINED', detail: '钉住的摘要本身不合格（64 位十六进制），一致性无从判定' }
+  }
+  if (result.reason_code === 'IDENTITY_TOO_LARGE_TO_MEASURE') {
+    return { kind: 'UNDETERMINED', detail: `文件超过实测上限，读取器没有核验身份（digestSource=${source}）` }
   }
   if (result.status !== 'OK') {
     return { kind: 'UNDETERMINED', detail: `读取停在 ${result.reason_code}，未进入摘要核对` }
   }
-  const expected = str(result.identity?.wholeDigest ?? null)
-  if (!recorded) return { kind: 'NOT_REQUESTED', detail: '调用方未提供记录摘要（digestSource=' + (result.identity?.digestSource ?? 'UNKNOWN') + '）' }
-  if (expected && expected === recorded) return { kind: 'AGREE', detail: '返回字节属于被记录的那份产物' }
-  return { kind: 'NOT_REQUESTED', detail: '仅有实测摘要，没有期望值可比对' }
+  if (!pinned) return { kind: 'NOT_REQUESTED', detail: `地址未钉住摘要（digestSource=${source}），身份未核验` }
+  if (!measured) return { kind: 'UNDETERMINED', detail: `读取未实测整文件摘要（digestSource=${source}），身份未核验` }
+  if (measured === pinned) return { kind: 'AGREE', detail: '读取器实测摘要与钉住的摘要一致' }
+  return { kind: 'MISMATCH', detail: '返回体里实测摘要与钉住的摘要不一致' }
 }
 
 /** The projected artifact shelf. `sources` is a real v3 field (`workspace.sources`, produced by

@@ -1,11 +1,11 @@
 <!-- GENERATED — DO NOT EDIT -->
 <!-- source: projections/agents/source/work-lab-workflow/SKILL.md -->
 <!-- generator: projections/agents/generate.py v1.0.0 -->
-<!-- content_hash: sha256:528bdd0424de23886885ec4cb3c61e5ed97e407d3c914fa370fffc5c8d757fef -->
+<!-- content_hash: sha256:8716c0ce1f477648fb2b543777578dc8206f430911f4840ff9b71eec05efc042 -->
 ---
 name: work-lab-workflow
 description: "Use for WORK-LAB workflow tasks; follow the project ledger, module, and verification boundaries."
-version: 1.1.0
+version: 1.2.0
 ---
 
 # WORK-LAB Workflow Contract
@@ -14,15 +14,20 @@ Use this skill only inside the WORK-LAB Git repository.
 
 ## What this product is
 
-WORK-LAB is a client-neutral workflow control, governance, task, delivery and observability layer. It is not
-an agent, not a chat application, and not a model gateway; external software executes the business work. The
-repository is an auditable portable source, and Hermes, Codex, CC Switch, GitHub, OpenHuman and Open Design
-are replaceable Adapters behind one contract, not the product itself.
+WORK-LAB is a client-neutral workflow management, governance, runtime monitoring and problem closed-loop
+system for a personal AI environment. It connects managed agents, developer tools, workflow software, model
+services and plugins; it discovers and groups problems, produces advice or Agent repair task packages,
+tracks verification, and turns proven fixes into reusable maintenance solutions. It is not an agent, not an
+agent runtime, not a model gateway, not a generic chat client, and not a professional auditor for every
+project; external software executes the actual work. The repository is an auditable portable source, and
+Hermes, Codex, CC Switch, GitHub, OpenHuman and Open Design are replaceable Adapters behind one contract,
+not the product itself.
 
 ## Three projects, one boundary each
 
-- WORK-LAB: project observation, reusable capability evaluation / adaptation / target verification, and
-  declared configuration governance. It is not a mandatory total dispatcher.
+- WORK-LAB: general workflow governance, runtime monitoring, issue aggregation, repair coordination,
+  reusable maintenance solutions and generic receipts. It is not a mandatory total dispatcher and does not
+  replace Codex, Claude Code, Qoder or WorkBuddy for actual repair.
 - ArcheAxis-Knowledge-OS (AAOS): full knowledge lifecycle, human knowledge work, research and learning, AI
   learning assets, bidirectional learning and long-term project memory.
 - DESIGN-LAB: professional design of all types, native assets, the design-specific execution core and
@@ -55,6 +60,13 @@ scope: it is not built, not queued, and not recorded as a deferred or frozen tas
 - A colour or layout proposal from an inbound task pack becomes an opt-in theme
   (`?palette=master`) and never overwrites the shipped default values.
 
+## Problem loop
+
+Discovery, duplicate/related grouping, issue summary, matching prior solutions, advice or an Agent repair
+package, user/policy handoff, actual repair, tests and runtime readback, closure, solution solidification,
+and AAOS knowledge candidates are separate states. Agent self-report, HTTP 200, a single exit code, a
+document edit or a submitted candidate never proves repair, verification or AAOS acceptance.
+
 ## Writer boundary
 
 - One writer owns a checkout; parallel writers require separate worktrees.
@@ -75,22 +87,29 @@ scope: it is not built, not queued, and not recorded as a deferred or frozen tas
 
 ## Verification
 
-Run checks from the exact module path. Prefer the canonical gate:
+Run checks from the exact module path and scope them to the changed surface. The canonical full gate is:
 
 ```text
 python services/orchestration/run_quality_gate.py verify
 ```
 
-Distinguish structural checks, local runtime checks, exact-SHA CI, and release evidence. A local test pass is
-not proof of exact-SHA CI or publication. A render or measurement receipt must name the bytes it looked at.
+Do not run the full local governance suite as the default judge; the current rule is change-scoped local
+gates and exact-SHA CI as the final judge. Distinguish structural checks, local runtime checks, exact-SHA CI,
+and release evidence. A local test pass is not proof of exact-SHA CI or publication. A render or measurement
+receipt must name the bytes it looked at.
 
 ## Task execution
 
 Before changing code, read the relevant `AGENTS.md`, inspect the project task contract, and locate the symbol
-or configuration owner. The single live task register is `taskpacks/current/OPEN-TASK-REGISTER.md`, and the
-current taskpack for this round is `taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`. Use the
-Workflow-owned Task Ledger for durable task state when the task contract requires it. Observer projections
-are read-only and are never a second source of truth.
+or configuration owner. The single live task register is `taskpacks/current/OPEN-TASK-REGISTER.md`. The
+current taskpack is `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`; every other row
+in the register is FROZEN_20261019 and must not be dispatched, status-rewritten or closed without evidence.
+The first real minimal loop `WORK-LAB-MINIMAL-LOOP-001` was delivered on 2026-10-19 under the user's
+explicit Task Grant; its implementation card and `SOLUTION-001` are under
+`docs/current/authority-convergence-20261019/`. Further loops or capabilities still need a new explicit
+user Task Grant; future capability states are in `docs/current/authority-convergence-20261019/ROADMAP.md`.
+Use the Workflow-owned Task Ledger for durable task state when the task contract requires it. Observer
+projections are read-only and are never a second source of truth.
 
 ## Scoped references
 

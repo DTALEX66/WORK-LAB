@@ -73,7 +73,7 @@ def full_payload() -> dict:
                     "agentPlatform": "codex", "workingAreas": ["apps/observer"]}],
         executions=[{"executionId": "ex-1", "state": "RUNNING",
                      "anchorProjectId": "work-lab", "sourceRef": "git:1"}],
-        ci_runs=[{"runId": "r1", "workflow": "w", "headSha": "a" * 40,
+        ci_runs=[{"runId": "r1", "projectId": "work-lab", "workflow": "w", "headSha": "a" * 40,
                   "status": "completed", "conclusion": "success", "sourceRef": "gh:1"}],
         usage=[{"inputTokens": 10, "outputTokens": 5, "cachedTokens": 2, "provider": "p",
                "model": "m", "costUsd": 0.1, "costQuality": "EXACT"}],

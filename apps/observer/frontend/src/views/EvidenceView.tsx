@@ -16,10 +16,20 @@
 //   digest — `未提供` is the honest cell);
 // * offer a hand-typed path field. There is no `<input>` here: an artifact is addressed by a link, the same
 //   single `?view=` mechanism the Work lane uses, and the projected shelf is the only source of handles.
+//
+// WUI-15 (2026-10-20) adds the fourth honest surface of this lane: 证据把手. `artifactHandles` plus
+// `artifactHandlesSummary` ride the live v3 payload — a cap-bounded window of identity rows over a much
+// larger enumeration — and nothing rendered either key, so a reader could not see which artifacts the
+// projection even claims to know about, nor that the window was truncated. That block is mounted below and
+// lives in `views/EvidenceHandles.tsx` (2026-10-20 refactoring review item ⑤: it was 48% of this file).
+// This file keeps what both surfaces need — the never-padding cell (`Field`), its three origin markers
+// (`FactOrigin`), the `num`/`bool`/`text` readers and the three-column slice verdict — and the handle lane
+// imports them instead of carrying a second copy.
 import * as React from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dim } from '@/views/RecordInspector'
+import { EvidenceHandles } from '@/views/EvidenceHandles'
 import type { SnapshotV3 } from '@/types'
 import type { RecordFocus } from '@/lib/recordFocus'
 import { evidenceRangeEndpoint } from '@/lib/api'
@@ -44,10 +54,28 @@ export interface EvidenceViewProps {
 
 const PREVIEW_LIMIT = 1200
 
-/** A cell that never pads: a value the result does not carry stays 未提供 with the reason it is absent. */
-function Field({ label, value, missing, field }: { label: string; value: string | null; missing: string; field?: string }) {
+/** The three origins the projection can actually distinguish (same vocabulary as RecordInspector/UsageCache).
+ *  Exported because the handle lane labels every one of its cells with the same three words — a second
+ *  private copy of this union is how two lanes start meaning two things. */
+export type FactOrigin = 'PROJECTED' | 'NULL_FIELD' | 'SOURCE_GAP'
+
+/** A cell that never pads: a value the result does not carry stays 未提供 with the reason it is absent.
+ *  `origin` writes the DOM contract marker (`data-origin`) so a reader — and the render-level test — can
+ *  tell a projected value from an absent field without reading the prose. Exported for the handle lane:
+ *  one renderer for 未提供 in this lane, not two that can disagree. */
+export function Field({ label, value, missing, field, origin }: {
+  label: string
+  value: string | null
+  missing: string
+  field?: string
+  origin?: FactOrigin
+}) {
   return (
-    <div className="list-item flex-col items-stretch gap-1" data-field={field ?? label}>
+    <div
+      className="list-item flex-col items-stretch gap-1"
+      data-field={field ?? label}
+      {...(origin ? { 'data-origin': origin } : {})}
+    >
       <div className="text-[12px] uppercase tracking-[0.12em] text-muted">{label}</div>
       {value !== null ? (
         <div className="break-words font-mono text-[12px] text-ink">{value}</div>
@@ -61,13 +89,15 @@ function Field({ label, value, missing, field }: { label: string; value: string 
   )
 }
 
-const num = (value: number | null | undefined): string | null =>
+/** The three "is this value actually there" readers, shared with the handle lane: an absent field and a
+ *  fabricated one must not be decided twice in one file-family. */
+export const num = (value: number | null | undefined): string | null =>
   typeof value === 'number' && Number.isFinite(value) ? String(value) : null
 
-const bool = (value: boolean | null | undefined, yes: string, no: string): string | null =>
+export const bool = (value: boolean | null | undefined, yes: string, no: string): string | null =>
   typeof value === 'boolean' ? (value ? yes : no) : null
 
-const text = (value: string | null | undefined): string | null =>
+export const text = (value: string | null | undefined): string | null =>
   value === null || value === undefined || value === '' ? null : value
 
 function statusTone(status: EvidenceRangeResult['status']): 'success' | 'warning' | 'error' {
@@ -119,7 +149,7 @@ export function EvidenceView({
     reader({
       handle: address.handle,
       offset: address.offset, limit: address.limit,
-      expectedDigest: address.expectedDigest, wholeDigest: address.wholeDigest,
+      expectedDigest: address.expectedDigest,
     }).then((outcome) => { if (!cancelled) setState({ kind: 'DONE', outcome }) })
     return () => { cancelled = true }
   }, [addressKey, hasReader])
@@ -164,7 +194,7 @@ export function EvidenceView({
                 ))}
               </div>
               <p className="mt-2 text-xs text-muted">
-                被拒绝的地址不参与任何读取：这里不会把它拼成一个看起来像句柄的东西，也不会退回清单第一条。
+                被拒绝的地址不参与任何读取：这里不会把它拼成一个看起来像把手的东西，也不会退回清单第一条。
               </p>
             </CardContent>
           </Card>
@@ -172,7 +202,7 @@ export function EvidenceView({
 
         <Card>
           <CardHeader>
-            <span>证据产物 · 投影登记的来源</span>
+            <span>证据产物 · 取自快照投影的来源</span>
             <span className="text-[12px] text-muted">
               {shelf.kind === 'sources' ? `${shelf.items.length} 条 · 来自 workspace.sources` : '无投影'}
             </span>
@@ -186,7 +216,7 @@ export function EvidenceView({
             ) : shelf.kind === 'not-provided' ? (
               <div className="text-xs text-warning">
                 来源缺口：v3 快照没有 workspace.sources 字段（生产者未加载仓库证据面），
-                因此没有可寻址的句柄。这与「加载了但一个来源都没有」是两件事。
+                因此没有可寻址的把手（handle）。这与「加载了但一个来源都没有」是两件事。
               </div>
             ) : shelf.items.length === 0 ? (
               <div className="text-xs text-muted">已加载证据面，但没有登记任何来源（空列表是查询结果，不是缺源）</div>
@@ -195,7 +225,7 @@ export function EvidenceView({
                 {shelf.items.map((item, index) => {
                   const handle = item.path
                   const rowAddress: EvidenceAddress | null = handle
-                    ? { handle, offset: null, limit: null, expectedDigest: null, wholeDigest: null }
+                    ? { handle, offset: null, limit: null, expectedDigest: null }
                     : null
                   const href = evidenceHref(rowAddress, initialSearch)
                   const active = handle !== null && address?.handle === handle
@@ -221,7 +251,7 @@ export function EvidenceView({
               </div>
             )}
             <p className="mt-2 text-[12px] text-muted">
-              投影登记的 path 是仓库相对路径，而区间读要求绝对句柄，并只在声明的证据面上提供内容。
+              取自快照投影的 path 是仓库相对路径，而区间读要求的是绝对路径的把手（handle），并只在声明的证据面上提供内容。
               点开一条不在证据面上的来源，会得到后端的类型化拒绝，而不是一块空白。
             </p>
             {(focus.taskId || focus.executionId) && (
@@ -233,6 +263,8 @@ export function EvidenceView({
             )}
           </CardContent>
         </Card>
+
+        <EvidenceHandles snap={snap} search={initialSearch} />
 
         <Card>
           <CardHeader>
@@ -256,7 +288,7 @@ export function EvidenceView({
             <div className="list">
               <Dim label="判定住在 body" value={`status / reason_code；HTTP 200 不等于读取成功（当前 schema ${EVIDENCE_RANGE_SCHEMA_VERSION}）`} />
               <Dim label="拒绝时的内容" value="REFUSED / OUT_OF_RANGE 携带 content=null，本视图不渲染内容块，也不留空白" />
-              <Dim label="地址" value="artifact / offset / limit / expectedDigest / wholeDigest 全部走 ?view=evidence 同一条链接机制，没有手填入口" />
+              <Dim label="地址" value="artifact / offset / limit / expectedDigest 全部走 ?view=evidence 同一条链接机制，没有手填入口" />
               <Dim label="未提供" value="结果里没有的字段显示 未提供，不补 0，也不补 false" />
               <Dim label="上限" value={`单次 ${EVIDENCE_MAX_LIMIT.toLocaleString('en-US')} 字节：超限由后端拒绝（LIMIT_TOO_LARGE），这一侧不做静默截断`} />
             </div>
@@ -268,7 +300,7 @@ export function EvidenceView({
           <CardContent className="text-xs text-muted">
             本视图只发起 <span className="font-mono">GET</span>：没有批准 / 派发 / 重试 / 回滚 / apply 的任何入口，
             也没有写深链。读取失败、被拒绝与未送达是三件不同的事，分别如实呈现；
-            项目内部不等于阅读许可 —— 不在声明证据面上的句柄、凭证样名称都由后端拒绝，本视图把拒绝原样展示。
+            项目内部不等于阅读许可 —— 不在声明证据面上的把手、凭证样名称都由后端拒绝，本视图把拒绝原样展示。
           </CardContent>
         </Card>
       </div>
@@ -292,8 +324,8 @@ function EvidenceColumns({
         <Card data-column="identity">
           <CardHeader><span>身份 · Identity</span></CardHeader>
           <CardContent>
-            <Field label="handle" value={null} missing={rejectedCount > 0 ? '地址被拒绝，没有可用句柄' : '地址里没有 artifact 参数，未指定句柄'} />
-            <Field label="记录摘要" value={null} missing="未指定句柄，谈不上摘要" />
+            <Field label="handle" value={null} missing={rejectedCount > 0 ? '地址被拒绝，没有可用把手' : '地址里没有 artifact 参数，未指定把手'} />
+            <Field label="记录摘要" value={null} missing="未指定把手，谈不上摘要" />
             <Field label="大小" value={null} missing="未发起读取" />
           </CardContent>
         </Card>
@@ -312,8 +344,8 @@ function EvidenceColumns({
           <CardContent>
             <div className="text-xs text-muted" role="status">
               {rejectedCount > 0
-                ? '无判定：地址在校验处就被拒绝，读取未发起。被拒绝的值不会被拼成一个看起来像句柄的东西，也不会退回清单第一条。'
-                : '无判定：没有句柄就没有对象。选择左侧清单里的一条来源，或直接使用带 artifact 参数的地址。'}
+                ? '无判定：地址在校验处就被拒绝，读取未发起。被拒绝的值不会被拼成一个看起来像把手的东西，也不会退回清单第一条。'
+                : '无判定：没有把手就没有对象。选择左侧清单里的一条来源，或直接使用带 artifact 参数的地址。'}
             </div>
           </CardContent>
         </Card>
@@ -377,7 +409,7 @@ function EvidenceColumns({
           <CardHeader><span>身份 · Identity</span></CardHeader>
           <CardContent>
             <Field label="handle" value={address?.handle ?? null} missing="地址未被解析" />
-            <Field label="记录摘要" value={address?.expectedDigest ?? null} missing="地址未提供 expectedDigest" />
+            <Field label="钉住摘要" value={address?.expectedDigest ?? null} missing="地址未提供 expectedDigest" />
             <Field label="大小" value={null} missing="未送达，没有实测大小" />
           </CardContent>
         </Card>
@@ -414,7 +446,8 @@ function EvidenceColumns({
   const cost = item.cost
   const digest = digestVerdictOf(item)
   const sizeBytes = typeof identity?.sizeBytes === 'number' ? identity.sizeBytes : (typeof cost?.fileSize === 'number' ? cost.fileSize : null)
-  const recordedDigest = text(address?.expectedDigest) ?? text(identity?.wholeDigest)
+  const pinnedDigest = text(identity?.expectedDigest) ?? text(address?.expectedDigest)
+  const measuredDigest = text(identity?.wholeDigest)
   const isOk = item.status === 'OK'
 
   return (
@@ -422,8 +455,9 @@ function EvidenceColumns({
       <Card data-column="identity">
         <CardHeader><span>身份 · Identity</span></CardHeader>
         <CardContent>
-          <Field field="handle" label="handle" value={text(item.handle) ?? text(address?.handle)} missing="结果未回传句柄" />
-          <Field field="recordedDigest" label="记录摘要（调用方提供）" value={recordedDigest} missing="地址未提供 expectedDigest，后端也没有可比的 wholeDigest" />
+          <Field field="handle" label="handle" value={text(item.handle) ?? text(address?.handle)} missing="结果未回传把手" />
+          <Field field="pinnedDigest" label="钉住摘要（调用方声明）" value={pinnedDigest} missing="地址未提供 expectedDigest，本次没有请求身份核验" />
+          <Field field="measuredDigest" label="实测摘要（读取器计算）" value={measuredDigest} missing="读取器未实测整文件摘要，身份未核验" />
           <Field field="digestSource" label="摘要来源" value={text(identity?.digestSource)} missing="该判定未走到摘要核对" />
           <Field field="size" label="大小" value={sizeBytes !== null ? fmtBytes(sizeBytes) : null} missing="结果未携带文件大小" />
         </CardContent>

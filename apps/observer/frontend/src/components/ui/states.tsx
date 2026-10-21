@@ -215,31 +215,66 @@ export interface ProductStateCardProps {
   /** what this page actually observed, in one line */
   detail?: string
   className?: string
+  /**
+   * Lower the PRESENTATION weight without touching the state's meaning.
+   *
+   * `.empty` is the page-level shell: a 56px band and a 64px icon circle. For a state that this repository
+   * shows as a long-term norm rather than an incident — a read-only projection whose source declines
+   * sensitive names and prunes regenerable directories on every run (measured 231 / 114) — that weight is
+   * alarm fatigue, and an always-shouting card teaches a reader to stop reading it. `compact` therefore
+   * keeps `data-state`, the vocabulary label, the detail, 依据 and 下一步 exactly as they are and changes
+   * only the shell: left-aligned, inline, no icon circle, no page-level whitespace. The words and the
+   * counts are the caller's, so this cannot rewrite a verdict.
+   */
+  compact?: boolean
 }
 
 /** One of the eight states, rendered with its evidence rule and its way out. */
-export function ProductStateCard({ state, subject, detail, className }: ProductStateCardProps) {
+export function ProductStateCard({ state, subject, detail, className, compact = false }: ProductStateCardProps) {
   const definition = STATE_BY_ID[state]
+  // In the page-level shell the paragraphs centre inside the `.empty` band; the compact strip is
+  // left-aligned, so the centring widths are what drop out — never the text.
+  const measure = compact ? 'min-w-0' : 'mx-auto max-w-xl'
+  const body = (
+    <div className="min-w-0">
+      <p className="text-sm font-semibold text-ink">
+        {definition.label}{subject ? ` · ${subject}` : ''}
+      </p>
+      <p className={cn('mt-1 text-xs', measure)}>{detail ? detail : definition.meaning}</p>
+      <p className={cn('mt-2 text-[12px] text-muted', measure)}>
+        依据：{definition.signal}
+      </p>
+      <p className={cn('mt-1 text-[12px] text-muted', measure)}>
+        下一步：{definition.nextAction}
+      </p>
+      {definition.projectable === false && (
+        <p className={cn('mt-2 text-[12px] text-warning', measure)} data-testid={`state-not-projectable-${state}`}>
+          当前 v3 快照不携带可判定该状态的项目；本卡只在调用方明确告知时出现，不由空值推断。
+        </p>
+      )}
+    </div>
+  )
+  if (compact) {
+    return (
+      <div
+        className={cn(
+          // token-driven only: panel2, the hairline and radius-md are the shell's own variables.
+          'flex min-w-0 items-start gap-2 rounded-md border border-border/60 bg-panel2 p-2 text-left',
+          className,
+        )}
+        role="status"
+        data-state={state}
+        data-presentation="compact"
+      >
+        <span className="mt-0.5 shrink-0 text-secondary-ink" aria-hidden="true">{STATE_ICONS[state]}</span>
+        {body}
+      </div>
+    )
+  }
   return (
     <div className={cn('empty', className)} role="status" data-state={state}>
       <div className="icon" aria-hidden="true">{STATE_ICONS[state]}</div>
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-ink">
-          {definition.label}{subject ? ` · ${subject}` : ''}
-        </p>
-        <p className="mx-auto mt-1 max-w-xl text-xs">{detail ? detail : definition.meaning}</p>
-        <p className="mx-auto mt-2 max-w-xl text-[12px] text-muted">
-          依据：{definition.signal}
-        </p>
-        <p className="mx-auto mt-1 max-w-xl text-[12px] text-muted">
-          下一步：{definition.nextAction}
-        </p>
-        {definition.projectable === false && (
-          <p className="mx-auto mt-2 max-w-xl text-[12px] text-warning" data-testid={`state-not-projectable-${state}`}>
-            当前 v3 快照不携带可判定该状态的项目；本卡只在调用方明确告知时出现，不由空值推断。
-          </p>
-        )}
-      </div>
+      {body}
     </div>
   )
 }

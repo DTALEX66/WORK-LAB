@@ -45,7 +45,8 @@ function readOk(over: Partial<EvidenceRangeResult> = {}): EvidenceRangeResult {
     eofReached: false,
     content: 'first slice line\nsecond slice line',
     sliceDigest: SLICE,
-    identity: { wholeDigest: WHOLE, sizeBytes: 8388614, digestSource: 'caller-supplied' },
+    identity: { expectedDigest: WHOLE, wholeDigest: WHOLE, sizeBytes: 8388614,
+      digestSource: 'measured-by-reader', verified: true },
     cost: { bytesRead: 6144, fileSize: 8388614, wholeFileWasRead: false },
     ...over,
   }
@@ -68,17 +69,17 @@ function refused(code: string, reason: string, over: Partial<EvidenceRangeResult
 const REFUSALS: Array<[string, string]> = [
   ['OUT_OF_EVIDENCE_SURFACE', 'handle 不在声明的证据目录内：项目内部本身就是敏感的，边界不等于许可。'],
   ['SENSITIVE_NAME', 'handle 指向凭证、配置、会话库或密钥类文件，读取投影在任何边界内都不提供这类内容。'],
-  ['DIGEST_MISMATCH', '期望摘要与实际文件不符：返回的字节不属于被记录的那份产物，因此不返回内容。'],
+  ['DIGEST_MISMATCH', '期望摘要与读取器实测的整文件摘要不符：返回的字节不属于被记录的那份产物，因此不返回内容。'],
 ]
 
 const ADDRESS = `?view=evidence&artifact=${encodeURIComponent(HANDLE)}&offset=4096&limit=8192`
-  + `&expectedDigest=${WHOLE}&wholeDigest=${WHOLE}`
+  + `&expectedDigest=${WHOLE}`
 
 function snapWithShelf(): SnapshotV3 {
   return mkSnap({
     workspace: {
       sources: [
-        { path: 'taskpacks/current/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md', evidenceKind: 'PLAN', loadedAt: '2026-10-08T01:00:00Z' },
+        { path: 'taskpacks/history/pre-convergence-20261019/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md', evidenceKind: 'PLAN', loadedAt: '2026-10-08T01:00:00Z' },
         { path: '.project/governance/generated/CURRENT_STATE.json', evidenceKind: 'STATIC_BASELINE', loadedAt: '2026-10-08T01:00:00Z', generatedAt: '2026-10-07T22:00:00Z' },
       ],
     },
@@ -128,13 +129,39 @@ describe('REQ-RANGE · three columns from a realistic READ_OK', () => {
     }
   })
 
-  it('identity column shows the handle, the recorded digest and the measured size', async () => {
+  it('identity column shows the handle, the pinned and measured digests apart, and the measured size', async () => {
     const { container } = await renderWithResult(readOk())
     expect(fieldOf(container, 'handle')!.textContent).toContain(HANDLE)
     // the full digest is on screen, not a prefix with no way to check the rest
-    expect(fieldOf(container, 'recordedDigest')!.textContent).toContain(WHOLE)
+    expect(fieldOf(container, 'pinnedDigest')!.textContent).toContain(WHOLE)
+    expect(fieldOf(container, 'measuredDigest')!.textContent).toContain(WHOLE)
     expect(fieldOf(container, 'size')!.textContent).toContain('8,388,614 B')
-    expect(fieldOf(container, 'digestSource')!.textContent).toContain('caller-supplied')
+    expect(fieldOf(container, 'digestSource')!.textContent).toContain('measured-by-reader')
+  })
+
+  it('ERR-284: a body carrying one digest cannot be read as agreement', async () => {
+    // The shape the reader used to return: `wholeDigest` echoed back whatever the caller sent, and the
+    // verdict helper compared that field with itself. One value on the wire is not two agreeing values.
+    const bare = `?view=evidence&artifact=${encodeURIComponent(HANDLE)}&offset=4096&limit=8192`
+    const { container } = await renderWithResult(readOk({
+      identity: { wholeDigest: WHOLE, sizeBytes: 8388614, digestSource: 'not-requested' },
+    }), bare)
+    const digest = container.querySelector('[data-testid="evidence-digest-verdict"]') as HTMLElement
+    expect(digest.textContent).toContain('未请求')
+    expect(digest.textContent).not.toContain('AGREE')
+    expect(fieldOf(container, 'measuredDigest')!.textContent).toContain(WHOLE)
+    expect(fieldOf(container, 'pinnedDigest')!.textContent).toContain('未提供')
+  })
+
+  it('a measured digest that differs from the pinned one is a MISMATCH even on an OK body', async () => {
+    const other = 'b'.repeat(64)
+    const { container } = await renderWithResult(readOk({
+      identity: { expectedDigest: other, wholeDigest: WHOLE, sizeBytes: 8388614,
+        digestSource: 'measured-by-reader', verified: false },
+    }))
+    const digest = container.querySelector('[data-testid="evidence-digest-verdict"]') as HTMLElement
+    expect(digest.textContent).toContain('MISMATCH')
+    expect(digest.textContent).not.toContain('AGREE')
   })
 
   it('slice column shows the interval the read actually returned', async () => {
@@ -244,7 +271,7 @@ describe('REQ-RANGE · a refusal is rendered as a refusal', () => {
     const grid = columnsOf(container)
     expect(grid.getAttribute('data-state')).toBe('unaddressed')
     expect(Array.from(grid.children)).toHaveLength(3)
-    expect(grid.textContent).toContain('没有句柄就没有对象')
+    expect(grid.textContent).toContain('没有把手就没有对象')
     expect(grid.textContent).toContain('未提供')
     expect(grid.textContent).not.toMatch(/(^|\D)0(\D|$)/)
     expect(container.querySelectorAll('.tag.ok')).toHaveLength(0)
@@ -283,7 +310,7 @@ describe('REQ-RANGE · shelf honesty and addressing', () => {
     expect(/^\/\?view=evidence(&|$)/.test(href), `link escaped the lane contract: ${href}`).toBe(true)
     fireEvent.click(link!)
     await waitFor(() => expect(columnsOf(container).getAttribute('data-state')).toBe('REFUSED'))
-    expect(seen[0].handle).toBe('taskpacks/current/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md')
+    expect(seen[0].handle).toBe('taskpacks/history/pre-convergence-20261019/WORK-LAB-MASTER-2.0-APPROVAL-PACKAGE.md')
     // the refusal is what the owner sees: no content, and the backend's own reason
     expect(container.querySelector('[data-testid="evidence-content"]')).toBeNull()
     expect(columnsOf(container).textContent).toContain('ABSOLUTE_PATH_REQUIRED')

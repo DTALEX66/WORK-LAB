@@ -237,6 +237,17 @@ DISPOSITIONS: dict[str, str] = {
         "the observation that was made, not bytes a checkout must supply; `.project-local/` is "
         "git-ignored by declaration, so CI is asked to see the re-measure command, never to believe the "
         "receipt.",
+    ".project-local/artifacts/wui-20261009/refs-census-20261018.json":
+        "MACHINE-LOCAL CENSUS FROM AN UNTRACKED DRIVER — 889,298 B, sha256 024d34786ef9feef…, written "
+        "2026-10-18T17:21:26Z at head 0369d349d46b75c7048b884331bb40a0f42d4e34. Its own `rule` field "
+        "names the predicate it applied (`scripts/ci/verify_authority_index_paths.py:check()`) over 662 "
+        "surfaces, and its totals are the claim: live 33 surfaces / 512 refs / 143 broken, dated_archive "
+        "70 / 329 / 243, external_skill_copy 559 / 3,327 / 2,871. What is NOT in the tree is the driver "
+        "that wrote it, so no re-measure command exists — and that absence is exactly what the two "
+        "reader-facing sentences cite the path for, not the bytes. CI is asked to see the classification "
+        "and the missing instrument, never to believe a receipt a checkout cannot supply "
+        "(`.project-local/` is git-ignored by declaration). Adjudicated 2026-10-20; the open repair, if "
+        "the owner wants it, is to land the census as a tracked instrument with its own gate.",
 }
 
 

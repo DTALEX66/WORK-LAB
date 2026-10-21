@@ -108,7 +108,7 @@ The product has exactly two windows, and both sizes are declared in `apps/observ
 |---|---|---|---|---|---|
 | `main`, default | 1280×820, resizable | 214.5px measured at a 1262px inner width (`clamp(210px, 17vw, 280px)`; 2026-10-09 `geometry2.json`) | inline, overflow menu when the band cannot hold it | full width | no horizontal overflow; no wrap; every lane reachable |
 | `main`, at its floor | ≥ 900×600 (`minWidth`/`minHeight`) | rail is its own scroll box, 345px over 1778px of content, 27 lanes, last item hit-testable | overflow menu allowed | full width | the same set, re-measured at 900×600 |
-| `panel` (HUD) | 440×780, `resizable: false` | none by design | inline | icon + shortcut chip | no rail; no horizontal overflow |
+| `panel` (HUD) | 440×680, `resizable: false` | none by design | inline | icon only (label + Ctrl K chip remain in the DOM, named by aria-label/title) | no rail; no horizontal overflow; command row stays on one line |
 
 **There is no narrow band.** Owner decision 2026-10-07 (优先跑通全量执行桌面端电脑端 UI，先删除手机端其他端)
 deleted the phone shell, and `tests/ci/test_desktop_only_shell.py` pins both the absence of a mobile
@@ -160,7 +160,7 @@ one-pixel-wide windows.
 
 ## States required per region
 
-State lists here follow the repo's own truth rule — `UI_DECISIONS.md`: "UNKNOWN ≠ 0，不伪造 KPI" — so a
+State lists here follow the repo's own truth rule — `docs/history/archive/root-ui-records-20261019/UI_DECISIONS.md`: "UNKNOWN ≠ 0，不伪造 KPI" — so a
 lane that has not received a value renders `UNKNOWN`, and a skeleton would be a fabricated state. No
 region below "requires" one.
 
@@ -175,9 +175,17 @@ region below "requires" one.
 
 ## Text and contrast (normative, restated from DESIGN.md)
 
-- No meaningful text below 12px. *Measured 2026-10-08 after the floor sweep: minimum 12px in both
-  themes, 33 leaf nodes at 1262×668. Enforced on screen by `scripts/audit/text_legibility_via_cdp.py`
-  and in source by `tests/workflow-assistance/test_no_sub_floor_text_in_the_observer_source.py`.*
+- No meaningful text below 12px. *Re-measured 2026-10-19 with a per-lane scroll sweep: 31 lanes in both
+  themes at the 900×600 window floor, 2,676 sampled leaf nodes (dark; light 2,678), minimum 12px,
+  `aa_failures=0`, `belowFloor=0`, and no horizontal overflow (`scrollWidth=900 = innerWidth`). Enforcement
+  is split, and stated as such: the probe's arithmetic and its verdict (colour parsing, alpha compositing,
+  thresholds, the per-lane coverage checks) are gated in CI by `tests/ci/test_text_legibility_gate.py`
+  (52 cases) and the source-level rule by `tests/workflow-assistance/test_no_sub_floor_text_in_the_observer_source.py`;
+  the browser sweep of the shipped bundle is not a CI step — the CI browser job runs
+  `scripts/audit/topbar_geometry_via_cdp.py`, so a fresh `LEGIBILITY_GATE_PASS` from
+  `scripts/audit/text_legibility_via_cdp.py` is evidence produced by hand, not a gate the pipeline asserts.
+  The earlier figure "33 leaf nodes at 1262×668" was a single-view census, which
+  this instrument's own ERR-218 lesson says cannot stand for the product.*
 - **A box may not ellipsise a fact.** Any painted element that clips its own text with
   `text-overflow: ellipsis` must carry the whole string somewhere a reader can reach (`title`, or an
   ancestor's `aria-label`); otherwise it is a violation of the assertion
@@ -202,7 +210,7 @@ region below "requires" one.
 ## Gate coverage owed
 
 All six assertion families this section listed are now enforced. `topbar_geometry_via_cdp.py` runs three
-passes over the shipped bundle — 20 checks at the 1280×820 default, 14 at the 440×780 HUD, 21 at the
+passes over the shipped bundle — 20 checks at the 1280×820 default, 14 at the 440×680 HUD, 21 at the
 900×600 window floor — and `text_legibility_via_cdp.py` asserts 6 per theme plus three for the switch
 itself. Delivered: rail reachability (`nav_items_reachable`, `nav_groups_are_disclosures` — and since
 2026-10-09 the disclosure *behaviour* rather than only its markup, 7 cases in

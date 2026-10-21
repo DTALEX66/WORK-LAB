@@ -18,7 +18,7 @@ ACTIVE_HINTS = (
 ARCHIVE_HINTS = (
     "docs/history/archive-manifests/",
     ".project/governance/migration-status.json",
-    "taskpacks/current/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.json",
+    "taskpacks/history/pre-convergence-20261019/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.json",
 )
 
 

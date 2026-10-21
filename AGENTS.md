@@ -7,13 +7,14 @@
 新增来源先比对SHA-256，复用相同内容、登记别名；不同版本保留，再更新登记和成员表，运行`build-index`与`verify`。
 历史资料只作来源，不激活旧任务、AGENTS或Authority，不新建第二任务账本。
 
-## 当前任务范围更新（用户2026-10-09明确决定）
+## 当前任务范围更新（用户2026-10-19明确决定，取代2026-10-09的UI优先范围）
 
-新发总体包与UI包为准，唯一CURRENT是`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，UI优先。
+唯一CURRENT是`taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`；其余任务冻结，
+路线图`docs/current/authority-convergence-20261019/ROADMAP.md`。UI优先轮次已归档，其任务包与交接不再是当前指令。
 默认主线为项目观测、能力评价/迁移/目标验证与受管配置，外部软件执行业务；本仓开发流程不强制被观察项目采用。
-手机端不做，不列延后/冻结任务；既有HUD是桌面浮窗。旧任务有用要求并入WUI，无用冻结归档，不独立派工。
+手机端不做，不列延后/冻结任务；既有HUD是桌面浮窗。旧任务有用要求并入现行任务，无用冻结归档，不独立派工。
 本轮仅整理归档/索引/交接，产品代码NOT_EXECUTED；后续执行以具体用户Task Grant为准。
-完整交接：`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`。旧安全/隐私/所有权/单写者规则及有效测试保持。
+UI轮次交接：`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT，已汇总归档）。旧安全/隐私/所有权/单写者规则及有效测试保持。
 
 
 > 全局执行标准（跨软件跨项目）：见 `docs/decisions/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
@@ -53,7 +54,7 @@ legacy `10-workflow/workflow-assistance` path was split out at the 2026-09
 directory convergence and is no longer tracked. The
 managed client workflow is Hermes · Codex · CC Switch · GitHub · Open Design ·
 OpenHuman, plus any future AI software through the same Adapter contract.
-DSH (DeepSeek Harness, official build `0.2.0-rc.2`, installed at the vendor DEFAULT per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness` — resolve the install root from the uninstall registry entry or the shortcut TargetPath, never hardcode a drive letter; NSIS silent installs reset desktop .lnk TargetPath+IconLocation to the temp install dir — after ANY upgrade re-pin all .lnk fields per skill `dsh-administration` and error-ledger ERR-087) is a managed agent runtime client
+DSH (DeepSeek Harness, official build `0.2.1-rc.2`, installed at the vendor DEFAULT per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness` — resolve the install root from the uninstall registry entry or the shortcut TargetPath, never hardcode a drive letter; NSIS silent installs reset desktop .lnk TargetPath+IconLocation to the temp install dir — after ANY upgrade re-pin all .lnk fields per skill `dsh-administration` and error-ledger ERR-087) is a managed agent runtime client
 through the same Adapter contract. CC Switch is LEGACY_OBSERVE (observe-only;
 no active writes) unless evidence restores it to active status.
 Open Design is an external *client* (`nexu-io/open-design`); the separate
@@ -153,12 +154,18 @@ following baseline, owned by the enhancement module:
    Hermes: official desktop app (`apps/desktop/release/win-unpacked/Hermes.exe`,
    Electron) + `hermes` CLI; Codex: single wrapper (`bin/codex` bash +
    `packages/client-neutral-core/bin/codex.cmd`, identical versioned-glob resolution to the official
-   runtime); DSH: official DeepSeek Harness `0.2.0-rc.2` (Electron, installed at the
+   runtime); DSH: official DeepSeek Harness `0.2.1-rc.2` (Electron, installed at the
    vendor default per-user path `%LOCALAPPDATA%\Programs\DeepSeek Harness\DeepSeek Harness.exe`;
    the install root is RESOLVED from the uninstall registry entry or the shortcut
    TargetPath, never hardcoded — the earlier community DSH Desktop 2.0.13 build and its
-   `D:\All projects\DSH` path are SUPERSEDED; if a launch ever falls back to an empty C:
-   skeleton while data sits elsewhere, check the `DSH_HOME` user env var layer first, ERR-088);
+   `D:\All projects\DSH` path are SUPERSEDED). DSH's DATA ROOT is a separate, measured
+   layer: the live root is the official default `%USERPROFILE%\.dsh` (2026-10-13:
+   `C:\Users\ALEX\.dsh`, 15 session files), and `D:\All projects\DSH\.dsh` is a retired
+   archive no process reads. Never re-point that layer by assertion: compare session
+   counts and mtimes first, then set the env var — a stale `DSH_HOME` pointing at the
+   archive is the ERR-088/ERR-276 trap (one layer, both directions), and no logon session
+   inherits a user-scope change until the next logon, so recording which root is live is
+   part of the change, not a follow-up;
    CC Switch / OpenHuman / Open Design: single desktop shortcut to
    their installed official executables. No duplicate or conflicting launchers;
    entries are the official standard formats — WORK-LAB never invents custom

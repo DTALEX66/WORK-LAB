@@ -3,7 +3,7 @@
 The taskpack acceptance for this slice is one authorized transaction proven four ways — positive success,
 conflict, refusal, recovery — plus the rule that the server checks actor / scope / prior state / version /
 idempotency. The inbound owner material (WL-REC-0103 §6, judged in
-`docs/current/ui-priority-20261009/UI-V2-INTAKE-20261010.md`) adds three constraints, and the second one is
+`docs/history/archive/ui-priority-20261009/UI-V2-INTAKE-20261010.md`) adds three constraints, and the second one is
 what this module buys:
 
   后台刷新丢失时保留操作身份并查询同一操作，禁止以新幂等键自动重复写入。

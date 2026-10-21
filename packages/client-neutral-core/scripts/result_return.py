@@ -90,7 +90,7 @@ class ResultReceipt:
             "commit": self.commit, "pull_request": self.pull_request,
             "blockers": list(self.blockers), "open_items": list(self.open_items),
             "token_usage": self.token_usage, "cost": self.cost,
-            "fingerprint": self.fingerprint,
+            "fingerprint": self.fingerprint(),
         }
 
 
@@ -137,20 +137,38 @@ class OutboxDedupe:
     def __init__(self) -> None:
         self._sent: dict[str, dict[str, Any]] = {}
         self._pending: dict[str, dict[str, Any]] = {}
+        self._revisions: dict[str, int] = {}
 
     def _key(self, receipt: Mapping[str, Any]) -> str:
         return f"{receipt.get('receiptId')}:{receipt.get('task_revision')}"
 
+    def _conflicts(self, receipt: Mapping[str, Any]) -> bool:
+        """A receipt id is bound to one revision; a second revision for the same
+        id is a conflict, not a duplicate and not a new result."""
+        receipt_id = receipt.get("receiptId")
+        seen = self._revisions.get(receipt_id)
+        return seen is not None and seen != receipt.get("task_revision")
+
+    def _conflict_result(self, receipt: Mapping[str, Any]) -> dict[str, Any]:
+        return {"conflict": True, "reason": "IDEMPOTENCY_CONFLICT",
+                "key": self._key(receipt),
+                "note": "the same receipt id is already bound to another revision; a revision is part of receipt identity"}
+
     def enqueue(self, receipt: Mapping[str, Any]) -> dict[str, Any]:
         key = self._key(receipt)
+        if self._conflicts(receipt):
+            return {"enqueued": False, **self._conflict_result(receipt)}
         if key in self._pending or key in self._sent:
             return {"enqueued": False, "duplicate": True, "key": key,
                     "note": "same receipt+revision already tracked; not re-run"}
         self._pending[key] = {"receipt": dict(receipt), "attempts": 0}
+        self._revisions[receipt.get("receiptId")] = receipt.get("task_revision")
         return {"enqueued": True, "duplicate": False, "key": key}
 
     def send_attempt(self, receipt: Mapping[str, Any], *, ack: bool) -> dict[str, Any]:
         key = self._key(receipt)
+        if self._conflicts(receipt):
+            return {"sent": False, **self._conflict_result(receipt)}
         rec = self._pending.get(key)
         if rec is None:
             # not ours to send — it was never enqueued
@@ -174,10 +192,41 @@ class OutboxDedupe:
     def lost_ack_reconcile(self, receipt: Mapping[str, Any]) -> dict[str, Any]:
         """Response lost: check whether it is already sent; only resend if absent."""
         key = self._key(receipt)
+        if self._conflicts(receipt):
+            return {"resent": False, **self._conflict_result(receipt)}
         if key in self._sent:
             return {"resent": False, "already": True, "key": key,
                     "note": "receipt already acknowledged; no duplicate result"}
         return {"resent": True, **self.send_attempt(receipt, ack=False)}
+
+
+class EgressPolicy:
+    """Default-deny egress for a result receipt.
+
+    Nothing leaves until the destination is explicitly authorized, and private
+    payload keys are refused even to an authorized destination.  Authorization
+    to send says nothing about whether the work is accepted: ``accepted`` stays
+    a separate fact in the returned payload.
+    """
+
+    PRIVATE_KEYS = frozenset({"task_body", "session_log", "prompt", "response"})
+
+    def __init__(self) -> None:
+        self._authorized: set[str] = set()
+
+    def authorize(self, destination: str) -> None:
+        self._authorized.add(destination)
+
+    def check(self, destination: str, receipt: Mapping[str, Any]) -> dict[str, Any]:
+        leaked = sorted(k for k in self.PRIVATE_KEYS if k in receipt)
+        if leaked:
+            return {"allowed": False, "reason": "PRIVATE_FIELD_REFUSED",
+                    "fields": leaked, "destination": destination}
+        if destination not in self._authorized:
+            return {"allowed": False, "reason": "DESTINATION_NOT_AUTHORISED",
+                    "destination": destination}
+        return {"allowed": True, "destination": destination,
+                "payload": _public_telemetry(receipt)}
 
 
 def read_back_for_revision(receipts: list[Mapping[str, Any]],

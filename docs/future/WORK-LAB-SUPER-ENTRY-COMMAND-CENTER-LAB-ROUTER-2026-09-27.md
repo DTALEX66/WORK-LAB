@@ -1,6 +1,13 @@
 # WORK-LAB 超级入口 / Command Center / LAB Router（2026-09-27 迁入后续任务）
 
-> **状态：OPEN（后续任务，未授权执行）。** 本文由用户 2026-09-27 贴入迁移入库
+> **FROZEN_20261019 / RETIRED（作为产品目标）— 不得据本文派工或建任务。**
+> 2026-10-19 权威收敛决定：WORK-LAB 不是 Agent、不是通用 Agent Runtime，
+> 不做第四产品入口或复杂自主编排；超级入口/Command Center/LAB Router 作为执行大脑
+> 与现行定位冲突。原文保留为历史研究，不授予任何权限。
+> 当前权威：`WORK-LAB-AUTHORITY.md` 与
+> `docs/current/authority-convergence-20261019/ROADMAP.md`。
+
+> **原状态：OPEN（后续任务，未授权执行）。** 本文由用户 2026-09-27 贴入迁移入库
 > （两次贴入内容一致，10334 tokens；以本份为准，不留第二份）。它是**规划/研究层**
 > 文档：WORK-LAB 作为系统级超级入口的架构设想（Command Center + LAB Router +
 > 各 Adapter），**不是 taskpack，不授予任何执行权限**。落地前须走

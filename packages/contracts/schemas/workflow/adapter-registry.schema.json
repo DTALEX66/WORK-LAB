@@ -147,6 +147,20 @@
                     "type": "string",
                     "minLength": 1
                   },
+                  "reproducible": {
+                    "description": "2026-10-20: false only when the launch-free read that produced verified_version can no longer be taken on this machine. Naming un-readability is the alternative to treating an uninstall as a data error: 'the number is wrong' and 'the number cannot be read' are two states, and a vocabulary with only the first one pushes a reader to edit the claim until the gate stops firing.",
+                    "type": "boolean"
+                  },
+                  "not_reproducible_since": {
+                    "description": "2026-10-20: the date on which the re-read was measured to be impossible, so a later reader can tell an abandoned client from a fresh observation.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "not_reproducible_verdict": {
+                    "description": "2026-10-20: the exact verdict the launch-free probe returned (for instance NOT_RESOLVED_AND_NOT_IN_UNINSTALL_REGISTRY). It must be the probe's own string, which is what stops an unreadable row from becoming a licence to keep any claim.",
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "commit": {
                     "type": "string",
                     "minLength": 1

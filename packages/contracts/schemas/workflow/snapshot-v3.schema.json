@@ -346,8 +346,60 @@
           "ci": {
             "type": "array",
             "items": {
-              "type": "object"
-            }
+              "type": "object",
+              "required": [
+                "runId",
+                "projectId",
+                "workflow",
+                "headSha",
+                "status",
+                "conclusion",
+                "sourceRef"
+              ],
+              "properties": {
+                "runId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "projectId": {
+                  "type": "string"
+                },
+                "workflow": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "headSha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "conclusion": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sourceRef": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            "description": "The project's rows selected from `ci_runs` by `projectId` (`snapshot_api.py:268`). Each item is a whole composition-root row, so it carries `projectId` — a row without one can never enter this list, because the filter compares it to the project id."
           },
           "executionIds": {
             "type": "array",
@@ -523,8 +575,56 @@
     "ci": {
       "type": "array",
       "items": {
-        "type": "object"
-      }
+        "type": "object",
+        "required": [
+          "runId",
+          "workflow",
+          "headSha",
+          "status",
+          "conclusion",
+          "sourceRef"
+        ],
+        "properties": {
+          "runId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "workflow": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "headSha": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conclusion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceRef": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "The flat CI projection (`snapshot_api.py:97-107`): the six row facts without `projectId`, which is re-attached for the per-project view. Every key is emitted on every row even when the read missed, so the keys are required and their values nullable."
     },
     "sourceRefs": {
       "type": "array",
@@ -634,6 +734,8 @@
                     "INSTALLED",
                     "LOADED_CONNECTED",
                     "QUALIFIED",
+                    "ENABLED_FOR_TASK",
+                    "NATIVE_PROJECTION",
                     "OBSERVED_IN_EXECUTION"
                   ]
                 },

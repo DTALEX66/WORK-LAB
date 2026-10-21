@@ -157,7 +157,7 @@ describe('P1-02 · record deep link through the shell', () => {
       generatedAt: new Date().toISOString(), sourceWatermark: null,
       transport: { transportState: 'LIVE', freshnessState: 'FRESH', connectedSince: null, eventsUrl: null },
       coverage: { numerator: 1, denominator: 1, scope: 'workflow' },
-      governance: { state: 'OK', families: {} },
+      governance: { state: 'CLEAN', families: {} },
       workspace: {},
       projects: [], executions: [], ci: [], tasks: {}, sourceRefs: [],
       tokenSummary: { inputTokens: null, outputTokens: null, totalTokens: null, costQuality: 'UNKNOWN' },

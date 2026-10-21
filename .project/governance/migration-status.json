@@ -1,7 +1,7 @@
 {
   "schemaVersion": "work-lab-migration-status/v1",
   "taskIdNamespace": "historical-migration-v6; attachment-taskpack-v1-is-final",
-  "activeTaskpackReconciliation": "taskpacks/current/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.json",
+  "activeTaskpackReconciliation": "taskpacks/history/pre-convergence-20261019/WORK-LAB-HERMES-TASKPACK-RECONCILIATION.json",
   "status": "HISTORICAL_SNAPSHOT_STALE_FOR_CURRENT_TREE",
   "historicalStatus": "AUDITED_ABSORBED_LOCAL_CUTOVER_COMPLETE",
   "repository": "DTALEX66/WORK-LAB",

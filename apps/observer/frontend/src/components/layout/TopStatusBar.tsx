@@ -101,6 +101,7 @@ export function TopStatusBar({
           }}
           className="search"
           aria-label="搜索或命令"
+          title="搜索或命令… (Ctrl K)"
         >
           <Search size={15} aria-hidden="true" />
           <span className="truncate">搜索或命令…</span>

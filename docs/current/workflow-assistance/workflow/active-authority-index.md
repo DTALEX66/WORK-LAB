@@ -2,9 +2,14 @@
 
 > 历史资料定位与来源登记：`docs/history/owner-inputs/INDEX.md`。这是导航，不是第二Authority。
 
-> 2026-10-09范围切换：唯一CURRENT为`taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md`，完整交接在`docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md`。
-> 旧文档数量/状态/建议只描述此前盘点，现行任务以OPEN为准；UI优先、手机端不做。
-> 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/current/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
+> 2026-10-19权威收敛：其他任务冻结，唯一CURRENT为`taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md`；
+> 路线图`docs/current/authority-convergence-20261019/ROADMAP.md`，报告`docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md`。
+> UI包与`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT）为SUPERSEDED_20261019/FROZEN，仅作历史；手机端不做。
+> 旧任务归档与逐条继承：`taskpacks/history/UI-PRIORITY-CUTOVER-20261009/FROZEN-MANIFEST.json`、`docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`。
+> 2026-10-19 第四次修正（任务包 §15，用户原话"本项目按照独立运行先运行跑通起来   项目联动延后冻结"）：
+> 先跑通本仓独立链（`services/orchestration/sidecar.py` 回环快照 + 已构建 Observer 投影，只读），
+> AAOS 候选提交与接收读取、DESIGN-LAB 设计能力、外部 source-root 清点、跨项目记忆与会话联邦一律冻结；
+> 冻结不关闭账本行，也不把独立运行已实测通过之外的部分算作完成。
 
 
 > **NON-AUTHORITY VIEW** — 本文件是只读分类索引，不是第二顶层 Authority。
@@ -42,7 +47,7 @@
 
 - 历史 handoff 与审计：`docs/history/archive/workflow-assistance/handoffs/`、
   `docs/history/archive/workflow-assistance/audit/` 中带日期的交接文档（如
-  `docs/history/archive/workflow-assistance/handoffs/workflow-baseline-and-recovery-handoff-2026-08-13.md`）
+  `docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 workflow-baseline-and-recovery-handoff-2026-08-13））
   记录当时状态，**不构成当前规范**，仅作归档。
   2026-10-08 更正：本条原写作 docs/handoffs/ 与 docs/audit/ 两个裸路径，而它们在 2026-09 目录收敛后
   就不存在了（`ls` 实测两者皆无），索引因此把读者指向空路径；现改写为收敛后的真实归档根。旧写法在此

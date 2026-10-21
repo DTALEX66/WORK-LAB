@@ -21,6 +21,7 @@
 import * as React from 'react'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { CollectorDeliverySummary } from '@/components/ui/collector-delivery'
 import type { SnapshotV3, Execution, Project, CiRun, TaskRecord } from '@/types'
 import { fmtTokens, fmtCostQuality, stateTone } from '@/lib/api'
 // P1-02: record focus is one query parameter per record, resolved against the records the backend
@@ -437,6 +438,16 @@ export function WorkView({
                 value={null}
                 hint="下一步由操作员判定；Observer 只读，不自动派生 / 不伪造" />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><span>采集器交付与拒绝（快照级，不能归属当前对象）</span></CardHeader>
+          <CardContent>
+            <p className="mb-2 text-xs text-muted">
+              collectors 没有 project/task 键：这里只复述全局交付与拒绝计数，不能把它算到当前记录名下。
+            </p>
+            <CollectorDeliverySummary collectors={snap?.collectors} />
           </CardContent>
         </Card>
 

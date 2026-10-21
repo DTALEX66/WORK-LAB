@@ -3,10 +3,14 @@
 The hazard this closes: a root file whose name reads like an assignment
 (`HANDOFF-*.md`, `*_REPORT.md`, `*_MANIFEST.md`) is opened by a new session before the
 authority chain is, and it can command work that the CURRENT taskpack already closed.
-Six such documents exist. None of them may be *deleted* (WUI-17 acceptance: preserve the
-original bytes/hashes, and `UI_IMPLEMENTATION_REPORT.md` is load-bearing as the uppercase
-falsifier in `tests/workflow-assistance/test_path_text_is_one_predicate.py:83`), so the
-control is: label each one at the top, and keep the label honest by machine.
+On 2026-10-19 the six such documents were moved (not deleted) to
+`docs/history/archive/root-ui-records-20261019/` by explicit user directive, after their
+consumers were repointed: the uppercase-falsifier fixtures now use `NOTICE.md` (root-level
+because `docs/` is a non-diffable root), and `taskpacks/current/error-ledger.json` keeps its
+historical citation as evidence. The root now holds five documents. This guard still
+classifies every tracked root Markdown file, so a new assignment-shaped file cannot appear
+unlabelled, and it still verifies that the registry's authority set is derived from the
+machine index rather than copied.
 
 Verdicts, all red, never a silent skip:
   ROOT_DISPOSITIONS_PASS        every tracked root document is classified and labelled

@@ -2,8 +2,8 @@
   "schemaVersion": "work-lab/record-source-census/v1",
   "root": "D:/All projects/Record",
   "snapshotDate": "2026-10-11",
-  "enumeratedFileCount": 185,
-  "archivedSourceFileCount": 49,
+  "enumeratedFileCount": 187,
+  "archivedSourceFileCount": 51,
   "excludedForeignFileCount": 136,
   "unresolved": 0,
   "files": [
@@ -1116,6 +1116,32 @@
       "bytes": 8038362,
       "disposition": "ARCHIVED",
       "basis": "three-project cloud audit containing the WORK findings W01-W04 and the work-* evidence family"
+    },
+    {
+      "sourceRelativePath": "WORK-LAB_9DE58194E69BB8E88488E88395E58C95E4BB8AE585.zip",
+      "bytes": 9459,
+      "disposition": "ARCHIVED",
+      "basis": "2026-10-19 owner-supplied authority-convergence task package (WL-REC-0105)"
+    },
+    {
+      "sourceRelativePath": "WORK-LAB_独立闭环审计包_20261021.zip",
+      "bytes": 72322,
+      "disposition": "ARCHIVED",
+      "basis": "2026-10-21 owner-supplied independent closed-loop audit pack (WL-REC-0106)"
+    }
+  ],
+  "incrementalAppends": [
+    {
+      "at": "2026-10-19",
+      "sourceRelativePath": "WORK-LAB_9DE58194E69BB8E88488E88395E58C95E4BB8AE585.zip",
+      "materialId": "WL-REC-0105",
+      "basis": "appended without re-enumerating the source root; counts include this file"
+    },
+    {
+      "at": "2026-10-21",
+      "sourceRelativePath": "WORK-LAB_独立闭环审计包_20261021.zip",
+      "materialId": "WL-REC-0106",
+      "basis": "appended without re-enumerating the source root; counts include this file"
     }
   ]
 }

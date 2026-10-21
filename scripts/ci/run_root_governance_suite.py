@@ -29,6 +29,18 @@ ROOT = Path(__file__).resolve().parents[2]
 TESTS_CI = ROOT / "tests" / "ci"
 RAN_LINE = re.compile(r"^Ran (\d+) tests", re.M)
 
+# Measured 2026-10-20: the report loop died with UnicodeEncodeError ('gbk' codec can't encode '\ufffd')
+# while printing a failed module's own output, so `modules_failed=3` arrived with one detail and the
+# runner's exit status became unreadable. The replacement character comes from decoding the *child*,
+# which is correct and must survive; only the console it is spoken to was wrong. Same reason as
+# services/orchestration/run_quality_gate.py: a verdict that cannot be printed is not a verdict.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 
 def vacuity_reason(returncode: int, output: str) -> str | None:
     """Why a green exit cannot be trusted, or None when the module showed it ran.

@@ -9,9 +9,9 @@ reader can quietly become a full-file reader or a silent-truncator:
 
 * adjacent intervals concatenate to exactly the whole file (offset arithmetic is right or the citation is
   wrong);
-* the reader never computes the whole-file digest itself — asking for identity verification without
-  supplying the recorded digest is REFUSED, which is what keeps a range read from secretly reading
-  everything;
+* identity verification is decided ONLY against a digest this reader measured itself. A caller may pin
+  `expectedDigest`; there is no parameter for a caller to also supply the file's "actual" digest, because
+  comparing one caller input with another is not a check (ERR-284);
 * a mismatched digest returns NO content;
 * over-limit, non-positive, past-end, outside-boundary and unreadable handles are each their own typed
   answer, never an empty success.
@@ -109,23 +109,76 @@ class IdentityTests(unittest.TestCase):
         return err.read_range(**kwargs)
 
     def test_a_matching_digest_is_carried_into_the_result(self) -> None:
-        result = self.read(expected_digest=self.digest, whole_digest=self.digest)
+        result = self.read(expected_digest=self.digest)
         self.assertEqual(result["status"], err.STATUS_OK)
         self.assertEqual(result["identity"]["wholeDigest"], self.digest)
-        self.assertEqual(result["identity"]["digestSource"], "caller-supplied")
+        self.assertEqual(result["identity"]["digestSource"], "measured-by-reader")
+        self.assertTrue(result["identity"]["verified"])
 
     def test_a_mismatched_digest_returns_no_content(self) -> None:
-        result = self.read(expected_digest="f" * 64, whole_digest=self.digest)
+        result = self.read(expected_digest="f" * 64)
         self.assertEqual(result["status"], "REFUSED")
         self.assertEqual(result["reason_code"], "DIGEST_MISMATCH")
         self.assertIsNone(result["content"])
+        self.assertEqual(result["identity"]["digestSource"], "measured-by-reader")
+        self.assertFalse(result["identity"]["verified"])
 
-    def test_verification_without_a_digest_to_compare_is_refused_not_computed(self) -> None:
-        """The proof that a range read never secretly becomes a whole-file hash."""
+    def test_the_same_claim_on_a_different_file_is_convicted(self) -> None:
+        """ERR-284's own probe: a claimed digest must never travel from one artifact to another.
+
+        The audit pack's repro passed `a×64` as BOTH the expected and the "actual" value and got a content
+        return plus an AGREE the interface then rendered as "these bytes belong to the recorded artifact".
+        The reader now measures, so the second file is convicted by its own bytes.
+        """
+        claim = "a" * 64
+        first = self.dir / "claimed-first.bin"
+        first.write_bytes(b"THE FIRST ARTIFACT")
+        second = self.dir / "claimed-second.bin"
+        second.write_bytes(b"ANOTHER FILE ENTIRELY")
+        pinned = {"expected_digest": claim}
+        convicted = 0
+        for path in (first, second):
+            result = err.read_range(handle=str(path), root=ROOT, offset=0, limit=64, **pinned)
+            self.assertEqual(result["status"], "REFUSED", str(path))
+            self.assertEqual(result["reason_code"], "DIGEST_MISMATCH", str(path))
+            self.assertIsNone(result["content"], str(path))
+            self.assertNotEqual(result["identity"]["wholeDigest"], claim, str(path))
+            convicted += 1
+        self.assertEqual(convicted, 2)
+
+    def test_editing_the_file_invalidates_the_pinned_identity(self) -> None:
+        self.assertEqual(self.read(expected_digest=self.digest)["status"], err.STATUS_OK)
+        self.path.write_bytes(b"abcdefgh" * 8 + b"mutated")
         result = self.read(expected_digest=self.digest)
-        self.assertEqual(result["status"], "REFUSED")
-        self.assertEqual(result["reason_code"], "DIGEST_UNAVAILABLE")
+        self.assertEqual(result["reason_code"], "DIGEST_MISMATCH")
         self.assertIsNone(result["content"])
+
+    def test_verification_without_a_pinned_digest_reports_not_requested_and_is_not_a_pass(self) -> None:
+        """No pin means no verification happened, which the identity block must say, never imply."""
+        result = self.read()
+        self.assertEqual(result["status"], err.STATUS_OK)
+        self.assertEqual(result["identity"]["digestSource"], "not-requested")
+        self.assertIsNone(result["identity"]["wholeDigest"])
+        self.assertFalse(result["identity"]["verified"])
+
+    def test_an_oversized_artifact_says_unverifiable_instead_of_reading_itself(self) -> None:
+        ceiling = err.WHOLE_HASH_MAX_BYTES
+        err.WHOLE_HASH_MAX_BYTES = 8
+        try:
+            result = self.read(expected_digest=self.digest)
+        finally:
+            err.WHOLE_HASH_MAX_BYTES = ceiling
+        self.assertEqual(result["status"], "REFUSED")
+        self.assertEqual(result["reason_code"], "IDENTITY_TOO_LARGE_TO_MEASURE")
+        self.assertIsNone(result["content"])
+        self.assertEqual(result["identity"]["digestSource"], "not-measurable")
+        self.assertFalse(result["identity"]["verified"])
+
+    def test_no_caller_input_can_supply_the_actual_digest(self) -> None:
+        """The parameter that made the false pass possible must not come back."""
+        with self.assertRaises(TypeError):
+            err.read_range(handle=str(self.path), root=ROOT, offset=0, limit=16,
+                           expected_digest=self.digest, whole_digest=self.digest)
 
     def test_a_malformed_digest_shape_is_refused(self) -> None:
         for bad in ("abc", "z" * 64, "!" * 64):
@@ -329,12 +382,33 @@ class SidecarRouteTests(unittest.TestCase):
         self.assertEqual(result["reason_code"], "OUT_OF_BOUNDARY")
         self.assertIsNone(result["content"])
 
-    def test_verification_without_a_digest_is_refused_over_http_too(self) -> None:
+    def test_the_route_measures_identity_and_convicts_a_claimed_digest(self) -> None:
+        """ERR-284 over the real HTTP route: the audit pack's exact probe must not return bytes.
+
+        It sent `expectedDigest=a×64` together with `wholeDigest=a×64`, which the reader used to compare
+        against each other. `wholeDigest` is no longer read at all, and the comparison is against a
+        measurement, so the same URL is refused.
+        """
         artifact = self.runtime / "route-digest.log"
         artifact.write_bytes(b"abc" * 50)
+        claim = "a" * 64
         _status, result = self.get(f"?handle={urllib.parse.quote(str(artifact))}"
-                                   f"&expectedDigest={'1' * 64}")
-        self.assertEqual(result["reason_code"], "DIGEST_UNAVAILABLE")
+                                   f"&expectedDigest={claim}&wholeDigest={claim}")
+        self.assertEqual(result["status"], "REFUSED")
+        self.assertEqual(result["reason_code"], "DIGEST_MISMATCH")
+        self.assertIsNone(result["content"])
+        self.assertEqual(result["identity"]["digestSource"], "measured-by-reader")
+        self.assertNotEqual(result["identity"]["wholeDigest"], claim)
+
+    def test_the_route_verifies_a_pinned_digest_it_measured(self) -> None:
+        artifact = self.runtime / "route-digest-match.log"
+        artifact.write_bytes(b"verbatim bytes")
+        claim = hashlib.sha256(b"verbatim bytes").hexdigest()
+        _status, result = self.get(f"?handle={urllib.parse.quote(str(artifact))}"
+                                   f"&expectedDigest={claim}")
+        self.assertEqual(result["status"], err.STATUS_OK)
+        self.assertTrue(result["identity"]["verified"])
+        self.assertEqual(result["content"], "verbatim bytes")
 
     def test_a_non_numeric_query_is_400_not_a_silent_default(self) -> None:
         try:

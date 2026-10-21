@@ -1187,7 +1187,15 @@ export type WorkflowSnapshotV3 = {
     totalTokens?: number | null,
     costQuality: "EXACT" | "ESTIMATED" | "UNKNOWN"
   },
-    ci: Record<string, unknown>[],
+    ci: ({
+    runId: string | null,
+    projectId: string,
+    workflow: string | null,
+    headSha: string | null,
+    status: string | null,
+    conclusion: string | null,
+    sourceRef: string | null
+  })[],
     executionIds: string[],
     sourceRefs: string[]
   })[],
@@ -1215,7 +1223,14 @@ export type WorkflowSnapshotV3 = {
     freshness?: string | null,
     sourceRef?: string | null
   },
-    ci: Record<string, unknown>[],
+    ci: ({
+    runId: string | null,
+    workflow: string | null,
+    headSha: string | null,
+    status: string | null,
+    conclusion: string | null,
+    sourceRef: string | null
+  })[],
     sourceRefs: (string | null)[],
     software?: {
     softwareId: string,
@@ -1234,7 +1249,7 @@ export type WorkflowSnapshotV3 = {
     adapterCapabilities?: ({
     clientId: string,
     layers: ({
-    layer: "REGISTERED" | "INSTALLED" | "LOADED_CONNECTED" | "QUALIFIED" | "OBSERVED_IN_EXECUTION",
+    layer: "REGISTERED" | "INSTALLED" | "LOADED_CONNECTED" | "QUALIFIED" | "ENABLED_FOR_TASK" | "NATIVE_PROJECTION" | "OBSERVED_IN_EXECUTION",
     state: "MET" | "NOT_PROBED" | "NOT_SUPPORTED"
   })[]
   })[],

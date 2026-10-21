@@ -231,7 +231,7 @@ API、进程身份、锁/围栏、IPC/安全、打包或实测性能处扩张，
 17.1 `T01—T09`（2026-10-06 闭环包）在仓库内没有独立账本，其可执行落点是唯一 open register 的
 对应行；每条只有「保留范围」与「不可替代的验收」两个字段，其余字段原文未给，本文不补。
 17.2 `AG-09—AG-20` 与横切项映射到仓库现有 `AG-01…AG-20`（唯一真源
-`taskpacks/current/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md`）。
+`taskpacks/history/pre-convergence-20261019/WORK-LAB-ATLAS-GAP-REMEDIATION-TASKCARD-20261001.md`）。
 必须如实记录的原文缺陷：原文标题声称 AG-09—AG-20，但**无 AG-14 行**，且 `AG-16/AG-17` 合写成
 一行；AG-01—AG-08 在该文档中根本不出现（仓库侧存在且仍在册）；`U02`、`U04`—`U17`、`U20+` 未被
 提及；`W09` 缺号；`OD03/04` 只以联合引用出现，无法拆分各自含义。这些一律记为 `SOURCE_GAP`，

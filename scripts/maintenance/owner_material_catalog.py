@@ -204,8 +204,10 @@ def render_index(data, members):
 
 ## 当前任务与历史摘要
 
-- [当前 UI 优先任务包](../../../taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md)
-- [完整后续交接提示词](../../current/ui-priority-20261009/NEXT-AGENT-PROMPT.md)
+- [当前权威收敛任务包](../../../taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md)
+- [当前路线图](../../current/authority-convergence-20261019/ROADMAP.md)
+- [权威收敛报告](../../current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md)
+- [UI 历史交接（FROZEN_20261019，2026-10-19 汇总归档）](../archive/HANDOFFS-AND-PROMPTS-20261019-MANIFEST.json)：成员 NEXT-AGENT-PROMPT.md
 - [历史关键信息与沿用边界](HISTORICAL-KEY-POINTS.md)
 - [本次归档、去重、压缩及验证记录](RECORD-ARCHIVE-REPORT.md)
 - [可搜索文件目录](CATALOG.html)：可按文件名、包内路径、材料分类、原位置筛选。

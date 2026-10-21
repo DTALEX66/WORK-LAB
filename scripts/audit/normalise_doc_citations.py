@@ -33,13 +33,16 @@ SCOPE = (
     "WORK-LAB-AUTHORITY.md",
     ".project/governance/project-authority-index.json",
     "docs/current/DOCUMENT-CENSUS.md",
-    "taskpacks/current/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md",
+    # auditBootstrap step 5 is the CURRENT taskpack, which since 2026-10-19 is the authority-convergence
+    # package. The superseded UI taskpack stays frozen history, not a document a new session is told to read.
+    "taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md",
     # The live register is step 6 of auditBootstrap, so it is part of the chain a new session loads by
     # default; leaving it out of SCOPE meant the document that carries every citation this round wrote
     # was the one document nobody checked (measured 2026-10-10: 223 citations covered, register 0).
     "taskpacks/current/OPEN-TASK-REGISTER.md",
-    "docs/current/ui-priority-20261009/NEXT-AGENT-PROMPT.md",
-    "docs/current/ui-priority-20261009/UI-V2-INTAKE-20261010.md",
+    # This round's own entry points: the convergence report and roadmap.
+    "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+    "docs/current/authority-convergence-20261019/ROADMAP.md",
 )
 JSON_SCOPES = (".project/governance/project-authority-index.json",)
 
@@ -71,7 +74,6 @@ GENERIC_CITATIONS = {
     "tauri.conf.json": "两个应用各有一份（apps/observer、apps/token-monitor），同段主语已指明",
     "design_tokens.json": "两份入册材料各带一份（record 20261009 与 record-20261010），比对对象就是这两份",
     "SOURCE-INTEGRITY.json": "每个 record-* 目录一份完整性清单，此处指本次那份",
-    "SOURCE_BASELINE.json": "包内自报文件，不在本仓；引用它正是在描述包的自报字段",
     "project-authority-index.json": "机器权威与其冻结副本同名，同段已指明读的是 .project/governance 那一份",
     "ui_read_model.ts": "包内文件（v1 包 contracts/ui_read_model.ts），不是本仓源码；引用它是为了说明该字段只在包里有声明",
     "usage.jsonl": "类指：collect_usage_files 的输入文件名形状（TOKEN_FILE_NAME_RE 认 usage|token|tokens|usage_rollup 的 .json/.jsonl），仓内没有也不该有这一份固定文件",
@@ -81,6 +83,28 @@ GENERIC_CITATIONS = {
 # Matched by the full citation token, not the basename, so an allowance can never excuse a different file
 # that happens to share a name. Validated as USED, exactly like a class reference.
 QUOTED_AS_ABSENT = {
+    # 2026-10-19 归档规范化：以下名字指移动前的仓库根位置，正文按当时的文件名记录清点。
+    # 它们的最终位置是 docs/history/archive/root-ui-records-20261019/（哈希见 MOVED-PATHS-20261019.json）。
+    # 键按**整条引用**匹配、逐条带理由、不再被使用即转红；漏掉任一条，basename 兜底会把历史句子
+    # 改成今天某个同名文件的路径，那是把判决从文档里抹掉。
+    "ASSET_REPLACEMENT_MANIFEST.md":
+        "2026-10-19 归档记录名：指移动前的仓库根文件，现位于 docs/history/archive/root-ui-records-20261019/",
+    "HANDOFF-UI-L10B.md":
+        "2026-10-19 归档记录名：指移动前的仓库根文件，现位于 docs/history/archive/root-ui-records-20261019/",
+    "UI_DECISIONS.md":
+        "2026-10-19 归档记录名：指移动前的仓库根文件；本仓另有 apps/observer/UI_DECISIONS.md 同名不同物，"
+        "按 basename 改写会把一句 2026-10-10 的清点指到另一份文档",
+    "UI_IMPLEMENTATION_REPORT.md":
+        "2026-10-19 归档记录名：指移动前的仓库根文件，现位于 docs/history/archive/root-ui-records-20261019/",
+    "UI_REFERENCE_MANIFEST.md":
+        "2026-10-19 归档记录名：指移动前的仓库根文件，现位于 docs/history/archive/root-ui-records-20261019/",
+    "VISUAL_QA_REPORT.md":
+        "2026-10-19 归档记录名：指移动前的仓库根文件，现位于 docs/history/archive/root-ui-records-20261019/",
+    "design.qa.yaml":
+        "2026-10-19 归档记录名：指移动前的仓库根配置，现位于 docs/history/archive/root-ui-records-20261019/",
+    "workflow-assistance-AGENTS.md":
+        "2026-10-19 归档记录名：指移动前 docs/current/ 下的模块指令文件，现位于 "
+        "docs/history/archive/workflow-assistance/module-instructions-20261019.md",
     "apps/observer/frontend/src/lib/shared_rule_adaptation.ts":
         "WUI-23 更正记录：这条引用从未存在于仓库，是被逐行核对后替换掉的错误路径本身",
     "test_observer_no_business_write.py":
@@ -100,6 +124,8 @@ QUOTED_AS_ABSENT = {
         "ERR-247 更正记录：矩阵 B08 曾把该测试写成 src/ 直属，真实位置在 apps/observer/frontend/src/views/",
     "packages/.../project_identity_resolver.py":
         "ERR-247 更正记录：矩阵 B18 用过这种省略号缩写路径，真实位置在 packages/client-neutral-core/scripts/",
+    "OPEN-TASK-REGISTER.md":
+        "收据字面量：收敛报告逐字引用 verify_project_authority_reference.py 的输出 register=OPEN-TASK-REGISTER.md；改成全路径就不是那条命令打印的字节了",
 }
 # Roots a document may cite relative to in prose. Only one candidate may exist for the rewrite to be safe.
 PROSE_ROOTS = ("apps/observer/frontend/", "packages/client-neutral-core/", "services/", "scripts/",
