@@ -46,6 +46,13 @@ OUT_DIR = ROOT / ".project-local" / "artifacts" / "legibility"
 
 WINDOW_SIZE = "1280,820"
 THEMES = ("dark", "light")
+# How long one whole-rail harvest may take to ANSWER. The sweep clicks every rail lane and walks every
+# scroll range of every view inside ONE page session, so it cannot live on the default 60 s that fits a
+# single shell: measured 2026-10-21, one theme costs ~35 s on the development host, and a runner only
+# somewhat slower produced `LEGIBILITY_GATE_NOT_RUN views/light at 1280px TimeoutError('timed out')` at
+# ed7b8fa6 — the instrument's own ceiling, not a product defect. Declaring the budget here puts it in the
+# receipt, so a verdict says which budget it was produced under; a genuine timeout still exits 3.
+SWEEP_EVALUATE_TIMEOUT_S = 300.0
 
 FLOOR_PX = 12.0          # DESIGN.md: no text a user must read below 12px
 AA_NORMAL = 4.5          # SC 1.4.3
@@ -900,7 +907,8 @@ def main() -> int:
                             collected = geometry.serve_and_eval(root, path, window,
                                                             views_expression(f"{size}px"),
                                                             browser, u19,
-                                                            viewport=(size, 820))
+                                                            viewport=(size, 820),
+                                                            evaluate_timeout_s=SWEEP_EVALUATE_TIMEOUT_S)
                         except Exception as exc:  # noqa: BLE001
                             print(f"LEGIBILITY_GATE_NOT_RUN views/{theme} at {size}px {exc!r}")
                             return 3

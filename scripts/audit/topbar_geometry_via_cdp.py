@@ -616,7 +616,7 @@ def discover_page_ws(port: int, tries: int = 20) -> str:
                        f"targets_seen={seen[:6]}")
 
 
-def connect_with_retry(port: int, attempts: int = 6):
+def connect_with_retry(port: int, attempts: int = 6, evaluate_timeout_s: float = 60.0):
     """Re-discover the page target before each websocket attempt.
 
     A refused connect after a successful /json/list is not contradiction: the target list is a
@@ -624,6 +624,9 @@ def connect_with_retry(port: int, attempts: int = 6):
     first-run window settling) stops answering on its port while the browser endpoint keeps serving.
     Re-fetching is what makes that a retry rather than a refusal, and the last reason is reported
     rather than swallowed.
+
+    `evaluate_timeout_s` is how long one expression may take to ANSWER. Callers that harvest a whole
+    rail in a single session must widen it — see `serve_and_eval`.
     """
     last_ws: str | None = None
     last_exc: Exception | None = None
@@ -631,7 +634,7 @@ def connect_with_retry(port: int, attempts: int = 6):
         try:
             ws = discover_page_ws(port, tries=6)
             last_ws = ws
-            return ChromeCDP(ws), ws
+            return ChromeCDP(ws, timeout=evaluate_timeout_s), ws
         except (ConnectionRefusedError, OSError, RuntimeError) as exc:
             last_exc = exc
             time.sleep(1.0)
@@ -669,7 +672,8 @@ def wait_for_mount(cdp, selector: str, budget_s: float, poll_s: float) -> tuple[
 def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: str,
                    u19, shot: Path | None = None, viewport: tuple[int, int] | None = None,
                    scale_factor: float = 1.0, serve_url: str | None = None,
-                   mount_selector: str = MOUNT_SELECTOR) -> dict:
+                   mount_selector: str = MOUNT_SELECTOR,
+                   evaluate_timeout_s: float = 60.0) -> dict:
     """Serve the built `dist` and evaluate one expression in a headless Chrome.
 
     This is the browser bootstrap, not a topbar-specific step: a second instrument (the legibility
@@ -745,7 +749,7 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
             ANNOUNCED_MISMATCH.append(f"requested {requested_cdp}, announced {cdp_port}")
         time.sleep(2.0)  # the page target appears once the document has loaded
         try:
-            cdp, _ws = connect_with_retry(cdp_port)
+            cdp, _ws = connect_with_retry(cdp_port, evaluate_timeout_s=evaluate_timeout_s)
             try:
                 cdp.send("Page.enable")
                 if viewport is not None:
@@ -764,7 +768,8 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
                     # The wait travels with the numbers, so a later red can be told apart from a cold runner.
                     parsed["readyWait"] = {"ms": waited_ms, "mounted": mounted,
                                            "selector": mount_selector,
-                                           "budgetMs": int(MOUNT_BUDGET_S * 1000)}
+                                           "budgetMs": int(MOUNT_BUDGET_S * 1000),
+                                           "evaluateTimeoutS": evaluate_timeout_s}
                 return parsed
             finally:
                 cdp.close()

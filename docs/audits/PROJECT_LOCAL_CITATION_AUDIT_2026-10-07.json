@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-21T18:23:54Z",
+  "generatedAt": "2026-10-21T19:06:08Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2559,
     "distinctProjectLocalTokens": 631,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 631,
-    "citationsToAbsentTokens": 1853
+    "citationsToAbsentTokens": 1854
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 964,
-      "distinctPaths": 478
+      "citations": 965,
+      "distinctPaths": 479
     },
     "machine_local_runtime_pointer": {
       "citations": 232,
@@ -3946,6 +3946,12 @@
         "file": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json",
         "line": 4362,
         "text": "\"command\": \"python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json\","
+      },
+      {
+        "path": ".project-local/runs/ci/legibility_sweep.json",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 8694,
+        "text": "\"command\": \"python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json\","
       },
       {
         "path": ".project-local/runs/ci/probe.json",
