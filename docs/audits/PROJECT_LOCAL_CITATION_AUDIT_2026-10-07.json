@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-21T20:47:14Z",
+  "generatedAt": "2026-10-21T21:56:41Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2559,
-    "distinctProjectLocalTokens": 631,
+    "distinctProjectLocalTokens": 632,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 631,
-    "citationsToAbsentTokens": 1856
+    "tokensAbsent": 632,
+    "citationsToAbsentTokens": 1859
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -33,8 +33,8 @@
       "distinctPaths": 479
     },
     "machine_local_runtime_pointer": {
-      "citations": 232,
-      "distinctPaths": 118
+      "citations": 235,
+      "distinctPaths": 119
     },
     "negative_assertion_or_removal_record": {
       "citations": 188,
@@ -8439,15 +8439,33 @@
       },
       {
         "path": ".project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 1330,
+        "text": "（`.project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json`，同一台机器、"
+      },
+      {
+        "path": ".project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json",
         "file": "tests/ci/test_handle_latency_attribution.py",
         "line": 7,
         "text": "page's rows at ~208 ms (`.project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json`)."
+      },
+      {
+        "path": ".project-local/artifacts/wl02-and-handle-20261021/handle-latency-geometry-assertion.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 1323,
+        "text": "**实测事实**（回执 `.project-local/artifacts/wl02-and-handle-20261021/handle-latency-geometry-assertion.json`，"
       },
       {
         "path": ".project-local/artifacts/wl02-and-handle-20261021/legibility-ci-shape.json",
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
         "line": 1176,
         "text": "（回执 `.project-local/artifacts/wl02-and-handle-20261021/legibility-ci-shape.json`，"
+      },
+      {
+        "path": ".project-local/artifacts/wl02-and-handle-20261021/legibility-ci-shape.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 1251,
+        "text": "引用的时候必须带宿主。本机这一组出自 `.project-local/artifacts/wl02-and-handle-20261021/legibility-ci-shape.json`"
       },
       {
         "path": ".project-local/artifacts/wl3-810-archive/migration-20260805/source-checkouts-archive-manifest.json",
@@ -11229,7 +11247,7 @@
     "reviewQueue": 7,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 340
+    "presentOnThisMachine": 341
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

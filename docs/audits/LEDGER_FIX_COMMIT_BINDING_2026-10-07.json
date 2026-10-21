@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/ledger-fix-commit-binding/v1",
-  "generatedAt": "2026-10-21T20:46:46Z",
+  "generatedAt": "2026-10-21T21:56:18Z",
   "generatedBy": "scripts/audit/ledger_binding_readback.py",
   "rules": {
     "fixedCommit": "must be a real commit and must contain the file the entry's own lifecycle.regressionCommand promises to run",
@@ -1637,30 +1637,30 @@
       "id": "ERR-287",
       "statusAfter": "PASS",
       "fixedCommit": "47fde48f0db1250603f090f818551e19352972a1",
-      "verifiedCommit": null,
+      "verifiedCommit": "97c9758c9d63c45170ada6f774df7285d45d7a9d",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-288",
       "statusAfter": "PASS",
       "fixedCommit": "5758d5a4d7f76e98cf5f9c5f9fb1bdc25724ad37",
-      "verifiedCommit": null,
+      "verifiedCommit": "97c9758c9d63c45170ada6f774df7285d45d7a9d",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     },
     {
       "id": "ERR-289",
       "statusAfter": "PASS",
       "fixedCommit": "8504aa305a7b7bab7f891168c592f2be91cb57a8",
-      "verifiedCommit": null,
+      "verifiedCommit": "97c9758c9d63c45170ada6f774df7285d45d7a9d",
       "promise": null,
       "promisePresentInFixTree": true,
-      "verifiedTreeChecked": false,
+      "verifiedTreeChecked": true,
       "bindingNotePresent": false
     }
   ],

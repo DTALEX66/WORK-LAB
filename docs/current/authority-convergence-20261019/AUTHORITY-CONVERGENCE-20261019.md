@@ -1211,6 +1211,9 @@ DSH 的 225.65 MB 安装回滚副本：**未能定位，故不删除**。按 ERR
 仍待 owner 的只剩两件：PR #178 合入 `main` 之后的 main-SHA 重锚，以及把手块 200 行是否改成
 窗口化/默认可达（本轮只加断言与几何事实，没动布局）。
 
+> 这句写下之后，第一件已经完成：§22 记了 PR #178 的合并提交与 main 自身运行的绿，`ERR-284/285/286`
+> 的 `verifiedCommit` 已钉住。剩下的一件仍归 owner。
+
 ## 22. 合入与合并后的独立判决：中间那枚红是 runner 的冷启动（2026-10-22）
 
 > 标题里"runner 的冷启动"是写下这一段时的说法，保留原样以留下判断被修正的过程。按本轮末尾的实测：
@@ -1244,8 +1247,9 @@ observer 作业里既有的几何门第一步 exit 1，`full` 视图所有选择
 **新接进 CI 的扫掠第一次在 runner 上给出判决**：`Text legibility sweep` 于 2026-10-21T18:17:02Z
 `LEGIBILITY_GATE_PASS`，`every_scrollable_range_was_traversed stops=501/501 lanes_short=[]`、
 `no_text_below_the_type_floor offenders=0`、`every_text_node_meets_AA aa_failures=0 invisible=0`、
-`sampled=3574 present=6674`。runner 的分母与本机（566/566 站、3,923/8,006）不同，这是两个宿主上
-两次独立的量，不是同一个数被抄了两遍——引用的时候必须带宿主。
+`sampled=3574 present=6674`。runner 的分母与本机（566/566 站、3,923/8,006）不同，这是两个宿主上两次独立的量，不是同一个数被抄了两遍——
+引用的时候必须带宿主。本机这一组出自 `.project-local/artifacts/wl02-and-handle-20261021/legibility-ci-shape.json`
+（包体 `7626fd51…`）；同一轮里另两次量落在 565/566 站之间漂移，说明分母跟着快照数据走，不是常数。
 
 **合并后的重锚**：`origin/main` 自己的 push 触发 run 39648708283（work-lab-gate）
 与 39648708412（wlr-060-production-gates）均 conclusion=success，前者 7/7 作业绿
@@ -1311,3 +1315,61 @@ CI 的墙钟代价由作业上限兜住，尚未按 runner 观测重算扫掠耗
 
 仍不在本轮范围内、留给 owner 的只剩一件：把手块 200 行 / 23,056 px 列表是否改成窗口化或默认可达。
 本轮交付的是断言与几何事实，不是布局决定。
+
+## 23. 把"23,056px 无虚拟化"从散文变成回执里的数（2026-10-22）
+
+上一轮交接把这条列成待办：几何事实已经量出来，但它只活在文档里。本轮把它落成仪器自己会说的数。
+
+**实测事实**（回执 `.project-local/artifacts/wl02-and-handle-20261021/handle-latency-geometry-assertion.json`，
+两个样本，包体随那次运行命名在回执里）：DOM 行数 200，快照提供的行数也是 200；列表高 **22,981 px**
+对 **668 px** 视口＝**34.4 屏**，每行 **114.9 px**；首屏提交时列表在折叠线以下（`belowFoldAtCommit=true`），
+滚动之后 `NOW_VISIBLE`。三段延迟在这一次是解析 155.5/161 ms、提交 61.0/62 ms、滚动到可见 37.5/38 ms，
+总计 216.5/221 ms——与 §20 更正过的结论一致，仍然不是"页面慢"。
+
+**要更正的数**：此前引用的 23,056 px 出自更早那份量
+（`.project-local/artifacts/wl02-and-handle-20261021/handle-latency-attribution-v2.json`，同一台机器、
+不同快照数据）。数字会跟着数据漂，这正是本轮不做成散文常数的理由：`handleGeometry` 逐样本报出
+`rowsInDom`、`rowsServedBySnapshot`、`listHeightPx`、`viewportHeightPx`、`pxPerRow`、`viewportsOfScrolling`，
+打印行也带上同样的六个数，所以任何"多少屏的行没虚拟化"的说法都必须由当次回执支撑。
+
+**三条新断言**（都在纯函数 `problems()` 里，因此可在 CI 判红而不必开浏览器）：
+
+1. 有 DOM 行但没有快照行数分母 → 判红："这些行没有可对照的总体，'每条把手都显示了'不成立"；
+2. DOM 行数**大于**快照提供的行数 → 判红并点名两个数：多出来的行不是从投影读来的，是造出来的；
+3. 列表高于视口而滚动根本没执行（`scrollOutcome == NO_SCROLL_HOOK`）→ 判红并报出像素与屏数：
+   无虚拟化的尾巴没人量过。
+
+反例守卫 15→23 例（实测 `Ran 23 tests / OK`，2026-10-22）：三条各一种坏样本，另加一条"480 px 短列表
+不需要滚动证据"，证明断言不会把正常情形判红——只在真正的缺口上咬。
+
+**判定**：这条泳道的 200 行不是"看不见"，是"要滚 34 屏才看完"，而逐泳道扫掠在两个宿主上都把每一段
+滚动范围走完了（runner 501/501、本机 565 或 566/同数）。所以本轮的结论是**可达性已被量到、成本是线性的**，
+不是缺陷；要不要窗口化仍是 owner 的产品决定，不是缺一条断言。
+
+**一处真实的自我抓取**：第一版把辅助函数命名为 `geometry`，而 `main()` 里有一个同名局部变量装的是导入进来的
+引导模块——真跑一次立刻 `TypeError: 'module' object is not callable`，而守卫套件全绿，因为它直接调那个函数，
+从来没经过真调用点。补了一条结构守卫（用 ast 取模块级函数名与 `main()` 的局部绑定求交集，非空即红），
+把旧名植回去当场 1 例判红并连带 18 例错误，随后逐字节恢复（`RESTORED_BYTE_IDENTICAL`）。
+同一条红里还有一次操作失误：第一眼看成"exit 0"，其实是被 `| tail` 掩掉的管道退出码，改成重定向到文件再取 `$?`。
+
+**残留噪声（如实记下，未修）**：本地静态服务在浏览器关闭时打了一条 `socketserver` 的
+`ConnectionResetError` 回溯。它出现在读数之后、不影响退出码与判决，但它说明这一步的错误和真实缺陷共用
+同一个输出流——下一次真要归因时得先把它认出来。
+
+**合并后 main 自己的重锚**：`bf3e189c` 的 exact-SHA 运行 12 枚 check-run 全 `completed/success`
+（两个 workflow 加两个 aggregate 都在内：`gate-plan`、`workflow-assistance`、`integration`、`observer`、
+`token-monitor`、`supply-chain-security`、`aggregate`、`config-compiler`、`schema-fixtures`、
+`observer-readonly`、`capsule-cli`、`wlr060-aggregate`），observer 里
+`GEOMETRY_GATE_PASS`（21:17:13Z）之后 `LEGIBILITY_GATE_PASS`（21:18:37Z），两主题各 `stops=501/501`、
+`sampled=3573` 与 `3575`、`present=6674`，且没有 `LEGIBILITY_SWEEP_ATTEMPT` 行——第一次尝试就走完，
+ERR-288 加的有界重试没有救下任何东西，只是被证明无害。扫掠那一步在 runner 上的墙钟约 84 秒
+（进步骤与出结果的时间戳相减），共享管道因此付得起。合并提交 `97c9758c` 让 `bf3e189c` 留在 main 的祖先里，
+`git merge-base --is-ancestor` 对 `5758d5a4`、`ff3348bf`、`8504aa30`、`bf3e189c` 四枚实测为真。
+
+main 自己那次 push 触发的运行（run 39678850519）7 枚作业全 `success`，其中 observer 里几何门 21:43:04Z 判绿、
+扫掠 21:44:36Z 判绿：两主题各 `stops=501/501`、`sampled=3572` 与 `3574`、`present=6674`，地板与 AA 零违例，
+日志里没有重试行，那一步的墙钟约 92 秒。三行账本（`ERR-287`、`ERR-288`、`ERR-289`）的 `verifiedCommit`
+因此钉到 `97c9758c`——钉之前先断言每行的 `fixedCommit` 都是它的祖先、该对象在库、且除这三行外没有行移动、
+`remaining_boundary` 是这三行里唯一变化的字段；钉之后 `LEDGER_FIX_COMMIT_BINDING` 读回三行
+`verified=97c9758c… promiseInTree=True`，`ERROR_LEDGER_PASS entries=288 classifications=14 counts_consistent=true`。
+被推翻的两条归因仍留在账上，只在各自边界后追加闭合说明，原文一字未改。

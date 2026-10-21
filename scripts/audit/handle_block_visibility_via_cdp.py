@@ -201,6 +201,25 @@ READBACK = r"""(async () => {
 })()"""
 
 
+def handle_geometry(sample: dict) -> dict:
+    """The list's own shape, computed from the rect the page reported.
+
+    A prose claim of "23,056px of un-windowed rows" is worth nothing unless the receipt that made it says
+    so in numbers, and unless the number is tied to the row count the snapshot actually served.
+    """
+    rect = sample.get("rowsRect") or {}
+    view = sample.get("viewport") or {}
+    rows = sample.get("rowCount") or 0
+    served = sample.get("snapshotHandleRows")
+    height, viewport_height = rect.get("height"), view.get("height")
+    return {"rowsInDom": rows,
+            "rowsServedBySnapshot": served,
+            "listHeightPx": height,
+            "viewportHeightPx": viewport_height,
+            "pxPerRow": round(height / rows, 1) if height and rows else None,
+            "viewportsOfScrolling": round(height / viewport_height, 1) if height and viewport_height else None}
+
+
 def problems(sample: dict, fail_over_ms: int | None) -> list[str]:
     """Every assertion the instrument makes about ITS OWN measurement, as a pure function.
 
@@ -242,6 +261,20 @@ def problems(sample: dict, fail_over_ms: int | None) -> list[str]:
                      f"{sample.get('viewport')} did not bring the rows on screen")
     if below is True and segments.get("C_rowsToVisibleMs") == 0:
         found.append("the block starts below the fold but segment C reports 0 ms -- nobody scrolled")
+
+    shape = handle_geometry(sample)
+    rows, served = shape["rowsInDom"], shape["rowsServedBySnapshot"]
+    if served is None and rows:
+        found.append(f"the block mounted {rows} rows but the snapshot's own row count was never observed, "
+                     "so those rows have no denominator and 'every served handle is shown' is unsupported")
+    if served is not None and rows > served:
+        found.append(f"the block mounted {rows} rows while the snapshot served {served} -- the extra rows "
+                     "were not read from the projection, they were invented")
+    height, viewport_height = shape["listHeightPx"], shape["viewportHeightPx"]
+    if height and viewport_height and height > viewport_height and sample.get("scrollOutcome") == "NO_SCROLL_HOOK":
+        found.append(f"the list is {height}px inside a {viewport_height}px viewport "
+                     f"({shape['viewportsOfScrolling']} screens of un-windowed rows) and no scroll was "
+                     "attempted, so the tail of the list was never on screen and never measured")
 
     bundle = sample.get("servedBundle") or {}
     if not bundle.get("files"):
@@ -373,6 +406,7 @@ def main() -> int:
         "segments": {name: aggregate(samples, name) for name in SEGMENTS},
         "rowCountObserved": [s.get("rowCount") for s in samples],
         "belowFoldAtCommit": [s.get("belowFoldAtCommit") for s in samples],
+        "handleGeometry": [handle_geometry(s) for s in samples],
         "failOverMs": args.fail_over_ms,
     }
     per_sample = [problems(s, args.fail_over_ms) for s in samples]
@@ -390,8 +424,14 @@ def main() -> int:
 
     line = " ".join(f"{name}={report['segments'][name]['median']}/{report['segments'][name]['worst']}"
                     for name in SEGMENTS)
+    shapes = [g for g in report["handleGeometry"] if g["listHeightPx"]]
+    widest = max(shapes, key=lambda g: g["listHeightPx"]) if shapes else None
+    geometry_note = ("" if widest is None else
+                     f" listPx={widest['listHeightPx']} viewportPx={widest['viewportHeightPx']}"
+                     f" pxPerRow={widest['pxPerRow']} screens={widest['viewportsOfScrolling']}"
+                     f" servedRows={widest['rowsServedBySnapshot']} domRows={widest['rowsInDom']}")
     print(f"HANDLE_LATENCY n={len(samples)} {line} rows={report['rowCountObserved']} "
-          f"belowFold={report['belowFoldAtCommit']}")
+          f"belowFold={report['belowFoldAtCommit']}{geometry_note}")
     for problem in flat:
         print("  PROBLEM", problem)
     if args.fail_over_ms is None:
