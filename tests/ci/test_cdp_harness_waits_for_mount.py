@@ -171,3 +171,59 @@ class EvaluateBudgetTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SweepRetryTests(unittest.TestCase):
+    """A launch race may be retried; a re-roll nobody can see may not.
+
+    The runner killed the whole-rail sweep twice on `main` within seconds of a green geometry step and never
+    on the development host, with the traceback swallowed by the handler that printed only `repr(exc)` — so
+    the red existed and was unattributable at the same time. These cases pin both halves of the fix: the
+    attempt is counted and printed, and a retry that keeps failing still raises.
+    """
+
+    def setUp(self) -> None:
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts" / "audit"))
+        spec = importlib.util.spec_from_file_location("legibility", SWEEP)
+        self.sweep = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.sweep)
+
+    class FakeGeometry:
+        def __init__(self, outcomes):
+            self.outcomes = list(outcomes)
+            self.calls = 0
+
+        def serve_and_eval(self, *args, **kwargs):
+            self.calls += 1
+            outcome = self.outcomes.pop(0)
+            if isinstance(outcome, Exception):
+                raise outcome
+            return dict(outcome)
+
+    def test_a_failed_session_is_retried_once_and_the_attempt_is_counted(self) -> None:
+        geometry = self.FakeGeometry([TimeoutError("timed out"), {"nodes": 1}])
+        got = self.sweep.run_views_session(geometry, ROOT, "chrome", None, "/p", "1280,900",
+                                           1280, "expr", "dark", None, attempts=2)
+        self.assertEqual(2, geometry.calls)
+        self.assertEqual(2, got["sweepAttempts"], "the receipt must say this came from a retry")
+
+    def test_a_persistent_failure_still_raises_rather_than_reporting_a_small_sample(self) -> None:
+        geometry = self.FakeGeometry([TimeoutError("a"), TimeoutError("b")])
+        with self.assertRaises(Exception) as caught:
+            self.sweep.run_views_session(geometry, ROOT, "chrome", None, "/p", "1280,900",
+                                         1280, "expr", "dark", None, attempts=2)
+        self.assertEqual(2, geometry.calls)
+        self.assertEqual("b", str(caught.exception), "the last attempt's error is the one reported")
+
+    def test_attempts_can_be_set_to_one_without_becoming_silent(self) -> None:
+        geometry = self.FakeGeometry([TimeoutError("only")])
+        with self.assertRaises(TimeoutError):
+            self.sweep.run_views_session(geometry, ROOT, "chrome", None, "/p", "1280,900",
+                                         1280, "expr", "dark", None, attempts=1)
+        self.assertEqual(1, geometry.calls)
+
+    def test_the_refusal_site_prints_a_traceback_not_only_a_repr(self) -> None:
+        src = SWEEP.read_text(encoding="utf-8")
+        self.assertGreaterEqual(src.count("traceback.print_exc()"), 2,
+                                "a swallowed traceback is why the two main-head reds could not be attributed")
