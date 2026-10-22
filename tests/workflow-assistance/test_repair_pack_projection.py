@@ -340,6 +340,42 @@ class PolishTests(unittest.TestCase):
         self.assertTrue(any("name what blocks it" in problem for problem in rpp.validate_repair_pack(mute)),
                         "a blocked pack with no reason is a blocked pack nobody can act on")
 
+    def test_a_repeated_adapter_mints_one_pack_and_discloses_the_repeat(self) -> None:
+        """The defect this guards: `--adapter codex --adapter codex` produced two packs sharing one
+        content-addressed id and counted the same issue twice, so bound=2 while open=1 -- every pack valid,
+        the denominators invented."""
+        out = rpp.project_repair_packs(issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")],
+                                       registry=REGISTRY, adapters=["codex", "codex", "codex"],
+                                       generated_at=GENERATED_AT, root_probe=make_root())
+        self.assertEqual(1, len(out["packs"]))
+        self.assertEqual(2, out["summary"]["duplicateAdaptersDropped"],
+                         "three requests, one executor: two repeats dropped and both counted")
+        self.assertEqual(1, out["summary"]["boundIssueCount"])
+        self.assertEqual([], rpp.validate_repair_pack_set(out["packs"], out["summary"]))
+
+    def test_a_second_pack_on_the_same_issue_is_convicted_at_the_set_level(self) -> None:
+        out = rpp.project_repair_packs(issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")],
+                                       registry=REGISTRY, adapters=["codex"], generated_at=GENERATED_AT,
+                                       root_probe=make_root())
+        twin = copy.deepcopy(out["packs"][0])
+        twin["packId"] = "rp-work-lab-codex-deadbeefdeadbeef"
+        twin["plan"]["plan_id"] = twin["packId"]
+        summary = dict(out["summary"])
+        summary["boundIssueCount"] = 2
+        problems = rpp.validate_repair_pack_set(out["packs"] + [twin], summary)
+        self.assertTrue(any("more than one pack" in p for p in problems), problems)
+
+    def test_bound_may_never_exceed_open(self) -> None:
+        out = rpp.project_repair_packs(issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")],
+                                       registry=REGISTRY, adapters=["codex"], generated_at=GENERATED_AT,
+                                       root_probe=make_root())
+        summary = dict(out["summary"])
+        summary["openIssueCount"] = 1
+        summary["boundIssueCount"] = 3
+        summary["unboundOpenIssueCount"] = -2
+        problems = rpp.validate_repair_pack_set(out["packs"], summary)
+        self.assertTrue(any("more issues bound than open" in p for p in problems), problems)
+
     def test_a_pack_without_a_verify_step_is_refused(self) -> None:
         pack = rpp.project_repair_packs(issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")],
                                         registry=REGISTRY, adapters=["codex"], generated_at=GENERATED_AT,

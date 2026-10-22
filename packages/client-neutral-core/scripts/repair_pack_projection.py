@@ -295,6 +295,33 @@ def validate_repair_pack(pack: Mapping[str, Any], *, schema: Mapping[str, Any] |
     return problems
 
 
+def validate_repair_pack_set(packs: list[dict[str, Any]], summary: Mapping[str, Any]) -> list[str]:
+    """Projection-level checks: what a set of packs must not be able to say about its own denominators.
+
+    A single pack can be internally perfect and still double-count the store, which is exactly how the
+    repeated-adapter defect looked green. These are the checks that would have caught it.
+    """
+    problems: list[str] = []
+    ids = [str(pack.get("packId") or "") for pack in packs]
+    if len(set(ids)) != len(ids):
+        problems.append("two packs share one packId: a re-delivery under the same content must dedupe, "
+                        "not appear twice")
+    fingerprints = [fp for pack in packs for fp in (pack.get("binds") or {}).get("issueFingerprints") or []]
+    if len(set(fingerprints)) != len(fingerprints):
+        problems.append("one issue fingerprint is bound by more than one pack; count it once or say why twice")
+    if int(summary.get("boundIssueCount") or 0) != len(fingerprints):
+        problems.append("summary.boundIssueCount disagrees with the fingerprints the packs actually carry")
+    open_count = summary.get("openIssueCount")
+    if open_count is not None and int(summary.get("boundIssueCount") or 0) > int(open_count):
+        problems.append("more issues bound than open: the denominators are invented, not measured")
+    if open_count is not None and int(summary.get("boundIssueCount") or 0) + int(
+            summary.get("unboundOpenIssueCount") or 0) != int(open_count):
+        problems.append("bound + unbound must equal openIssueCount")
+    for pack in packs:
+        problems.extend(f"{pack.get('packId')}: {problem}" for problem in validate_repair_pack(pack))
+    return problems
+
+
 def project_repair_packs(*, issues: list[dict[str, Any]] | None, projects: list[dict[str, Any]] | None,
                          registry: Mapping[str, Any] | None, adapters: list[str],
                          generated_at: str, root_probe: Any = Path) -> dict[str, Any]:
@@ -305,17 +332,23 @@ def project_repair_packs(*, issues: list[dict[str, Any]] | None, projects: list[
     """
     sources = {"issues": issues is not None, "projects": projects is not None,
                "adapterRegistry": registry is not None}
+    # A repeated --adapter used to mint two packs with one identical content-addressed id and count the same
+    # issue into `boundIssueCount` twice, so the denominators disagreed with `openIssueCount` while every
+    # individual pack stayed valid. Order-preserving dedupe, and the drop is disclosed rather than hidden.
+    unique_adapters = list(dict.fromkeys(adapters))
+    duplicate_adapters = len(adapters) - len(unique_adapters)
     if issues is None or projects is None or registry is None:
         return {"packs": [], "summary": _summary(sources=sources, packs=[], refused=[],
                                                  issue_count=None, adapters=adapters,
                                                  absent=", ".join(sorted(k for k, v in sources.items() if not v))
-                                                 or None, truncated=False, generated_at=generated_at)}
+                                                 or None, truncated=False, generated_at=generated_at,
+                                                 duplicate_adapters=duplicate_adapters)}
 
     packs: list[dict[str, Any]] = []
     refused: list[dict[str, str]] = []
     open_rows = _open_issues(issues)
     project_ids = sorted({str(row.get("projectId") or "") for row in open_rows if row.get("projectId")})
-    for adapter in adapters:
+    for adapter in unique_adapters:
         if not open_rows:
             refused.append({"adapter": adapter, "reason": "no-open-issues"})
             continue
@@ -348,6 +381,7 @@ def project_repair_packs(*, issues: list[dict[str, Any]] | None, projects: list[
             "summary": _summary(sources=sources, packs=packs, refused=refused,
                                 issue_count=len(open_rows), adapters=adapters, absent=None,
                                 truncated=truncated, generated_at=generated_at,
+                                duplicate_adapters=duplicate_adapters,
                                 projects_seen=len(project_ids),
                                 issues_without_project=sum(1 for row in open_rows
                                                            if not row.get("projectId")))}
@@ -356,7 +390,7 @@ def project_repair_packs(*, issues: list[dict[str, Any]] | None, projects: list[
 def _summary(*, sources: dict[str, bool], packs: list[dict[str, Any]], refused: list[dict[str, str]],
              issue_count: int | None, adapters: list[str], absent: str | None,
              truncated: bool, generated_at: str, projects_seen: int = 0,
-             issues_without_project: int = 0) -> dict[str, Any]:
+             issues_without_project: int = 0, duplicate_adapters: int = 0) -> dict[str, Any]:
     reasons: dict[str, int] = {}
     for item in refused:
         reasons[item["reason"]] = reasons.get(item["reason"], 0) + 1
@@ -380,6 +414,7 @@ def _summary(*, sources: dict[str, bool], packs: list[dict[str, Any]], refused: 
         "verificationKnownCount": sum(1 for pack in packs if pack["verification"]["known"]),
         "projectsSeen": projects_seen,
         "issuesWithoutProject": issues_without_project,
+        "duplicateAdaptersDropped": duplicate_adapters,
         "dispatchPerformed": False,
         "sent": False,
         "contentIncluded": False,
@@ -491,10 +526,17 @@ def main(argv: list[str] | None = None) -> int:
     packs, packs_summary = load_repair_packs(store, adapters=args.adapters,
                                              registry_path=root / "config" / "adapter-registry.json",
                                              generated_at=generated_at, issues=issues)
-    print("REPAIR_PACKS generated=%d refused=%d openIssues=%s bound=%s unbound=%s absentSources=%s apply=%d" % (
-        packs_summary["packCount"], packs_summary["refusalCount"], packs_summary["openIssueCount"],
-        packs_summary["boundIssueCount"], packs_summary["unboundOpenIssueCount"],
-        packs_summary["absentReason"], int(args.apply)))
+    set_problems = validate_repair_pack_set(packs, packs_summary)
+    print("REPAIR_PACKS generated=%d refused=%d openIssues=%s bound=%s unbound=%s absentSources=%s "
+          "setProblems=%d apply=%d" % (
+              packs_summary["packCount"], packs_summary["refusalCount"], packs_summary["openIssueCount"],
+              packs_summary["boundIssueCount"], packs_summary["unboundOpenIssueCount"],
+              packs_summary["absentReason"], len(set_problems), int(args.apply)))
+    for problem in set_problems:
+        print("  SET_PROBLEM", problem)
+    if set_problems:
+        print("REPAIR_PACKS_BLOCKED nothing written: the projection failed its own set checks")
+        return 1
     for item in packs_summary["refusals"]:
         print("  REFUSED", json.dumps(item, ensure_ascii=False))
     if not args.apply:

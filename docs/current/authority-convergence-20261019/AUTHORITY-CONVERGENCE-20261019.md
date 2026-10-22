@@ -1509,13 +1509,34 @@ constraints，也早就在 canonical store 里有一张 `action_plans` 空表，
 一份草稿不能在字节里假装自己被批了、发了或跑了。植入 `sent=true` 的包被 `validate_repair_pack` 与 JSON Schema
 **两遍都拒**（这是守卫里唯一一处"两个来源各自成立"的断言，因为合同与代码各说各话正是 ERR-225 的形状）。
 
-**实测。** 新守卫 `tests/workflow-assistance/test_repair_pack_projection.py` 18 例；合同登记后
+**回看自己这一片时抓到的两个真缺陷，都记在这儿。**
+第一个是规范门替我抓的：`672915c8` 那次 `ran=1 planned=50 failed_gate=governance`、`GATE_EXIT=1`，红的就是
+`tests/workflow-assistance/test_core_schemas.py` 里 `SCHEMA_DIR.glob("*.schema.json") == EXPECTED` 这条**精确清单**
+——往合同目录放一份新合同，必须同时在那份清单里留评审记录，并且进 `CAMEL_CASE_WIRE_SCHEMAS`：信封与问题行一样是
+camelCase 的 `schemaVersion`，而内联包体保留 action-plan 自己的 snake_case，版本字段只能点名，不能让守卫从邻居猜。
+第二个是我自己复看代码看出来的，门是红的不起来——因为它每一条单记录检查都过：`--adapter codex --adapter codex`
+会铸出**两个 packId 完全相同**的包（包 id 是内容寻址的，重复输入算出同一份内容），并且把同一个问题数两遍，
+`boundIssueCount=2` 而 `openIssueCount=1`。单看每个包都无懈可击，分母在说谎。修法是分两层：投影侧按顺序去重并把
+丢掉的重复数披露成 `duplicateAdaptersDropped`；再加一层 `validate_repair_pack_set`，专查"一组包"而不是"一个包"——
+packId 不许重复、同一指纹不许被两个包绑走、`bound` 不得超过 `open`、`bound + unbound` 必须等于 `open`。
+CLI 写盘前先跑这层检查，不过就 `REPAIR_PACKS_BLOCKED`、一个字都不落。实测：三个重复的 `--adapter codex`
+→ 1 个包、`duplicateAdaptersDropped=2`、`setProblems=0`。
+
+**实测。** 新守卫 `tests/workflow-assistance/test_repair_pack_projection.py` 26 例；连同
+`tests/workflow-assistance/test_core_schemas.py` 与生成合同投影清单三套合跑 42 例绿；合同登记后
 `CONTRACT_CATALOG_PASS contracts=46 schemas=46`，`CONTRACT_SSOT_PASS contracts=46`，
-`CORE_SCHEMA_CONTRACT_PASS schemas=29`，`tests/workflow-assistance/test_generated_contract_types_project_the_schema.py`
-与折叠清单一起 36 例绿。CLI 真跑（dry 与 `--apply` 两趟）：`generated=1 refused=2`，
-`openIssues=1 bound=1 unbound=0`，产物在 `.project-local/artifacts/repair-packs/` 下：包 JSON、可复制的交接文本，
-以及同目录的 `.project-local/artifacts/repair-packs/repair-packs-summary.json`。本机那一个包绑的是 `SOURCE_INCOMPLETE_COVERAGE`/work-lab，
-证据条目 `telemetry:task-ledger-…`，验证命令因为 `services/orchestration/run_quality_gate.py` 实测存在才写进步骤。
+`CORE_SCHEMA_CONTRACT_PASS schemas=29`。规范门在 `5d671dcd` 这个头上（合同清单登记已进、集合层去重还没进）
+`GATE_EXIT=0`、`ran=50 planned=50`、`GATE_SOURCE_DRIFT=no`；把去重与集合级分母检查加进来之后另跑一次，以那一跑的
+`^GATE_EXIT=0$` 作为本片的交付判据。CLI 真跑（dry 与 `--apply` 两趟）：
+`generated=1 refused=2 openIssues=1 bound=1 unbound=0 absentSources=None setProblems=0`，
+产物在 `.project-local/artifacts/repair-packs/` 下：包 JSON、可复制的交接文本，
+以及同目录的 `.project-local/artifacts/repair-packs/repair-packs-summary.json`。数据边界那条也是实测的：
+`--out-dir` 指到项目 Git 根外面时 `REPAIR_PACK_REFUSED_OUT_OF_BOUNDARY`、退出码 2，不写任何东西；
+存储根里没有库时 `REPAIR_PACK_NO_STORE` 退出 3——`CanonicalStore(path)` 会把文件建出来，
+一个猜错的路径于是回报成"读过且为空"，这正是本轮禁止的形状。本机那一个包绑的是 `SOURCE_INCOMPLETE_COVERAGE`/work-lab，
+证据条目 `telemetry:task-ledger-…`，验证命令因为 `services/orchestration/run_quality_gate.py` 实测存在才写进步骤；
+CLI 还会先印一行 `ISSUE_SOURCE … softwareAttribution={…}`，因为导出这一步不跑安装发现，
+`binds.softwareIds` 为空必须看得见是"身份来源缺席"，不是"这问题不属于任何软件"。
 
 **还没做。** 包不落库：`action_plans` 表仍是空的，第 5 行（修复状态跟踪与实际结果验证）才有资格写它——
 先有状态机再持久化，反过来就是把"生成过"当成"跟踪中"。Observer 不显示修复包，快照 v3 这轮没加键，
