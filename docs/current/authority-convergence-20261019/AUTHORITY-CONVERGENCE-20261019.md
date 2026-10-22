@@ -1474,6 +1474,15 @@ Observer 没有任何写路径。
 拿一个更早的 SHA（`c35273c6…`，修复还没进 `main` 的时候）去钉会被当场拒绝，这条断言因此是能失败的对照。
 重发读回：`docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json` 里这一行现在是
 `verified=7ee6ab6b… verifiedTreeChecked=true`，账本仍 `ERROR_LEDGER_PASS entries=289`。
+**钉的是哪一次运行，也说清楚。** 同一个 SHA 上其实有两次 `work-lab-gate`：#1536 七个作业全绿，
+#1537 的 `observer` 判红。#1537 的红不在源码字节上——那台 win32 runner 没有交互会话
+（`DESKTOP_CAPABILITY_FAIL … session=FAIL {"SESSIONNAME": null}`），于是 WebView2 起不来：
+`[U19] CDP readback FAILED: no CDP page target`、`GDI render proof: FAIL (windows=4)`、
+`GEOMETRY_GATE_NOT_RUN MEASURE_FAILED … no 'DevTools listening on' line within 90s`。
+两次运行里 `workflow-assistance` 都是绿的，而本行的回归例正是那一跑的必测集合跑的（回执
+`.project-local/artifacts/issue-center-20261022/ci-workflow-assistance-at-7ee6ab6b.log` 与
+`ci-observer-FAILED-at-7ee6ab6b-run1537.log`）。所以判决钉在 `7ee6ab6b`，而"这台 win32 runner
+跑不了桌面几何"是**另一条独立的边界**，不混进这一行，也不因为它就把已绿的回归说成没跑。
 同一次改动里另外两份派生记录**经实测不需要动**：`docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json`
 与 `.project/governance/generated/CURRENT_STATE.json` 按 `VOLATILE` 字段归一后与仓库字节逐字段相同，
 `.project/governance/generated/CURRENT_STATE.md` 只差那一行 `Generated at`——所以这次提交只动
