@@ -4,14 +4,14 @@
 **卡片性质：** AGENTS.md 规定跨模块改动需要一张显式卡；本次改动同时落在两个规范模块根上，这张卡就是那张。
 **权威链：** 最新用户决定 > `WORK-LAB-AUTHORITY.md` > `.project/governance/project-authority-index.json` >
 `taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md` > 唯一 open register > `AGENTS.md` >
-`module-ownership.json`（`crossModuleWrites: "explicit-cross-task-only"`）。
+`.project/governance/module-ownership.json`（`crossModuleWrites: "explicit-cross-task-only"`）。
 
 ## 1. 涉及的模块与写入归属
 
 | 模块根 | 归属 | 本次改的文件 | 单一写者 |
 | --- | --- | --- | --- |
-| `packages/client-neutral-core` | workflow-assistance | `scripts/issue_projection.py`（新）、`scripts/canonical_store.py`、`scripts/snapshot_api.py`、`scripts/snapshot_validator.py`、`generated/contracts.ts`（生成物）、`packages/contracts/schemas/workflow/snapshot-v3.schema.json` | workflow-assistance |
-| `apps/observer` | work-lab-observer | `frontend/src/types.ts`、`frontend/src/contractConformance.ts` | work-lab-observer |
+| `packages/client-neutral-core` | workflow-assistance | `packages/client-neutral-core/scripts/issue_projection.py`（新）、`packages/client-neutral-core/scripts/canonical_store.py`、`packages/client-neutral-core/scripts/snapshot_api.py`、`packages/client-neutral-core/scripts/snapshot_validator.py`、`packages/client-neutral-core/generated/contracts.ts`（生成物）、`packages/contracts/schemas/workflow/snapshot-v3.schema.json` | workflow-assistance |
+| `apps/observer` | work-lab-observer | `apps/observer/frontend/src/types.ts`、`apps/observer/frontend/src/contractConformance.ts` | work-lab-observer |
 | 支撑面（非模块根） | workflow-assistance | `services/orchestration/composition_root.py`、`tests/workflow-assistance/test_issue_projection.py`（新）、`tests/workflow-assistance/test_snapshot_issue_section.py`（新）、`tests/workflow-assistance/test_canonical_store_v2.py`、`tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py` | workflow-assistance |
 
 Observer 侧只新增**合同声明**（可选字段与编译期 `Refines` 断言），没有任何渲染消费者、没有可点控件、没有任何写路径：
@@ -45,8 +45,8 @@ Observer 侧只新增**合同声明**（可选字段与编译期 `Refines` 断�
 
 ## 5. 退出与回滚
 
-回滚按文件集合整体反转：删除 `issue_projection.py` 与两份新测试、
-把 `snapshot_api.py`/`snapshot_validator.py`/`composition_root.py`/`canonical_store.py`/schema/`contracts.ts`/
-`types.ts`/`contractConformance.ts` 恢复到卡前字节即可，无数据迁移、无外部副作用。
-`canonical_store.upsert_collector_health` 的收紧（ERR-290）是独立可回退的一处：它拒绝未映射键与空写，
-既有调用方与全部测试都用 camelCase 已映射键，实测不受影响。
+回滚就是删掉本卡 §1 表格里列出的文件集合：新增的那三个文件（投影模块与两份新守卫）移除，其余按卡前字节恢复，
+schema、生成合同 `packages/client-neutral-core/generated/contracts.ts` 与 Observer 的两个声明文件一并回退即可，
+无数据迁移、无外部副作用。
+`packages/client-neutral-core/scripts/canonical_store.py` 里健康表写入的收紧（ERR-290）是独立可回退的一处：
+它拒绝未映射键与空写，既有调用方与全部测试都用 camelCase 已映射键，实测不受影响。
