@@ -856,7 +856,10 @@
           "origin",
           "evidenceRef",
           "occurrences",
-          "status"
+          "status",
+          "softwareId",
+          "softwareVersion",
+          "softwareVersionSource"
         ],
         "properties": {
           "schemaVersion": {
@@ -924,6 +927,22 @@
           },
           "status": {
             "const": "OPEN"
+          },
+          "softwareId": {
+            "type": ["string", "null"]
+          },
+          "softwareVersion": {
+            "type": ["string", "null"]
+          },
+          "softwareVersionSource": {
+            "enum": [
+              "discovered",
+              "not-discovered",
+              "unmatched",
+              "ambiguous",
+              "source-names-no-software",
+              "identity-source-absent"
+            ]
           }
         },
         "additionalProperties": false
@@ -943,7 +962,8 @@
         "truncated",
         "sourcesRead",
         "sourcesAbsent",
-        "orderingKey"
+        "orderingKey",
+        "softwareAttribution"
       ],
       "properties": {
         "schemaVersion": {
@@ -1029,6 +1049,43 @@
         },
         "complete": {
           "type": "boolean"
+        },
+        "softwareAttribution": {
+          "type": "object",
+          "required": [
+            "attributed",
+            "unmatched",
+            "ambiguous",
+            "unattributable",
+            "versionKnown",
+            "identitySourceAbsent"
+          ],
+          "properties": {
+            "attributed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unmatched": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "ambiguous": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unattributable": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "versionKnown": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "identitySourceAbsent": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
         },
         "priorityCounts": {
           "type": "object",

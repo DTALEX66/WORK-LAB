@@ -1422,3 +1422,68 @@ Observer 侧因此只加**合同声明**（两个接口 + 两条编译期 `Refin
 `04` 报告里的第 4–6 行，需要后续卡片）；界面的呈现与可达性（STITCH 那一轮）；`ERR-290` 的 `verifiedCommit`
 等 exact-SHA 判绿再钉；`config/adapter-registry.json` 一个字节没动，Control 的 13 个动词一个没加，
 Observer 没有任何写路径。
+
+## 25. 问题行的软件与版本归属：能配就配，配不上要说为什么（2026-10-22）
+
+§24 留下的第一条缺口是「软件/版本关联只有 `projectId`」。这一片把它接上，规则是**不猜**。
+
+**做法。** `issue_projection` 多收一个身份来源：composition root 已经建好的 `software[]` 行
+（注册表 × 安装发现），不自己发现、不安装、不读凭据。索引把 `softwareId` 与 `displayName` 都做键，
+比对前统一去掉空格/连字符/下划线并折叠大小写——因此 `codex` 不是 `codex-desktop` 的匹配（前缀匹配
+会把问题挂到碰巧同前缀的产品上）。每个结果落在六个状态之一：
+`discovered` / `not-discovered` / `unmatched` / `ambiguous` / `source-names-no-software` /
+`identity-source-absent`。一个名字对上两个产品就是 `ambiguous`，`softwareId` 保持 null——
+把问题归给错误的已装软件，比不归给任何软件更坏。
+
+**摘要因此多出一个必须自洽的块。** `softwareAttribution` 报
+`attributed / unmatched / ambiguous / unattributable / versionKnown / identitySourceAbsent`，
+四个桶必须恰好覆盖所有行；运行期 `snapshot_validator` 拒：桶加起来不等于行数、
+`versionKnown` 与真带版本的行数不符、有版本却没身份、有身份却说"没匹配上"、
+以及 `identitySourceAbsent` 与 `sources` 里 software 那一条的状态不一致。
+
+**一处我自己的语义分歧，被第一次真读回抓到。** 投影说 `complete` 只关于四个问题源，
+而验证器原先把 `sources` 里所有条目都算进"没答"，于是 identity 缺席就把一份完整的清单判成不完整——
+第一次带身份源跑就红。修法不是放宽断言，而是**两边用同一个定义**：identity 缺席由
+`softwareAttribution.identitySourceAbsent` 单独披露，验证器改成同样只看四个问题源，
+并新增那条"两处必须一致"的检查。这就是"两边都来自同一个来源的核对不是核对"的反面教材：
+这次两处各自表述同一事实，所以它们必须能被证一致。
+
+**本机真实读数（不美化）。** 真起 sidecar 取回：`rowsScanned=15`、`sourcesRead=5`、`complete=True`，
+`attribution={attributed:0, unmatched:1, ambiguous:0, unattributable:0, versionKnown:0, identitySourceAbsent:False}`，
+唯一那行的 producer 是 `task-ledger-collector`——它是**采集器名**而不是已装软件的身份，
+所以正确答案就是 `unmatched`，既不是 0 也不是硬配一个。也就是说：归属的机器到位了，
+但这台机器的数据面还没喂给它可配的身份原料；哪些客户端会以软件名出现在 telemetry 里，
+取决于采集器写 `producer` 的方式，这一步没做之前不说"软件关联已完成"。
+
+**四地同步的代价，说清楚。** 加三个字段的真实成本是：schema、生成合同
+`packages/client-neutral-core/generated/contracts.ts`、手写声明 `apps/observer/frontend/src/types.ts`、
+以及生产面静态合同 `apps/observer/tests/test_production_surface_static_contract.js` 的可选键白名单——
+少一处就有一枚门红给你看。折叠清单这次**没有**新增：`softwareAttribution` 在 schema 里给了六个真属性，
+不做自由映射，所以生成器不折叠它。
+
+**实测。** 守卫 20→28 与 17→21（含归属的 8 条新反例：唯一匹配、前缀不算匹配、歧义不归属、
+无版本说 not-discovered、四桶覆盖、注入与缺席两路、以及三处不自洽归属被拒）；
+`tsc` exit 0；`vitest` 68 文件 826 例；`tests/workflow-assistance/test_snapshot_validator.py` 16 例；
+`tests/workflow-assistance/test_canonical_store_v2.py` 14 例；live `VALIDATE valid=True errors=[]`。
+
+**`ERR-290` 的判决钉下去了，钉的是它有资格用的那个 SHA。** `main` 的 `7ee6ab6b…` 自身那次
+`work-lab-gate` 运行里七个作业全部 `success`（含 `aggregate`），而 `workflow-assistance` 作业的日志里
+就有本行回归例的第一次真跑：`test_collector_health_refuses_a_name_that_is_not_a_column (test_canonical_store_v2.CanonicalStoreV2Tests…)... ok`。写之前逐条断言：`fixedCommit` 是该提交的祖先、
+对象在库、这一行原先 `verifiedCommit` 为空（不许覆盖旧判决）、写后全账本只有这一行移动且只动
+`lifecycle.verifiedCommit` 与 `remaining_boundary` 两个键；边界原文一字未改，闭合说明追加在后面。
+拿一个更早的 SHA（`c35273c6…`，修复还没进 `main` 的时候）去钉会被当场拒绝，这条断言因此是能失败的对照。
+重发读回：`docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json` 里这一行现在是
+`verified=7ee6ab6b… verifiedTreeChecked=true`，账本仍 `ERROR_LEDGER_PASS entries=289`。
+**钉的是哪一次运行，也说清楚。** 同一个 SHA 上其实有两次 `work-lab-gate`：#1536 七个作业全绿，
+#1537 的 `observer` 判红。#1537 的红不在源码字节上——那台 win32 runner 没有交互会话
+（`DESKTOP_CAPABILITY_FAIL … session=FAIL {"SESSIONNAME": null}`），于是 WebView2 起不来：
+`[U19] CDP readback FAILED: no CDP page target`、`GDI render proof: FAIL (windows=4)`、
+`GEOMETRY_GATE_NOT_RUN MEASURE_FAILED … no 'DevTools listening on' line within 90s`。
+两次运行里 `workflow-assistance` 都是绿的，而本行的回归例正是那一跑的必测集合跑的（回执
+`.project-local/artifacts/issue-center-20261022/ci-workflow-assistance-at-7ee6ab6b.log` 与
+`ci-observer-FAILED-at-7ee6ab6b-run1537.log`）。所以判决钉在 `7ee6ab6b`，而"这台 win32 runner
+跑不了桌面几何"是**另一条独立的边界**，不混进这一行，也不因为它就把已绿的回归说成没跑。
+同一次改动里另外两份派生记录**经实测不需要动**：`docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json`
+与 `.project/governance/generated/CURRENT_STATE.json` 按 `VOLATILE` 字段归一后与仓库字节逐字段相同，
+`.project/governance/generated/CURRENT_STATE.md` 只差那一行 `Generated at`——所以这次提交只动
+`taskpacks/current/error-ledger.json` 和那份绑定审计，不为"看起来重发过"去改没有变化的字节。

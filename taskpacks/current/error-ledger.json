@@ -8810,7 +8810,7 @@
       "regressionTestVerifiabilityReason": "新例把两种失败形态都喂进去：未映射键与只有 name 的记录各断言一次 ValueError，并检查错误消息里同时出现拼错的名与正确的名，最后断言 collector_health 仍为 0 行——证明拒绝发生在写之前，不是写完再回滚。",
       "evidence_level": "local-focused",
       "repeat_prevention": "凡\"写入词汇表\"与\"读回列名\"不同形的 API，写路径必须对未知键名 fail fast 并把可写名印在错误里；每处由键集合拼出的 SQL 都必须拒绝空集合，禁止把\"没匹配到列\"实现成静默跳过。",
-      "remaining_boundary": "同类形状未逐一排查：`upsert_execution_instance` / `upsert_task` / `append_execution_evidence` 用的是同一类\"只写调用方点名的字段\"策略，本轮只实测了 collector_health 这一条。本行 fixedCommit 指向产品修复提交，verifiedCommit 等 exact-SHA CI 判绿后再钉。",
+      "remaining_boundary": "同类形状未逐一排查：`upsert_execution_instance` / `upsert_task` / `append_execution_evidence` 用的是同一类\"只写调用方点名的字段\"策略，本轮只实测了 collector_health 这一条。本行 fixedCommit 指向产品修复提交，verifiedCommit 等 exact-SHA CI 判绿后再钉。2026-10-22：这句承诺已在 7ee6ab6bc52537ecb8e1924eb244afc23b97e63d 兑现——该提交自身的 work-lab-gate 里 `workflow-assistance` 作业判 success，而该作业的必测集合包含本行的 regression_test；`LEDGER_FIX_COMMIT_BINDING` 在同一次提交里重发并读回本行 verified=7ee6ab6bc52537ecb8e1924eb244afc23b97e63d。仍未闭合的是上面那句：同形的另外三个写者本轮没有逐一实测。",
       "status_before": "FAIL",
       "status_after": "PASS",
       "intakeSource": "本轮自建真库样本喂给问题投影时的第一次写调用",
@@ -8821,7 +8821,7 @@
       "lifecycle": {
         "introducedCommit": null,
         "fixedCommit": "25a53c9edc4059e03d11818d1bce23063bcba918",
-        "verifiedCommit": null,
+        "verifiedCommit": "7ee6ab6bc52537ecb8e1924eb244afc23b97e63d",
         "affectedCapability": "采集器健康写入的可靠性：问题中心的 SOURCE_REFUSAL / SOURCE_DATA_DROPPED 两类都读这张表",
         "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_canonical_store_v2.py",
         "currentApplicability": "VERIFIED_LIVE_20261022",

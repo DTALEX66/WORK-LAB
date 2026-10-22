@@ -185,6 +185,40 @@ class DenominatorTests(unittest.TestCase):
         snapshot["issuesSummary"]["priorityCounts"]["P1"] = 9
         self.assertTrue(any("priorityCounts" in e for e in errors_of(snapshot)))
 
+    def test_attribution_buckets_must_cover_every_row(self) -> None:
+        snapshot = snapshot_with_issues()
+        snapshot["issuesSummary"]["softwareAttribution"]["unmatched"] += 3
+        self.assertTrue(any("exactly one attribution bucket" in e for e in errors_of(snapshot)))
+
+    def test_version_known_must_match_the_rows_that_carry_a_version(self) -> None:
+        snapshot = snapshot_with_issues()
+        snapshot["issues"][0]["softwareVersion"] = "9.9.9"
+        snapshot["issues"][0]["softwareVersionSource"] = "discovered"
+        snapshot["issues"][0]["softwareId"] = "some-product"
+        self.assertTrue(any("versionKnown" in e for e in errors_of(snapshot)))
+
+    def test_a_version_without_identity_and_a_lucky_state_are_refused(self) -> None:
+        snapshot = snapshot_with_issues()
+        snapshot["issues"][0]["softwareVersion"] = "1.2.3"
+        snapshot["issues"][0]["softwareVersionSource"] = "unmatched"
+        errors = errors_of(snapshot)
+        self.assertTrue(any("no product identity" in e for e in errors),
+                        "a version attached to no product is a fabricated linkage")
+        # the same row, but now claiming a product while the state says nothing matched
+        snapshot = snapshot_with_issues()
+        snapshot["issues"][0]["softwareId"] = "guessed-product"
+        snapshot["issues"][0]["softwareVersionSource"] = "unmatched"
+        errors = errors_of(snapshot)
+        self.assertTrue(any("without saying how that was known" in e for e in errors), errors)
+
+    def test_the_identity_source_state_must_be_agreed_by_both_places(self) -> None:
+        # complete is about the four problem sources; the identity list is disclosed by identitySourceAbsent.
+        # If the two ever disagree, a reader cannot tell whether attribution was impossible or empty.
+        snapshot = snapshot_with_issues()
+        snapshot["issuesSummary"]["softwareAttribution"]["identitySourceAbsent"] = False
+        self.assertTrue(any("identitySourceAbsent disagrees" in e for e in errors_of(snapshot)))
+        self.assertTrue(snapshot["issuesSummary"]["complete"], "the list itself is still complete")
+
     def test_an_inference_claim_or_content_claim_on_the_scope_is_refused(self) -> None:
         for field, value in (("inferencePerformed", True), ("contentIncluded", True),
                              ("derivationScope", "whatever-the-model-said")):

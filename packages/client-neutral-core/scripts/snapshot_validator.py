@@ -506,7 +506,10 @@ ISSUE_CLASSES = ("SOURCE_CIRCUIT_OPEN", "SOURCE_REFUSAL", "SOURCE_FAILURE", "SOU
                  "SOURCE_STALE", "SOURCE_INCOMPLETE_COVERAGE", "EXECUTION_STALLED", "EXECUTION_CONFLICT",
                  "TASK_BLOCKED", "TASK_FAILED")
 _ISSUE_REQUIRED = ("schemaVersion", "fingerprint", "class", "origin", "evidenceRef", "priority",
-                   "priorityRule", "occurrences", "status")
+                   "priorityRule", "occurrences", "status", "softwareId", "softwareVersion",
+                   "softwareVersionSource")
+_SOFTWARE_STATES = ("discovered", "not-discovered", "unmatched", "ambiguous",
+                    "source-names-no-software", "identity-source-absent")
 # Content fields are refused by name, the way the handle list refuses them: an issue row is a pointer to
 # evidence, and a row that also carried the bytes would make the range route's read-on-demand rule moot.
 _ISSUE_CONTENT_FIELDS = ("content", "body", "payload", "text", "lines")
@@ -601,15 +604,48 @@ def _validate_issues(snapshot: dict[str, Any]) -> list[str]:
     if summary.get("truncated") and not omitted:
         errors.append("issuesSummary.truncated is true while omittedCount is 0 — one of them is lying")
 
-    unread = [item.get("source") for item in (summary.get("sources") or [])
-              if isinstance(item, dict) and item.get("state") != "read"]
+    # `complete` is a statement about the four problem sources. The software identity list is a fifth entry
+    # in `sources` and is disclosed by softwareAttribution.identitySourceAbsent instead: a complete problem
+    # list whose identities were never built is a real, reportable state, not a half-read enumeration.
+    problem_sources = [item for item in (summary.get("sources") or [])
+                       if isinstance(item, dict) and item.get("source") != "software"]
+    unread = [item.get("source") for item in problem_sources if item.get("state") != "read"]
     if summary.get("complete") and unread:
         errors.append(f"issuesSummary.complete cannot be true while sources did not answer: {unread}")
+    identity_absent = any(isinstance(item, dict) and item.get("source") == "software"
+                          and item.get("state") != "read" for item in (summary.get("sources") or []))
+    declared = (summary.get("softwareAttribution") or {}).get("identitySourceAbsent")
+    if isinstance(declared, bool) and declared is not identity_absent:
+        errors.append("issuesSummary.softwareAttribution.identitySourceAbsent disagrees with the state "
+                      f"reported for the software source (declared {declared}, sources say {identity_absent})")
     scanned = summary.get("rowsScanned")
     per_source = [item.get("rowsScanned") for item in (summary.get("sources") or [])
                   if isinstance(item, dict) and isinstance(item.get("rowsScanned"), int)]
     if isinstance(scanned, int) and sum(per_source) != scanned:
         errors.append(f"issuesSummary.rowsScanned={scanned} disagrees with the per-source counts {per_source}")
+    attribution = summary.get("softwareAttribution")
+    if not isinstance(attribution, dict):
+        errors.append("issuesSummary.softwareAttribution must state how each row was attributed")
+    else:
+        buckets = sum(int(attribution.get(key) or 0) for key in ("attributed", "unmatched", "ambiguous",
+                                                                "unattributable"))
+        if buckets != len(issues):
+            errors.append(f"issuesSummary.softwareAttribution covers {buckets} of {len(issues)} rows — "
+                          "every row is in exactly one attribution bucket")
+        known = int(attribution.get("versionKnown") or 0)
+        with_version = sum(1 for row in issues if isinstance(row, dict) and row.get("softwareVersion"))
+        if known != with_version:
+            errors.append(f"versionKnown={known} disagrees with the {with_version} rows carrying a version")
+    for index, row in enumerate(issues):
+        if not isinstance(row, dict):
+            continue
+        state = row.get("softwareVersionSource")
+        if state is not None and state not in _SOFTWARE_STATES:
+            errors.append(f"issues[{index}].softwareVersionSource {state!r} is outside the vocabulary")
+        if row.get("softwareVersion") and not row.get("softwareId"):
+            errors.append(f"issues[{index}] reports a version with no product identity")
+        if row.get("softwareId") and state not in ("discovered", "not-discovered"):
+            errors.append(f"issues[{index}] is attributed to a product without saying how that was known")
     counts = summary.get("priorityCounts")
     if isinstance(counts, dict) and sum(v for v in counts.values() if isinstance(v, int)) != len(issues):
         errors.append("issuesSummary.priorityCounts does not add up to the rows emitted")

@@ -457,6 +457,13 @@ export interface IssueRecord {
   magnitude?: Record<string, unknown>
   detail?: string
   status: 'OPEN'
+  /** Attribution, three fields, one of six states. A row whose source names no product says so; a name the
+   *  identity list resolves to two products is `ambiguous` and keeps `softwareId: null` — guessing which
+   *  install was meant would attribute a problem to software that may not be involved. */
+  softwareId: string | null
+  softwareVersion: string | null
+  softwareVersionSource: 'discovered' | 'not-discovered' | 'unmatched' | 'ambiguous'
+  | 'source-names-no-software' | 'identity-source-absent'
 }
 
 /** The scope report of that exact list: which sources answered, what the scan limit absorbed, what the cap
@@ -479,6 +486,10 @@ export interface IssuesSummary {
   truncated: boolean
   complete?: boolean
   priorityCounts?: {P1?: number, P2?: number, P3?: number}
+  /** Every emitted row sits in exactly one of the four buckets; `identitySourceAbsent` is why
+   *  `attributed: 0` must never be read as "no problem belongs to any software". */
+  softwareAttribution: {attributed: number, unmatched: number, ambiguous: number, unattributable: number,
+    versionKnown: number, identitySourceAbsent: boolean}
   classesPresent?: string[]
   classVocabulary?: string[]
   projectsCovered?: Array<string | null>

@@ -239,24 +239,31 @@ _ISSUES_TTL_SECONDS = 30.0
 _issues_cache: dict[str, Any] = {}
 
 
-def _build_issues_projection(store: CanonicalStore, *, force: bool = False
+def _build_issues_projection(store: CanonicalStore, software_rows: list[dict[str, Any]] | None,
+                             *, force: bool = False
                              ) -> tuple[list[dict[str, Any]] | None, dict[str, Any] | None, str | None]:
     """(issues, summary, absentReason), TTL-cached like the handle enumeration.
 
-    The derivation itself is pure over store rows; this wrapper exists so the read path can never die on a
-    bad column and so an operator can ask why the key is absent (issues_status below).
+    The identity signature is part of the cache key: rows attributed to `softwareId`s from one tick must not
+    be served next to a software list from another, or the attribution counts and the identity section would
+    disagree inside one snapshot. The derivation itself is pure over store rows; this wrapper exists so the
+    read path can never die on a bad column, and so an operator can ask why the key is absent.
     """
     now = time.time()
-    if not force and _issues_cache and (now - _issues_cache.get("at", 0.0)) < _ISSUES_TTL_SECONDS:
+    signature = tuple(sorted({str(row.get("softwareId") or "") for row in (software_rows or [])}))
+    if (not force and _issues_cache and _issues_cache.get("softwareSignature") == signature
+            and (now - _issues_cache.get("at", 0.0)) < _ISSUES_TTL_SECONDS):
         return _issues_cache["issues"], _issues_cache["summary"], _issues_cache["reason"]
     try:
         from issue_projection import load_issues
-        issues, summary, reason = load_issues(store, generated_at=_snapshot_timestamp(now))
+        issues, summary, reason = load_issues(store, generated_at=_snapshot_timestamp(now),
+                                             software_rows=software_rows)
     except Exception as error:  # noqa: BLE001 - a projection fault is a reported gap, not a dead snapshot
         issues = summary = None
         reason = f"projection-unavailable:{type(error).__name__}"
     _issues_cache.clear()
-    _issues_cache.update({"at": now, "issues": issues, "summary": summary, "reason": reason})
+    _issues_cache.update({"at": now, "issues": issues, "summary": summary, "reason": reason,
+                          "softwareSignature": signature})
     return issues, summary, reason
 
 
@@ -264,6 +271,7 @@ def issues_status() -> dict[str, Any]:
     """Why `issues` is or is not in the last snapshot, read from the same cache the build used."""
     return {"derived": bool(_issues_cache.get("issues") is not None),
             "absentReason": _issues_cache.get("reason"),
+            "identityRowsKnown": len(_issues_cache.get("softwareSignature") or ()),
             "emittedCount": len(_issues_cache.get("issues") or []),
             "sourcesRead": (_issues_cache.get("summary") or {}).get("sourcesRead"),
             "sourcesAbsent": (_issues_cache.get("summary") or {}).get("sourcesAbsent"),
@@ -612,7 +620,7 @@ def build_v3_snapshot(
         _build_artifact_handles_projection())
     operation_progress_rows, isolated_trial_rows = _task_ledger_read_models(
         store, transport_state=transport_state)
-    issues_rows, issues_summary, _issues_reason = _build_issues_projection(store)
+    issues_rows, issues_summary, _issues_reason = _build_issues_projection(store, software_rows)
     return build_snapshot(
         revision=revision,
         generated_at=generated_at,
