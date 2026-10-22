@@ -291,5 +291,64 @@ class AbsentSourceTests(unittest.TestCase):
         self.assertEqual(1, out["summary"]["unboundOpenIssueCount"])
 
 
+class PolishTests(unittest.TestCase):
+    def test_an_unslug_safe_adapter_id_still_mints_a_pack_id_the_contract_accepts(self) -> None:
+        registry = {"entries": [{"id": "Bad Name!", "display_name": None, "support_level": "deep",
+                                "operations": ["invoke"]}]}
+        pack = rpp.project_repair_packs(issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")],
+                                       registry=registry, adapters=["Bad Name!"],
+                                       generated_at=GENERATED_AT, root_probe=make_root())["packs"][0]
+        import re
+        self.assertRegex(pack["packId"], r"^[A-Za-z0-9._-]{3,120}$")
+        self.assertEqual([], rpp.validate_repair_pack(pack))
+
+    def test_a_quoted_prefix_of_the_bound_evidence_says_the_rest_exists(self) -> None:
+        many = [issue(f"{i:016x}", "work-lab") for i in range(12)]
+        pack = rpp.project_repair_packs(issues=many, projects=[project("work-lab")], registry=REGISTRY,
+                                        adapters=["codex"], generated_at=GENERATED_AT,
+                                        root_probe=make_root())["packs"][0]
+        self.assertEqual(12, pack["binds"]["issueCount"])
+        read_step = [step for step in pack["plan"]["steps"] if step["id"] == "read-evidence"][0]
+        self.assertIn("另有 4 条在 binds.evidenceRefs 里逐条列出", read_step["action"],
+                      "eight refs shown out of twelve reads as twelve shown")
+        self.assertEqual(12, len(pack["binds"]["evidenceRefs"]))
+
+    def setUp(self) -> None:
+        self.pack = rpp.project_repair_packs(issues=[issue("a" * 16, "work-lab")],
+                                             projects=[project("work-lab")], registry=REGISTRY,
+                                             adapters=["codex"], generated_at=GENERATED_AT,
+                                             root_probe=make_root())["packs"][0]
+
+    def test_the_envelope_and_the_plan_body_must_name_the_same_target(self) -> None:
+        for path, value in ((("plan", "target", "project_root"), "D:/elsewhere"),
+                            (("plan", "target", "adapter"), "hermes")):
+            forged = copy.deepcopy(self.pack)
+            forged["plan"]["target"][path[-1]] = value
+            problems = rpp.validate_repair_pack(forged)
+            self.assertTrue(any("different" in problem for problem in problems),
+                            f"{path} mismatch must be visible: {problems}")
+
+    def test_readiness_and_status_cannot_disagree(self) -> None:
+        split = copy.deepcopy(self.pack)
+        split["status"] = "BLOCKED"
+        self.assertTrue(any("readiness.state" in problem
+                            for problem in rpp.validate_repair_pack(split)),
+                        "one field says blocked and the other says ready")
+        mute = copy.deepcopy(self.pack)
+        mute["status"] = "BLOCKED"
+        mute["readiness"] = {"state": "BLOCKED", "reasons": []}
+        self.assertTrue(any("name what blocks it" in problem for problem in rpp.validate_repair_pack(mute)),
+                        "a blocked pack with no reason is a blocked pack nobody can act on")
+
+    def test_a_pack_without_a_verify_step_is_refused(self) -> None:
+        pack = rpp.project_repair_packs(issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")],
+                                        registry=REGISTRY, adapters=["codex"], generated_at=GENERATED_AT,
+                                        root_probe=make_root())["packs"][0]
+        stripped = copy.deepcopy(pack)
+        stripped["plan"]["steps"] = [s for s in stripped["plan"]["steps"] if s["id"] != "verify"]
+        self.assertTrue(any("verify step" in problem for problem in rpp.validate_repair_pack(stripped)),
+                        "a handoff with no check step cannot be verified by anyone")
+
+
 if __name__ == "__main__":
     unittest.main()

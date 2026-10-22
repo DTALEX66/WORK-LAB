@@ -57,21 +57,38 @@ OWN_GATE_RELATIVE_PATH = "services/orchestration/run_quality_gate.py"
 OWN_GATE_COMMAND = "python services/orchestration/run_quality_gate.py verify"
 
 
+def _slug(value: str, limit: int) -> str:
+    """Both halves of the pack id come from caller/registry text, and the contract pattern is
+    `^[A-Za-z0-9._-]{3,120}$` -- an adapter id with a space would otherwise mint a pack the schema refuses."""
+    return "".join(c if c.isalnum() or c in "._-" else "-" for c in value)[:limit]
+
+
 def _pack_id(project_id: str, adapter: str, fingerprints: list[str]) -> str:
     """Content-addressed so re-running the same facts yields the same pack id (and a re-delivery dedupes)."""
     blob = json.dumps({"project": project_id, "adapter": adapter, "issues": sorted(fingerprints)},
                      sort_keys=True, ensure_ascii=False)
     digest = hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
-    safe = "".join(c if c.isalnum() or c in "._-" else "-" for c in project_id)[:40]
-    return f"rp-{safe}-{adapter[:20]}-{digest}"
+    return f"rp-{_slug(project_id, 40)}-{_slug(adapter, 20)}-{digest}"
 
 
 def _open_issues(issues: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [row for row in issues if str(row.get("status") or "OPEN") == "OPEN"]
 
 
+def _evidence_phrase(evidence_refs: list[str]) -> str:
+    """A step may quote only a prefix of the bound evidence, but it must say the rest exists: eight refs shown
+    out of thirty read as thirty bound."""
+    if not evidence_refs:
+        return "（本包没有点名任何证据条目）"
+    shown = evidence_refs[:8]
+    phrase = ", ".join(shown)
+    if len(evidence_refs) > len(shown):
+        phrase += f"，另有 {len(evidence_refs) - len(shown)} 条在 binds.evidenceRefs 里逐条列出"
+    return phrase
+
+
 def _steps(project_id: str, evidence_refs: list[str], verification: dict[str, Any]) -> list[dict[str, Any]]:
-    refs = ", ".join(evidence_refs[:8]) or "（本包没有点名任何证据条目）"
+    refs = _evidence_phrase(evidence_refs)
     verify_action = (
         f"跑读数确认问题不再出现：{verification['command']}" if verification["known"] else
         "跑目标项目自己的检查并把命令与退出码原样交回；WORK-LAB 不知道该项目的命令，"
@@ -249,7 +266,27 @@ def validate_repair_pack(pack: Mapping[str, Any], *, schema: Mapping[str, Any] |
     if (plan.get("approval") or {}).get("status") != "PENDING":
         problems.append("a generated plan cannot carry an approved or rejected approval status")
     verification = pack.get("verification") or {}
-    if verification.get("known") is not True and (plan.get("steps") or [{}])[3].get("action", "").startswith("跑读数确认"):
+    verify_steps = [step for step in (plan.get("steps") or []) if step.get("id") == "verify"]
+    if not verify_steps:
+        problems.append("a pack without a verify step hands the executor nothing to check against")
+    readiness = pack.get("readiness") or {}
+    if pack.get("status") == "BLOCKED" and readiness.get("state") != "BLOCKED":
+        problems.append("a BLOCKED pack must also say BLOCKED in readiness.state")
+    if pack.get("status") == "WAITING_APPROVAL" and readiness.get("state") != "READY":
+        problems.append("a pack that is ready to hand off cannot be reported as blocked in one field and "
+                        "waiting in the other")
+    if readiness.get("state") == "BLOCKED" and not (readiness.get("reasons") or []):
+        problems.append("a blocked pack must name what blocks it")
+    if readiness.get("state") == "READY" and (readiness.get("reasons") or []):
+        problems.append("a ready pack may not carry blocking reasons")
+    target = pack.get("target") or {}
+    plan_target = plan.get("target") or {}
+    if plan_target.get("project_root") != target.get("projectRoot"):
+        problems.append("the envelope and the plan body name different project roots")
+    if plan_target.get("adapter") != target.get("adapter"):
+        problems.append("the envelope and the plan body name different executors")
+    if verification.get("known") is not True and any(
+            str(step.get("action") or "").startswith("跑读数确认") for step in verify_steps):
         problems.append("the verify step names a command the pack says it does not know")
     if schema is not None:
         from jsonschema import Draft202012Validator
@@ -443,13 +480,21 @@ def main(argv: list[str] | None = None) -> int:
 
     store = CanonicalStore(db)
     generated_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    issues, _summary, _absent = load_issues(store)
+    issues, issues_summary, absent_reason = load_issues(store)
+    # The CLI does not run install discovery (only the composition root does), so every bound row says
+    # identity-source-absent here. Print that instead of letting an empty binds.softwareIds read as
+    # "this problem belongs to no software".
+    attribution = (issues_summary or {}).get("softwareAttribution") or {}
+    print("ISSUE_SOURCE issues=%s absent=%s softwareAttribution=%s" % (
+        "absent" if issues is None else len(issues), absent_reason,
+        json.dumps(attribution, ensure_ascii=False)))
     packs, packs_summary = load_repair_packs(store, adapters=args.adapters,
                                              registry_path=root / "config" / "adapter-registry.json",
                                              generated_at=generated_at, issues=issues)
-    print("REPAIR_PACKS generated=%d refused=%d openIssues=%s bound=%s unbound=%s apply=%d" % (
+    print("REPAIR_PACKS generated=%d refused=%d openIssues=%s bound=%s unbound=%s absentSources=%s apply=%d" % (
         packs_summary["packCount"], packs_summary["refusalCount"], packs_summary["openIssueCount"],
-        packs_summary["boundIssueCount"], packs_summary["unboundOpenIssueCount"], int(args.apply)))
+        packs_summary["boundIssueCount"], packs_summary["unboundOpenIssueCount"],
+        packs_summary["absentReason"], int(args.apply)))
     for item in packs_summary["refusals"]:
         print("  REFUSED", json.dumps(item, ensure_ascii=False))
     if not args.apply:

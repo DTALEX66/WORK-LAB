@@ -16,6 +16,11 @@ EXPECTED = {
     "task-card.schema.json",
     "domain-pack.schema.json",
     "action-plan.schema.json",
+    # 后端2 (2026-10-22): the repair-pack envelope. It wraps an action-plan body rather than replacing it,
+    # and the envelope is camelCase because the producer that writes it is `repair_pack_projection.py` and
+    # the executor-facing fields are the same ones the issue rows already use. Adding the file moves this
+    # set -- that is the review this pin exists to force.
+    "repair-pack.schema.json",
     # OD05 (2026-10-08): Quick Entry's field+permission contract. This set is an exact inventory of
     # the directory, so adding a legitimate schema moves it -- the pin defends "nothing appears in the
     # contract directory without being reviewed here", not a fixed number.
@@ -73,6 +78,10 @@ EXPECTED = {
 # Schemas whose wire field is camelCase by producer fact, mapped to that field's name.
 CAMEL_CASE_WIRE_SCHEMAS = {
     "snapshot-v3.schema.json": "schemaVersion",
+    # The repair-pack envelope is camelCase on the wire like the issue rows it binds; its inner `plan`
+    # keeps the action-plan contract's own snake_case fields, which is why the version field has to be
+    # named rather than guessed from the file's neighbours.
+    "repair-pack.schema.json": "schemaVersion",
 }
 
 
