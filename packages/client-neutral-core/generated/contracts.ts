@@ -36,6 +36,7 @@ export type ContractId =
   | "project-profile"
   | "quick-entry-request"
   | "release-manifest"
+  | "repair-pack"
   | "rule-asset"
   | "rule-drift"
   | "runtime-lock"
@@ -921,6 +922,90 @@ export type ReleaseManifest = {
     approval: {
     status: "PENDING" | "APPROVED" | "REJECTED",
     scope?: string
+  }
+  };
+
+// @contract repair-pack
+// schema: packages/contracts/schemas/workflow/repair-pack.schema.json
+export type RepairPack = {
+    schemaVersion: "workflow/repair-pack/v1",
+    packId: string,
+    generatedAt: string,
+    status: "WAITING_APPROVAL" | "BLOCKED",
+    readiness: {
+    state: "READY" | "BLOCKED",
+    reasons: ("no-open-issues" | "adapter-not-declared" | "adapter-does-not-declare-invoke" | "project-unregistered" | "project-root-missing" | "issue-has-no-project" | "verification-command-unknown" | "pack-cap-reached")[]
+  },
+    target: {
+    projectId: string,
+    projectName: string | null,
+    projectRoot: string,
+    projectStatus: string | null,
+    adapter: string,
+    adapterDisplayName: string | null,
+    adapterSupportLevel: string | null,
+    declaredOperations: ("detect" | "capabilities" | "plan" | "apply" | "invoke" | "observe" | "rollback")[],
+    operation: "invoke",
+    routingSource: "caller-choice"
+  },
+    binds: {
+    issueFingerprints: string[],
+    evidenceRefs: string[],
+    classes: ("SOURCE_CIRCUIT_OPEN" | "SOURCE_REFUSAL" | "SOURCE_FAILURE" | "SOURCE_DATA_DROPPED" | "SOURCE_STALE" | "SOURCE_INCOMPLETE_COVERAGE" | "EXECUTION_STALLED" | "EXECUTION_CONFLICT" | "TASK_BLOCKED" | "TASK_FAILED")[],
+    priorities: ("P1" | "P2" | "P3")[],
+    issueCount: number,
+    softwareIds: string[],
+    unattributedCount: number
+  },
+    verification: {
+    known: boolean,
+    command: string,
+    basis: string
+  },
+    handoff: {
+    sent: false,
+    dispatched: false,
+    authorizationRef: unknown,
+    requiresOwnerAction: string
+  },
+    provenance: {
+    derivationScope: "open-issue-rows-plus-registered-projects-plus-adapter-registry",
+    inferencePerformed: false,
+    contentIncluded: false,
+    authorityClaimed: false,
+    applied: false
+  },
+    plan: {
+    schema_version: "workflow/action-plan/v1",
+    plan_id: string,
+    task_id?: string,
+    status: "DRAFT" | "WAITING_APPROVAL" | "APPROVED" | "EXECUTING" | "SUCCEEDED" | "FAILED" | "BLOCKED" | "ROLLED_BACK",
+    target: {
+    adapter: string,
+    operation: string,
+    project_root: string
+  },
+    steps: ({
+    id: string,
+    action: string,
+    mode: "read" | "write" | "execute",
+    side_effects: string[]
+  })[],
+    approval: {
+    approval_required: true,
+    status: "PENDING" | "APPROVED" | "REJECTED",
+    approved_by?: string
+  },
+    rollback: {
+    available: true,
+    strategy: string,
+    artifact?: string
+  },
+    constraints?: {
+    allowed_paths?: string[],
+    forbidden_paths?: string[],
+    network?: "none" | "explicit"
+  }
   }
   };
 

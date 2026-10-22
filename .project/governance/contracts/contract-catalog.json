@@ -276,6 +276,14 @@
       ]
     },
     {
+      "id": "repair-pack",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/repair-pack.schema.json",
+      "consumers": [
+        "workflow"
+      ]
+    },
+    {
       "id": "rule-asset",
       "owner": "workflow",
       "schemaPath": "packages/contracts/schemas/workflow/rule-asset.schema.json",
