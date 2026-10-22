@@ -1422,3 +1422,46 @@ Observer 侧因此只加**合同声明**（两个接口 + 两条编译期 `Refin
 `04` 报告里的第 4–6 行，需要后续卡片）；界面的呈现与可达性（STITCH 那一轮）；`ERR-290` 的 `verifiedCommit`
 等 exact-SHA 判绿再钉；`config/adapter-registry.json` 一个字节没动，Control 的 13 个动词一个没加，
 Observer 没有任何写路径。
+
+## 25. 问题行的软件与版本归属：能配就配，配不上要说为什么（2026-10-22）
+
+§24 留下的第一条缺口是「软件/版本关联只有 `projectId`」。这一片把它接上，规则是**不猜**。
+
+**做法。** `issue_projection` 多收一个身份来源：composition root 已经建好的 `software[]` 行
+（注册表 × 安装发现），不自己发现、不安装、不读凭据。索引把 `softwareId` 与 `displayName` 都做键，
+比对前统一去掉空格/连字符/下划线并折叠大小写——因此 `codex` 不是 `codex-desktop` 的匹配（前缀匹配
+会把问题挂到碰巧同前缀的产品上）。每个结果落在六个状态之一：
+`discovered` / `not-discovered` / `unmatched` / `ambiguous` / `source-names-no-software` /
+`identity-source-absent`。一个名字对上两个产品就是 `ambiguous`，`softwareId` 保持 null——
+把问题归给错误的已装软件，比不归给任何软件更坏。
+
+**摘要因此多出一个必须自洽的块。** `softwareAttribution` 报
+`attributed / unmatched / ambiguous / unattributable / versionKnown / identitySourceAbsent`，
+四个桶必须恰好覆盖所有行；运行期 `snapshot_validator` 拒：桶加起来不等于行数、
+`versionKnown` 与真带版本的行数不符、有版本却没身份、有身份却说"没匹配上"、
+以及 `identitySourceAbsent` 与 `sources` 里 software 那一条的状态不一致。
+
+**一处我自己的语义分歧，被第一次真读回抓到。** 投影说 `complete` 只关于四个问题源，
+而验证器原先把 `sources` 里所有条目都算进"没答"，于是 identity 缺席就把一份完整的清单判成不完整——
+第一次带身份源跑就红。修法不是放宽断言，而是**两边用同一个定义**：identity 缺席由
+`softwareAttribution.identitySourceAbsent` 单独披露，验证器改成同样只看四个问题源，
+并新增那条"两处必须一致"的检查。这就是"两边都来自同一个来源的核对不是核对"的反面教材：
+这次两处各自表述同一事实，所以它们必须能被证一致。
+
+**本机真实读数（不美化）。** 真起 sidecar 取回：`rowsScanned=15`、`sourcesRead=5`、`complete=True`，
+`attribution={attributed:0, unmatched:1, ambiguous:0, unattributable:0, versionKnown:0, identitySourceAbsent:False}`，
+唯一那行的 producer 是 `task-ledger-collector`——它是**采集器名**而不是已装软件的身份，
+所以正确答案就是 `unmatched`，既不是 0 也不是硬配一个。也就是说：归属的机器到位了，
+但这台机器的数据面还没喂给它可配的身份原料；哪些客户端会以软件名出现在 telemetry 里，
+取决于采集器写 `producer` 的方式，这一步没做之前不说"软件关联已完成"。
+
+**四地同步的代价，说清楚。** 加三个字段的真实成本是：schema、生成合同
+`packages/client-neutral-core/generated/contracts.ts`、手写声明 `apps/observer/frontend/src/types.ts`、
+以及生产面静态合同 `apps/observer/tests/test_production_surface_static_contract.js` 的可选键白名单——
+少一处就有一枚门红给你看。折叠清单这次**没有**新增：`softwareAttribution` 在 schema 里给了六个真属性，
+不做自由映射，所以生成器不折叠它。
+
+**实测。** 守卫 20→28 与 17→21（含归属的 8 条新反例：唯一匹配、前缀不算匹配、歧义不归属、
+无版本说 not-discovered、四桶覆盖、注入与缺席两路、以及三处不自洽归属被拒）；
+`tsc` exit 0；`vitest` 68 文件 826 例；`tests/workflow-assistance/test_snapshot_validator.py` 16 例；
+`tests/workflow-assistance/test_canonical_store_v2.py` 14 例；live `VALIDATE valid=True errors=[]`。

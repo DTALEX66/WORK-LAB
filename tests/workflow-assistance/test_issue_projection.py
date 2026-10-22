@@ -196,11 +196,14 @@ class AbsentVersusEmptyTests(unittest.TestCase):
         result = project_issues(collector_health=fixture["health"], telemetry=None,
                                 executions=fixture["executions"], tasks=fixture["tasks"])
         self.assertFalse(result["summary"]["complete"])
-        self.assertEqual(1, result["summary"]["sourcesAbsent"])
+        # two absent sources: the problem source that did not answer, and the identity list that was never
+        # passed in. Counting both is the point -- an absent identity list is a real gap in the report.
+        self.assertEqual(2, result["summary"]["sourcesAbsent"])
         absent = [item for item in result["summary"]["sources"] if item["state"] == "absent"]
-        self.assertEqual([{"source": "telemetry_events", "state": "absent", "rowsScanned": None,
-                           "issuesDerived": None}], absent,
-                         "an absent source must not report a row count it never saw")
+        self.assertEqual({"telemetry_events", "software"}, {item["source"] for item in absent})
+        for item in absent:
+            self.assertIsNone(item["rowsScanned"],
+                              "an absent source must not report a row count it never saw")
 
     def test_a_truncated_scan_is_not_a_complete_report(self) -> None:
         many = [telemetry_row(event_id=f"e{i}", freshness="STALE") for i in range(6)]
@@ -320,6 +323,105 @@ class EndToEndShapeTests(unittest.TestCase):
         self.assertEqual(attributed + summary["unattributedCount"], summary["emittedCount"],
                          "every row is either attributed to a project or counted as unattributed")
         self.assertTrue(summary["projectsCovered"], "the fixture attributes rows on purpose")
+
+
+class AttributionTests(unittest.TestCase):
+    """Software identity is joined, never guessed, and its absence is reported as absence."""
+
+    identity = [{"softwareId": "codex-desktop", "displayName": "Codex Desktop",
+                 "discoveredVersion": "24.10.1"},
+                {"softwareId": "cc-switch", "displayName": "CC Switch", "discoveredVersion": None},
+                {"softwareId": "dsh", "displayName": "DeepSeek Harness", "discoveredVersion": "0.2.1-rc.2"}]
+
+    def project(self, events, software=identity):
+        return project_issues(collector_health=[], telemetry=events, executions=[], tasks=[],
+                              software=software, generated_at="2026-10-22T10:00:00Z")
+
+    def test_a_unique_name_is_attributed_and_carries_the_discovered_version(self) -> None:
+        result = self.project([telemetry_row(producer="codex-desktop", freshness="STALE")])
+        row = result["issues"][0]
+        self.assertEqual("codex-desktop", row["softwareId"])
+        self.assertEqual("24.10.1", row["softwareVersion"])
+        self.assertEqual("discovered", row["softwareVersionSource"])
+
+    def test_matching_is_by_identity_not_by_luck_on_a_substring(self) -> None:
+        # "codex" is a prefix of codex-desktop and of its display name, but it is neither identity. Matching
+        # on prefix would attach a problem to whichever product happens to share the first letters.
+        result = self.project([telemetry_row(producer="codex", freshness="STALE")])
+        self.assertIsNone(result["issues"][0]["softwareId"])
+        self.assertEqual("unmatched", result["issues"][0]["softwareVersionSource"])
+
+    def test_a_name_two_products_share_stays_unattributed(self) -> None:
+        only = [{"softwareId": "codex-desktop", "displayName": "Codex Desktop",
+                 "discoveredVersion": "1.0"},
+                {"softwareId": "codex-fork", "displayName": "Codex Desktop", "discoveredVersion": "2.0"}]
+        result = self.project([telemetry_row(producer="Codex Desktop", freshness="STALE")], software=only)
+        row = result["issues"][0]
+        self.assertIsNone(row["softwareId"], "guessing which install was meant attributes a false subject")
+        self.assertIsNone(row["softwareVersion"])
+        self.assertEqual("ambiguous", row["softwareVersionSource"])
+        self.assertEqual(1, result["summary"]["softwareAttribution"]["ambiguous"])
+
+    def test_a_product_known_without_a_version_says_not_discovered_rather_than_empty(self) -> None:
+        result = self.project([telemetry_row(producer="cc-switch", freshness="STALE")])
+        row = result["issues"][0]
+        self.assertEqual("cc-switch", row["softwareId"])
+        self.assertIsNone(row["softwareVersion"])
+        self.assertEqual("not-discovered", row["softwareVersionSource"])
+
+    def test_a_source_that_names_no_product_so_does_the_row(self) -> None:
+        result = self.project([telemetry_row(producer="UNKNOWN", freshness="STALE")])
+        self.assertEqual("source-names-no-software", result["issues"][0]["softwareVersionSource"])
+        health = project_issues(collector_health=[{"name": "git", "consecutive_failures": 2,
+                                                  "updated_at": "2026-10-22T09:00:00Z"}],
+                                telemetry=[], executions=[], tasks=[], software=self.identity)
+        self.assertEqual("source-names-no-software", health["issues"][0]["softwareVersionSource"])
+
+    def test_the_four_buckets_cover_every_row_and_the_absent_list_is_named(self) -> None:
+        events = [telemetry_row(event_id="a", producer="codex-desktop", freshness="STALE"),
+                  telemetry_row(event_id="b", producer="who-knows", freshness="STALE"),
+                  telemetry_row(event_id="c", producer="UNKNOWN", freshness="STALE")]
+        with_identity = self.project(events)
+        attribution = with_identity["summary"]["softwareAttribution"]
+        self.assertEqual(len(with_identity["issues"]),
+                         attribution["attributed"] + attribution["unmatched"] + attribution["ambiguous"]
+                         + attribution["unattributable"])
+        self.assertEqual(1, attribution["versionKnown"])
+        self.assertFalse(attribution["identitySourceAbsent"])
+        self.assertTrue(with_identity["summary"]["complete"],
+                        "the identity list being present or not is a separate fact from the list's scope")
+
+        without = self.project(events, software=None)
+        absent = without["summary"]["softwareAttribution"]
+        self.assertTrue(absent["identitySourceAbsent"])
+        self.assertEqual(0, absent["attributed"])
+        self.assertEqual(len(without["issues"]), absent["unattributable"],
+                         "attributed=0 with an absent identity list must read as 'nothing was known', "
+                         "never as 'no problem belongs to software'")
+        self.assertTrue(without["summary"]["complete"], "complete is about the problem sources")
+
+    def test_load_issues_passes_the_injected_identity_rows_through(self) -> None:
+        class Store(FakeStore):
+            pass
+
+        store = Store(health=[], executions=[], tasks=[],
+                      telemetry=[telemetry_row(producer="dsh", freshness="STALE")])
+        issues, summary, reason = load_issues(store, software_rows=None)
+        self.assertEqual("identity-source-absent", issues[0]["softwareVersionSource"])
+        self.assertIsNone(reason)
+        issues, summary, _reason = load_issues(store, software_rows=self.identity)
+        self.assertEqual("dsh", issues[0]["softwareId"])
+        self.assertEqual("0.2.1-rc.2", issues[0]["softwareVersion"])
+        self.assertEqual(1, summary["softwareAttribution"]["versionKnown"])
+
+    def test_validate_issue_refuses_an_incoherent_attribution(self) -> None:
+        good = self.project([telemetry_row(producer="codex-desktop", freshness="STALE")])["issues"][0]
+        self.assertEqual([], validate_issue(good))
+        self.assertIn("vocabulary", " ".join(validate_issue(dict(good, softwareVersionSource="guessed"))))
+        self.assertIn("how its version was obtained",
+                      " ".join(validate_issue(dict(good, softwareVersionSource="unmatched"))))
+        self.assertIn("fabricated linkage",
+                      " ".join(validate_issue(dict(good, softwareId=None))))
 
 
 if __name__ == "__main__":

@@ -103,9 +103,71 @@ def _epoch(value: Any) -> float:
         return 0.0
 
 
+def _norm(value: str) -> str:
+    return re.sub(r"[\s_\-.]+", "", value).casefold()
+
+
+# The six ways a row can end up attributed or not. They are a closed vocabulary because "we could not
+# attribute this" and "attribution was impossible by source" are different facts a reader acts on.
+SOFTWARE_STATES = ("discovered", "not-discovered", "unmatched", "ambiguous",
+                   "source-names-no-software", "identity-source-absent")
+
+
+def _software_index(rows: list[dict[str, Any]] | None) -> dict[str, Any]:
+    """Case/punctuation-insensitive identity index over the software rows the root already built.
+
+    Both `softwareId` and `displayName` become keys, because a producer names itself either way. A key that
+    resolves to more than one product is kept as ambiguous rather than guessed: attributing a problem to the
+    wrong installed software is worse than leaving it unattributed.
+    """
+    if rows is None:
+        return {"state": "absent", "byKey": {}, "byId": {}}
+    by_key: dict[str, list[str]] = {}
+    by_id: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        software_id = str(row.get("softwareId") or "")
+        if not software_id:
+            continue
+        by_id[software_id] = row
+        for name in (software_id, str(row.get("displayName") or "")):
+            if not name:
+                continue
+            bucket = by_key.setdefault(_norm(name), [])
+            if software_id not in bucket:
+                bucket.append(software_id)
+    return {"state": "read", "byKey": by_key, "byId": by_id}
+
+
+def _resolve_software(index: dict[str, Any], named: str | None) -> dict[str, Any]:
+    """The three attribution fields for a row whose source named `named` (possibly nothing)."""
+    if index["state"] == "absent":
+        return {"softwareId": None, "softwareVersion": None,
+                "softwareVersionSource": "identity-source-absent"}
+    if not named:
+        return {"softwareId": None, "softwareVersion": None,
+                "softwareVersionSource": "source-names-no-software"}
+    matches = index["byKey"].get(_norm(named)) or []
+    if len(matches) > 1:
+        return {"softwareId": None, "softwareVersion": None, "softwareVersionSource": "ambiguous"}
+    if not matches:
+        return {"softwareId": None, "softwareVersion": None, "softwareVersionSource": "unmatched"}
+    row = index["byId"][matches[0]]
+    version = row.get("discoveredVersion")
+    return {"softwareId": matches[0],
+            "softwareVersion": str(version) if version else None,
+            "softwareVersionSource": "discovered" if version else "not-discovered"}
+
+
 def _issue(*, issue_class: str, project: str | None, subject: str, source: str,
            evidence_ref: str, first_seen: str | None, last_seen: str | None,
-           occurrences: int, magnitude: dict[str, Any], detail: str) -> dict[str, Any]:
+           occurrences: int, magnitude: dict[str, Any], detail: str,
+           software: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Build one row. `software` is the attribution triple; omitting it means the source named no product.
+
+    The default is deliberate: collector and task facts do not carry a product identity, and writing
+    "unattributable" at every one of those call sites would invite someone to "fix" the repetition by
+    guessing a match instead.
+    """
     rule = PRIORITY_RULES[issue_class]
     return {
         "schemaVersion": ISSUE_SCHEMA_VERSION,
@@ -124,11 +186,22 @@ def _issue(*, issue_class: str, project: str | None, subject: str, source: str,
         "magnitude": magnitude,
         "detail": detail,
         "status": "OPEN",
+        **(software or _no_software()),
     }
 
 
-def _from_collector_health(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Circuit / refusal / failure / drop facts per collector, as recorded by the durable worker."""
+def _no_software() -> dict[str, Any]:
+    return {"softwareId": None, "softwareVersion": None,
+            "softwareVersionSource": "source-names-no-software"}
+
+
+def _from_collector_health(rows: list[dict[str, Any]], index: dict[str, Any]) -> list[dict[str, Any]]:
+    """Circuit / refusal / failure / drop facts per collector, as recorded by the durable worker.
+
+    A collector name is not a product identity — `git` and `usage-files` describe what was read, not which
+    installed software it belongs to — so every row here reports source-names-no-software rather than
+    matching a product by string luck.
+    """
     issues: list[dict[str, Any]] = []
     for row in rows:
         name = str(row.get("name") or "")
@@ -174,8 +247,11 @@ def _from_collector_health(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return issues
 
 
-def _from_telemetry(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _from_telemetry(rows: list[dict[str, Any]], index: dict[str, Any]) -> list[dict[str, Any]]:
     """Freshness and coverage per event — the honest "this reading is old / only partial" signal.
+
+    The producer string is what gets asked of the identity index; a literal "UNKNOWN" is treated as no name,
+    so it reports source-names-no-software instead of matching some product by luck.
 
     One candidate per event on purpose: folding happens only in ``_ordered_unique``, so `occurrences` and
     `foldedOccurrences` describe one mechanism everywhere. Aggregating here as well would report a fold that
@@ -189,24 +265,27 @@ def _from_telemetry(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         freshness = str(row.get("freshness") or "").upper()
         coverage = str(row.get("coverage") or "").upper()
         evidence = f"telemetry:{row.get('event_id') or '?'}"
+        software = _resolve_software(index, None if producer == "UNKNOWN" else producer)
         if freshness in STALE_FRESHNESS:
             issues.append(_issue(
                 issue_class="SOURCE_STALE", project=project, subject=f"{producer}:freshness",
                 source="telemetry_events", evidence_ref=evidence,
                 first_seen=occurred, last_seen=occurred, occurrences=1,
                 magnitude={"freshness": freshness},
-                detail=f"producer={producer} 读数新鲜度为 {freshness}"))
+                detail=f"producer={producer} 读数新鲜度为 {freshness}", software=software))
         if coverage in INCOMPLETE_COVERAGE:
             issues.append(_issue(
                 issue_class="SOURCE_INCOMPLETE_COVERAGE", project=project, subject=f"{producer}:coverage",
                 source="telemetry_events", evidence_ref=evidence,
                 first_seen=occurred, last_seen=occurred, occurrences=1,
                 magnitude={"coverage": coverage},
-                detail=f"producer={producer} 覆盖为 {coverage}，读数只描述已采到的部分"))
+                detail=f"producer={producer} 覆盖为 {coverage}，读数只描述已采到的部分",
+                software=software))
     return issues
 
 
-def _from_executions(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _from_executions(rows: list[dict[str, Any]], index: dict[str, Any]) -> list[dict[str, Any]]:
+    """Stalled or conflicted executions, attributed to the agent the row itself names."""
     issues: list[dict[str, Any]] = []
     for row in rows:
         execution_id = str(row.get("execution_id") or "")
@@ -214,6 +293,8 @@ def _from_executions(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             continue
         project = str(row.get("anchor_project_id") or "") or None
         updated = str(row.get("updated_at") or "") or None
+        agent = str(row.get("agent") or "") or "UNKNOWN"
+        software = _resolve_software(index, None if agent == "UNKNOWN" else agent)
         conflict = row.get("conflict_evidence")
         if conflict not in (None, "", [], {}):
             if isinstance(conflict, str):
@@ -226,7 +307,7 @@ def _from_executions(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 source="execution_instances", evidence_ref=f"execution_instances:{execution_id}",
                 first_seen=str(row.get("started_at") or "") or None, last_seen=updated,
                 occurrences=1, magnitude={"conflictEvidence": conflict},
-                detail=f"execution={execution_id} 带冲突证据"))
+                detail=f"execution={execution_id} 带冲突证据", software=software))
         state = str(row.get("state") or "").upper()
         heartbeat = str(row.get("last_heartbeat_at") or "")
         transport = str(row.get("transport_state") or "").upper()
@@ -239,11 +320,12 @@ def _from_executions(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 magnitude={"state": state, "transportState": transport or "UNKNOWN",
                            "lastHeartbeatAt": heartbeat or None,
                            "stateQuality": str(row.get("state_quality") or "UNKNOWN")},
-                detail=f"execution={execution_id} 状态为 {state} 但{'无心跳' if not heartbeat else '传输已过期'}"))
+                detail=f"execution={execution_id} 状态为 {state} 但"
+                       f"{'无心跳' if not heartbeat else '传输已过期'}", software=software))
     return issues
 
 
-def _from_tasks(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _from_tasks(rows: list[dict[str, Any]], index: dict[str, Any]) -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
     for row in rows:
         status = str(row.get("status") or "").upper()
@@ -305,6 +387,7 @@ def project_issues(*, collector_health: list[dict[str, Any]] | None,
                    telemetry: list[dict[str, Any]] | None,
                    executions: list[dict[str, Any]] | None,
                    tasks: list[dict[str, Any]] | None,
+                   software: list[dict[str, Any]] | None = None,
                    generated_at: str | None = None,
                    max_issues: int = MAX_ISSUES,
                    telemetry_limit: int | None = 5000) -> dict[str, Any]:
@@ -314,6 +397,7 @@ def project_issues(*, collector_health: list[dict[str, Any]] | None,
     store" stays where it belongs (the composition root) instead of being re-decided here.
     """
     started = time.perf_counter()
+    index = _software_index(software)
     sources = [
         ("collector_health", collector_health, _from_collector_health),
         ("telemetry_events", telemetry, _from_telemetry),
@@ -327,10 +411,17 @@ def project_issues(*, collector_health: list[dict[str, Any]] | None,
             per_source.append({"source": name, "state": "absent", "rowsScanned": None,
                                "issuesDerived": None})
             continue
-        derived = build(rows)
+        derived = build(rows, index)
         collected.extend(derived)
         per_source.append({"source": name, "state": "read", "rowsScanned": len(rows),
                            "issuesDerived": len(derived)})
+    # The identity list is a source too: absent must be reportable, or `attributed: 0` would read as
+    # "no problem belongs to any software" instead of "nothing was known about software".
+    problem_sources = list(per_source)
+    per_source.append({"source": "software",
+                       "state": "read" if index["state"] == "read" else "absent",
+                       "rowsScanned": len(index["byId"]) if index["state"] == "read" else None,
+                       "issuesDerived": None})
 
     ordered, folded = _ordered_unique(collected)
     issues = ordered[:max_issues]
@@ -358,9 +449,20 @@ def project_issues(*, collector_health: list[dict[str, Any]] | None,
         "cap": int(max_issues),
         "truncated": bool(len(ordered) > len(issues)),
         "complete": bool(len(ordered) <= len(issues)
-                         and all(item["state"] == "read" for item in per_source)
+                         and all(item["state"] == "read" for item in problem_sources)
                          and not any(truncated_scans.values())),
         "priorityCounts": priority_counts,
+        # Each emitted row lands in exactly one of these four buckets.
+        "softwareAttribution": {
+            "attributed": sum(1 for row in issues if row["softwareId"]),
+            "unmatched": sum(1 for row in issues if row["softwareVersionSource"] == "unmatched"),
+            "ambiguous": sum(1 for row in issues if row["softwareVersionSource"] == "ambiguous"),
+            "unattributable": sum(1 for row in issues
+                                  if row["softwareVersionSource"] in ("source-names-no-software",
+                                                                      "identity-source-absent")),
+            "versionKnown": sum(1 for row in issues if row.get("softwareVersion")),
+            "identitySourceAbsent": index["state"] != "read",
+        },
         "classesPresent": sorted({item["class"] for item in issues}),
         "classVocabulary": list(CLASSES),
         "projectsCovered": sorted({item["projectId"] for item in issues if item["projectId"]}),
@@ -398,17 +500,29 @@ def validate_issue(row: dict[str, Any]) -> list[str]:
         problems.append("an issue without an evidenceRef cannot be re-checked by anyone")
     if int(row.get("occurrences") or 0) < 1:
         problems.append("occurrences must be at least 1; a zero-occurrence issue is an invented row")
+    state = row.get("softwareVersionSource")
+    if state not in SOFTWARE_STATES:
+        problems.append(f"softwareVersionSource {state!r} is outside the attribution vocabulary")
+    if row.get("softwareId") and state not in ("discovered", "not-discovered"):
+        problems.append("a row attributed to a product must say how its version was obtained")
+    if not row.get("softwareId") and row.get("softwareVersion"):
+        problems.append("a version without a product identity is a fabricated linkage")
     return problems
 
 
 def load_issues(store: Any, *, generated_at: str | None = None, max_issues: int = MAX_ISSUES,
-                telemetry_limit: int = 5000) -> tuple[list[dict[str, Any]] | None,
+                telemetry_limit: int = 5000,
+                software_rows: list[dict[str, Any]] | None = None) -> tuple[list[dict[str, Any]] | None,
                                                       dict[str, Any] | None,
                                                       str | None]:
     """Composition-root entry point: (issues, summary, absentReason), never a crash on the read path.
 
     If NO source could be read the key is absent entirely (``(None, None, reason)``) — an empty list with a
     summary of four absent sources would still put a row-shaped claim in front of a reader who has none.
+
+    ``software_rows`` are the identity rows the composition root already built (registry x discovery). They
+    are injected because labelling a problem must never trigger install discovery; ``None`` means they were
+    never built, and every row then reports identity-source-absent.
     """
     readers = (("collector_health", lambda: store.list_collector_health()),
                ("telemetry_events", lambda: store.list_telemetry_events(limit=telemetry_limit)),
@@ -431,7 +545,7 @@ def load_issues(store: Any, *, generated_at: str | None = None, max_issues: int 
         projection = project_issues(collector_health=read["collector_health"],
                                     telemetry=read["telemetry_events"],
                                     executions=read["execution_instances"],
-                                    tasks=read["tasks"],
+                                    tasks=read["tasks"], software=software_rows,
                                     generated_at=generated_at, max_issues=max_issues,
                                     telemetry_limit=telemetry_limit)
     except Exception as error:  # noqa: BLE001 - a junk column is a reported gap, never a dead read path

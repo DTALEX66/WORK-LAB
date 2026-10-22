@@ -1289,7 +1289,10 @@ export type WorkflowSnapshotV3 = {
     occurrences: number,
     magnitude?: Record<string, unknown>,
     detail?: string,
-    status: "OPEN"
+    status: "OPEN",
+    softwareId: string | null,
+    softwareVersion: string | null,
+    softwareVersionSource: "discovered" | "not-discovered" | "unmatched" | "ambiguous" | "source-names-no-software" | "identity-source-absent"
   })[],
     issuesSummary?: {
     schemaVersion: "worklab/issues-summary/v1",
@@ -1316,6 +1319,14 @@ export type WorkflowSnapshotV3 = {
     cap: number,
     truncated: boolean,
     complete?: boolean,
+    softwareAttribution: {
+    attributed: number,
+    unmatched: number,
+    ambiguous: number,
+    unattributable: number,
+    versionKnown: number,
+    identitySourceAbsent: boolean
+  },
     priorityCounts?: {
     P1?: number,
     P2?: number,
