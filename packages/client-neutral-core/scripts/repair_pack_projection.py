@@ -528,10 +528,11 @@ def main(argv: list[str] | None = None) -> int:
                                              generated_at=generated_at, issues=issues)
     set_problems = validate_repair_pack_set(packs, packs_summary)
     print("REPAIR_PACKS generated=%d refused=%d openIssues=%s bound=%s unbound=%s absentSources=%s "
-          "setProblems=%d apply=%d" % (
+          "duplicateAdaptersDropped=%d setProblems=%d apply=%d" % (
               packs_summary["packCount"], packs_summary["refusalCount"], packs_summary["openIssueCount"],
               packs_summary["boundIssueCount"], packs_summary["unboundOpenIssueCount"],
-              packs_summary["absentReason"], len(set_problems), int(args.apply)))
+              packs_summary["absentReason"], packs_summary["duplicateAdaptersDropped"],
+              len(set_problems), int(args.apply)))
     for problem in set_problems:
         print("  SET_PROBLEM", problem)
     if set_problems:

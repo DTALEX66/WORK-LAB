@@ -1520,7 +1520,9 @@ camelCase 的 `schemaVersion`，而内联包体保留 action-plan 自己的 snak
 丢掉的重复数披露成 `duplicateAdaptersDropped`；再加一层 `validate_repair_pack_set`，专查"一组包"而不是"一个包"——
 packId 不许重复、同一指纹不许被两个包绑走、`bound` 不得超过 `open`、`bound + unbound` 必须等于 `open`。
 CLI 写盘前先跑这层检查，不过就 `REPAIR_PACKS_BLOCKED`、一个字都不落。实测：三个重复的 `--adapter codex`
-→ 1 个包、`duplicateAdaptersDropped=2`、`setProblems=0`。
+→ 1 个包、`duplicateAdaptersDropped=2`、`setProblems=0`；这个数一开始只在摘要 JSON 里，要打开文件才看得见，
+所以它现在也印在 CLI 那一行上——`codex codex cc-switch` 实测 `generated=1 refused=1 duplicateAdaptersDropped=1
+setProblems=0`，去重这件事得在界面上自己说话，不能只躺在产物文件里。
 
 **实测。** 新守卫 `tests/workflow-assistance/test_repair_pack_projection.py` 26 例；连同
 `tests/workflow-assistance/test_core_schemas.py` 与生成合同投影清单三套合跑 42 例绿；合同登记后
