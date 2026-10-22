@@ -245,9 +245,15 @@ function run() {
     // producer omits the whole section when it could not read its source. An empty array there would claim
     // "the section was read and it is empty" -- the false negative the WUI-19 audit turned up -- so the key
     // is optional in the type AND omitted from the spread when its source was unreadable.
+    // issues / issuesSummary (问题中心, 2026-10-22) are absent-only under the artifactHandles rule: the
+    // producer (issue_projection.load_issues) returns (None, None, reason) when no source answered, and
+    // snapshot_api spreads the pair together or not at all. An empty pair there would say "every source was
+    // read and nothing is wrong", which is the opposite claim -- so both keys must stay optional in the type
+    // while the render population (contractConformance.PINNED_REFINEMENT_PATHS) still names neither, because
+    // no lane consumes them yet.
     const OPTIONAL = ["software", "taskRecords", "adapterCapabilities",
                       "artifactHandles", "artifactHandlesSummary", "collectors",
-                      "operationProgress", "isolatedTrials"];
+                      "operationProgress", "isolatedTrials", "issues", "issuesSummary"];
     const optional = declared.filter((d) => d.optional).map((d) => d.name).sort();
     assert(JSON.stringify(optional) === JSON.stringify([...OPTIONAL].sort()),
       "optional keys must be exactly " + OPTIONAL.join("/") + ", got " + (optional.join(", ") || "none"));
