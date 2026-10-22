@@ -1465,3 +1465,16 @@ Observer 没有任何写路径。
 无版本说 not-discovered、四桶覆盖、注入与缺席两路、以及三处不自洽归属被拒）；
 `tsc` exit 0；`vitest` 68 文件 826 例；`tests/workflow-assistance/test_snapshot_validator.py` 16 例；
 `tests/workflow-assistance/test_canonical_store_v2.py` 14 例；live `VALIDATE valid=True errors=[]`。
+
+**`ERR-290` 的判决钉下去了，钉的是它有资格用的那个 SHA。** `main` 的 `7ee6ab6b…` 自身那次
+`work-lab-gate` 运行里七个作业全部 `success`（含 `aggregate`），而 `workflow-assistance` 作业的日志里
+就有本行回归例的第一次真跑：`test_collector_health_refuses_a_name_that_is_not_a_column (test_canonical_store_v2.CanonicalStoreV2Tests…)... ok`。写之前逐条断言：`fixedCommit` 是该提交的祖先、
+对象在库、这一行原先 `verifiedCommit` 为空（不许覆盖旧判决）、写后全账本只有这一行移动且只动
+`lifecycle.verifiedCommit` 与 `remaining_boundary` 两个键；边界原文一字未改，闭合说明追加在后面。
+拿一个更早的 SHA（`c35273c6…`，修复还没进 `main` 的时候）去钉会被当场拒绝，这条断言因此是能失败的对照。
+重发读回：`docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json` 里这一行现在是
+`verified=7ee6ab6b… verifiedTreeChecked=true`，账本仍 `ERROR_LEDGER_PASS entries=289`。
+同一次改动里另外两份派生记录**经实测不需要动**：`docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json`
+与 `.project/governance/generated/CURRENT_STATE.json` 按 `VOLATILE` 字段归一后与仓库字节逐字段相同，
+`.project/governance/generated/CURRENT_STATE.md` 只差那一行 `Generated at`——所以这次提交只动
+`taskpacks/current/error-ledger.json` 和那份绑定审计，不为"看起来重发过"去改没有变化的字节。
