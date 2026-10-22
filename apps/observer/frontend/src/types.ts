@@ -423,6 +423,74 @@ export interface SnapshotV3 {
   // trial pages render the two differently and never pad either to a zero.
   operationProgress?: OperationProgressRecord[]
   isolatedTrials?: IsolatedTrialRecord[]
+  // The problem centre (audit 2026-10-22, 闭环距离 row 2). Declared here so the contract has one shape in
+  // both directions; NOT yet rendered, because no lane consumes it — that is the Stitch pass. Absent means
+  // no source answered; `[]` with `issuesSummary.complete=true` means every source was read and nothing
+  // was wrong. A lane that cannot tell those two apart must show UNKNOWN, never a zero.
+  issues?: IssueRecord[]
+  issuesSummary?: IssuesSummary
+}
+
+/**
+ * One problem derived from a fact the canonical store already holds
+ * (`packages/client-neutral-core/scripts/issue_projection.py::_issue`). `evidenceRef` is the table and key
+ * to re-read, `priorityRule` is the sentence that set `priority`, and `occurrences` counts the source rows
+ * that folded into this fingerprint. Nothing here states a cause. The optionality mirrors the schema's
+ * `required` list exactly: widening any of it stops the generated contract from being assignable.
+ */
+export interface IssueRecord {
+  schemaVersion: 'workflow/issue/v1'
+  fingerprint: string
+  class: 'SOURCE_CIRCUIT_OPEN' | 'SOURCE_REFUSAL' | 'SOURCE_FAILURE' | 'SOURCE_DATA_DROPPED'
+  | 'SOURCE_STALE' | 'SOURCE_INCOMPLETE_COVERAGE' | 'EXECUTION_STALLED' | 'EXECUTION_CONFLICT'
+  | 'TASK_BLOCKED' | 'TASK_FAILED'
+  projectId?: string | null
+  subject?: string
+  origin: string
+  evidenceRef: string
+  priority: 'P1' | 'P2' | 'P3'
+  priorityRule: string
+  safeToReread?: boolean
+  firstSeenAt?: string | null
+  lastSeenAt?: string | null
+  occurrences: number
+  magnitude?: Record<string, unknown>
+  detail?: string
+  status: 'OPEN'
+}
+
+/** The scope report of that exact list: which sources answered, what the scan limit absorbed, what the cap
+ *  dropped. A list without this block is a claim that nothing was omitted. */
+export interface IssuesSummary {
+  schemaVersion: 'worklab/issues-summary/v1'
+  generatedAt?: string
+  sources?: Array<{source: string, state: 'read' | 'absent' | 'error', rowsScanned?: number | null,
+    issuesDerived?: number | null}>
+  sourcesRead: number
+  sourcesAbsent: number
+  rowsScanned: number
+  scanLimits?: Record<string, unknown>
+  scanTruncated?: Record<string, unknown>
+  distinctIssueCount: number
+  emittedCount: number
+  omittedCount: number
+  foldedOccurrences: number
+  cap: number
+  truncated: boolean
+  complete?: boolean
+  priorityCounts?: Record<string, unknown>
+  classesPresent?: string[]
+  classVocabulary?: string[]
+  projectsCovered?: Array<string | null>
+  unattributedCount?: number
+  order?: string
+  orderingKey: string
+  orderingRule?: string
+  derivationScope?: 'canonical-store-facts-only'
+  inferencePerformed?: false
+  contentIncluded?: false
+  sourceErrors?: string[]
+  cost?: Record<string, unknown>
 }
 
 /** One separated trial stage. `basis` is the evidence; `status` without it is a claim. */
