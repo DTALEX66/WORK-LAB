@@ -346,6 +346,7 @@ def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
         errors.append("transport must be an object")
 
     errors.extend(_validate_artifact_handles(snapshot))
+    errors.extend(_validate_issues(snapshot))
 
     return {"valid": not errors, "errors": errors, "warnings": warnings}
 
@@ -500,3 +501,116 @@ def _validate_artifact_handles(snapshot: dict[str, Any]) -> list[str]:
 def snapshot_to_json(snapshot: dict[str, Any]) -> str:
     """Serialize a snapshot with strict null preservation (never pad to 0)."""
     return json.dumps(snapshot, ensure_ascii=False, sort_keys=True)
+
+ISSUE_CLASSES = ("SOURCE_CIRCUIT_OPEN", "SOURCE_REFUSAL", "SOURCE_FAILURE", "SOURCE_DATA_DROPPED",
+                 "SOURCE_STALE", "SOURCE_INCOMPLETE_COVERAGE", "EXECUTION_STALLED", "EXECUTION_CONFLICT",
+                 "TASK_BLOCKED", "TASK_FAILED")
+_ISSUE_REQUIRED = ("schemaVersion", "fingerprint", "class", "origin", "evidenceRef", "priority",
+                   "priorityRule", "occurrences", "status")
+# Content fields are refused by name, the way the handle list refuses them: an issue row is a pointer to
+# evidence, and a row that also carried the bytes would make the range route's read-on-demand rule moot.
+_ISSUE_CONTENT_FIELDS = ("content", "body", "payload", "text", "lines")
+
+
+def _validate_issues(snapshot: dict[str, Any]) -> list[str]:
+    """Runtime rules for the issue centre, mirroring the enumeration-scope rules of the handle list.
+
+    Absent is legal and means no source answered. Present means each row names a fact the store already
+    holds, and the scope report has to add up: emitted + omitted must equal the distinct count, a capped
+    list must name its ordering key, a fold that absorbed nothing cannot claim a denominator, and
+    `complete` cannot be true while any source went unread.
+    """
+    errors: list[str] = []
+    issues = snapshot.get("issues")
+    summary = snapshot.get("issuesSummary")
+    if issues is None:
+        if summary is not None:
+            errors.append("issuesSummary without issues — a scope report of a list this snapshot does not carry")
+        return errors
+    if not isinstance(issues, list):
+        errors.append("issues must be a list when present")
+        return errors
+    if summary is None:
+        errors.append("issues requires issuesSummary — a problem list without its stated scope reads as "
+                      "the complete set whether or not it is one")
+        return errors
+    if not isinstance(summary, dict):
+        errors.append("issuesSummary must be an object")
+        return errors
+
+    if summary.get("inferencePerformed") is not False:
+        errors.append("issuesSummary.inferencePerformed must be false: this projection relates facts, it "
+                      "does not diagnose causes")
+    if summary.get("contentIncluded") is not False:
+        errors.append("issuesSummary.contentIncluded must be false — no issue row may carry file content")
+    if summary.get("derivationScope") != "canonical-store-facts-only":
+        errors.append("issuesSummary.derivationScope must be canonical-store-facts-only")
+
+    seen: set[str] = set()
+    for index, row in enumerate(issues):
+        if not isinstance(row, dict):
+            errors.append(f"issues[{index}] must be an object")
+            continue
+        missing = [key for key in _ISSUE_REQUIRED if key not in row]
+        if missing:
+            errors.append(f"issues[{index}] missing {missing}")
+            continue
+        fingerprint = row["fingerprint"]
+        if not (isinstance(fingerprint, str) and len(fingerprint) == 16
+                and all(char in "0123456789abcdef" for char in fingerprint)):
+            errors.append(f"issues[{index}].fingerprint must be 16 hex chars")
+        if fingerprint in seen:
+            errors.append(f"issues[{index}].fingerprint repeats — the fold did not happen, so occurrences "
+                          "would double-count the same problem across rows")
+        seen.add(fingerprint)
+        if row["class"] not in ISSUE_CLASSES:
+            errors.append(f"issues[{index}].class {row['class']!r} is outside the declared vocabulary")
+        if row["priority"] not in ("P1", "P2", "P3"):
+            errors.append(f"issues[{index}].priority must be P1/P2/P3")
+        if not str(row["priorityRule"] or "").strip():
+            errors.append(f"issues[{index}].priorityRule must state the rule that set the priority")
+        if not str(row["evidenceRef"] or "").strip():
+            errors.append(f"issues[{index}].evidenceRef must point at the row a reader can re-read")
+        if row["status"] != "OPEN":
+            errors.append(f"issues[{index}].status must be OPEN; anything else is a claim this projection "
+                          "cannot make without a verification source")
+        occurrences = row["occurrences"]
+        if not isinstance(occurrences, int) or isinstance(occurrences, bool) or occurrences < 1:
+            errors.append(f"issues[{index}].occurrences must be an integer >= 1")
+        detail = row.get("detail")
+        if isinstance(detail, str) and len(detail) > 160:
+            errors.append(f"issues[{index}].detail exceeds the 160-char bound")
+        for field in _ISSUE_CONTENT_FIELDS:
+            if field in row:
+                errors.append(f"issues[{index}] must not carry {field!r} — an issue row is a pointer, "
+                              "not a copy of the evidence")
+
+    emitted = summary.get("emittedCount")
+    if emitted != len(issues):
+        errors.append(f"issuesSummary.emittedCount={emitted} disagrees with the {len(issues)} rows present")
+    distinct = summary.get("distinctIssueCount")
+    omitted = summary.get("omittedCount")
+    if isinstance(distinct, int) and isinstance(omitted, int) and distinct != emitted + omitted:
+        errors.append(f"issuesSummary distinctIssueCount={distinct} != emittedCount({emitted}) "
+                      f"+ omittedCount({omitted}) — the cap's tail must be counted exactly once")
+    cap = summary.get("cap")
+    if isinstance(cap, int) and len(issues) > cap:
+        errors.append(f"issues holds {len(issues)} rows above its declared cap={cap}")
+    if omitted and not str(summary.get("orderingKey") or "").strip():
+        errors.append("a list that dropped rows without an orderingKey is a truncation that cannot be audited")
+    if summary.get("truncated") and not omitted:
+        errors.append("issuesSummary.truncated is true while omittedCount is 0 — one of them is lying")
+
+    unread = [item.get("source") for item in (summary.get("sources") or [])
+              if isinstance(item, dict) and item.get("state") != "read"]
+    if summary.get("complete") and unread:
+        errors.append(f"issuesSummary.complete cannot be true while sources did not answer: {unread}")
+    scanned = summary.get("rowsScanned")
+    per_source = [item.get("rowsScanned") for item in (summary.get("sources") or [])
+                  if isinstance(item, dict) and isinstance(item.get("rowsScanned"), int)]
+    if isinstance(scanned, int) and sum(per_source) != scanned:
+        errors.append(f"issuesSummary.rowsScanned={scanned} disagrees with the per-source counts {per_source}")
+    counts = summary.get("priorityCounts")
+    if isinstance(counts, dict) and sum(v for v in counts.values() if isinstance(v, int)) != len(issues):
+        errors.append("issuesSummary.priorityCounts does not add up to the rows emitted")
+    return errors

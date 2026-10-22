@@ -1133,8 +1133,20 @@ class CanonicalStore:
 
     def upsert_collector_health(self, record: dict[str, Any]) -> None:
         """Write only the fields this caller named. An absent key is left alone; an explicit ``None``
-        clears the column, because a closed circuit has to be storable."""
+        clears the column, because a closed circuit has to be storable.
+
+        A name that is not a column is refused rather than skipped. Measured 2026-10-22: a record whose
+        keys were all unmapped (a snake_case call against a camelCase mapping) built
+        ``ON CONFLICT(name) DO UPDATE SET`` with an empty right-hand side and died with
+        ``sqlite3.OperationalError: incomplete input`` — a name that reads like a misspelling of the
+        vocabulary must not be able to produce either a broken statement or a silent no-op (ERR-290).
+        """
         name = str(record.get("name", "unknown"))
+        unmapped = sorted(key for key in record if key != "name"
+                          and key not in self._COLLECTOR_HEALTH_COLUMNS)
+        if unmapped:
+            raise ValueError(f"collector health names field(s) with no column: {unmapped}; "
+                             f"the writable vocabulary is {sorted(self._COLLECTOR_HEALTH_COLUMNS)}")
         columns: list[str] = ["name"]
         values: list[Any] = [name]
         for key, (column, caster) in self._COLLECTOR_HEALTH_COLUMNS.items():
@@ -1143,6 +1155,9 @@ class CanonicalStore:
             value = record[key]
             columns.append(column)
             values.append(None if value is None else caster(value))
+        if len(columns) == 1:
+            raise ValueError("collector health record carries no field to write; a no-op upsert would "
+                             "report success for a row that says nothing")
         assignments = ", ".join(f"{column}=excluded.{column}" for column in columns[1:])
         placeholders = ", ".join("?" for _ in columns)
         with self._lock:
@@ -1151,7 +1166,7 @@ class CanonicalStore:
                 INSERT INTO collector_health ({", ".join(columns)}, updated_at)
                 VALUES ({placeholders}, ?)
                 ON CONFLICT(name) DO UPDATE SET
-                    {assignments}{", updated_at=excluded.updated_at" if assignments else ""}
+                    {assignments}, updated_at=excluded.updated_at
                 """,
                 (*values, _now()),
             )
@@ -1208,6 +1223,23 @@ class CanonicalStore:
         """All collector_health rows (coverage numerator/denominator source)."""
         with self._lock:
             rows = self._conn.execute("SELECT * FROM collector_health ORDER BY updated_at DESC").fetchall()
+            return [dict(row) for row in rows]
+
+    def list_telemetry_events(self, limit: int = 5000) -> list[dict[str, Any]]:
+        """The newest telemetry events, WITHOUT the payload column.
+
+        The issue projection reads freshness/coverage/producer only. Selecting `payload` here would put
+        user-authored content into a read path that has no business carrying it (AGENTS.md: no prompt
+        bodies), so the column is excluded by the query rather than stripped afterwards. The limit is
+        disclosed by the caller: a truncated scan must never be reported as a complete population.
+        """
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT event_id, project_id, sequence, producer, occurred_at, observed_at,"
+                " freshness, coverage, quality FROM telemetry_events"
+                " ORDER BY occurred_at DESC LIMIT ?",
+                (int(limit),),
+            ).fetchall()
             return [dict(row) for row in rows]
 
     def list_source_quality(self) -> list[dict[str, Any]]:

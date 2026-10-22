@@ -1273,6 +1273,69 @@ export type WorkflowSnapshotV3 = {
     orderingKey: string,
     refused?: Record<string, unknown>
   },
+    issues?: ({
+    schemaVersion: "workflow/issue/v1",
+    fingerprint: string,
+    class: "SOURCE_CIRCUIT_OPEN" | "SOURCE_REFUSAL" | "SOURCE_FAILURE" | "SOURCE_DATA_DROPPED" | "SOURCE_STALE" | "SOURCE_INCOMPLETE_COVERAGE" | "EXECUTION_STALLED" | "EXECUTION_CONFLICT" | "TASK_BLOCKED" | "TASK_FAILED",
+    projectId?: string | null,
+    subject?: string,
+    origin: string,
+    evidenceRef: string,
+    priority: "P1" | "P2" | "P3",
+    priorityRule: string,
+    safeToReread?: boolean,
+    firstSeenAt?: string | null,
+    lastSeenAt?: string | null,
+    occurrences: number,
+    magnitude?: Record<string, unknown>,
+    detail?: string,
+    status: "OPEN"
+  })[],
+    issuesSummary?: {
+    schemaVersion: "worklab/issues-summary/v1",
+    generatedAt?: string,
+    sources?: ({
+    source: string,
+    state: "read" | "absent" | "error",
+    rowsScanned?: number | null,
+    issuesDerived?: number | null
+  })[],
+    sourcesRead: number,
+    sourcesAbsent: number,
+    rowsScanned: number,
+    scanLimits?: {
+    telemetry_events?: number | null
+  },
+    scanTruncated?: {
+    telemetry_events?: boolean
+  },
+    distinctIssueCount: number,
+    emittedCount: number,
+    omittedCount: number,
+    foldedOccurrences: number,
+    cap: number,
+    truncated: boolean,
+    complete?: boolean,
+    priorityCounts?: {
+    P1?: number,
+    P2?: number,
+    P3?: number
+  },
+    classesPresent?: string[],
+    classVocabulary?: string[],
+    projectsCovered?: (string | null)[],
+    unattributedCount?: number,
+    order?: string,
+    orderingKey: string,
+    orderingRule?: string,
+    derivationScope?: "canonical-store-facts-only",
+    inferencePerformed?: false,
+    contentIncluded?: false,
+    sourceErrors?: string[],
+    cost?: {
+    elapsedMs?: number
+  }
+  },
     operationProgress?: ({
     schema_version: "worklab/operation-progress/v1",
     task_id: string | null,

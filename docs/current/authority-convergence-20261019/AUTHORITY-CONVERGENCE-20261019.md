@@ -1372,4 +1372,53 @@ main 自己那次 push 触发的运行（run 39678850519）7 枚作业全 `succe
 因此钉到 `97c9758c`——钉之前先断言每行的 `fixedCommit` 都是它的祖先、该对象在库、且除这三行外没有行移动、
 `remaining_boundary` 是这三行里唯一变化的字段；钉之后 `LEDGER_FIX_COMMIT_BINDING` 读回三行
 `verified=97c9758c… promiseInTree=True`，`ERROR_LEDGER_PASS entries=288 classifications=14 counts_consistent=true`。
-被推翻的两条归因仍留在账上，只在各自边界后追加闭合说明，原文一字未改。
+被推翻的两条归因仍留在账上，只在各自边界后追加闭合说明，原文一字一字未改。
+
+## 24. 问题中心的第一片后端：把计数变成可重读的问题（2026-10-22）
+
+owner 本轮指令逐字：「现在你按照审计报告来做后端 前端我交给STITCH 做好了 再告诉给你接入」。
+这份 STITCH 包（26,177 B，sha256 `a435ea93fe7bd57e…ba32399b`，10 名成员、包内 `SHA256SUMS.txt` 声明的 9 份逐份哈希命中）
+锚在 `c35273c6…`，其 17 个来源文件的 sha256 **全部等于该提交里那些 blob 的 sha256**，
+它对仓库的每条可机器核对的说法我也逐条复测过（267/31 文件差、定向 80 例 = 30+6+21+23、`apps/observer/frontend/src/views/EvidenceView.test.tsx` 实跑
+29 例、`sources_scanned=83`、九组 31 入口、13 动词 3 实现、source-ledger 17 行 derive3/reference13/external-optional1
+与 local-verified2/not-implemented15、候选池 22 行 1/1/5/15、九个深色令牌全在源码里），没有一条需要更正。
+包本身仍是 `PROPOSAL_NOT_OWNER_APPROVED`，也**尚未登记进 owner 资料册**（登记要动跟踪字节，等一句话）。
+
+它给的「闭环距离」第 2 行——问题中心 NOT_IMPLEMENTED——是本轮动的第一处。
+
+**做的不是新计数，而是把已有事实变成能重读的问题。** `packages/client-neutral-core/scripts/issue_projection.py`
+只读 canonical store 已经记下的东西（collector_health、telemetry_events、execution_instances、tasks），
+产出 10 类闭合词汇的问题行：每行带 16 位十六进制指纹（同类同项目同主体折叠成一行，`occurrences` 是被折叠的源行数，
+`foldedOccurrences` 说这次折叠真发生过）、`evidenceRef` 指回它来自哪张表哪一行，`priority` 必须连着
+**产生它的那句规则**一起出现——规则表在模块里写死，不在界面里现算。它不做因果推断（`inferencePerformed=false`），
+不带内容（`contentIncluded=false`，`detail` 有 160 字上限），也不写任何账。
+
+三条反例形状是被守卫钉住的，不是被希望的：来源没答→键**缺席**并报出原因；读过且为空→`[]` 且 `complete=true`;
+扫描被上限截断→`scanTruncated` 为真且 `complete` 不得为真。运行期 `snapshot_validator._validate_issues`
+再拒四件事：清单没带 scope、scope 报的是没有的清单、指纹重复、行里夹带 `content`/`payload` 这类内容字段，
+以及任何一处自相不自洽的分母（`emittedCount` 与行数、`distinct = emitted + omitted`、`rowsScanned` 与逐源之和、
+`priorityCounts` 之和、`truncated` 却 `omitted=0`、`complete` 却还有源没答）。
+
+**为什么这次必然跨模块：** `tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py`
+断言"schema 顶层键集 == `apps/observer/frontend/src/types.ts` 的 SnapshotV3 声明"两个方向都比，所以加键不能只加一边。
+Observer 侧因此只加**合同声明**（两个接口 + 两条编译期 `Refines`），并且**故意不进**
+`PINNED_REFINEMENT_PATHS`——那份数组是渲染门要求的消费者总体，22 个键一个不加，界面也就仍然不消费这两个键；
+这正对 owner 的分工：契约先存在，画面等 STITCH。卡的正文在
+`docs/current/authority-convergence-20261019/CROSS-MODULE-ISSUE-CENTER-20261022.md`，
+它写明涉及哪两个规范根、每个路径的单一写者、验收与回滚集合。
+
+**一处顺手抓到的真缺陷（记 `ERR-290`）：** 给投影喂真库样本时第一次写健康表就死在
+`sqlite3.OperationalError: incomplete input`。写者的键表是 camelCase、读回的列名是 snake_case，
+而未映射键的策略是静默跳过——于是 `ON CONFLICT(name) DO UPDATE SET` 后面什么都没有。
+现在未映射键与"只有 name 的空写"都当场拒绝，并把正确名印在错误里；既有调用方全部用已映射键，实测无影响。
+
+**判决分两层，不混着说。** 结构层：新守卫 20 + 17 例全绿，`typecheck` exit 0，前端 `vitest` 68 文件 826 例全绿，
+账本 `ERROR_LEDGER_PASS entries=289 classifications=14 counts_consistent=true`。
+运行层：真起 `services/orchestration/sidecar.py`（随机端口）取回 `/api/v1/snapshot`，25 键、
+`valid=True errors=[]`，`issues` 有 1 行——`SOURCE_INCOMPLETE_COVERAGE` 挂在 work-lab 的 task-ledger 采集器上，
+`rowsScanned=8 sourcesRead=4 complete=true`。这台机器上真实存在的问题被真实报出来了，而不是一个演示用的空清单。
+
+**还没做、也不假装做完的：** 问题→修复任务包的生成、修复生命周期与结果读回、可检索的方案库（后三条是
+`04` 报告里的第 4–6 行，需要后续卡片）；界面的呈现与可达性（STITCH 那一轮）；`ERR-290` 的 `verifiedCommit`
+等 exact-SHA 判绿再钉；`config/adapter-registry.json` 一个字节没动，Control 的 13 个动词一个没加，
+Observer 没有任何写路径。

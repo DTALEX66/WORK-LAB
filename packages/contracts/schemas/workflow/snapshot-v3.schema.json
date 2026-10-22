@@ -843,6 +843,271 @@
       },
       "description": "The enumeration scope of that exact list. An enumeration can be capped; it can never be quietly capped, which is why a truncated list without its ordering key is refused by the validator."
     },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "fingerprint",
+          "class",
+          "priority",
+          "priorityRule",
+          "origin",
+          "evidenceRef",
+          "occurrences",
+          "status"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "const": "workflow/issue/v1"
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{16}$"
+          },
+          "class": {
+            "enum": [
+              "SOURCE_CIRCUIT_OPEN",
+              "SOURCE_REFUSAL",
+              "SOURCE_FAILURE",
+              "SOURCE_DATA_DROPPED",
+              "SOURCE_STALE",
+              "SOURCE_INCOMPLETE_COVERAGE",
+              "EXECUTION_STALLED",
+              "EXECUTION_CONFLICT",
+              "TASK_BLOCKED",
+              "TASK_FAILED"
+            ]
+          },
+          "projectId": {
+            "type": ["string", "null"]
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1
+          },
+          "origin": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidenceRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "priority": {
+            "enum": ["P1", "P2", "P3"]
+          },
+          "priorityRule": {
+            "type": "string",
+            "minLength": 1
+          },
+          "safeToReread": {
+            "type": "boolean"
+          },
+          "firstSeenAt": {
+            "type": ["string", "null"]
+          },
+          "lastSeenAt": {
+            "type": ["string", "null"]
+          },
+          "occurrences": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "magnitude": {
+            "type": "object"
+          },
+          "detail": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "status": {
+            "const": "OPEN"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "Problems derived only from facts the canonical store already recorded. A row names the table and key it came from, the rule that set its priority, and how many source rows folded into it; nothing here is inferred about a cause."
+    },
+    "issuesSummary": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "cap",
+        "rowsScanned",
+        "distinctIssueCount",
+        "emittedCount",
+        "omittedCount",
+        "foldedOccurrences",
+        "truncated",
+        "sourcesRead",
+        "sourcesAbsent",
+        "orderingKey"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "worklab/issues-summary/v1"
+        },
+        "generatedAt": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source", "state"],
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "state": {
+                "enum": ["read", "absent", "error"]
+              },
+              "rowsScanned": {
+                "type": ["integer", "null"]
+              },
+              "issuesDerived": {
+                "type": ["integer", "null"]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "sourcesRead": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourcesAbsent": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rowsScanned": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scanLimits": {
+          "type": "object",
+          "properties": {
+            "telemetry_events": {
+              "type": ["integer", "null"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "scanTruncated": {
+          "type": "object",
+          "properties": {
+            "telemetry_events": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "distinctIssueCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "emittedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "omittedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "foldedOccurrences": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "priorityCounts": {
+          "type": "object",
+          "properties": {
+            "P1": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "P2": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "P3": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "classesPresent": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "classVocabulary": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "projectsCovered": {
+          "type": "array",
+          "items": {
+            "type": ["string", "null"]
+          }
+        },
+        "unattributedCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "order": {
+          "type": "string"
+        },
+        "orderingKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "orderingRule": {
+          "type": "string"
+        },
+        "derivationScope": {
+          "const": "canonical-store-facts-only"
+        },
+        "inferencePerformed": {
+          "const": false
+        },
+        "contentIncluded": {
+          "const": false
+        },
+        "sourceErrors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cost": {
+          "type": "object",
+          "properties": {
+            "elapsedMs": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "description": "The scope report of that exact list: which sources answered, which did not, what the scan limit absorbed, and what the cap dropped. It travels with the list or with neither."
+    },
     "operationProgress": {
       "type": "array",
       "items": {
@@ -1139,6 +1404,32 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "required": [
+          "issues"
+        ]
+      },
+      "then": {
+        "required": [
+          "issuesSummary"
+        ]
+      },
+      "description": "An issue list with no stated scope is a claim that nothing was omitted, which the projection cannot make."
+    },
+    {
+      "if": {
+        "required": [
+          "issuesSummary"
+        ]
+      },
+      "then": {
+        "required": [
+          "issues"
+        ]
+      },
+      "description": "A scope report for an issue list this snapshot does not carry is a claim about a snapshot the reader is not looking at."
+    },
     {
       "if": {
         "required": [

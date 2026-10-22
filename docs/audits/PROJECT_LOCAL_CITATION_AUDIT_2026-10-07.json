@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-21T21:56:41Z",
+  "generatedAt": "2026-10-22T13:37:29Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2559,
-    "distinctProjectLocalTokens": 632,
+    "trackedFilesScanned": 2563,
+    "distinctProjectLocalTokens": 633,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 632,
-    "citationsToAbsentTokens": 1859
+    "tokensAbsent": 633,
+    "citationsToAbsentTokens": 1860
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 967,
-      "distinctPaths": 479
+      "citations": 968,
+      "distinctPaths": 480
     },
     "machine_local_runtime_pointer": {
       "citations": 235,
@@ -5530,6 +5530,12 @@
         "file": "taskpacks/current/error-ledger.json",
         "line": 7532,
         "text": "\"fix\": \"The two metadata lookups now carry a declared ceiling (`ROOT_CHECK_TIMEOUT_SECONDS = 5.0` in the guard, `GIT_METADATA_TIMEOUT_SECONDS = 5.0` in the wrapper, both sited against the measured lat"
+      },
+      {
+        "path": ".project-local/runs/probe_snapshot_with_issues.py",
+        "file": "taskpacks/current/error-ledger.json",
+        "line": 8803,
+        "text": "\"command\": \"python .project-local/runs/probe_snapshot_with_issues.py\","
       },
       {
         "path": ".project-local/runs/qoder-20261007-a/gate-verify-242be880.log",
@@ -11247,7 +11253,7 @@
     "reviewQueue": 7,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 341
+    "presentOnThisMachine": 342
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

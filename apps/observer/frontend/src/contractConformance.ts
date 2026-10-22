@@ -45,6 +45,12 @@ export const GENERATED_COLLAPSED_PATHS = [
   'projects[].repositories',
   'artifactHandlesSummary.refused',
   'isolatedTrials[].isolation',
+  // The problem centre (2026-10-22). `magnitude` is per-class payload by design -- a refusal row carries
+  // {refusedRows, deliveredRows}, a stalled execution carries {state, transportState, lastHeartbeatAt} --
+  // so the schema states it as an object and does not pretend to a common shape. Every other free-looking
+  // map in the two new sections (cost, priorityCounts, scanLimits, scanTruncated) was given real properties
+  // in the schema instead of being added to this list.
+  'issues[].magnitude',
 ] as const
 
 export type CollapsedPath = typeof GENERATED_COLLAPSED_PATHS[number]
@@ -72,6 +78,12 @@ export type ArtifactHandlesSummaryRefines = Expect<Refines<SnapshotV3['artifactH
 export type CollectorsRefines = Expect<Refines<SnapshotV3['collectors'], WorkflowSnapshotV3['collectors']>>
 export type OperationProgressRefines = Expect<Refines<SnapshotV3['operationProgress'], WorkflowSnapshotV3['operationProgress']>>
 export type IsolatedTrialsRefines = Expect<Refines<SnapshotV3['isolatedTrials'], WorkflowSnapshotV3['isolatedTrials']>>
+// The two issue-centre sections (audit 2026-10-22). They are aliases only, deliberately NOT listed in
+// PINNED_REFINEMENT_PATHS below: that array is the population the render gate (`verify_snapshot_keys_rendered.py`)
+// requires a lane to consume, and no lane renders these yet — the front-end pass is a separate decision.
+// `WholeSnapshotRefines` still covers both, so a drift in either shape fails compilation today.
+export type IssuesRefines = Expect<Refines<SnapshotV3['issues'], WorkflowSnapshotV3['issues']>>
+export type IssuesSummaryRefines = Expect<Refines<SnapshotV3['issuesSummary'], WorkflowSnapshotV3['issuesSummary']>>
 
 /**
  * The whole object, not just its paths: until WUI-15 the front model could not be handed to the generated

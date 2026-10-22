@@ -9,7 +9,7 @@
     "redaction_policy": "Only sanitized command names, exit codes, and root-cause summaries are recorded."
   },
   "summary": {
-    "total": 288,
+    "total": 289,
     "by_classification": {
       "entrypoint": 7,
       "contract_drift": 87,
@@ -22,7 +22,7 @@
       "dead_entry": 4,
       "path_boundary": 15,
       "ci_tooling": 27,
-      "sql_schema": 1,
+      "sql_schema": 2,
       "regression_contract": 8,
       "boundary_leak": 2
     },
@@ -8791,6 +8791,41 @@
         "regressionCommand": "python -m unittest discover -s tests/ci -p test_cdp_harness_waits_for_mount.py",
         "currentApplicability": "VERIFIED_LIVE_20261022",
         "fixedCommitBasis": "把 socket 每次读的超时并入声明的应答预算、去掉硬编码 10 秒的那次提交"
+      }
+    },
+    {
+      "error_id": "ERR-290",
+      "date": "2026-10-22",
+      "task_id": "WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019",
+      "phase": "LOCAL_VERIFICATION",
+      "classification": "sql_schema",
+      "entrypoint": "packages/client-neutral-core/scripts/canonical_store.py::CanonicalStore.upsert_collector_health",
+      "command": "python .project-local/runs/probe_snapshot_with_issues.py",
+      "exit_code": 1,
+      "observed_error": "给问题中心喂真库样本时，第一次写 collector_health 就死在 `sqlite3.OperationalError: incomplete input`。我传的是 `refused_rows=5`，而这个写者的键表是 camelCase（`refusedRows`）；未映射的键被逐条 `continue` 跳过，于是拼出的语句是 `INSERT INTO collector_health (name, updated_at) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET`——SET 后面什么都没有。只带 `name` 的调用同样落到这里。",
+      "root_cause": "两套词汇（写入 camelCase / 读回 snake_case）之间没有守卫：写者对未知键的策略是静默忽略，而它唯一的\"全部被忽略\"检测藏在 `if assignments else \"\"` 里，那条分支的目的只是避免多余的逗号，不是拒绝一次什么都没写的写。静默跳过键名拼错，比抛错更坏：调用方拿到\"成功\"，健康表里那列却还是旧值。",
+      "fix": "写者改为先校验词汇表：任何非 `name` 且不在 `_COLLECTOR_HEALTH_COLUMNS` 里的键抛出 ValueError 并在消息里列出未知名与可写名（让拼错自己现形）；只剩 `name` 的空写同样拒绝；`DO UPDATE SET` 的可选逗号分支删掉，因为它现在不可能为空。既有调用方（durable_worker 与全部测试）本来就用已映射键，实测不受影响。",
+      "regression_test": "tests/workflow-assistance/test_canonical_store_v2.py",
+      "regressionTestVerifiability": "RESOLVES",
+      "regressionTestVerifiabilityReason": "新例把两种失败形态都喂进去：未映射键与只有 name 的记录各断言一次 ValueError，并检查错误消息里同时出现拼错的名与正确的名，最后断言 collector_health 仍为 0 行——证明拒绝发生在写之前，不是写完再回滚。",
+      "evidence_level": "local-focused",
+      "repeat_prevention": "凡\"写入词汇表\"与\"读回列名\"不同形的 API，写路径必须对未知键名 fail fast 并把可写名印在错误里；每处由键集合拼出的 SQL 都必须拒绝空集合，禁止把\"没匹配到列\"实现成静默跳过。",
+      "remaining_boundary": "同类形状未逐一排查：`upsert_execution_instance` / `upsert_task` / `append_execution_evidence` 用的是同一类\"只写调用方点名的字段\"策略，本轮只实测了 collector_health 这一条。本行 fixedCommit 指向产品修复提交，verifiedCommit 等 exact-SHA CI 判绿后再钉。",
+      "status_before": "FAIL",
+      "status_after": "PASS",
+      "intakeSource": "本轮自建真库样本喂给问题投影时的第一次写调用",
+      "related": [
+        "ERR-256（拒绝与丢弃必须可数）",
+        "ERR-284（同一声明不能自己当自己的对照）"
+      ],
+      "lifecycle": {
+        "introducedCommit": null,
+        "fixedCommit": "25a53c9edc4059e03d11818d1bce23063bcba918",
+        "verifiedCommit": null,
+        "affectedCapability": "采集器健康写入的可靠性：问题中心的 SOURCE_REFUSAL / SOURCE_DATA_DROPPED 两类都读这张表",
+        "regressionCommand": "python -m pytest -q tests/workflow-assistance/test_canonical_store_v2.py",
+        "currentApplicability": "VERIFIED_LIVE_20261022",
+        "fixedCommitBasis": "收紧 upsert_collector_health 词汇表校验的那次提交"
       }
     }
   ],

@@ -54,7 +54,12 @@ OPTIONAL_KEYS = {"software", "taskRecords", "adapterCapabilities",
                  # nothing could see it: the module is pytest-style (module-level `def test_*()` with bare
                  # asserts) while the canonical gate discovers unittest classes, so the runner never
                  # collected it. Found by running the module directly.
-                 "operationProgress", "isolatedTrials"}
+                 "operationProgress", "isolatedTrials",
+                 # Added 2026-10-22 with the issue centre. Same rule, stated again because it is the rule
+                 # and not an accident of one section: absent means no source answered, [] means every
+                 # source answered and held nothing. The producer (issue_projection.load_issues) returns
+                 # (None, None, reason) in the first case, so the builder emits neither key at all.
+                 "issues", "issuesSummary"}
 
 
 def schema() -> dict:

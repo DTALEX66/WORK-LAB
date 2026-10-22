@@ -56,6 +56,8 @@ def build_snapshot(
     collector_delivery: list[dict[str, Any]] | None = None,
     operation_progress: list[dict[str, Any]] | None = None,
     isolated_trials: list[dict[str, Any]] | None = None,
+    issues: list[dict[str, Any]] | None = None,
+    issues_summary: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the v3 snapshot from canonical facts (all fields optional for tests)."""
     generated_at = generated_at or _now()
@@ -127,6 +129,13 @@ def build_snapshot(
         # reader must be able to tell "the producer was never wired" from "there is nothing to report".
         **({"operationProgress": operation_progress} if operation_progress is not None else {}),
         **({"isolatedTrials": isolated_trials} if isolated_trials is not None else {}),
+        # The read side of the problem centre (audit 2026-10-22, 闭环距离 row 2). Paired exactly like
+        # artifactHandles: the scope report travels with the list or with neither, and an absent pair means
+        # "no source answered" — an empty pair would have claimed "every source was read and nothing is
+        # wrong", which is a different statement and the one this repo refuses to let a projection make.
+        **({"issues": issues,
+            **({"issuesSummary": issues_summary} if issues_summary is not None else {})}
+           if issues is not None else {}),
     }
 
 

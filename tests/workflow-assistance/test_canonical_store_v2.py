@@ -130,6 +130,25 @@ class CanonicalStoreV2Tests(unittest.TestCase):
         finally:
             store.close()
 
+    def test_collector_health_refuses_a_name_that_is_not_a_column(self) -> None:
+        # ERR-290: the keys are camelCase in this API and the row reads back snake_case. A caller that
+        # guesses `refused_rows` used to build `DO UPDATE SET` with nothing after it and die with
+        # sqlite3.OperationalError: incomplete input, and `{"name": x}` alone did the same. Both are
+        # refusals with the vocabulary in the message now, so the misspelling names itself.
+        store = self._store()
+        try:
+            with self.assertRaises(ValueError) as unknown:
+                store.upsert_collector_health({"name": "git-collector", "refused_rows": 5})
+            self.assertIn("refused_rows", str(unknown.exception))
+            self.assertIn("refusedRows", str(unknown.exception),
+                          "the message must teach the caller the right name, not just reject it")
+            with self.assertRaises(ValueError):
+                store.upsert_collector_health({"name": "git-collector"})
+            self.assertEqual([], store._conn.execute(
+                "SELECT * FROM collector_health").fetchall(), "a refused write must leave no half-row")
+        finally:
+            store.close()
+
     def test_projection_revision_increments(self) -> None:
         store = self._store()
         try:
