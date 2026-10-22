@@ -469,8 +469,8 @@ export interface IssuesSummary {
   sourcesRead: number
   sourcesAbsent: number
   rowsScanned: number
-  scanLimits?: Record<string, unknown>
-  scanTruncated?: Record<string, unknown>
+  scanLimits?: {telemetry_events?: number | null}
+  scanTruncated?: {telemetry_events?: boolean}
   distinctIssueCount: number
   emittedCount: number
   omittedCount: number
@@ -478,7 +478,7 @@ export interface IssuesSummary {
   cap: number
   truncated: boolean
   complete?: boolean
-  priorityCounts?: Record<string, unknown>
+  priorityCounts?: {P1?: number, P2?: number, P3?: number}
   classesPresent?: string[]
   classVocabulary?: string[]
   projectsCovered?: Array<string | null>
@@ -490,7 +490,7 @@ export interface IssuesSummary {
   inferencePerformed?: false
   contentIncluded?: false
   sourceErrors?: string[]
-  cost?: Record<string, unknown>
+  cost?: {elapsedMs?: number}
 }
 
 /** One separated trial stage. `basis` is the evidence; `status` without it is a claim. */

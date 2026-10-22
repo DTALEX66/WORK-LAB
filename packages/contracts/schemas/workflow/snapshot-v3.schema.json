@@ -987,10 +987,22 @@
           "minimum": 0
         },
         "scanLimits": {
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "telemetry_events": {
+              "type": ["integer", "null"]
+            }
+          },
+          "additionalProperties": false
         },
         "scanTruncated": {
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "telemetry_events": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
         },
         "distinctIssueCount": {
           "type": "integer",
@@ -1019,7 +1031,22 @@
           "type": "boolean"
         },
         "priorityCounts": {
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "P1": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "P2": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "P3": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
         },
         "classesPresent": {
           "type": "array",
@@ -1069,7 +1096,14 @@
           }
         },
         "cost": {
-          "type": "object"
+          "type": "object",
+          "properties": {
+            "elapsedMs": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
         }
       },
       "description": "The scope report of that exact list: which sources answered, which did not, what the scan limit absorbed, and what the cap dropped. It travels with the list or with neither."

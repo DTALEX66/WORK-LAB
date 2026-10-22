@@ -1303,8 +1303,12 @@ export type WorkflowSnapshotV3 = {
     sourcesRead: number,
     sourcesAbsent: number,
     rowsScanned: number,
-    scanLimits?: Record<string, unknown>,
-    scanTruncated?: Record<string, unknown>,
+    scanLimits?: {
+    telemetry_events?: number | null
+  },
+    scanTruncated?: {
+    telemetry_events?: boolean
+  },
     distinctIssueCount: number,
     emittedCount: number,
     omittedCount: number,
@@ -1312,7 +1316,11 @@ export type WorkflowSnapshotV3 = {
     cap: number,
     truncated: boolean,
     complete?: boolean,
-    priorityCounts?: Record<string, unknown>,
+    priorityCounts?: {
+    P1?: number,
+    P2?: number,
+    P3?: number
+  },
     classesPresent?: string[],
     classVocabulary?: string[],
     projectsCovered?: (string | null)[],
@@ -1324,7 +1332,9 @@ export type WorkflowSnapshotV3 = {
     inferencePerformed?: false,
     contentIncluded?: false,
     sourceErrors?: string[],
-    cost?: Record<string, unknown>
+    cost?: {
+    elapsedMs?: number
+  }
   },
     operationProgress?: ({
     schema_version: "worklab/operation-progress/v1",

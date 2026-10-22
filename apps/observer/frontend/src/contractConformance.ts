@@ -45,6 +45,12 @@ export const GENERATED_COLLAPSED_PATHS = [
   'projects[].repositories',
   'artifactHandlesSummary.refused',
   'isolatedTrials[].isolation',
+  // The problem centre (2026-10-22). `magnitude` is per-class payload by design -- a refusal row carries
+  // {refusedRows, deliveredRows}, a stalled execution carries {state, transportState, lastHeartbeatAt} --
+  // so the schema states it as an object and does not pretend to a common shape. Every other free-looking
+  // map in the two new sections (cost, priorityCounts, scanLimits, scanTruncated) was given real properties
+  // in the schema instead of being added to this list.
+  'issues[].magnitude',
 ] as const
 
 export type CollapsedPath = typeof GENERATED_COLLAPSED_PATHS[number]
