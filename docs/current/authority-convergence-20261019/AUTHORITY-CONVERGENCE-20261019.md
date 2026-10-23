@@ -1487,3 +1487,70 @@ Observer 没有任何写路径。
 与 `.project/governance/generated/CURRENT_STATE.json` 按 `VOLATILE` 字段归一后与仓库字节逐字段相同，
 `.project/governance/generated/CURRENT_STATE.md` 只差那一行 `Generated at`——所以这次提交只动
 `taskpacks/current/error-ledger.json` 和那份绑定审计，不为"看起来重发过"去改没有变化的字节。
+
+## 26. 问题→修复任务包的生产通路：准备并导出，不派发（2026-10-22）
+
+审计包「闭环距离」第 3 行的原话是**「案例已有，通用入口缺失：ML-001 人工交接；没有 issue→repair 生产通道」**。
+这一片补的就是那个通用入口，并且按审计的要求停在入口处：`05_后续实施建议`写的是
+「复用既有 store/Control，接问题记录/去重→修复包导出或复制→外部 Agent 修复→结果导入→独立验证→方案固化/检索」和
+**「不要为完成首版而强制实现自动 dispatch」**。所以这一片做的是"导出或复制"，不是"发出去"。
+
+**三条不做就不可信的规则。**
+第一，**执行者由人点名，不从归属推断**。软件归属回答的是"这个问题属于哪个软件"，它不是"该由哪个软件来修"的证据。
+CLI 的 `--adapter` 是必填语义：`--adapter codex --adapter cc-switch` 里 cc-switch 被拒并报名字，因为
+`config/adapter-registry.json` 给它声明的动词集合是 `detect/capabilities/observe`，没有 `invoke`——观测型软件
+不能被交接一次修复。注册表里没有的名字也是拒，不是默认给一个。
+第二，**包体是既有合同，不是新发明的形状**。`workflow/action-plan/v1` 早就声明过 target/steps/approval/rollback/
+constraints，也早就在 canonical store 里有一张 `action_plans` 空表，缺的从来不是形状而是生产者。这一片把包体
+交给那份合同，外面只套一层交接信封 `workflow/repair-pack/v1`（绑定哪些问题、谁被点名、验证命令知不知道、
+发没发过）。信封的 `plan` 是**逐属性内联**的，因为 `scripts/ci/generate_contract_types.py` 不跟 `$ref`——
+留一个 `$ref` 就把包体折叠成 `Record<string, unknown>`，合同还在但形状没人投影。复制的风险用一条守卫钉住：
+`test_the_inlined_plan_body_has_not_drifted_from_the_action_plan_contract` 逐属性比对两份 schema 的 `properties`
+与 `required`，两处任一改动都会红。
+第三，**不知道就说是不知道**。验证命令只有在目标项目根下真的存在那个入口时才写进 `verify` 步骤
+（`_verification()` 走 `is_file()` 实测），否则包状态是 `BLOCKED`、理由是 `verification-command-unknown`，
+并且步骤里不出现任何命令串——守卫里那条 `assertNotIn("run_quality_gate", ...)` 就是这一句的反例。
+项目根不在磁盘上、项目在 `projects` 表里没有、问题不带 projectId：三种各有各的拒因，
+落库的是 `refusals[{adapter, projectId, reason}]` 与逐因计数，不是一张空列表。
+
+**界面之外的东西不算界面。** 信封把 `handoff.sent`、`handoff.dispatched`、`provenance.applied` 全部做成
+`const false`，`approval.status` 只能是 `PENDING`，`status` 的枚举只有 `WAITING_APPROVAL`/`BLOCKED`——
+一份草稿不能在字节里假装自己被批了、发了或跑了。植入 `sent=true` 的包被 `validate_repair_pack` 与 JSON Schema
+**两遍都拒**（这是守卫里唯一一处"两个来源各自成立"的断言，因为合同与代码各说各话正是 ERR-225 的形状）。
+
+**回看自己这一片时抓到的两个真缺陷，都记在这儿。**
+第一个是规范门替我抓的：`672915c8` 那次 `ran=1 planned=50 failed_gate=governance`、`GATE_EXIT=1`，红的就是
+`tests/workflow-assistance/test_core_schemas.py` 里 `SCHEMA_DIR.glob("*.schema.json") == EXPECTED` 这条**精确清单**
+——往合同目录放一份新合同，必须同时在那份清单里留评审记录，并且进 `CAMEL_CASE_WIRE_SCHEMAS`：信封与问题行一样是
+camelCase 的 `schemaVersion`，而内联包体保留 action-plan 自己的 snake_case，版本字段只能点名，不能让守卫从邻居猜。
+第二个是我自己复看代码看出来的，门是红的不起来——因为它每一条单记录检查都过：`--adapter codex --adapter codex`
+会铸出**两个 packId 完全相同**的包（包 id 是内容寻址的，重复输入算出同一份内容），并且把同一个问题数两遍，
+`boundIssueCount=2` 而 `openIssueCount=1`。单看每个包都无懈可击，分母在说谎。修法是分两层：投影侧按顺序去重并把
+丢掉的重复数披露成 `duplicateAdaptersDropped`；再加一层 `validate_repair_pack_set`，专查"一组包"而不是"一个包"——
+packId 不许重复、同一指纹不许被两个包绑走、`bound` 不得超过 `open`、`bound + unbound` 必须等于 `open`。
+CLI 写盘前先跑这层检查，不过就 `REPAIR_PACKS_BLOCKED`、一个字都不落。实测：三个重复的 `--adapter codex`
+→ 1 个包、`duplicateAdaptersDropped=2`、`setProblems=0`；这个数一开始只在摘要 JSON 里，要打开文件才看得见，
+所以它现在也印在 CLI 那一行上——`codex codex cc-switch` 实测 `generated=1 refused=1 duplicateAdaptersDropped=1
+setProblems=0`，去重这件事得在界面上自己说话，不能只躺在产物文件里。
+
+**实测。** 新守卫 `tests/workflow-assistance/test_repair_pack_projection.py` 26 例；连同
+`tests/workflow-assistance/test_core_schemas.py` 与生成合同投影清单三套合跑 42 例绿；合同登记后
+`CONTRACT_CATALOG_PASS contracts=46 schemas=46`，`CONTRACT_SSOT_PASS contracts=46`，
+`CORE_SCHEMA_CONTRACT_PASS schemas=29`。规范门在 `5d671dcd` 这个头上（合同清单登记已进、集合层去重还没进）
+`GATE_EXIT=0`、`ran=50 planned=50`、`GATE_SOURCE_DRIFT=no`；把去重与集合级分母检查加进来之后另跑一次，以那一跑的
+`^GATE_EXIT=0$` 作为本片的交付判据。CLI 真跑（dry 与 `--apply` 两趟）：
+`generated=1 refused=2 openIssues=1 bound=1 unbound=0 absentSources=None setProblems=0`，
+产物在 `.project-local/artifacts/repair-packs/` 下：包 JSON、可复制的交接文本，
+以及同目录的 `.project-local/artifacts/repair-packs/repair-packs-summary.json`。数据边界那条也是实测的：
+`--out-dir` 指到项目 Git 根外面时 `REPAIR_PACK_REFUSED_OUT_OF_BOUNDARY`、退出码 2，不写任何东西；
+存储根里没有库时 `REPAIR_PACK_NO_STORE` 退出 3——`CanonicalStore(path)` 会把文件建出来，
+一个猜错的路径于是回报成"读过且为空"，这正是本轮禁止的形状。本机那一个包绑的是 `SOURCE_INCOMPLETE_COVERAGE`/work-lab，
+证据条目 `telemetry:task-ledger-…`，验证命令因为 `services/orchestration/run_quality_gate.py` 实测存在才写进步骤；
+CLI 还会先印一行 `ISSUE_SOURCE … softwareAttribution={…}`，因为导出这一步不跑安装发现，
+`binds.softwareIds` 为空必须看得见是"身份来源缺席"，不是"这问题不属于任何软件"。
+
+**还没做。** 包不落库：`action_plans` 表仍是空的，第 5 行（修复状态跟踪与实际结果验证）才有资格写它——
+先有状态机再持久化，反过来就是把"生成过"当成"跟踪中"。Observer 不显示修复包，快照 v3 这轮没加键，
+前端仍等 STITCH；`config/adapter-registry.json` 一字节未动，Control 的 13 个动词一个没加，没有自动派发。
+`refusal` 词汇表在模块与合同里各存一份，靠 `test_refusal_vocabulary_in_the_module_and_the_schema_are_one_list`
+对齐——这是复制，不是共享，改名要同时改两处否则红。

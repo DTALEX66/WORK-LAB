@@ -21,6 +21,11 @@ EXPECTED = {
     "release-manifest": "root-governance",
     "adapter-capability": "workflow",
     "action-plan": "workflow",
+    # The repair-pack envelope (后端2, 2026-10-22): a prepared handoff for an executor a human
+    # named, never an auto-dispatch. Registered rather than left loose because this file is the review gate
+    # that makes a new contract an explicit decision -- and the interface it generates is what proves the
+    # envelope's refusal fields (sent/dispatched const false) survive into the TypeScript side.
+    "repair-pack": "workflow",
     "task-ledger-event": "workflow",
     # P1-06 (2026-10-08): the Control Surface pair. Registering a contract here is the review gate that
     # makes a new cross-language write boundary an explicit decision instead of a file that appeared.
@@ -89,6 +94,7 @@ CANONICAL_SCHEMA_PREFIXES = {
     "release-manifest": (".project/governance/",),
     "adapter-capability": ("packages/contracts/",),
     "action-plan": ("packages/contracts/",),
+    "repair-pack": ("packages/contracts/",),
     "task-ledger-event": ("packages/contracts/",),
     "control-operation": ("packages/contracts/",),
     "control-operation-result": ("packages/contracts/",),
