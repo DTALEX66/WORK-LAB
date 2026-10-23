@@ -48,8 +48,13 @@ class RealRegister(unittest.TestCase):
         live_bad, live_tables, live_rows = shape.scan(REGISTER.read_text(encoding="utf-8"))
         self.assertEqual(1, len(live_tables),
                          f"the live register is the single WUI table; the parser saw {live_tables}")
-        self.assertEqual(25, live_rows,
-                         f"the live register carries 25 rows on 2026-10-10; {live_rows} were judged, so a "
+        # 25 was the count on 2026-10-10; the 2026-10-11/12 cloud-audit batch appended WUI-21..WUI-24 and the
+        # 2026-10-23 independent-closed-loop programme (source WL-REC-0107) appended CL-01..CL-12, so the live
+        # ledger now carries 37. The number is a tripwire for a *lost* row or a parser that stopped splitting
+        # them, not a claim that the register never grows: adding a row must move this figure in the same
+        # commit that adds it, otherwise a deleted row can hide behind a stale floor.
+        self.assertEqual(37, live_rows,
+                         f"the live register carried 37 rows on 2026-10-23; {live_rows} were judged, so a "
                          "row was lost or the parser stopped splitting them")
         self.assertEqual([], live_bad)
 

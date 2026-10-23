@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-22T14:30:04Z",
+  "generatedAt": "2026-10-23T11:16:56Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2563,
-    "distinctProjectLocalTokens": 633,
+    "trackedFilesScanned": 2567,
+    "distinctProjectLocalTokens": 636,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 633,
-    "citationsToAbsentTokens": 1860
+    "tokensAbsent": 636,
+    "citationsToAbsentTokens": 1864
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -33,8 +33,8 @@
       "distinctPaths": 480
     },
     "machine_local_runtime_pointer": {
-      "citations": 235,
-      "distinctPaths": 119
+      "citations": 239,
+      "distinctPaths": 122
     },
     "negative_assertion_or_removal_record": {
       "citations": 188,
@@ -2924,25 +2924,25 @@
       {
         "path": ".project-local/artifacts/temp-residue-reclaim",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 379,
+        "line": 394,
         "text": "（manifest 在 `.project-local/artifacts/temp-residue-reclaim/`），"
       },
       {
         "path": ".project-local/artifacts/temp-residue-reclaim",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 533,
+        "line": 548,
         "text": "随后 `TEMP_RESIDUE_DRY_RUN apply_not_run=1`；清单落在 `.project-local/artifacts/temp-residue-reclaim/`。"
       },
       {
         "path": ".project-local/artifacts/temp-residue-reclaim",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 564,
+        "line": 579,
         "text": "- 清单：`.project-local/artifacts/temp-residue-reclaim/`（本次新增一份 `manifest-<时间戳>.json`，与既有的三份并列；"
       },
       {
         "path": ".project-local/artifacts/temp-residue-reclaim/manifest-20261009T204026Z.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 103,
+        "line": 118,
         "text": "**新红 ④：`test_temp_fixture_residue_is_bounded` 点出一个 6.5 小时前的孤儿 `.project-local/runs/tmp/node-jiti`**（1 个文件、2,250 B、无嵌套 git），是本轮早前为读基线跑 node 工具链留下的编译缓存。走仓内既有工具做有清单的回收：`scripts/maintenance/release_temp_f"
       },
       {
@@ -3152,7 +3152,7 @@
       {
         "path": ".project-local/artifacts/wui-20261009/keyboard-focus-fresh.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 66,
+        "line": 81,
         "text": "`.project-local/artifacts/wui-20261009/keyboard-focus-fresh.json` 只能绑到「stage 时的 dist」而不能绑到实际绘制的字节——它测的是发行二进制"
       },
       {
@@ -3188,7 +3188,7 @@
       {
         "path": ".project-local/artifacts/wui-20261009/legibility-live-views.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 83,
+        "line": 98,
         "text": "`NOT_ENFORCED`＋药丸普查。live 实测（bundle `3929e3f84a97ee2f`，`.project-local/artifacts/wui-20261009/legibility-live-views.json`）：每主题 34 个药丸节点、"
       },
       {
@@ -3236,7 +3236,7 @@
       {
         "path": ".project-local/artifacts/wui-20261010/citation-expansion.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 114,
+        "line": 129,
         "text": "⑧ 可恢复性：两表改动前已按字节备份（`.project-local/runs/wui-20261010/csv-backup/`，`.project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv` 40,406 B / `7aeddf5d5c25e084`，`.project-local/runs/wui-20261010/csv-ba"
       },
       {
@@ -3254,7 +3254,7 @@
       {
         "path": ".project-local/artifacts/wui-20261010/hermes-overlay-readback.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 132,
+        "line": 147,
         "text": "`.project-local/artifacts/wui-20261010/hermes-overlay-readback.json`（sha `e597acf91ca9b3b7`，"
       },
       {
@@ -3548,7 +3548,7 @@
       {
         "path": ".project-local/runs",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 53,
+        "line": 68,
         "text": "每份回执都写入它；切片捕获仪表从临时目录 `.project-local/runs/` 升为受版本控制的"
       },
       {
@@ -3908,7 +3908,7 @@
       {
         "path": ".project-local/runs/ci/gate-stages.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 810,
+        "line": 825,
         "text": "`.project-local/runs/ci/gate-stages.json`：逐阶段的 `gate/exit/seconds/description` 外加 **chain**"
       },
       {
@@ -4988,7 +4988,7 @@
       {
         "path": ".project-local/runs/hud-preview",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 938,
+        "line": 953,
         "text": "- **Observer 440×680 浮窗**：`apps/observer/frontend/src/views/CompactHUD.tsx` 由 KPI 网格重写为表型面板（精确总量、供应商环、会话 sparkline、3 卡折叠）；派生全部落在 `apps/observer/frontend/src/views/hudModel.ts`——按 `agentPlatform` 分组、非有"
       },
       {
@@ -5018,7 +5018,7 @@
       {
         "path": ".project-local/runs/hud-preview/shots/states.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 938,
+        "line": 953,
         "text": "- **Observer 440×680 浮窗**：`apps/observer/frontend/src/views/CompactHUD.tsx` 由 KPI 网格重写为表型面板（精确总量、供应商环、会话 sparkline、3 卡折叠）；派生全部落在 `apps/observer/frontend/src/views/hudModel.ts`——按 `agentPlatform` 分组、非有"
       },
       {
@@ -5636,19 +5636,19 @@
       {
         "path": ".project-local/runs/quality-gate-governance-20261010c.log",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 122,
+        "line": 137,
         "text": "`.project-local/runs/quality-gate-governance-20261010c.log`。本轮全部改动落定后**又跑了一次全量**：`Ran 2613 tests in 213.924s` / `FAILED (failures=2, skipped=10)` / `GATE_EXIT=1`，`modules_run=240`（新增的两道必门 `test_hooks_"
       },
       {
         "path": ".project-local/runs/quality-gate-governance-20261010d.log",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 122,
+        "line": 137,
         "text": "`.project-local/runs/quality-gate-governance-20261010c.log`。本轮全部改动落定后**又跑了一次全量**：`Ran 2613 tests in 213.924s` / `FAILED (failures=2, skipped=10)` / `GATE_EXIT=1`，`modules_run=240`（新增的两道必门 `test_hooks_"
       },
       {
         "path": ".project-local/runs/quality-gate-governance-20261010f.log",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 197,
+        "line": 212,
         "text": "`.project-local/runs/quality-gate-governance-20261010f.log`，全量转写 `.project-local/runs/quality-gate-governance-fail.log`。"
       },
       {
@@ -5672,19 +5672,19 @@
       {
         "path": ".project-local/runs/quality-gate-governance-fail.log",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 122,
+        "line": 137,
         "text": "`.project-local/runs/quality-gate-governance-20261010c.log`。本轮全部改动落定后**又跑了一次全量**：`Ran 2613 tests in 213.924s` / `FAILED (failures=2, skipped=10)` / `GATE_EXIT=1`，`modules_run=240`（新增的两道必门 `test_hooks_"
       },
       {
         "path": ".project-local/runs/quality-gate-governance-fail.log",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 197,
+        "line": 212,
         "text": "`.project-local/runs/quality-gate-governance-20261010f.log`，全量转写 `.project-local/runs/quality-gate-governance-fail.log`。"
       },
       {
         "path": ".project-local/runs/quality-gate-governance-fail.log",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 213,
+        "line": 228,
         "text": "（完整转写 `.project-local/runs/quality-gate-governance-fail.log`）。"
       },
       {
@@ -5744,7 +5744,7 @@
       {
         "path": ".project-local/runs/repoint_matrix_line_citations.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 104,
+        "line": 119,
         "text": "**同轮把行号指针变成可检断言**（这是③教我的同一类失效：指针写的是一回事，文件里是另一回事）：新探测对绑定矩阵的 **149** 条带行号引用逐条回查，量出 **7 条漂移**（多为 ±1～2 行；其中 `packages/client-neutral-core/scripts/collectors.py:267→268` 是本轮我自己删掉一行造成的），用 `.project-local/ru"
       },
       {
@@ -5816,25 +5816,25 @@
       {
         "path": ".project-local/runs/tmp",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 284,
+        "line": 299,
         "text": "`.project-local/runs/tmp` 残留已按项目自有工具释放（见第五批）；独有分支已于同日全部处置（见第五批）。commit/push/PR 本批未执行。"
       },
       {
         "path": ".project-local/runs/tmp",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 377,
+        "line": 392,
         "text": "另按交接第 15 项释放 `.project-local/runs/tmp` 的无人引用残留："
       },
       {
         "path": ".project-local/runs/tmp",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 591,
+        "line": 606,
         "text": "- 名字全部只在**子串**层面命中（例如某个短名会命中 `agent.log` 一类文本），无一处是指向 `.project-local/runs/tmp/` 下这个文件的引用。"
       },
       {
         "path": ".project-local/runs/tmp",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 595,
+        "line": 610,
         "text": "- 结果：`.project-local/runs/tmp/` 目录 61→0、文件 14→0、占用 737 KiB → **0**。"
       },
       {
@@ -5900,19 +5900,19 @@
       {
         "path": ".project-local/runs/tmp/baseline-main",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 395,
+        "line": 410,
         "text": "先建基线再判定，不按分支名猜：在 `.project-local/runs/tmp/baseline-main` 拉 `origin/main` 的独立工作树，"
       },
       {
         "path": ".project-local/runs/tmp/fix_wui19_exe_hash.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 940,
+        "line": 955,
         "text": "- **Rust/制品与封印**：token-monitor release 重建 `hermes-token-monitor.exe` 8,939,008 B / `bcb86b48…`；WUI-19 的旧 exe 哈希 `1ee8e0fd…` 已按实测字节机械重绑（`.project-local/runs/tmp/fix_wui19_exe_hash.py`，写后回读）。前端改动按交接重封：`"
       },
       {
         "path": ".project-local/runs/tmp/node-jiti",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 103,
+        "line": 118,
         "text": "**新红 ④：`test_temp_fixture_residue_is_bounded` 点出一个 6.5 小时前的孤儿 `.project-local/runs/tmp/node-jiti`**（1 个文件、2,250 B、无嵌套 git），是本轮早前为读基线跑 node 工具链留下的编译缓存。走仓内既有工具做有清单的回收：`scripts/maintenance/release_temp_f"
       },
       {
@@ -5924,13 +5924,13 @@
       {
         "path": ".project-local/runs/token-hud/verify-20261019.log",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 939,
+        "line": 954,
         "text": "- **token-monitor HUD**：HUD 成为默认视图，`?view=dashboard` 保留旧仪表盘，视图/模式只进 URL（不写 web storage）；演示夹具只在普通浏览器或 `?demo=1` 时启用，真实 WebView2 读回为 `PAUSED`/空值而非 demo（`hud-live-window-1180.png`）。模型规则在 `apps/token-moni"
       },
       {
         "path": ".project-local/runs/token-hud/verify-live-20261019.log",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 939,
+        "line": 954,
         "text": "- **token-monitor HUD**：HUD 成为默认视图，`?view=dashboard` 保留旧仪表盘，视图/模式只进 URL（不写 web storage）；演示夹具只在普通浏览器或 `?demo=1` 时启用，真实 WebView2 读回为 `PAUSED`/空值而非 demo（`hud-live-window-1180.png`）。模型规则在 `apps/token-moni"
       },
       {
@@ -6218,19 +6218,19 @@
       {
         "path": ".project-local/runs/wui-20261010/csv-backup",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 114,
+        "line": 129,
         "text": "⑧ 可恢复性：两表改动前已按字节备份（`.project-local/runs/wui-20261010/csv-backup/`，`.project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv` 40,406 B / `7aeddf5d5c25e084`，`.project-local/runs/wui-20261010/csv-ba"
       },
       {
         "path": ".project-local/runs/wui-20261010/csv-backup/CHECKLIST.before.csv",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 114,
+        "line": 129,
         "text": "⑧ 可恢复性：两表改动前已按字节备份（`.project-local/runs/wui-20261010/csv-backup/`，`.project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv` 40,406 B / `7aeddf5d5c25e084`，`.project-local/runs/wui-20261010/csv-ba"
       },
       {
         "path": ".project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 114,
+        "line": 129,
         "text": "⑧ 可恢复性：两表改动前已按字节备份（`.project-local/runs/wui-20261010/csv-backup/`，`.project-local/runs/wui-20261010/csv-backup/MATRIX.before.csv` 40,406 B / `7aeddf5d5c25e084`，`.project-local/runs/wui-20261010/csv-ba"
       },
       {
@@ -6260,7 +6260,7 @@
       {
         "path": ".project-local/runs/wui-20261010/expand_shorthand_citations.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 109,
+        "line": 124,
         "text": "③ 怎么修的：`.project-local/runs/wui-20261010/expand_shorthand_citations.py` 的替换表来自**门自己的扫描**（因此正文里提到 `package.json` 不会被改写成路径），要求 basename 在树中**只有一个**文件才落笔（`EXPAND_ABORT` 是默认拒绝），且错目录那六条必须**先在候选文件里命中被引代码**才"
       },
       {
@@ -6290,7 +6290,7 @@
       {
         "path": ".project-local/runs/wui-20261010/falsify_hook_bound_guard.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 140,
+        "line": 155,
         "text": "`.project-local/runs/wui-20261010/readback_hermes_overlay.py`（读回）与 `.project-local/runs/wui-20261010/falsify_hook_bound_guard.py`（伪证还原）都在仓内运行时根下。"
       },
       {
@@ -6302,13 +6302,13 @@
       {
         "path": ".project-local/runs/wui-20261010/falsify_pack_digest_fix.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 193,
+        "line": 208,
         "text": "`.project-local/runs/wui-20261010/falsify_pack_digest_fix.py`）。途中我自己的探针先被判空：子进程输出是 CRLF，`$` 锚定的正则什么都匹配不到而返回码仍是 0。"
       },
       {
         "path": ".project-local/runs/wui-20261010/falsify_ragged_row_assertion.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 112,
+        "line": 127,
         "text": "⑥ **我自己的第二个缺陷**：把替换句子以原文写进**未加引号**的 CSV 字段，而句子里有逗号——B34 因此从 14 列变 **15 列**，表却照样\"通过\"：`csv.DictReader` 把多余字段挂在 `None` 键下，而门只断言表头名与行数，看不见多列。修正分两处：句子改用分号（`.project-local/runs/wui-20261010/fix_b34_field_sh"
       },
       {
@@ -6344,7 +6344,7 @@
       {
         "path": ".project-local/runs/wui-20261010/falsify_widened_file_index.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 166,
+        "line": 181,
         "text": "（`.project-local/runs/wui-20261010/falsify_widened_file_index.py`）。同一个\"部分宇宙\"缺陷此前已在文档引用门上出现过一次并修过，"
       },
       {
@@ -6356,13 +6356,13 @@
       {
         "path": ".project-local/runs/wui-20261010/fix_b34_field_shape.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 112,
+        "line": 127,
         "text": "⑥ **我自己的第二个缺陷**：把替换句子以原文写进**未加引号**的 CSV 字段，而句子里有逗号——B34 因此从 14 列变 **15 列**，表却照样\"通过\"：`csv.DictReader` 把多余字段挂在 `None` 键下，而门只断言表头名与行数，看不见多列。修正分两处：句子改用分号（`.project-local/runs/wui-20261010/fix_b34_field_sh"
       },
       {
         "path": ".project-local/runs/wui-20261010/gate-batch2-20261010.log",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 212,
+        "line": 227,
         "text": "`GATE_SOURCE_DRIFT=no`。日志 `.project-local/runs/wui-20261010/gate-batch2-20261010.log`"
       },
       {
@@ -6374,7 +6374,7 @@
       {
         "path": ".project-local/runs/wui-20261010/probe_ledger_binding_convictions.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 218,
+        "line": 233,
         "text": "`.project-local/runs/wui-20261010/probe_ledger_binding_convictions.py` 现场打印），本批新增的 ERR-254/255"
       },
       {
@@ -6398,7 +6398,7 @@
       {
         "path": ".project-local/runs/wui-20261010/prove_pack_digest_stable_across_seconds_v2.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 192,
+        "line": 207,
         "text": "`d7ef1321edeba540`（`.project-local/runs/wui-20261010/prove_pack_digest_stable_across_seconds_v2.py`、"
       },
       {
@@ -6422,7 +6422,7 @@
       {
         "path": ".project-local/runs/wui-20261010/readback_hermes_overlay.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 140,
+        "line": 155,
         "text": "`.project-local/runs/wui-20261010/readback_hermes_overlay.py`（读回）与 `.project-local/runs/wui-20261010/falsify_hook_bound_guard.py`（伪证还原）都在仓内运行时根下。"
       },
       {
@@ -6452,7 +6452,7 @@
       {
         "path": ".project-local/runs/wui-20261010/repoint_convicted_pointers.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 110,
+        "line": 125,
         "text": "④ 路径一通，八条指针随即在行号上判红（偏离 1～4 行；`packages/client-neutral-core/scripts/perf_baseline.py:42-43 → 46-47` 是本轮我自己在那个文件里加行造成的）。`.project-local/runs/wui-20261010/repoint_convicted_pointers.py` 只移动**门自己点名**的指针、只"
       },
       {
@@ -6470,7 +6470,7 @@
       {
         "path": ".project-local/runs/wui-20261011",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 264,
+        "line": 279,
         "text": "两脚本均落在 `.project-local/runs/wui-20261011/`（已记 CRLF 与锚点唯一性两个自身踩坑）。"
       },
       {
@@ -6482,37 +6482,37 @@
       {
         "path": ".project-local/runs/wui-20261011/falsify_l01_l03_fixes.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 261,
+        "line": 276,
         "text": "- 伪证（各植回缺陷、证明变红、按 sha256 还原一致）：`.project-local/runs/wui-20261011/falsify_l01_l03_fixes.py` → 8 项定罪，"
       },
       {
         "path": ".project-local/runs/wui-20261011/falsify_l01_l03_fixes.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 346,
+        "line": 361,
         "text": "这是本轮第二次踩同一个坑（第一次在 `.project-local/runs/wui-20261011/falsify_l01_l03_fixes.py`）。"
       },
       {
         "path": ".project-local/runs/wui-20261011/falsify_l04_claim.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 263,
+        "line": 278,
         "text": "`.project-local/runs/wui-20261011/falsify_l04_claim.py` → 3 项定罪，还原 `apps/observer/frontend/src/views/WorkflowEditorView.tsx 2b28ad8c7056a2da`。"
       },
       {
         "path": ".project-local/runs/wui-20261011/falsify_w01_transport_truth.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 294,
+        "line": 309,
         "text": "伪证 `.project-local/runs/wui-20261011/falsify_w01_transport_truth.py`：植回两半缺陷 → 13 项定罪，字节还原"
       },
       {
         "path": ".project-local/runs/wui-20261011/falsify_w02_canvas.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 309,
+        "line": 324,
         "text": "伪证 `.project-local/runs/wui-20261011/falsify_w02_canvas.py`：四个植入 → 8 项定罪，还原 `apps/observer/frontend/src/components/graph/workflow-canvas.tsx 80156606d542dca5`。"
       },
       {
         "path": ".project-local/runs/wui-20261011/falsify_wui21_trial_pages.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 342,
+        "line": 357,
         "text": "伪证 `.project-local/runs/wui-20261011/falsify_wui21_trial_pages.py`：断开承载段＋让页面吞掉依据 → 承载面 2 项定罪、页面 2 项定罪，"
       },
       {
@@ -7604,7 +7604,7 @@
       {
         "path": ".project-local/toolchains/wl-py311",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "line": 227,
+        "line": 242,
         "text": "- 本批定向读回（治理批之外，全部现场复跑于 `.project-local/toolchains/wl-py311`，Python 3.11.15）："
       },
       {
@@ -8294,6 +8294,12 @@
         "text": "- `.project-local/artifacts/handoff-stage-e-20260930.md`（阶段 E 手动交接，含授权请求清单）"
       },
       {
+        "path": ".project-local/artifacts/issue-center-20261022/ci-workflow-assistance-at-7ee6ab6b.log",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 1483,
+        "text": "`.project-local/artifacts/issue-center-20261022/ci-workflow-assistance-at-7ee6ab6b.log` 与"
+      },
+      {
         "path": ".project-local/artifacts/mcp-candidate.yaml",
         "file": "docs/current/workflow-assistance-README.md",
         "line": 438,
@@ -8358,6 +8364,24 @@
         "file": ".project/governance/taskpack-authority-index.json",
         "line": 290,
         "text": "\"file\": \".project-local/artifacts/qoder-handoff-20261007/QODER_新规划前后端完整后续任务提示词.txt\","
+      },
+      {
+        "path": ".project-local/artifacts/repair-packs",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 1543,
+        "text": "产物在 `.project-local/artifacts/repair-packs/` 下：包 JSON、可复制的交接文本，"
+      },
+      {
+        "path": ".project-local/artifacts/repair-packs",
+        "file": "docs/current/authority-convergence-20261019/ROADMAP.md",
+        "line": 22,
+        "text": "| 4 | 问题摘要与 Agent 修复任务包生成；优先可靠人工交接，只有已验证连接才允许自动派发 | PARTIAL（2026-10-22 实测）：`packages/client-neutral-core/scripts/repair_pack_projection.py` 把 OPEN 问题行按（项目 × 人点名的执行者）折成交付包。包体仍是既有合同 `workflow/action-pla"
+      },
+      {
+        "path": ".project-local/artifacts/repair-packs/repair-packs-summary.json",
+        "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
+        "line": 1544,
+        "text": "以及同目录的 `.project-local/artifacts/repair-packs/repair-packs-summary.json`。数据边界那条也是实测的："
       },
       {
         "path": ".project-local/artifacts/spill-ledger.jsonl",
@@ -11253,7 +11277,7 @@
     "reviewQueue": 7,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 342
+    "presentOnThisMachine": 345
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
