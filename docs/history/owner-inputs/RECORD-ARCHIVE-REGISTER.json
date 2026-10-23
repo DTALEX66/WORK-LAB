@@ -2713,6 +2713,19 @@
       "mergedExactOriginalFiles": 36,
       "originalBytesBeforeCompression": 6630338,
       "status": "HISTORICAL_DERIVED_STORAGE_NOT_TASKPACK"
+    },
+    {
+      "id": "WL-STORE-AGENTRULES-20261024",
+      "archivePath": "docs/history/owner-inputs/20261024/WORK-LAB-AgentRules-Governance-Intake-20261024.zip",
+      "bytes": 74576,
+      "sha256": "190d56d69cd8f80efdac68abe393f087a2d4589896490003e50ca50810277fb8",
+      "mergedExactOriginalFiles": 39,
+      "originalBytesBeforeCompression": 175947,
+      "status": "HISTORICAL_DERIVED_HANDOFF_NOT_TASKPACK",
+      "origin": "Owner-authorized project-local summary and selected C:/Users/ALEX/AgentRules snapshots; not a Record source",
+      "summary": "docs/history/archive/workflow-assistance/handoffs/agent-rules-governance-20261024/SUMMARY.md",
+      "prompt": "docs/history/archive/workflow-assistance/handoffs/agent-rules-governance-20261024/WORK-LAB-INTAKE-PROMPT.md",
+      "sourceWriteOperations": 0
     }
   ],
   "consolidationReport": "docs/history/owner-inputs/RECORD-CONSOLIDATION.json"

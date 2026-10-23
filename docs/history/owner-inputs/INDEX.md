@@ -35,8 +35,15 @@
 ## 原文件及别名目录
 
 
-本次登记 **107 条资料**及 **2425 条包内成员**。下表链接指向规范存储；压缩资料的成员链在 JSON/CSV 和可搜索目录中完整列出。
+本次登记 **107 条资料**及 **2465 条包内成员**。下表链接指向规范存储；压缩资料的成员链在 JSON/CSV 和可搜索目录中完整列出。
 
+
+## 项目派生归档容器
+
+以下为既有资料整理或用户授权的项目内交接归档；不冒充 Record 源文件，不改变 Record 来源盘点。成员可通过 find 查询。
+
+- WL-STORE-20261009：[WORK-LAB-HISTORICAL-RECORDS-20261009.zip](<record-20261009/WORK-LAB-HISTORICAL-RECORDS-20261009.zip>)；HISTORICAL_DERIVED_STORAGE_NOT_TASKPACK。
+- WL-STORE-AGENTRULES-20261024：[WORK-LAB-AgentRules-Governance-Intake-20261024.zip](<20261024/WORK-LAB-AgentRules-Governance-Intake-20261024.zip>)；HISTORICAL_DERIVED_HANDOFF_NOT_TASKPACK。
 
 ### TASK_HANDOFF
 

@@ -20,6 +20,8 @@ UI轮次交接：`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成�
 > 全局执行标准（跨软件跨项目）：见 `docs/decisions/global-execution-standard.md`（执行生命周期：理解→扫技能→分片→执行→验证→落地）。
 > 经验教训铁律（核实优先/治理最小化/官方优先）：见 `docs/decisions/LESSONS_LEARNED.md`。
 > 全局部署与升级：按需读取 docs/current/workflow-assistance/workflow/official-plus-user-configuration-standard-2026-08-11.md；软件、模型、技能数量由当前发现与机器合同确定。2026-10-05 修复归档见 docs/history/archive/workflow-convergence-20261005.md，仅作历史证据。
+> 上下文服务（跨会话记忆/召回）治理：改动前先读 docs/decisions/OPENVIKING_CONTEXT_SERVICE_STANDARD.md，操作细节查 docs/decisions/OPENVIKING_DEPLOY_HANDBOOK_20261024.md。
+> 三条硬约束：服务只用 127.0.0.1:1933 单端口，不得为新增客户端另开端口；换模型或向量维度须走标准 §5 变更流程并归档旧索引；验收必须在新会话中实际调用检索与读取工具，health 成功或配置文件写入不算完成。
 
 ## Mandatory audit bootstrap (normative)
 

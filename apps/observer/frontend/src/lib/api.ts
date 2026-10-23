@@ -126,6 +126,24 @@ export function evidenceRangeEndpoint(): { url: string; authoritative: boolean }
   return isTrustedEvidenceRangeEndpoint(url) ? { url, authoritative: DESCRIPTOR.authoritative } : null
 }
 
+// CL-07: `GET /api/v1/repair-packs` is the fourth endpoint of the same loopback sidecar surface. Derived
+// from the validated snapshot base for the same reason as the range route: a crafted `?api=` must not be
+// able to steer a handoff read at an external host. GET-only; this module exposes no other method.
+export function isTrustedRepairPacksEndpoint(raw: string): boolean {
+  const u = _loopbackHttp(raw)
+  return u !== null && u.pathname === '/api/v1/repair-packs'
+}
+
+export function repairPacksEndpoint(): { url: string; authoritative: boolean } | null {
+  const base = _loopbackHttp(SNAPSHOT_URL)
+  if (!base) return null
+  base.pathname = '/api/v1/repair-packs'
+  base.search = ''
+  base.hash = ''
+  const url = base.toString().replace(/\?$/, '')
+  return isTrustedRepairPacksEndpoint(url) ? { url, authoritative: DESCRIPTOR.authoritative } : null
+}
+
 // Structural read of the wire payload. The front must not cast whatever arrives
 // into `SnapshotV3`: a legacy/v2 body, or a truncated one, would then render as
 // if it were current truth. Fail closed — `null` is a read failure, so the

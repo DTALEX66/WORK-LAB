@@ -937,15 +937,16 @@ export type RepairPack = {
     reasons: ("no-open-issues" | "adapter-not-declared" | "adapter-does-not-declare-invoke" | "project-unregistered" | "project-root-missing" | "issue-has-no-project" | "verification-command-unknown" | "pack-cap-reached")[]
   },
     target: {
+    kind: "ADAPTER_INVOKE" | "MANUAL_COPY",
     projectId: string,
     projectName: string | null,
     projectRoot: string,
     projectStatus: string | null,
-    adapter: string,
+    adapter: string | null,
     adapterDisplayName: string | null,
     adapterSupportLevel: string | null,
     declaredOperations: ("detect" | "capabilities" | "plan" | "apply" | "invoke" | "observe" | "rollback")[],
-    operation: "invoke",
+    operation: "invoke" | "copy-handoff",
     routingSource: "caller-choice"
   },
     binds: {
@@ -963,13 +964,32 @@ export type RepairPack = {
     basis: string
   },
     handoff: {
+    mode: "manual-copy",
+    copyable: true,
     sent: false,
     dispatched: false,
+    copiedByUser: {
+    declared: false,
+    declaredAt: unknown,
+    channel: unknown
+  },
+    userDeclaredHandoff: {
+    declared: false,
+    declaredAt: unknown,
+    channel: unknown,
+    claimedRecipient: unknown
+  },
+    externalReceipt: {
+    received: false,
+    receivedAt: unknown,
+    externalId: unknown,
+    source: unknown
+  },
     authorizationRef: unknown,
     requiresOwnerAction: string
   },
     provenance: {
-    derivationScope: "open-issue-rows-plus-registered-projects-plus-adapter-registry",
+    derivationScope: "open-issue-rows-plus-registered-projects-plus-adapter-registry" | "open-issue-rows-plus-registered-projects",
     inferencePerformed: false,
     contentIncluded: false,
     authorityClaimed: false,

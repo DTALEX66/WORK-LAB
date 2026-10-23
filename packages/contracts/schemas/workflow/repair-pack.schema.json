@@ -75,6 +75,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "kind",
         "projectId",
         "projectName",
         "projectRoot",
@@ -87,6 +88,14 @@
         "routingSource"
       ],
       "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ADAPTER_INVOKE",
+            "MANUAL_COPY"
+          ],
+          "description": "CL-03: two routes that must never borrow each other's claims. ADAPTER_INVOKE names an executor whose registry entry declares `invoke`; MANUAL_COPY names no adapter at all -- the material is copied to any tool a human chooses, and no adapter capability is asserted. The enum exists so `adapter: null` cannot be read as an adapter that merely forgot its name."
+        },
         "projectId": {
           "type": "string",
           "minLength": 1
@@ -108,8 +117,11 @@
           ]
         },
         "adapter": {
-          "type": "string",
-          "minLength": 1
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Non-empty for ADAPTER_INVOKE; null for MANUAL_COPY. A manual pack never carries the name of an adapter it did not choose."
         },
         "adapterDisplayName": {
           "type": [
@@ -139,13 +151,67 @@
           }
         },
         "operation": {
-          "const": "invoke"
+          "type": "string",
+          "enum": [
+            "invoke",
+            "copy-handoff"
+          ]
         },
         "routingSource": {
           "const": "caller-choice",
           "description": "The executor is named by whoever asked for the pack. Attribution says which software a problem belongs to; that is not evidence about which software should fix it, so the projection refuses to infer a route."
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "ADAPTER_INVOKE"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "operation": {
+                "const": "invoke"
+              },
+              "adapter": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "MANUAL_COPY"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "operation": {
+                "const": "copy-handoff"
+              },
+              "adapter": {
+                "type": "null"
+              },
+              "adapterDisplayName": {
+                "type": "null"
+              },
+              "adapterSupportLevel": {
+                "type": "null"
+              },
+              "declaredOperations": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
     },
     "binds": {
       "type": "object",
@@ -251,17 +317,102 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "mode",
+        "copyable",
         "sent",
         "dispatched",
+        "copiedByUser",
+        "userDeclaredHandoff",
+        "externalReceipt",
         "authorizationRef",
         "requiresOwnerAction"
       ],
       "properties": {
+        "mode": {
+          "const": "manual-copy",
+          "description": "CL-03: the only delivery mode this slice produces. The text a human copies is the material; there is no send path, so no other mode may be claimed."
+        },
+        "copyable": {
+          "const": true,
+          "description": "The material may be copied to any tool. This is a property of the material, not evidence that any copy happened."
+        },
         "sent": {
-          "const": false
+          "const": false,
+          "description": "WORK-LAB transmission. Distinct from `copiedByUser` in the same way a local copy is distinct from a send: writing a file or putting text on a clipboard is not a transmission and cannot turn this field true."
         },
         "dispatched": {
           "const": false
+        },
+        "copiedByUser": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "declared",
+            "declaredAt",
+            "channel"
+          ],
+          "properties": {
+            "declared": {
+              "const": false,
+              "description": "Only a user's own statement can make this true, and a generated pack carries no user statement. WORK-LAB cannot observe a clipboard."
+            },
+            "declaredAt": {
+              "type": "null"
+            },
+            "channel": {
+              "type": "null"
+            }
+          }
+        },
+        "userDeclaredHandoff": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "declared",
+            "declaredAt",
+            "channel",
+            "claimedRecipient"
+          ],
+          "properties": {
+            "declared": {
+              "const": false,
+              "description": "A user saying \"I handed it over\" is a claim about the user's action. It says nothing about whether the other side received anything, which is `externalReceipt` -- a separate field that this draft cannot fill."
+            },
+            "declaredAt": {
+              "type": "null"
+            },
+            "channel": {
+              "type": "null"
+            },
+            "claimedRecipient": {
+              "type": "null"
+            }
+          }
+        },
+        "externalReceipt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "received",
+            "receivedAt",
+            "externalId",
+            "source"
+          ],
+          "properties": {
+            "received": {
+              "const": false,
+              "description": "Only an external system's own response can fill this. A user-declared handoff must never be copied into here, or the claim would start wearing the evidence's clothes."
+            },
+            "receivedAt": {
+              "type": "null"
+            },
+            "externalId": {
+              "type": "null"
+            },
+            "source": {
+              "type": "null"
+            }
+          }
         },
         "authorizationRef": {
           "type": "null"
@@ -284,7 +435,11 @@
       ],
       "properties": {
         "derivationScope": {
-          "const": "open-issue-rows-plus-registered-projects-plus-adapter-registry"
+          "enum": [
+            "open-issue-rows-plus-registered-projects-plus-adapter-registry",
+            "open-issue-rows-plus-registered-projects"
+          ],
+          "description": "The second value is the CL-03 manual route: it consulted no adapter registry, so naming one would claim a source it never read."
         },
         "inferencePerformed": {
           "const": false

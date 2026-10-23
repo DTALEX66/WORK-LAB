@@ -142,6 +142,12 @@ DISPOSITIONS: dict[str, str] = {
         "`docs/audits/MODEL_LIBRARY_READBACK_2026-10-07.md`. The file was present on the authoring box "
         "(14,754 B, 2026-10-07). CI is not asked to believe the bytes — only to see that the claim "
         "names how to reproduce them.",
+    ".project-local/artifacts/cl07/receipt.json":
+        "MACHINE-LOCAL RENDER RECEIPT NAMED AS WHAT WAS OBSERVED — the CL-07 probe wrote it on the "
+        "authoring box (verdict=PASS, 12/12 checks, screenshot beside it); the tracked test "
+        "`apps/observer/frontend/src/views/IssueCenter.test.tsx` covers the same handoff behavior "
+        "without a browser, and the convergence record cites the receipt only for the measured "
+        "clipboard bytes. CI is not asked to recover this file.",
     ".project-local/runs/u19-msvc-20261006/target/release/app.exe":
         "MACHINE-LOCAL BUILD OUTPUT NAMED AS WHAT WAS RUN — the desktop readback records "
         "(`docs/audits/RELEASED_BROWSER_STATE_2026-10-07.json`, "

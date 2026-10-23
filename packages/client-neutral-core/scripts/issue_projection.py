@@ -34,6 +34,22 @@ ORDERING_KEY = "(-priorityRank, -lastSeenEpoch, fingerprint)"
 
 SOURCE_STATES = ("read", "absent", "error")
 
+# An evidence ref names the row it points at; the prefix is the ledger's own namespace and does not always
+# spell the projection source (`telemetry` events are produced by `telemetry_events`). Anyone asking "did
+# the source that produced this evidence answer this round?" needs this mapping, and it lives here because
+# this module owns both names.
+EVIDENCE_REF_SOURCES = {
+    "collector_health": "collector_health",
+    "telemetry": "telemetry_events",
+    "execution_instances": "execution_instances",
+    "tasks": "tasks",
+}
+
+
+def source_of_evidence_ref(evidence_ref: str) -> str:
+    prefix = str(evidence_ref or "").split(":", 1)[0]
+    return EVIDENCE_REF_SOURCES.get(prefix, prefix)
+
 # Classes are a closed vocabulary: a row whose cause nobody declared is a bug in this module, not a new
 # string a UI would have to special-case.
 CLASSES = (

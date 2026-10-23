@@ -84,3 +84,13 @@
   因为指向归档证据的索引本身是有用的，被误用的只是「把归档当作今日规范」这一种。
 - 新增权威文件时必须登记到本索引；历史文件不得回链为规范来源。
 - 归档操作：移入 `taskpacks/history/` 或 `docs/history/`（保留 Git 历史），不删除。
+
+## 5. Agent 规则与工作流治理接收归档（2026-10-24，非现行任务权威）
+
+用户将跨软件工作流配置、部署、治理和管理归属 WORK-LAB；沿用既有配置所有权与 Adapter 合同，各项目保留领域规则，AAOS 自行修复本项目入口。
+既有执行事实和未验证项见[归档摘要](../../../history/archive/workflow-assistance/handoffs/agent-rules-governance-20261024/SUMMARY.md)，并入操作见[接收提示词](../../../history/archive/workflow-assistance/handoffs/agent-rules-governance-20261024/WORK-LAB-INTAKE-PROMPT.md)。
+派生资料容器 `WL-STORE-AGENTRULES-20261024` 登记于既有 owner-inputs 目录与成员表；这份导航不新增 CURRENT、任务账本或全局配置授权。
+
+## 6. 上下文服务（OpenViking）标准与手册（2026-10-24，生效）
+
+跨会话记忆与召回的外部基础设施由 WORK-LAB 维护治理边界。现行规范是 `docs/decisions/OPENVIKING_CONTEXT_SERVICE_STANDARD.md`（单端口 127.0.0.1:1933、嵌入维度 1024、五步变更流程、六项验收），操作细节与已知故障见 `docs/decisions/OPENVIKING_DEPLOY_HANDBOOK_20261024.md`。两份文件不新增任务权威或第二账本；客户端配置仍按 `config/config-ownership.json` 的字段所有权处理，模型、服务商、鉴权与端点不在本规范授权范围内。

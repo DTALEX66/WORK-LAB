@@ -43,10 +43,10 @@
 | `.project/governance/` | 54 | 2026-10-08 | 机器权威（含 `.project/governance/generated/CURRENT_STATE.md`） | 是 |
 | `taskpacks/current/` | 4（2026-10-19 归档后；原记 26） | 2026-10-19 | 活账本 + 当前 taskpack | 是 |
 | `docs/current/` | 40 md（2026-10-19 归档后；2026-10-10 记 43） | 2026-10-19 | 当前工作文档 | 是（受引用门禁） |
-| `docs/decisions/` | 18 | 2026-10-07 | ADR、`docs/decisions/global-execution-standard.md`、`docs/decisions/instruction-precedence.md` | 是 |
+| `docs/decisions/` | 20（2026-10-24 复点：新增 OpenViking 标准/手册；原记 18） | 2026-10-07 | ADR、`docs/decisions/global-execution-standard.md`、`docs/decisions/instruction-precedence.md` | 是 |
 | `docs/future/` | 3 | 2026-10-08 | 蓝图与覆盖投影（含生成物） | 计划 |
 | `taskpacks/history/` | 104（146 → 第一批汇总删 38 → 第二批删 4） | 2026-10-19 | 冻结历史 + §12/§13 汇总归档 | **非规范** |
-| `docs/history/` | 167 md（2026-10-19 归档 180 → 汇总删除 14 后；原记 115） | 2026-10-19 | 冻结历史 + `docs/history/archive/` + `docs/history/archive/recovered-originals/` | **非规范** |
+| `docs/history/` | 169 md（2026-10-24 复点：新增 AgentRules 交接 2 md；2026-10-19 归档 180 → 汇总删除 14 后） | 2026-10-19 | 冻结历史 + `docs/history/archive/` + `docs/history/archive/recovered-originals/` | **非规范** |
 | `reports/` | 527 | 2026-10-06 | 审计证据（`reports/audit-archive/` 479、`reports/audit-evidence/` 34） | 证据 |
 | `knowledge-staging/` | 224 | **2026-09-23** | 边界标记为 `HISTORY_ONLY_CONVERGE`，非活动模块 | 冻结候选 |
 | `90-archive/` | 1 | **2026-09-24** | 只剩边界标记文件；内容 2026-09-23 已并入 `docs/history/` | 冻结候选 |

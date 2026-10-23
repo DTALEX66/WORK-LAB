@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-22T14:33:37Z",
+  "generatedAt": "2026-10-23T16:38:27Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -404,14 +404,14 @@
       "lines": 128,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 9,
+      "citedByRecords": 10,
       "citedBy": [
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/DOCUMENT-CENSUS.md",
+        "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
         "docs/history/archive/FROZEN.md",
         "knowledge-staging/FROZEN.md",
-        "reports/audit-archive/FROZEN.md",
-        "taskpacks/current/error-ledger.json"
+        "reports/audit-archive/FROZEN.md"
       ]
     },
     {
@@ -672,9 +672,9 @@
     },
     {
       "path": "scripts/audit/project_local_citation_audit.py",
-      "sha256": "42ef6925a585c11460bfb5bf83de09cb55ce25491f07bab36f3b1a4e104bd2ee",
-      "bytes": 24058,
-      "lines": 363,
+      "sha256": "8b50123d9e00acffe310816ac608e1c8056d963b67c69d958336417600cc645e",
+      "bytes": 24568,
+      "lines": 369,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 4,
       "citedByRecords": 13,
@@ -1145,9 +1145,9 @@
     },
     {
       "path": "scripts/maintenance/owner_material_catalog.py",
-      "sha256": "5e7372eff8ba0eb310759b8dfe16c8179875cc0bc892826decb12dc29f754230",
-      "bytes": 20860,
-      "lines": 335,
+      "sha256": "31475011df081df50e83397a9abccc04da5d758c93a6945cc84c4cbf28d47c85",
+      "bytes": 21351,
+      "lines": 339,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 15,

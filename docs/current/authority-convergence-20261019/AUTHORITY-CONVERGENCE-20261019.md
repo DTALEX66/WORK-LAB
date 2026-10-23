@@ -1554,3 +1554,129 @@ CLI 还会先印一行 `ISSUE_SOURCE … softwareAttribution={…}`，因为导�
 前端仍等 STITCH；`config/adapter-registry.json` 一字节未动，Control 的 13 个动词一个没加，没有自动派发。
 `refusal` 词汇表在模块与合同里各存一份，靠 `test_refusal_vocabulary_in_the_module_and_the_schema_are_one_list`
 对齐——这是复制，不是共享，改名要同时改两处否则红。
+
+**2026-10-23 更正（上文保留原样作当日记录）。** 上面「包不落库……Observer 不显示修复包……前端仍等 STITCH」三句
+已被 §27 的工作集取代：`action_plans` 现有读写方法与 v5 迁移，生命周期在
+`packages/client-neutral-core/scripts/repair_state.py`；Observer 在既有「项目监控」页消费
+`issues`／`issuesSummary` 并显示修复包交接；`PINNED_REFINEMENT_PATHS` 由 22 增至 24。本机 live canonical store
+本轮没有写入任何修复行（CL-09 在夹具运行时根里跑），行数未测，不补 0——「有路径」不等于「有记录」。
+Control 的 13 个动词未增、`config/adapter-registry.json` 未动、仍无自动派发。
+
+## 27. 从问题行到可核验交接：CL-03／04／05／07／09 的工作集（2026-10-23）
+
+用户 2026-10-23 以登记材料 `WL-REC-0107` 下达具体 Task Grant，要求按序做 CL-03 → CL-04 → CL-05 → CL-07 → CL-09，
+并明确 CL-06／CL-08／CL-10／CL-11／CL-12 是后续独立切片、不得顺带完成。这一节只写这五片**实测到的**东西；
+Windows／Tauri 安装层与真实外部 AI 工具腿仍记 NOT_RUN，不以本地退出码冒充。
+
+**交接对象先分家（CL-03）。** `packages/client-neutral-core/scripts/repair_pack_projection.py` 新增
+`TARGET_KINDS=("ADAPTER_INVOKE","MANUAL_COPY")` 与对应 operation 映射。人工交接路径**不读**
+`config/adapter-registry.json`、不点名适配器、不声明任何 `invoke`——同一问题交给人还是交给适配器是两份不同材料，
+不是同一份材料换个收件人。`render_handoff_text` 把绑定的证据引用与「还缺什么条件」逐条写出，四类交接事实分行且互不替代：
+`sent=false`、`copiedByUser.declared`、`userDeclaredHandoff.declared`（明写这只是用户说法，不是对方回执）、
+`externalReceipt.received`（只有外部系统自己的答复能填）；`validate_handoff_text` 要求每条 `binds.evidenceRefs`
+都出现在文本里，并拒发送／执行／已批准一类句子。`packages/contracts/schemas/workflow/repair-pack.schema.json`
+用 `allOf` 条件钉住两种目标：ADAPTER_INVOKE 必须非空 adapter 且 `invoke`，MANUAL_COPY 必须 `adapter=null`
+且 `copy-handoff`。合同目录仍 46 条，没有新增目录成员。证据：
+`tests/workflow-assistance/test_repair_pack_projection.py` 37 例；与后四片五个测试文件合跑 **102 passed（7.76s，2026-10-24 复跑）**。
+
+**状态要有地方落，且命令行不能替人做决定（CL-04）。** 新增
+`packages/client-neutral-core/scripts/repair_state.py`：`record` 只接受 WAITING_APPROVAL／BLOCKED，导出没有路径写
+APPROVED；`approve` 必须在既有 Control 受信授权记录（`control-trusted-grants`）中解析到未过期且覆盖
+`work-unit:<packId>` 或 `*` 的授权，模块只读该记录、从不创建或改写；`declare` 只写 `copiedByUser`／
+`userDeclaredHandoff`；`record_outcome` 只从 APPROVED 起，SUCCEEDED 需 reproducible／independent 且至少一条引用，
+self 自述只能停在待核验；每次变更都是按 `version` 的 compare-and-swap，重复请求是 no-op。
+`packages/client-neutral-core/scripts/canonical_store.py` 的 `action_plans` 从「建表无人读写」变为
+`save_action_plan`／`read_action_plan`／`list_action_plans`（写入只认点名的六个键，未知键具名拒绝，payload 走
+`secret_value_paths` 值扫描），迁移 v5 增加 `version`／`updated_at` 并由 `created_at` 回填，`action_plans`
+进 `RETENTION_EXEMPT_TABLES`（它是当前状态而非事件，裁剪会删掉后续导入结果要比对的那一行）。原计划句
+「该表当前零访问方法」已被本片取代；本次**没有**往 live canonical store 写行（CL-09 全链在夹具运行时根里跑），
+所以本机 live store 行数本轮未测，不补 0。证据：`tests/workflow-assistance/test_repair_state.py` 20 例。
+
+**导入不是核验（CL-05）。** 新增 `packages/client-neutral-core/scripts/repair_verification.py`：
+`validate_external_result` 把结果绑定到这一次交接——`packId`、`projectId`、交接声明的 `targetVersion`、产生时间与
+未用过的 `resultId`，错包／错项目／错版本／早于交接（STALE）／重复提交／关闭后晚到（RECORD_CLOSED）逐类具名拒绝；
+导入只写 `externalResults` 与 `pendingVerification`，记录状态不变，`receiptAcceptedAsVerification` 恒 false。
+`verify_repair_record` 重读 WORK-LAB 自己的 issues 投影：全部绑定指纹不再产生且本轮相关来源都作答→`RESOLVED`；
+仍有指纹→`UNRESOLVED`；任一相关来源未答、读被截断或投影缺席→`UNVERIFIABLE` 并点名未答来源，绝不关闭。
+证据强度沿用 `services/task-governance/completion_authority.py` 的四档 none／self／reproducible／independent，
+不造第五套尺；`RESOLVED+claimed SUCCEEDED→SUCCEEDED`，其余 RESOLVED→FAILED，UNRESOLVED→FAILED，
+UNVERIFIABLE 不关闭。`worklab/external-repair-result/v1` 与 `worklab/repair-verification/v1` 是内联载荷形状，
+未进合同目录（仍 46 条）。证据：`tests/workflow-assistance/test_repair_verification.py` 34 例。
+真实外部 AI 工具的产出本轮未跑，CL-09 记为 NOT_RUN。
+
+**界面只读地把它显示出来（CL-07）。** `services/orchestration/sidecar.py` 新增 GET-only `/api/v1/repair-packs`
+（`worklab/repair-packs-view/v1`），四态 `SOURCE_ABSENT`／`NO_OPEN_ISSUES`／`NO_PACK`／`OK`；
+`SOURCE_ABSENT` 表示没有来源作答，不是一个空列表的断言。`apps/observer/frontend/src/lib/repairPack.ts`
+只接受该形状且逐包复核 `handoff.sent=false`、`handoff.dispatched=false`；`apps/observer/frontend/src/lib/api.ts`
+从已验证快照基址派生端点（回环、GET-only），`?api=` 不能把交接读取引到外部主机。
+`apps/observer/frontend/src/views/IssueCenter.tsx` 挂在既有「项目监控」页（`apps/observer/frontend/src/views/OverviewView.tsx`）：
+问题行显示类别／影响／详情／软件／更新时间／重复次数／证据／下一步；`issues` 缺席画 UNKNOWN 且不造计数；
+`issues` 空且 `issuesSummary.complete===true` 才画「当前没有待交接的问题」，空但 `complete!==true` 画
+「扫描被截断，不能声称无问题」；交接预览显示包 ID、状态、`readiness.reasons` 与草稿句；包内唯一按钮是
+「复制交接材料」，无派发／执行／批准控件，复制后状态行仍写「仍未发送、未执行」。
+`apps/observer/frontend/src/contractConformance.ts` 的 `PINNED_REFINEMENT_PATHS` 由 22 增至 24。
+实测不是源码自述：`.project-local/runs/cl07_render_probe.py` 起真实 sidecar、已构建 dist 与 headless Chrome，
+真鼠标点击两次并读回剪贴板，`.project-local/artifacts/cl07/receipt.json` `verdict=PASS`、12/12 checks：
+直读路由包 `rp-work-lab-manual-copy-c59e22542c94e69b`，handoff 1,220 字符／2,390 B／40 换行；
+剪贴板 2,430 B 的 `normalizedSha256` 与路由相同，`crlfCount=40`、`bareLfCount=0`，
+`bytes=handoffBytes+crlfCount`（Windows 剪贴板 LF→CRLF 是唯一差异）；截图 `.project-local/artifacts/cl07/copied.png`
+（181,943 B，已实际查看）。前端两套件：`apps/observer/frontend/src/views/IssueCenter.test.tsx` 10 例、
+`apps/observer/frontend/src/lib/repairPack.test.ts` 7 例；`apps/observer/scripts/frontend_toolchain.py contracts`
+复跑 **70 文件／843 例**，`OBSERVER_FRONTEND_CONTRACTS_PASS js=0 vitest=0`。
+
+**整条纵线与反例族（CL-09）。** `tests/workflow-assistance/test_closed_loop_vertical_slice.py` 6 例，用真 canonical store、
+真 sidecar HTTP、每一步独立 `packages/client-neutral-core/scripts/repair_state.py` 进程（跨进程持久化，不靠同进程缓存）。
+主例走完 记录→声明复制→声明交接→授权→确定性本地工具真改 store→导入结果→核验（RESOLVED／independent）→SUCCEEDED→
+重启后 `/api/v1/repair-packs` 答 `NO_OPEN_ISSUES`、快照 `issues=[]`、记录仍 SUCCEEDED 且 `externalReceipt.received=true`，
+并断言载荷中没有 solution 字样（方案库不假装存在）。反例五例：过期结果拒、重复提交拒、自述不关闭、故障仍在→FAILED、
+关闭后晚到拒。回执 `.project-local/artifacts/cl09-vertical-slice/receipt.json`：8 个 CLI 步骤 rc=0，
+`restart={repairPacksStatus:NO_OPEN_ISSUES, snapshotIssueCount:0, recordStatus:SUCCEEDED,`
+`verificationOutcome:RESOLVED, evidenceLevel:independent}`，`externalAiTool=NOT_RUN`，
+`solutionLibrary=NOT_EXECUTED (CL-06 is a later slice)`。Observer 严格只读：写入全部经
+`packages/client-neutral-core/scripts/repair_state.py` 与 canonical store，界面只复制文本。
+未做且不冒充：真实外部 AI 工具那一腿 NOT_RUN；方案固化／检索属 CL-06 未执行；HUD 摘要属 CL-12 未动；
+Windows／Tauri 安装层未测，记 NOT_RUN。故 register 的 CL-09 保持 PARTIAL，不写 EXECUTED。
+
+**边界仍然成立的。** Control 的 13 个动词一个未加，`config/adapter-registry.json` 一字节未动，没有自动派发；
+Observer 无 execute／approve／retry／apply／rollback，也没有移交给它任何写路径；没有第二任务账本；
+工作集尚未提交，exact-SHA CI 未跑——本地门与守卫的绿不等于 CI 判决。
+
+## 28. 工作流与上下文服务治理并入（2026-10-24）
+
+用户于 2026-10-24 决定：跨软件工作流配置、部署、治理和管理归 WORK-LAB。本轮把两份现行治理文档与一份历史交接并入既有权威／归档结构，不新增 CURRENT、任务账本、第二母版或全局配置执行器。
+
+### 现行规范（`docs/decisions/`）
+
+- `docs/decisions/OPENVIKING_CONTEXT_SERVICE_STANDARD.md`：状态生效。上下文服务只走 `127.0.0.1:1933`
+  单端口；嵌入维度 1024；换模型或维度必须走标准 §5 的五步变更（备份、来源切换、重建、回读、归档旧索引）；
+  六项验收；验收必须在新会话实际调用检索与读取工具，`health` 成功或配置文件写入不算完成。
+- `docs/decisions/OPENVIKING_DEPLOY_HANDBOOK_20261024.md`：操作手册，记录 OpenViking 0.5.1.1 的部署、
+  13 类故障的现象／根因／修法、常用命令与验证清单；同时写明 ingest 被 0.5.1.1 阻塞、无 hook 接口的客户端
+  只能主动调用、依赖 `127.0.0.1:1234` 本地嵌入等限制。手册中的版本号与 PASS 是记录时点值，不是当前运行验收。
+- 两文件由 `AGENTS.md` 顶部指针引用，并在 `docs/current/workflow-assistance/workflow/active-authority-index.md`
+  §6 登记；客户端字段所有权仍以 `config/config-ownership.json` 为准（`preserve_unknown`），
+  模型、服务商、鉴权与端点不在本规范授权范围内。
+
+### 历史交接（归档，非现行任务权威）
+
+- 交接目录 `docs/history/archive/workflow-assistance/handoffs/agent-rules-governance-20261024/` 含摘要、
+  接收提示词、归档收据与来源清单；归档容器
+  `docs/history/owner-inputs/20261024/WORK-LAB-AgentRules-Governance-Intake-20261024.zip`
+  为 74,576 B、40 个成员、SHA-256 `190d56d69cd8f80efdac68abe393f087a2d4589896490003e50ca50810277fb8`，
+  登记为 `WL-STORE-AGENTRULES-20261024`（HISTORICAL_DERIVED_HANDOFF_NOT_TASKPACK）。
+- 资料目录校验本轮实测 PASS：107 条登记资料、2,465 个包内成员、188 个来源文件、52 个相关来源、
+  136 个排除的外来文件、56 个混合相关成员、0 个未解析来源；来源回读与产品实现为 NOT_EXECUTED。
+- 证据边界按原收据保留：21 个规则文件写入与文件回读、4 项原生装载诊断、51 个局部测试 PASS；
+  新会话读取与行为验证 NOT_EXECUTED，部署／提交／推送 NOT_EXECUTED。五类状态
+  （已写入、文件校验、原生装载诊断、新会话读取、行为验证）不得合并表述。
+- 未完成项保持原状：Open Design 0.24.1 daemon 离线 BLOCKED；MiniMax Design 4.0.4 持久入口 UNVERIFIED；
+  Claude Chat／Cowork、Cursor 用户全局与新会话验收仍有缺口；`STITCH_API_KEY` 事件只登记位置与风险类型，
+  未复制日志或值，轮换未验证。
+- 接收实现仍在并行工作区，尚未提交；其测试结果不属于本轮归档判据。
+- 归档目录受 `docs/history/archive/FROZEN-MANIFEST.json` 逐字节冻结；本轮新增 4 个文件后，
+  按 `scripts/audit/generate_frozen_surface_manifest.py` 重新生成清单，而不是手工改数字。
+
+### 边界
+
+本轮只把资料并入 WORK-LAB 的现有治理与归档，不改 AAOS 或 DESIGN-LAB 仓库；不写客户端模型／鉴权／端点；
+不把局部 PASS 表述为 exact-SHA CI 或发布完成；工作集保持未提交，提交与推送须 owner 另行授权。

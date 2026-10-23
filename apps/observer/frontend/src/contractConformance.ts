@@ -78,10 +78,10 @@ export type ArtifactHandlesSummaryRefines = Expect<Refines<SnapshotV3['artifactH
 export type CollectorsRefines = Expect<Refines<SnapshotV3['collectors'], WorkflowSnapshotV3['collectors']>>
 export type OperationProgressRefines = Expect<Refines<SnapshotV3['operationProgress'], WorkflowSnapshotV3['operationProgress']>>
 export type IsolatedTrialsRefines = Expect<Refines<SnapshotV3['isolatedTrials'], WorkflowSnapshotV3['isolatedTrials']>>
-// The two issue-centre sections (audit 2026-10-22). They are aliases only, deliberately NOT listed in
-// PINNED_REFINEMENT_PATHS below: that array is the population the render gate (`verify_snapshot_keys_rendered.py`)
-// requires a lane to consume, and no lane renders these yet — the front-end pass is a separate decision.
-// `WholeSnapshotRefines` still covers both, so a drift in either shape fails compilation today.
+// The two issue-centre sections (audit 2026-10-22). CL-07 wired them into the 项目监控 lane's problem
+// centre (`views/IssueCenter.tsx`), so they now belong to PINNED_REFINEMENT_PATHS: that array is the
+// population the render gate (`verify_snapshot_keys_rendered.py`) requires a lane to consume, and a
+// section no lane reads is a fact that never reaches a user.
 export type IssuesRefines = Expect<Refines<SnapshotV3['issues'], WorkflowSnapshotV3['issues']>>
 export type IssuesSummaryRefines = Expect<Refines<SnapshotV3['issuesSummary'], WorkflowSnapshotV3['issuesSummary']>>
 
@@ -99,7 +99,7 @@ export const PINNED_REFINEMENT_PATHS = [
   'schemaVersion', 'revision', 'generatedAt', 'sourceWatermark', 'transport', 'coverage',
   'governance', 'projects', 'executions', 'tasks', 'tokenSummary', 'git', 'ci', 'sourceRefs',
   'software', 'taskRecords', 'adapterCapabilities', 'artifactHandles', 'artifactHandlesSummary',
-  'collectors', 'operationProgress', 'isolatedTrials',
+  'collectors', 'operationProgress', 'isolatedTrials', 'issues', 'issuesSummary',
 ] as const
 
 /**

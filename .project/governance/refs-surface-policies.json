@@ -73,37 +73,37 @@
     "baseline": [
       {
         "target": "AGENTS.md",
-        "line": 105,
+        "line": 107,
         "ref": "skills/",
         "kind": "directory"
       },
       {
         "target": "AGENTS.md",
-        "line": 107,
+        "line": 109,
         "ref": "bin/",
         "kind": "directory"
       },
       {
         "target": "AGENTS.md",
-        "line": 107,
+        "line": 109,
         "ref": "bin/",
         "kind": "directory"
       },
       {
         "target": "AGENTS.md",
-        "line": 110,
+        "line": 112,
         "ref": "bin/",
         "kind": "directory"
       },
       {
         "target": "AGENTS.md",
-        "line": 110,
+        "line": 112,
         "ref": "skills/",
         "kind": "directory"
       },
       {
         "target": "AGENTS.md",
-        "line": 111,
+        "line": 113,
         "ref": "skills/",
         "kind": "directory"
       },

@@ -36,7 +36,9 @@ WAL_TABLES = (
 # Tables a retention ceiling may touch: the append-only event ledgers. Identity/registry tables and the
 # migration history are excluded by derivation, so a table added to WAL_TABLES is retention-exempt until
 # someone states which category it belongs to -- an unlisted table cannot be pruned by accident.
-RETENTION_EXEMPT_TABLES = ("schema_migrations", "projects", "tasks")
+# `action_plans` is current state, one row per plan identity, not an event: a ceiling on it would delete the
+# row a later imported result is checked against, and the delete would report success while doing it.
+RETENTION_EXEMPT_TABLES = ("schema_migrations", "projects", "tasks", "action_plans")
 RETAINABLE_TABLES = tuple(table for table in WAL_TABLES if table not in RETENTION_EXEMPT_TABLES)
 
 # Preference order for the "newest timestamp" witness; the column is resolved per table from
@@ -431,6 +433,23 @@ class CanonicalStore:
             if 4 not in existing:
                 self._conn.execute(
                     "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (4, ?)",
+                    (_now(),),
+                )
+            # Version 5: `action_plans` gains the two columns a lifecycle needs. The v1 table carried only
+            # status + created_at, so a second writer could overwrite the first with no compare-and-swap and
+            # a reader could not tell a stale row from a fresh one. `version` starts at 1 for existing rows
+            # (there are none in the live store, but a fixture may hold some) and `updated_at` is backfilled
+            # from created_at rather than invented.
+            action_plan_columns = {row[1] for row in self._conn.execute("PRAGMA table_info(action_plans)")}
+            for column, declaration in (("version", "INTEGER NOT NULL DEFAULT 1"),
+                                        ("updated_at", "TEXT")):
+                if column not in action_plan_columns:
+                    self._conn.execute(f"ALTER TABLE action_plans ADD COLUMN {column} {declaration}")
+            self._conn.execute(
+                "UPDATE action_plans SET updated_at = created_at WHERE updated_at IS NULL")
+            if 5 not in existing:
+                self._conn.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (5, ?)",
                     (_now(),),
                 )
             if not existing:
@@ -983,6 +1002,145 @@ class CanonicalStore:
                         item["checkpointParseState"] = "UNPARSEABLE"
                 result.append(item)
             return result
+
+    # ---- action plans (CL-04): one current row per plan identity, addressable and versioned ------
+
+    # The writable vocabulary: caller field -> column. ERR-290 -- a key that is not on this list is refused
+    # by name rather than skipped, because a record whose keys all missed once built an empty UPDATE and
+    # died with `incomplete input` while reading like a typo of the vocabulary.
+    _ACTION_PLAN_FIELDS = {
+        "planId": ("plan_id", str),
+        "projectId": ("project_id", str),
+        "status": ("status", str),
+        "createdAt": ("created_at", str),
+        "approvedAt": ("approved_at", str),
+        "payload": ("payload", dict),
+    }
+    _ACTION_PLAN_REQUIRED = ("planId", "projectId", "status", "payload")
+
+    def _action_plan_readback(self, row: sqlite3.Row) -> dict[str, Any]:
+        columns = set(row.keys())
+        item = {key: (row[column] if column in columns else None)
+                for key, (column, _) in self._ACTION_PLAN_FIELDS.items()}
+        raw = item.get("payload")
+        if isinstance(raw, str) and raw:
+            item["payloadDigest"] = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+            try:
+                item["payload"] = json.loads(raw)
+                item["payloadParseState"] = "PARSED"
+            except (json.JSONDecodeError, TypeError):
+                item["payload"] = None
+                item["payloadParseState"] = "UNPARSEABLE"
+        else:
+            item["payloadDigest"] = None
+            item["payloadParseState"] = "ABSENT"
+        # A read-only connection may open a database older than migration 5; saying `version: None` beats
+        # inventing 1, which would make an unmigrated row look writable under compare-and-swap.
+        item["version"] = int(row["version"] or 1) if "version" in columns else None
+        item["updatedAt"] = (row["updated_at"] if "updated_at" in columns else None) or item.get("createdAt")
+        return item
+
+    def save_action_plan(self, record: Mapping[str, Any], *,
+                         expected_version: int | None = None) -> dict[str, Any]:
+        """Insert a plan row, or replace one only at the version the caller read.
+
+        ``expected_version=None`` is allowed for an insert and refused for an update: a default that
+        silently overwrites would make the version column decorative. A write whose canonical payload,
+        status and approval are identical to what is stored is a no-op -- a retried record must not mint a
+        new version -- and every other write bumps ``version`` by exactly one.
+        """
+        if not isinstance(record, Mapping):
+            raise ValueError("action plan record must be an object")
+        unknown = sorted(key for key in record if key not in self._ACTION_PLAN_FIELDS)
+        if unknown:
+            raise ValueError(f"action plan names field(s) with no column: {unknown}; the writable "
+                             f"vocabulary is {sorted(self._ACTION_PLAN_FIELDS)}")
+        missing = sorted(key for key in self._ACTION_PLAN_REQUIRED if record.get(key) in (None, ""))
+        if missing:
+            raise ValueError(f"action plan is missing required field(s) {missing}; the required "
+                             f"vocabulary is {list(self._ACTION_PLAN_REQUIRED)}")
+        if not isinstance(record["payload"], Mapping):
+            raise ValueError("action plan payload must be an object")
+        payload_text = json.dumps(dict(record["payload"]), ensure_ascii=False, sort_keys=True)
+        # The contract's own field name `authorizationRef` contains a word on the auth-token key deny list,
+        # so a key-name screen here would refuse the document it exists to protect. Values are screened:
+        # a credential carried under any key still stops the write.
+        from artifact_flow_policy import secret_value_paths  # noqa: PLC0415 - shared predicate, no cycle
+        leaked = secret_value_paths(record["payload"])
+        if leaked:
+            raise ValueError(f"action plan payload carries sensitive value(s) at: {sorted(leaked)}")
+        plan_id = str(record["planId"])
+        with self._lock:
+            row = self._conn.execute("SELECT * FROM action_plans WHERE plan_id=?", (plan_id,)).fetchone()
+            if row is None:
+                created_at = str(record.get("createdAt") or _now())
+                approved_at = record.get("approvedAt")
+                self._conn.execute(
+                    """
+                    INSERT INTO action_plans
+                    (plan_id, project_id, status, created_at, approved_at, payload, version, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+                    """,
+                    (plan_id, str(record["projectId"]), str(record["status"]), created_at,
+                     None if approved_at is None else str(approved_at), payload_text, created_at),
+                )
+                self._conn.commit()
+                stored = self._conn.execute(
+                    "SELECT * FROM action_plans WHERE plan_id=?", (plan_id,)).fetchone()
+                return {**self._action_plan_readback(stored), "changed": True}
+            current = self._action_plan_readback(row)
+            approved_at = (current.get("approvedAt") if "approvedAt" not in record
+                           else record.get("approvedAt"))
+            stored_payload = current.get("payload")
+            unchanged = (current.get("payloadParseState") == "PARSED"
+                         and json.dumps(stored_payload, ensure_ascii=False, sort_keys=True) == payload_text
+                         and current.get("status") == str(record["status"])
+                         and current.get("approvedAt") == approved_at)
+            if unchanged:
+                return {**current, "changed": False}
+            if expected_version is None:
+                raise ValueError(
+                    f"ACTION_PLAN_VERSION_CONFLICT plan {plan_id} already exists at version "
+                    f"{current['version']}; expected_version is required to change an existing row")
+            if int(expected_version) != int(current["version"]):
+                raise ValueError(
+                    f"ACTION_PLAN_VERSION_CONFLICT plan {plan_id} is at version {current['version']}, "
+                    f"caller expected {expected_version}; re-read before writing")
+            self._conn.execute(
+                """
+                UPDATE action_plans
+                SET project_id=?, status=?, approved_at=?, payload=?, version=version+1, updated_at=?
+                WHERE plan_id=? AND version=?
+                """,
+                (str(record["projectId"]), str(record["status"]),
+                 None if approved_at is None else str(approved_at), payload_text, _now(),
+                 plan_id, int(expected_version)),
+            )
+            if self._conn.execute("SELECT changes()").fetchone()[0] != 1:
+                self._conn.rollback()
+                raise ValueError(f"ACTION_PLAN_VERSION_CONFLICT plan {plan_id} moved between the read "
+                                 "and the write")
+            self._conn.commit()
+            stored = self._conn.execute(
+                "SELECT * FROM action_plans WHERE plan_id=?", (plan_id,)).fetchone()
+            return {**self._action_plan_readback(stored), "changed": True}
+
+    def read_action_plan(self, plan_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM action_plans WHERE plan_id=?", (str(plan_id),)).fetchone()
+        return None if row is None else self._action_plan_readback(row)
+
+    def list_action_plans(self, project_id: str | None = None) -> list[dict[str, Any]]:
+        with self._lock:
+            if project_id:
+                rows = self._conn.execute(
+                    "SELECT * FROM action_plans WHERE project_id=? ORDER BY updated_at DESC, plan_id",
+                    (str(project_id),)).fetchall()
+            else:
+                rows = self._conn.execute(
+                    "SELECT * FROM action_plans ORDER BY updated_at DESC, plan_id").fetchall()
+        return [self._action_plan_readback(row) for row in rows]
 
     def projection(self) -> dict[str, Any]:
         with self._lock:
