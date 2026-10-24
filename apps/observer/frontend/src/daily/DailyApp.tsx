@@ -12,6 +12,7 @@ import {
 import {
   fetchSolutions, type SolutionSearchView, type SolutionItem,
 } from '@/daily/solutionsClient'
+import { WindowControls } from '@/components/layout/WindowControls'
 import {
   dailyProjectCards, dailyIssueRows, dailyToolRows, buildHandoverMaterial,
   type DailyProjectCard, type DailyIssueRow, type DailyToolRow,
@@ -40,7 +41,9 @@ function writeParams(state: { dv: DailyView; dp: string | null; dq: string; dm: 
     if (value) p.set(name, value)
     else p.delete(name)
   }
-  setOrDrop('shell', 'daily')
+  // 入口标记写回 `surface`，不改写 `shell`：桌面入口的 shell=tauri 是无边框壳的自声明，
+  // 被任何一次导航覆盖掉，窗口控件就只能靠 IPC 注入探测来判定（浏览器里则应完全没有）。
+  setOrDrop('surface', 'daily')
   setOrDrop('dv', state.dv === 'home' ? null : state.dv)
   setOrDrop('dp', state.dp)
   setOrDrop('dq', state.dq || null)
@@ -216,9 +219,11 @@ export function DailyApp(props: {
           </div>
         </nav>
 
-        {/* 主区：顶栏（全局搜索）+ 内容 */}
+        {/* 主区：顶栏（全局搜索）+ 内容。borderless 主窗口默认从这里进入，
+            顶栏容器是拖动区（Tauri 注入 data-tauri-drag-region 处理），
+            搜索框等交互元素不带该属性，点击行为不受影响。 */}
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="flex items-center gap-3 border-b border-[#303A46] bg-[#171D25] px-5 py-3">
+          <div data-tauri-drag-region className="flex items-center gap-3 border-b border-[#303A46] bg-[#171D25] px-5 py-3">
             <input
               ref={searchRef}
               type="search"
@@ -228,7 +233,7 @@ export function DailyApp(props: {
               aria-label="全局搜索"
               className="min-w-0 flex-1 rounded border border-[#303A46] bg-[#10141A] px-3 py-1.5 text-sm outline-none focus:border-[#40B6C7]"
             />
-            <span className="text-xs text-[#A6B0BE]">Ctrl+K</span>
+            <span className="daily-kbd-hint text-xs text-[#A6B0BE]">Ctrl+K</span>
           </div>
           {searchDisabledNote && (
             <div role="alert" className="border-b border-[#303A46] bg-[#171D25] px-5 py-2 text-xs text-amber-300">
@@ -295,7 +300,15 @@ export function DailyApp(props: {
   )
   void copyState
   void DAILY_PARAMS
-  return shell
+  // WindowControls portals to <body>; under a browser entry it renders null.
+  // The desktop main window is borderless (decorations:false), so without this
+  // cluster the default daily entry can neither minimize nor close from inside.
+  return (
+    <>
+      {shell}
+      <WindowControls />
+    </>
+  )
 }
 
 function HomeView(props: { cards: DailyProjectCard[]; totalCount: number; onOpen: (id: string) => void }) {

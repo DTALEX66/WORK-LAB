@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-24T02:30:44Z",
+  "generatedAt": "2026-10-24T13:38:43Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2588,
-    "distinctProjectLocalTokens": 649,
+    "trackedFilesScanned": 2593,
+    "distinctProjectLocalTokens": 654,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 649,
-    "citationsToAbsentTokens": 1885
+    "tokensAbsent": 654,
+    "citationsToAbsentTokens": 1892
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 983,
-      "distinctPaths": 493
+      "citations": 990,
+      "distinctPaths": 498
     },
     "machine_local_runtime_pointer": {
       "citations": 245,
@@ -2490,52 +2490,58 @@
         "text": "| CL-07 | P0 | EXECUTED_20261023 / 已提交 f8710dfe（真实渲染与剪贴板读回 12/12 绿） | 前端消费问题段与修复包：`services/orchestration/sidecar.py` 新增 GET-only `/api/v1/repair-packs`（`worklab/repair-packs-view/v1`），四态 `SOURCE_ABSE"
       },
       {
+        "path": ".project-local/artifacts/cl09-external-leg/external-leg-receipt.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 48,
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
+      },
+      {
         "path": ".project-local/artifacts/cl09-vertical-slice/receipt.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
-        "text": "| CL-09 | P0 | PARTIAL_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具 NOT_RUN；方案库后端已交付（界面待 STITCH）；Windows/Tauri 构建与原生窗口读回 PASS、MSI 安装/升级/卸载实测 PASS（签名 NotSigned，per-user 未构建） | 一条纵线端到端与反例族：`tests/workflow-assis"
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
       },
       {
         "path": ".project-local/artifacts/cl10/install-lifecycle/msi-install-lifecycle-receipt.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
-        "text": "| CL-09 | P0 | PARTIAL_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具 NOT_RUN；方案库后端已交付（界面待 STITCH）；Windows/Tauri 构建与原生窗口读回 PASS、MSI 安装/升级/卸载实测 PASS（签名 NotSigned，per-user 未构建） | 一条纵线端到端与反例族：`tests/workflow-assis"
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
       },
       {
         "path": ".project-local/artifacts/cl10/perf-baseline.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 49,
-        "text": "| CL-10 | P1 | EXECUTED_20261024 / 已提交 f8710dfe（数字、命令、退出码、原始读数同交回；三处仪表缺陷已修） | 性能基线实测（`WL-REC-0107` 明记本轮无性能测量）：冷启动、初始 JS 传输体积、空闲 CPU／内存、连续观测成本、页面切换延迟、数据新鲜度；先取基线再谈按需加载收益，不把「导航条目多」当 CPU 证据。依赖 CL-08。验收 数字"
+        "text": "| CL-10 | P1 | EXECUTED_20261024 / 已提交 a01f6ed6（数字、命令、退出码、原始读数同交回；三处仪表缺陷已修） | 性能基线实测（`WL-REC-0107` 明记本轮无性能测量）：冷启动、初始 JS 传输体积、空闲 CPU／内存、连续观测成本、页面切换延迟、数据新鲜度；先取基线再谈按需加载收益，不把「导航条目多」当 CPU 证据。依赖 CL-08。验收 数字"
       },
       {
         "path": ".project-local/artifacts/cl10/tauri-build-receipt.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
-        "text": "| CL-09 | P0 | PARTIAL_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具 NOT_RUN；方案库后端已交付（界面待 STITCH）；Windows/Tauri 构建与原生窗口读回 PASS、MSI 安装/升级/卸载实测 PASS（签名 NotSigned，per-user 未构建） | 一条纵线端到端与反例族：`tests/workflow-assis"
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
       },
       {
         "path": ".project-local/artifacts/cl10/tauri-msi-receipt.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
-        "text": "| CL-09 | P0 | PARTIAL_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具 NOT_RUN；方案库后端已交付（界面待 STITCH）；Windows/Tauri 构建与原生窗口读回 PASS、MSI 安装/升级/卸载实测 PASS（签名 NotSigned，per-user 未构建） | 一条纵线端到端与反例族：`tests/workflow-assis"
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
       },
       {
         "path": ".project-local/artifacts/cl10/window-readback-pre-msi.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
-        "text": "| CL-09 | P0 | PARTIAL_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具 NOT_RUN；方案库后端已交付（界面待 STITCH）；Windows/Tauri 构建与原生窗口读回 PASS、MSI 安装/升级/卸载实测 PASS（签名 NotSigned，per-user 未构建） | 一条纵线端到端与反例族：`tests/workflow-assis"
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
       },
       {
         "path": ".project-local/artifacts/cl10/window-readback.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
-        "text": "| CL-09 | P0 | PARTIAL_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具 NOT_RUN；方案库后端已交付（界面待 STITCH）；Windows/Tauri 构建与原生窗口读回 PASS、MSI 安装/升级/卸载实测 PASS（签名 NotSigned，per-user 未构建） | 一条纵线端到端与反例族：`tests/workflow-assis"
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
       },
       {
         "path": ".project-local/artifacts/cl10/window-readback.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
-        "text": "| CL-09 | P0 | PARTIAL_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具 NOT_RUN；方案库后端已交付（界面待 STITCH）；Windows/Tauri 构建与原生窗口读回 PASS、MSI 安装/升级/卸载实测 PASS（签名 NotSigned，per-user 未构建） | 一条纵线端到端与反例族：`tests/workflow-assis"
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
       },
       {
         "path": ".project-local/artifacts/curator-foldback",
@@ -4092,16 +4098,52 @@
         "text": "| CL-07 | P0 | EXECUTED_20261023 / 已提交 f8710dfe（真实渲染与剪贴板读回 12/12 绿） | 前端消费问题段与修复包：`services/orchestration/sidecar.py` 新增 GET-only `/api/v1/repair-packs`（`worklab/repair-packs-view/v1`），四态 `SOURCE_ABSE"
       },
       {
+        "path": ".project-local/runs/cl09-external-leg/runtime",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 48,
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
+      },
+      {
+        "path": ".project-local/runs/cl10/hud-dock-readback.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿）；多显示器未测（本机单屏） **2026-10-24 原生窄窗轮（本行最后一条 NOT_RUN 已实"
+      },
+      {
+        "path": ".project-local/runs/cl10/hud-strip-readback.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 47,
+        "text": "| CL-08 | P1 | EXECUTED_20261024 / 日常壳四主入口＋设置置底已成为桌面默认主窗口入口（本轮改 tauri.conf main url 为 shell=daily，原生主窗口读回 13/13 绿）；31 个专业入口与全部 ?view= 旧深链原样保留（深链仍落专业壳，已实测） **2026-10-24 默认入口轮（本行「默认主窗口入口未切」的缺口已实测闭合）**：切"
+      },
+      {
+        "path": ".project-local/runs/cl10/hud-strip-readback.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿）；多显示器未测（本机单屏） **2026-10-24 原生窄窗轮（本行最后一条 NOT_RUN 已实"
+      },
+      {
         "path": ".project-local/runs/cl10/install-lifecycle",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
-        "text": "| CL-09 | P0 | PARTIAL_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具 NOT_RUN；方案库后端已交付（界面待 STITCH）；Windows/Tauri 构建与原生窗口读回 PASS、MSI 安装/升级/卸载实测 PASS（签名 NotSigned，per-user 未构建） | 一条纵线端到端与反例族：`tests/workflow-assis"
+        "text": "| CL-09 | P0 | EXECUTED_20261024 / 核心纵线与重启持久化 6/6 绿；外部 AI 工具腿已真实执行（codex-cli 一次性修复→import-result→独立核验 RESOLVED/independent→重启读回 NO_OPEN_ISSUES，回执 .project-local/artifacts/cl09-external-leg/external-le"
       },
       {
         "path": ".project-local/runs/cl10/measure_perf.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 49,
-        "text": "| CL-10 | P1 | EXECUTED_20261024 / 已提交 f8710dfe（数字、命令、退出码、原始读数同交回；三处仪表缺陷已修） | 性能基线实测（`WL-REC-0107` 明记本轮无性能测量）：冷启动、初始 JS 传输体积、空闲 CPU／内存、连续观测成本、页面切换延迟、数据新鲜度；先取基线再谈按需加载收益，不把「导航条目多」当 CPU 证据。依赖 CL-08。验收 数字"
+        "text": "| CL-10 | P1 | EXECUTED_20261024 / 已提交 a01f6ed6（数字、命令、退出码、原始读数同交回；三处仪表缺陷已修） | 性能基线实测（`WL-REC-0107` 明记本轮无性能测量）：冷启动、初始 JS 传输体积、空闲 CPU／内存、连续观测成本、页面切换延迟、数据新鲜度；先取基线再谈按需加载收益，不把「导航条目多」当 CPU 证据。依赖 CL-08。验收 数字"
+      },
+      {
+        "path": ".project-local/runs/cl10/native-main-entry/native-main-entry.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 45,
+        "text": "| CL-06 | P1 | EXECUTED_20261024 / 后端已交付（已提交 a01f6ed6，13 例绿）；检索界面已交付并随桌面默认入口生效（已提交 123ebbdf，本轮 tauri.conf 主窗口 url 已切 surface=daily，原生读回 PASS）；方案库端到端命中 5/5 **2026-10-24 默认入口轮（owner「完成全部前后端任务 实现项目闭环」）**"
+      },
+      {
+        "path": ".project-local/runs/cl10/native-main-entry/native-main-entry.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿）；多显示器未测（本机单屏） **2026-10-24 原生窄窗轮（本行最后一条 NOT_RUN 已实"
       },
       {
         "path": ".project-local/runs/client_roots_probe.py",
@@ -11405,7 +11447,7 @@
     "reviewQueue": 8,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 359
+    "presentOnThisMachine": 363
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

@@ -1,6 +1,7 @@
 // HUD 四态（H01 常驻窄面板 / H02 悬停摘要 / H03 工具详情 / H04 新回复提醒）。
 // 默认工具视角。快照没有额度/余额数据：百分比一律 UNKNOWN、不补 0、不画虚构柱状图；
-// DeepSeek 等余额类单独标注口径。原生窗口行为（贴边/拖动/多显示器/DPI）未在浏览器中验证。
+// DeepSeek 等余额类单独标注口径。原生窄窗（label=hud，150×480）经 ?hud=daily 进入本组件，
+// 拖动面由紧凑布局的 TopStatusBar 既有 .drag-region 提供，贴边停靠由 tauri 侧完成。
 import { useMemo, useState } from 'react'
 import type { SnapshotV3 } from '@/types'
 import { fmtTimestamp } from '@/lib/api'
@@ -35,8 +36,9 @@ function writeHs(state: HudState) {
   window.history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''))
 }
 
-export function HudDaily(props: { snap: SnapshotV3 | null }) {
+export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean }) {
   const { snap } = props
+  const native = props.nativeStrip === true
   const [state, setState] = useState<HudState>(readHs)
   const onState = (s: HudState) => { setState(s); writeHs(s) }
   const toolIds = useMemo(
@@ -47,10 +49,29 @@ export function HudDaily(props: { snap: SnapshotV3 | null }) {
     .filter((e) => e.state === 'WAITING_APPROVAL' || e.state === 'WAITING_USER').length
   const activeProjects = (snap?.projects ?? []).filter((p) => p.activityState === 'ACTIVE').length
 
+  const stateSwitcher = (
+    <div className="flex flex-wrap justify-center gap-1 text-xs" aria-label="HUD 状态切换">
+      {(['h01', 'h02', 'h03', 'h04'] as HudState[]).map((s) => (
+        <button key={s} type="button" onClick={() => onState(s)}
+          aria-pressed={state === s}
+          className={`rounded px-2 py-1 ${state === s ? 'bg-[#1C2430] text-[#40B6C7]' : 'text-[#A6B0BE]'}`}>
+          {s.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  )
+
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-3 bg-[#10141A] p-4 text-[#E8EDF3]" data-hud-state={state}>
+    <div className={`flex h-screen flex-col items-center gap-2 overflow-y-auto bg-[#10141A] p-2 text-[#E8EDF3] ${native ? 'justify-start' : 'justify-center gap-3'}`}
+      data-hud-state={state} data-hud-frame={native ? 'native-strip' : 'panel'}>
+      {native && (
+        // borderless 窄窗的拖动面（与 TopStatusBar 的 .drag-region 同一属性约定）；
+        // 浏览器层这个属性是空操作，所以不随壳切换而消失。
+        <div data-tauri-drag-region aria-hidden="true"
+          className="h-6 w-full shrink-0 rounded-md border border-[#303A46] bg-[#171D25]" />
+      )}
       {state === 'h01' && (
-        <section aria-label="工具额度窄面板" className="w-[150px] rounded-2xl border border-[#303A46] bg-[#171D25] p-3">
+        <section aria-label="工具额度窄面板" className="w-full max-w-[150px] rounded-2xl border border-[#303A46] bg-[#171D25] p-3">
           <ul className="space-y-2">
             {toolIds.length === 0 && (
               <li className="py-2 text-center text-xs text-[#A6B0BE]">未连接工具</li>
@@ -71,7 +92,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null }) {
       )}
 
       {state === 'h02' && (
-        <section aria-label="悬停摘要" className="w-[300px] rounded-2xl border border-[#303A46] bg-[#171D25] p-4">
+        <section aria-label="悬停摘要" className="w-full max-w-[300px] rounded-2xl border border-[#303A46] bg-[#171D25] p-4">
           <h2 className="text-xs font-semibold">当前工具对应窗口</h2>
           {toolIds.length === 0
             ? <p className="mt-2 text-xs text-[#A6B0BE]">未连接工具</p>
@@ -90,7 +111,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null }) {
       )}
 
       {state === 'h03' && (
-        <section aria-label="工具详情" className="w-[400px] rounded-2xl border border-[#303A46] bg-[#171D25] p-5">
+        <section aria-label="工具详情" className="w-full max-w-[400px] rounded-2xl border border-[#303A46] bg-[#171D25] p-5">
           <div className="flex items-center gap-3">
             <ToolIcon label={toolIds[0]?.name ?? '?'} />
             <div>
@@ -115,7 +136,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null }) {
       )}
 
       {state === 'h04' && (
-        <section aria-label="新回复提醒" className="w-[380px] rounded-2xl border border-[#303A46] bg-[#171D25] p-5">
+        <section aria-label="新回复提醒" className="w-full max-w-[380px] rounded-2xl border border-[#303A46] bg-[#171D25] p-5">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-sm font-semibold">外部回复提醒</h2>
@@ -134,15 +155,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null }) {
         </section>
       )}
 
-      <div className="flex gap-2 text-xs" aria-label="HUD 状态切换">
-        {(['h01', 'h02', 'h03', 'h04'] as HudState[]).map((s) => (
-          <button key={s} type="button" onClick={() => onState(s)}
-            aria-pressed={state === s}
-            className={`rounded px-2 py-1 ${state === s ? 'bg-[#1C2430] text-[#40B6C7]' : 'text-[#A6B0BE]'}`}>
-            {s.toUpperCase()}
-          </button>
-        ))}
-      </div>
+      {native ? null : stateSwitcher}
     </div>
   )
 }

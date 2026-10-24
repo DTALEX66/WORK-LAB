@@ -45,9 +45,15 @@ function run() {
   }
 
   test("main window starts UNKNOWN and uses an opaque desktop canvas", () => {
-    assert.strictEqual(windows.main.url, "index.html?view=full&mode=UNKNOWN&theme=dark&shell=tauri");
+    assert.strictEqual(windows.main.url,
+      "index.html?view=full&mode=UNKNOWN&theme=dark&shell=tauri&surface=daily");
     assert.strictEqual(query(windows.main.url).get("mode"), "UNKNOWN");
     assert.strictEqual(query(windows.main.url).get("view"), "full");
+    // 2026-10-24 (CL-08, owner 「完成全部前后端任务」): the desktop default entry IS the
+    // daily shell, declared by surface=daily. shell=tauri stays because it is how the
+    // frameless window declares itself — dropping it would leave the frontend guessing.
+    assert.strictEqual(query(windows.main.url).get("surface"), "daily");
+    assert.strictEqual(query(windows.main.url).get("shell"), "tauri");
     assert.strictEqual(windows.main.decorations, false);
     assert.strictEqual(windows.main.transparent, false);
   });
@@ -68,6 +74,25 @@ function run() {
     assert.strictEqual(windows.panel.alwaysOnTop, true);
     assert.strictEqual(windows.panel.skipTaskbar, true);
     assert.strictEqual(windows.panel.visible, false);
+  });
+
+  test("hud window is the CL-12 native narrow strip, docked and tray-toggled", () => {
+    assert.strictEqual(windows.hud.url, "index.html?surface=hud&mode=UNKNOWN&theme=dark");
+    assert.strictEqual(query(windows.hud.url).get("surface"), "hud");
+    // The strip is its OWN surface: measured at 150 logical, the compact panel's
+    // TopStatusBar pushes ten controls past the viewport while .app{overflow:hidden}
+    // keeps scrollWidth at 150 — an unreachable control bar, not a narrow HUD.
+    assert.ok(windows.hud.width >= 140 && windows.hud.width <= 160,
+      "CL-12 demands a 140-160px native 窄窗, got " + windows.hud.width);
+    assert.strictEqual(windows.hud.alwaysOnTop, true);
+    assert.strictEqual(windows.hud.skipTaskbar, true);
+    assert.strictEqual(windows.hud.decorations, false);
+    assert.strictEqual(windows.hud.transparent, false);
+    assert.strictEqual(windows.hud.visible, false);
+    assert.strictEqual(windows.hud.resizable, true,
+      "the panel must stay the only non-resizable declared window (label-resolution contract)");
+    assert.ok(caps.windows.includes("hud"),
+      "data-tauri-drag-region is inert on a label the capability does not cover");
   });
 
   test("the settings page quotes the panel size the shell actually declares", () => {

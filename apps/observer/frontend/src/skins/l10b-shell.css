@@ -213,6 +213,11 @@
 .winctl-btn:hover { border-color: var(--border); background: var(--panel2); color: var(--ink); }
 .winctl-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .winctl-close:hover { border-color: #7f1d1d; background: #7f1d1d; color: #fff; }
+
+/* The daily shell's search-shortcut hint occupies the same top-right corner the caption
+   cluster paints into once the window is borderless (measured in the native readback:
+   "Ctrl+K" sat under the close button). With the cluster present, the hint yields. */
+body:has(.winctl) .daily-kbd-hint { display: none; }
 .winctl-zoom {
   min-width: 38px;
   /* 10px read this role used to claim as a sanctioned micro part. The instrument measured it as text

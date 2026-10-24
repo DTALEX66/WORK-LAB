@@ -472,3 +472,72 @@ class ScratchStaysInsideTheBoundary(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class DefaultEntryAndHudWindowContract(unittest.TestCase):
+    """CL-08 default entry + CL-12 native narrow HUD window, pinned on the declared bytes.
+
+    2026-10-24 (owner: 「完成全部前后端任务 实现项目闭环」): the desktop main window is the
+    product's default entry, and its URL now carries shell=daily; the browser address and every
+    ?view= deep link keep the professional shell, so the 31-entry IA contract is untouched here.
+    The HUD strip is a third declared window; its width band (140-160) and its read-only window
+    flags are contract, not taste — CL-12 demanded a native 窄窗 with 贴边/拖动, and a config
+    drift that widens it past the band or gives it a taskbar entry is a product change.
+    """
+
+    def _windows(self) -> dict:
+        conf = json.loads(TAURI_CONF.read_text(encoding="utf-8"))
+        return {w["label"]: w for w in conf["app"]["windows"]}
+
+    def test_the_main_window_default_entry_is_the_daily_shell(self):
+        url = self._windows()["main"]["url"]
+        self.assertIn("surface=daily", url, url)
+        # shell=tauri is the frameless shell's own declaration and must survive the entry
+        # switch, or the caption cluster falls back to feature-detection alone.
+        self.assertIn("shell=tauri", url, url)
+        self.assertNotIn("surface=hud", url, url)
+
+    def test_the_hud_window_is_declared_inside_the_narrow_band(self):
+        hud = self._windows()["hud"]
+        self.assertTrue(140 <= hud["width"] <= 160,
+                        f"CL-12 demands a 140-160px native 窄窗, got {hud['width']}")
+        self.assertEqual(hud["minWidth"], 140)
+        self.assertIn("surface=hud", hud["url"], hud["url"])
+        # The strip is its own surface, NOT the compact panel squeezed to 150px: measured at
+        # 150 logical the compact TopStatusBar pushes ten controls past the viewport while
+        # .app{overflow:hidden} keeps scrollWidth at 150, i.e. an unreachable control bar.
+        self.assertNotIn("view=compact", hud["url"],
+                        "a 150px window must not render the compact control strip")
+
+    def test_the_hud_window_is_a_borderless_dockable_strip(self):
+        hud = self._windows()["hud"]
+        # 置顶跳任务栏 + 无边框 + 默认隐藏：与既有 panel 同一族浮窗契约（CL-12 现状行）。
+        self.assertTrue(hud["alwaysOnTop"] and hud["skipTaskbar"] and hud["visible"] is False)
+        self.assertFalse(hud["decorations"], "no native title bar: the strip drags by its own handle")
+        self.assertFalse(hud["transparent"], "transparent=false stays pinned (CL-12 design-state row)")
+        self.assertTrue(hud["resizable"],
+                        "the fallback label-resolution rule depends on the panel being the only "
+                        "non-resizable declared window; the HUD must not take that role")
+
+    def test_declared_hud_size_from_disk_is_the_same_number_the_probe_will_expect(self):
+        self.assertEqual(wsr.declared_from_conf(TAURI_CONF, "hud"), {"width": 150, "height": 480})
+
+    def test_the_rust_side_docks_and_toggles_the_hud_window(self):
+        """Config alone is not 贴边/拖动: the tray item, the flush-right dock and the drag
+        capability must exist, each keyed on the same label the conf declares."""
+        rust = LIB_RS.read_text(encoding="utf-8")
+        self.assertIn('get_webview_window("hud")', rust, "no live hud window handling in lib.rs")
+        self.assertIn('MenuItem::with_id(app, "hud"', rust, "the tray offers no HUD toggle")
+        self.assertIn("msize.width as i32 - size.width as i32", rust,
+                      "toggle_hud no longer docks flush against the right edge (贴边)")
+        caps = ROOT / "apps" / "observer" / "src-tauri" / "capabilities" / "default.json"
+        self.assertIn("hud", json.loads(caps.read_text(encoding="utf-8"))["windows"],
+                      "data-tauri-drag-region is inert without start-dragging on this label")
+
+    def test_the_daily_shell_carries_the_window_controls_it_needs_when_borderless(self):
+        daily = ROOT / "apps" / "observer" / "frontend" / "src" / "daily" / "DailyApp.tsx"
+        src = daily.read_text(encoding="utf-8")
+        self.assertIn("WindowControls", src,
+                      "the default desktop entry cannot minimize/close without the caption cluster")
+        self.assertIn("data-tauri-drag-region", src,
+                      "a borderless default entry with no drag surface is un-movable")
