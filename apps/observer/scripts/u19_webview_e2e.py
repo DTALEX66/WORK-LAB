@@ -105,6 +105,10 @@ def snapshot_has_data(base_url: str) -> dict:
 # ---------------------------------------------------------------------------
 # 2. Self-contained CDP over WebSocket (RFC6455, minimal, stdlib-only).
 # ---------------------------------------------------------------------------
+class ConnectionClosedError(RuntimeError):
+    """The DevTools websocket sent a close frame (target died or was replaced)."""
+
+
 class CDP:
     """Talk the Chrome DevTools Protocol to a WebView2 remote-debug port.
 

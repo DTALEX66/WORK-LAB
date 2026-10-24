@@ -26,6 +26,10 @@ EXPECTED = {
     # that makes a new contract an explicit decision -- and the interface it generates is what proves the
     # envelope's refusal fields (sent/dispatched const false) survive into the TypeScript side.
     "repair-pack": "workflow",
+    # CL-06 (2026-10-23): the reusable solution revision. Its producer is `solution_library.py` and its
+    # reader is the sidecar's `/api/v1/solutions`; registering it here is the review gate for a new
+    # cross-language document, and it is what generates the TypeScript interface the Observer consumes.
+    "solution": "workflow",
     "task-ledger-event": "workflow",
     # P1-06 (2026-10-08): the Control Surface pair. Registering a contract here is the review gate that
     # makes a new cross-language write boundary an explicit decision instead of a file that appeared.
@@ -95,6 +99,7 @@ CANONICAL_SCHEMA_PREFIXES = {
     "adapter-capability": ("packages/contracts/",),
     "action-plan": ("packages/contracts/",),
     "repair-pack": ("packages/contracts/",),
+    "solution": ("packages/contracts/",),
     "task-ledger-event": ("packages/contracts/",),
     "control-operation": ("packages/contracts/",),
     "control-operation-result": ("packages/contracts/",),

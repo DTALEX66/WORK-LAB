@@ -21,6 +21,10 @@ EXPECTED = {
     # the executor-facing fields are the same ones the issue rows already use. Adding the file moves this
     # set -- that is the review this pin exists to force.
     "repair-pack.schema.json",
+    # CL-06 (2026-10-23): one immutable revision of a reusable maintenance solution. The file is
+    # camelCase like the other documents the workflow producer writes, and it is registered here because
+    # this set is the review that makes a new cross-module contract an explicit decision.
+    "solution.schema.json",
     # OD05 (2026-10-08): Quick Entry's field+permission contract. This set is an exact inventory of
     # the directory, so adding a legitimate schema moves it -- the pin defends "nothing appears in the
     # contract directory without being reviewed here", not a fixed number.
@@ -82,6 +86,9 @@ CAMEL_CASE_WIRE_SCHEMAS = {
     # keeps the action-plan contract's own snake_case fields, which is why the version field has to be
     # named rather than guessed from the file's neighbours.
     "repair-pack.schema.json": "schemaVersion",
+    # The solution document is written by `solution_library.py` and read by the Observer's solution route;
+    # its version field is `schemaVersion` for the same producer-fact reason.
+    "solution.schema.json": "schemaVersion",
 }
 
 

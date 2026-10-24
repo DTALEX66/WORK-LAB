@@ -44,6 +44,7 @@ export type ContractId =
   | "software-installation-identity"
   | "software-update-postflight"
   | "software-update-preflight"
+  | "solution"
   | "source-ledger"
   | "task-card"
   | "task-ledger-event"
@@ -1148,6 +1149,46 @@ export type SoftwareUpdatePreflight = {
     location_readback_passed?: boolean | null,
     overall?: "PASS" | "FAIL" | "PENDING",
     reasons?: ("IN_PLACE_UPDATE_OK" | "INSTALL_ROOT_CHANGE_REQUIRES_EXPLICIT_RELOCATION" | "DUAL_INSTALLATION_UPDATE_BLOCKED" | "LOCATION_DRIFT_UPDATE_BLOCKED" | "MISSING_EXPECTED_INSTALL_NO_VENDOR_FALLBACK" | "SINGLE_UNVERIFIED_IDENTITY_VALIDATION_FIRST" | "OS_MANAGED_PRESERVE_OFFICIAL_CHANNEL" | "LOCATION_READBACK_FAIL" | "RELOCATION_APPROVED" | "RELOCATION_NOT_APPROVED")[]
+  };
+
+// @contract solution
+// schema: packages/contracts/schemas/workflow/solution.schema.json
+export type Solution = {
+    schemaVersion: "workflow/solution/v1",
+    solutionId: string,
+    revision: number,
+    title: string,
+    status: "VERIFIED" | "UNVERIFIED",
+    software: {
+    softwareId: string,
+    softwareVersion: string,
+    platform: string,
+    versionSource: "MEASURED" | "DECLARED" | "UNKNOWN"
+  },
+    source: {
+    kind: "REPAIR_RECORD" | "MANUAL",
+    ref: string,
+    updatedAt: string
+  },
+    preconditions: string[],
+    steps: string[],
+    expected: string[],
+    verificationSteps: string[],
+    invalidWhen: string[],
+    risks: {
+    risk: string,
+    recovery: string
+  }[],
+    limits: string[],
+    evidenceRefs: string[],
+    issueRefs: string[],
+    keywords: string[],
+    recommended: boolean,
+    supersedes: {
+    solutionId: string,
+    revision: number
+  } | null,
+    changes: string
   };
 
 // @contract source-ledger

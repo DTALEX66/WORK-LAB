@@ -29,16 +29,19 @@ WAL_TABLES = (
     "ci_runs",
     "source_quality",
     "action_plans",
+    "solutions",
     "growth_candidates",
     "schema_migrations",
 )
 
 # Tables a retention ceiling may touch: the append-only event ledgers. Identity/registry tables and the
-# migration history are excluded by derivation, so a table added to WAL_TABLES is retention-exempt until
-# someone states which category it belongs to -- an unlisted table cannot be pruned by accident.
+# migration history are excluded by derivation, so every table added to WAL_TABLES is retainable unless it
+# is also listed here -- an unlisted table would be pruned by a ceiling that was written for event rows.
 # `action_plans` is current state, one row per plan identity, not an event: a ceiling on it would delete the
 # row a later imported result is checked against, and the delete would report success while doing it.
-RETENTION_EXEMPT_TABLES = ("schema_migrations", "projects", "tasks", "action_plans")
+# `solutions` is a recipe history whose revisions are cited by evidence references; pruning a revision would
+# break a citation that a later verification still points at.
+RETENTION_EXEMPT_TABLES = ("schema_migrations", "projects", "tasks", "action_plans", "solutions")
 RETAINABLE_TABLES = tuple(table for table in WAL_TABLES if table not in RETENTION_EXEMPT_TABLES)
 
 # Preference order for the "newest timestamp" witness; the column is resolved per table from
@@ -450,6 +453,34 @@ class CanonicalStore:
             if 5 not in existing:
                 self._conn.execute(
                     "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (5, ?)",
+                    (_now(),),
+                )
+            # Version 6: the solution library (CL-06). A solution is stored as immutable revisions -- the
+            # primary key is (solution_id, revision) and a revision's payload is never rewritten -- because
+            # evidence references cite a specific revision, and a recipe that silently grew a new step would
+            # make an old citation point at words it never quoted. `recommended` is the only mutable column:
+            # which revision is current is a pointer, not a revision's content.
+            self._conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS solutions (
+                    solution_id TEXT NOT NULL,
+                    revision INTEGER NOT NULL,
+                    title TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    software_id TEXT,
+                    software_version TEXT,
+                    platform TEXT,
+                    keywords TEXT NOT NULL,
+                    recommended INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT NOT NULL,
+                    payload TEXT NOT NULL,
+                    PRIMARY KEY (solution_id, revision)
+                )
+                """
+            )
+            if 6 not in existing:
+                self._conn.execute(
+                    "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (6, ?)",
                     (_now(),),
                 )
             if not existing:
@@ -1141,6 +1172,185 @@ class CanonicalStore:
                 rows = self._conn.execute(
                     "SELECT * FROM action_plans ORDER BY updated_at DESC, plan_id").fetchall()
         return [self._action_plan_readback(row) for row in rows]
+
+    # ---- solution library (CL-06) ----------------------------------------------------------------
+    # A solution row is one IMMUTABLE revision. `recommended` is the only mutable column because "which
+    # revision is current" is a pointer at a revision, not content inside it.
+
+    _SOLUTION_FIELDS = {
+        "solutionId": ("solution_id", str),
+        "revision": ("revision", int),
+        "title": ("title", str),
+        "status": ("status", str),
+        "softwareId": ("software_id", str),
+        "softwareVersion": ("software_version", str),
+        "platform": ("platform", str),
+        "keywords": ("keywords", list),
+        "createdAt": ("created_at", str),
+        "payload": ("payload", dict),
+    }
+    _SOLUTION_REQUIRED = ("solutionId", "revision", "title", "status", "keywords", "payload")
+
+    def _solution_readback(self, row: sqlite3.Row) -> dict[str, Any]:
+        columns = set(row.keys())
+        item: dict[str, Any] = {}
+        for key, (column, kind) in self._SOLUTION_FIELDS.items():
+            value = row[column] if column in columns else None
+            if kind is int and value is not None:
+                value = int(value)
+            item[key] = value
+        raw_keywords = item.get("keywords")
+        if isinstance(raw_keywords, str) and raw_keywords:
+            try:
+                item["keywords"] = json.loads(raw_keywords)
+                item["keywordsParseState"] = "PARSED"
+            except (json.JSONDecodeError, TypeError):
+                item["keywords"] = None
+                item["keywordsParseState"] = "UNPARSEABLE"
+        else:
+            item["keywords"] = None
+            item["keywordsParseState"] = "ABSENT"
+        raw = item.get("payload")
+        if isinstance(raw, str) and raw:
+            item["payloadDigest"] = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+            try:
+                item["payload"] = json.loads(raw)
+                item["payloadParseState"] = "PARSED"
+            except (json.JSONDecodeError, TypeError):
+                item["payload"] = None
+                item["payloadParseState"] = "UNPARSEABLE"
+        else:
+            item["payloadDigest"] = None
+            item["payloadParseState"] = "ABSENT"
+        # The stored document always says `recommended: false`; the column is the live pointer and the
+        # readback is where the two are joined, so a caller never has to reconcile two answers.
+        recommended = bool(row["recommended"]) if "recommended" in columns else False
+        item["recommended"] = recommended
+        if isinstance(item.get("payload"), dict):
+            item["payload"]["recommended"] = recommended
+        return item
+
+    def save_solution(self, record: Mapping[str, Any]) -> dict[str, Any]:
+        """Insert one immutable revision; a retry with identical bytes is a no-op.
+
+        Revisions are numbered without gaps: revision 1 creates the solution, revision N+1 is the only
+        legal next write, and re-sending N with different bytes is refused by name. A gap would make
+        "latest revision" a guess, and an in-place edit would make every citation of N point at content
+        it never quoted.
+        """
+        if not isinstance(record, Mapping):
+            raise ValueError("solution record must be an object")
+        unknown = sorted(key for key in record if key not in self._SOLUTION_FIELDS)
+        if unknown:
+            raise ValueError(f"solution names field(s) with no column: {unknown}; the writable "
+                             f"vocabulary is {sorted(self._SOLUTION_FIELDS)}")
+        missing = sorted(key for key in self._SOLUTION_REQUIRED if record.get(key) in (None, ""))
+        if missing:
+            raise ValueError(f"solution is missing required field(s) {missing}; the required "
+                             f"vocabulary is {list(self._SOLUTION_REQUIRED)}")
+        payload = record["payload"]
+        if not isinstance(payload, Mapping):
+            raise ValueError("solution payload must be an object")
+        if payload.get("recommended") is True:
+            raise ValueError("a solution revision is written unrecommended; use recommend_solution "
+                             "after the row exists, so 'current' stays a pointer instead of revision content")
+        from artifact_flow_policy import secret_value_paths  # noqa: PLC0415 - shared predicate, no cycle
+        leaked = secret_value_paths(payload)
+        if leaked:
+            raise ValueError(f"solution payload carries sensitive value(s) at: {sorted(leaked)}")
+        solution_id = str(record["solutionId"])
+        revision = int(record["revision"])
+        if revision < 1:
+            raise ValueError(f"SOLUTION_REVISION_INVALID revision {revision} must be >= 1")
+        payload_text = json.dumps(dict(payload), ensure_ascii=False, sort_keys=True)
+        keywords_text = json.dumps(list(record["keywords"]), ensure_ascii=False)
+        supersedes = payload.get("supersedes")
+        expected_supersedes = None if revision == 1 else {"solutionId": solution_id, "revision": revision - 1}
+        if supersedes != expected_supersedes:
+            raise ValueError(
+                f"SOLUTION_SUPERSEDES_MISMATCH revision {revision} must declare supersedes="
+                f"{expected_supersedes}; a revision that names different ancestors cannot be ordered")
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM solutions WHERE solution_id=? ORDER BY revision", (solution_id,)).fetchall()
+            by_revision = {int(row["revision"]): row for row in rows}
+            latest = max(by_revision, default=0)
+            existing = by_revision.get(revision)
+            if existing is not None:
+                # Compare the stored BYTES, not the readback: the readback joins the recommendation
+                # pointer into the payload, so a row that is now recommended would otherwise look
+                # different from the identical retry that first wrote it.
+                if str(existing["payload"]) == payload_text:
+                    current = self._solution_readback(existing)
+                    return {**current, "changed": False}
+                raise ValueError(
+                    f"SOLUTION_REVISION_IMMUTABLE {solution_id} revision {revision} already exists with "
+                    "different content; write a new revision instead of editing a cited one")
+            if revision != latest + 1:
+                raise ValueError(
+                    f"SOLUTION_REVISION_GAP {solution_id} has latest revision {latest}, so the next "
+                    f"writable revision is {latest + 1}; got {revision}")
+            created_at = str(record.get("createdAt") or _now())
+            self._conn.execute(
+                """
+                INSERT INTO solutions
+                (solution_id, revision, title, status, software_id, software_version, platform,
+                 keywords, recommended, created_at, payload)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
+                """,
+                (solution_id, revision, str(record["title"]), str(record["status"]),
+                 None if record.get("softwareId") is None else str(record["softwareId"]),
+                 None if record.get("softwareVersion") is None else str(record["softwareVersion"]),
+                 None if record.get("platform") is None else str(record["platform"]),
+                 keywords_text, created_at, payload_text),
+            )
+            self._conn.commit()
+            stored = self._conn.execute(
+                "SELECT * FROM solutions WHERE solution_id=? AND revision=?",
+                (solution_id, revision)).fetchone()
+            return {**self._solution_readback(stored), "changed": True}
+
+    def read_solution(self, solution_id: str, revision: int | None = None) -> dict[str, Any] | None:
+        with self._lock:
+            if revision is None:
+                row = self._conn.execute(
+                    "SELECT * FROM solutions WHERE solution_id=? ORDER BY revision DESC LIMIT 1",
+                    (str(solution_id),)).fetchone()
+            else:
+                row = self._conn.execute(
+                    "SELECT * FROM solutions WHERE solution_id=? AND revision=?",
+                    (str(solution_id), int(revision))).fetchone()
+        return None if row is None else self._solution_readback(row)
+
+    def list_solutions(self) -> list[dict[str, Any]]:
+        """Latest revision per solution. Older revisions stay readable by id, but the library list is the
+        current state of each recipe -- two rows for one recipe would read as two recipes."""
+        with self._lock:
+            rows = self._conn.execute(
+                """
+                SELECT * FROM solutions s
+                WHERE s.revision = (SELECT MAX(revision) FROM solutions WHERE solution_id = s.solution_id)
+                ORDER BY s.recommended DESC, s.created_at DESC, s.solution_id
+                """).fetchall()
+        return [self._solution_readback(row) for row in rows]
+
+    def recommend_solution(self, solution_id: str, revision: int) -> dict[str, Any]:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM solutions WHERE solution_id=? AND revision=?",
+                (str(solution_id), int(revision))).fetchone()
+            if row is None:
+                raise ValueError(f"SOLUTION_NOT_FOUND {solution_id} revision {revision}")
+            self._conn.execute(
+                "UPDATE solutions SET recommended=0 WHERE solution_id=?", (str(solution_id),))
+            self._conn.execute(
+                "UPDATE solutions SET recommended=1 WHERE solution_id=? AND revision=?",
+                (str(solution_id), int(revision)))
+            self._conn.commit()
+            stored = self._conn.execute(
+                "SELECT * FROM solutions WHERE solution_id=? AND revision=?",
+                (str(solution_id), int(revision))).fetchone()
+        return self._solution_readback(stored)
 
     def projection(self) -> dict[str, Any]:
         with self._lock:
