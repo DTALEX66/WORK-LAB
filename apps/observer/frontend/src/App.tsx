@@ -6,6 +6,9 @@ import { Drawer } from '@/components/ui/drawer'
 import { Toaster, useToaster } from '@/components/ui/toast'
 import { UnknownState, OfflineState } from '@/components/ui/states'
 import { CompactHUD } from '@/views/CompactHUD'
+// 2026-10-24 TRAE 交接包：日常壳（M01–M05）与 HUD 四态，经 ?shell=daily / ?hud=daily 进入。
+import { DailyApp } from '@/daily/DailyApp'
+import { HudDaily } from '@/daily/HudDaily'
 // L10 (2026-09-27): B10 overview landing surface (KPI grid + trends +
 // Observer Map + system status + alerts + recent task packs).
 import { OverviewView } from '@/views/OverviewView'
@@ -272,6 +275,12 @@ export default function App() {
     // vanish on the first lane switch.
     const shell = params.get('shell')
     if (shell) p.set('shell', shell)
+    // 2026-10-24 日常壳与 HUD 四态的自有地址参数（?dv/dp/dq/dm/dtool/hs）。
+    // 只保留 present 且非空的值，其余运行时参数不盲目搬运。
+    for (const name of ['dv', 'dp', 'dq', 'dm', 'dtool', 'hs']) {
+      const v = params.get(name)
+      if (v) p.set(name, v)
+    }
     // The compact HUD's own view state (tab + selected source) is written by
     // CompactHUD itself; this writer must carry it through a theme/layout change
     // instead of silently dropping the face the owner is looking at.
@@ -461,12 +470,25 @@ export default function App() {
           {loadingStrip}
           <section className="content" id="content">
             <LaneErrorBoundary lane="compact" onReset={() => setLayout('full')}>
-              <CompactHUD snap={snap} live={live} error={error} />
+              {new URLSearchParams(window.location.search).get('hud') === 'daily'
+                ? <HudDaily snap={snap} />
+                : <CompactHUD snap={snap} live={live} error={error} />}
             </LaneErrorBoundary>
           </section>
         </main>
         {overlays}
       </div>
+    )
+  }
+
+  // 2026-10-24：?shell=daily 走日常壳（M01–M05）。它自带导航与设置底置，
+  // 不渲染专业壳的 rail/topbar；专业壳仍是默认入口，切换默认属 owner 决定。
+  if (typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('shell') === 'daily') {
+    return (
+      <LaneErrorBoundary lane="daily" onReset={() => { window.location.href = '/index.html' }}>
+        <DailyApp snap={snap} live={live} error={error} theme={theme} onTheme={setTheme} />
+      </LaneErrorBoundary>
     )
   }
 
