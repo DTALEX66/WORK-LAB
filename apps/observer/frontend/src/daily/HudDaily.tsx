@@ -63,7 +63,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
   const { snap } = props
   const native = props.nativeStrip === true
   const [state, setState] = useState<HudState>(readHs)
-  const [hoverSummary, setHoverSummary] = useState(false)
+  const [hoveredTool, setHoveredTool] = useState<string | null>(null)
   const [miniSettings, setMiniSettings] = useState(false)
   const onState = (s: HudState) => { setState(s); writeHs(s) }
   const toolIds = useMemo(
@@ -83,17 +83,27 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
   const h01Card = (
     <section aria-label="工具额度窄面板" data-landmark="h01"
       className="w-full max-w-[150px] rounded-2xl border bg-[#171D25] p-3"
-      style={{ borderColor: LINE }}
-      onMouseEnter={native ? () => setHoverSummary(true) : undefined}
-      onMouseLeave={native ? () => setHoverSummary(false) : undefined}
-      onFocus={native ? () => setHoverSummary(true) : undefined}
-      onBlur={native ? () => setHoverSummary(false) : undefined}>
+      style={{ borderColor: LINE }}>
       <ul className="space-y-2.5">
         {toolIds.length === 0 && (
           <li className="py-2 text-center text-xs" style={{ color: '#A6B0BE' }}>未连接工具</li>
         )}
         {visibleTools.map((tool) => (
-          <li key={tool.id}><RingSlot label={tool.name.slice(0, 2).toUpperCase()} /></li>
+          <li key={tool.id}
+            onMouseEnter={native ? () => setHoveredTool(tool.id) : undefined}
+            onMouseLeave={native ? () => setHoveredTool((cur) => (cur === tool.id ? null : cur)) : undefined}
+            onFocus={native ? () => setHoveredTool(tool.id) : undefined}
+            onBlur={native ? () => setHoveredTool((cur) => (cur === tool.id ? null : cur)) : undefined}>
+            <RingSlot label={tool.name.slice(0, 2).toUpperCase()} />
+            {/* 参考的 H02 是悬停行旁的内联小胶囊，不是另起一张卡。放在行内：指针天然留在
+                展开区内，不会像追加卡那样要滚动才能看到自己唤出的内容。 */}
+            {native && hoveredTool === tool.id && (
+              <div aria-label="悬停摘要" data-landmark="h02"
+                className="mt-1 rounded-lg border px-2 py-1 text-xs" style={{ borderColor: LINE, color: '#A6B0BE' }}>
+                {tool.name}：窗口 待确认 · 数值 UNKNOWN · 重置时间 待确认
+              </div>
+            )}
+          </li>
         ))}
         {hiddenToolCount > 0 && (
           // 条体高度有限：参考图也是"少数几行 + 常驻页脚"。溢出如实说明，不把页脚顶出视口。
@@ -265,7 +275,6 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
         <>
           <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto">
           {state === 'h01' && h01Card}
-          {state === 'h01' && hoverSummary && h02Section}
           {state === 'h02' && h02Section}
           {state === 'h03' && h03Section}
           {state === 'h04' && h04Section}

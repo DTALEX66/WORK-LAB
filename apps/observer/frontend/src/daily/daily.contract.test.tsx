@@ -369,30 +369,37 @@ describe('CL-12 原生窄窗 surface（?surface=hud）', () => {
 })
 
 describe('CL-12 原生窄窗的 H02 可达性', () => {
-  // 隐藏四态切换器后，H02（悬停摘要）在窄窗里就没有别的入口了。它按定义是悬停态，
-  // 所以挂在 H01 上：悬停/聚焦展开，且 H01 保持在场（替换式展开会让指针落在新卡片上，
-  // 离开又触发展开＝抖动）。
-  it('悬停 H01 追加摘要卡，H01 仍在场', () => {
+  // 隐藏四态切换器后，H02（悬停摘要）在窄窗里就没有别的入口了。参考把它画成悬停行旁的
+  // 内联小胶囊，所以挂在**被悬停的那一行**上：指针天然留在展开区内，也不会像追加整张高卡
+  // 那样把常驻页脚顶出 480px 视口、或要求用户滚动去看自己刚唤出的内容。
+  it('悬停某一行只展开那一行的内联摘要，H01 与其余行不受影响', () => {
     window.history.replaceState(null, '', '/index.html?surface=hud')
     render(<HudDaily snap={mockSnap as never} nativeStrip />)
     expect(screen.queryByLabelText('悬停摘要')).toBeNull()
-    fireEvent.mouseEnter(screen.getByLabelText('工具额度窄面板'))
-    expect(screen.getByLabelText('悬停摘要')).toBeTruthy()
+    const li = screen.getByLabelText('工具额度窄面板').querySelector('li')!
+    fireEvent.mouseEnter(li)
+    const summary = screen.getByLabelText('悬停摘要')
+    expect(summary.textContent).toContain('UNKNOWN')
+    expect(li.contains(summary)).toBe(true)
+    expect(screen.getAllByLabelText('悬停摘要')).toHaveLength(1)
     expect(screen.getByLabelText('工具额度窄面板')).toBeTruthy()
-    expect(screen.getByLabelText('悬停摘要').textContent).toContain('UNKNOWN')
   })
 
-  it('键盘聚焦同样展开（悬停不是唯一通道）', () => {
+  it('键盘聚焦同样展开（悬停不是唯一通道），移开即收起', () => {
     window.history.replaceState(null, '', '/index.html?surface=hud')
     render(<HudDaily snap={mockSnap as never} nativeStrip />)
-    fireEvent.focus(screen.getByLabelText('工具额度窄面板'))
+    const li = screen.getByLabelText('工具额度窄面板').querySelector('li')!
+    fireEvent.focus(li)
     expect(screen.getByLabelText('悬停摘要')).toBeTruthy()
+    fireEvent.blur(li)
+    expect(screen.queryByLabelText('悬停摘要')).toBeNull()
   })
 
-  it('面板层不追加（切换器仍在，展开会变两张重复卡）', () => {
+  it('面板层不内联展开（切换器仍在，再挂一层会重复）', () => {
     window.history.replaceState(null, '', '/index.html?layout=compact&hud=daily')
     render(<HudDaily snap={mockSnap as never} />)
-    fireEvent.mouseEnter(screen.getByLabelText('工具额度窄面板'))
+    const li = screen.getByLabelText('工具额度窄面板').querySelector('li')!
+    fireEvent.mouseEnter(li)
     expect(screen.queryByLabelText('悬停摘要')).toBeNull()
     expect(screen.getByLabelText('HUD 状态切换')).toBeTruthy()
   })
