@@ -234,7 +234,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
 
   const footer = native ? (
     <div data-landmark="hud-footer"
-      className="mt-auto flex w-full items-center justify-between border-t pt-2 text-xs" style={{ borderColor: LINE }}>
+      className="mt-auto flex w-full shrink-0 items-center justify-between border-t pt-2 text-xs" style={{ borderColor: LINE }}>
       <span className="flex items-center gap-1.5" style={{ color: '#A6B0BE' }}>
         <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full"
           style={{ background: transport?.transportState === 'LIVE' ? '#34D399' : '#A6B0BE' }} />
@@ -248,7 +248,12 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
   ) : null
 
   return (
-    <div className={`flex h-screen flex-col items-center gap-2 overflow-y-auto bg-[#10141A] p-2 text-[#E8EDF3] ${native ? 'justify-start' : 'justify-center gap-3'}`}
+    // The native strip is a fixed 150x480 always-on-top window: the footer must stay inside the
+    // viewport, so the frame itself never scrolls — the content region does, and the footer is
+    // its sibling. (Measured: with the frame as the scroller, hovering H02 pushed the footer to
+    // y=874 of a 480px window, i.e. entirely off-screen.)
+    <div className={`flex h-screen flex-col items-center gap-2 bg-[#10141A] p-2 text-[#E8EDF3] ${
+      native ? 'justify-start' : 'justify-center gap-3 overflow-y-auto'}`}
       data-hud-state={state} data-hud-frame={native ? 'native-strip' : 'panel'}>
       {native && (
         // 参考图顶部的 notch 把手：borderless 窄窗的拖动面（与 TopStatusBar 的 .drag-region 同一属性约定）。
@@ -258,6 +263,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
 
       {native ? (
         <>
+          <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto">
           {state === 'h01' && h01Card}
           {state === 'h01' && hoverSummary && h02Section}
           {state === 'h02' && h02Section}
@@ -276,6 +282,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
               </button>
             </div>
           )}
+          </div>
           {footer}
         </>
       ) : (
