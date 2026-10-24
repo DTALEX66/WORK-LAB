@@ -2,7 +2,7 @@
 // M04 方法交接抽屉 / M05 我的工具，一级导航 项目/问题与经验/我的工具，设置底置。
 // 数据只来自真实快照、/api/v1/repair-packs 与 /api/v1/solutions；缺数据如实 UNKNOWN。
 // 本壳经 ?shell=daily 进入，不替换专业投影壳；高级入口从这里链接过去。
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { SnapshotV3 } from '@/types'
 import { fmtTimestamp, repairPacksEndpoint } from '@/lib/api'
 import {
@@ -12,7 +12,8 @@ import {
 import {
   fetchSolutions, type SolutionSearchView, type SolutionItem,
 } from '@/daily/solutionsClient'
-import { WindowControls } from '@/components/layout/WindowControls'
+import { Rail, TopBar, SectionTitle, StatusPill, IconTile, Chip, MetaItem, TimeIcon, DisabledAction, Link2 } from '@/daily/DailyChrome'
+import { ChevronDown, FileText, Plug, Sparkles, TriangleAlert } from 'lucide-react'
 import {
   dailyProjectCards, dailyIssueRows, dailyToolRows, buildHandoverMaterial,
   type DailyProjectCard, type DailyIssueRow, type DailyToolRow,
@@ -20,21 +21,24 @@ import {
 
 export type DailyView = 'home' | 'overview' | 'issues' | 'tools' | 'settings'
 
-const DAILY_PARAMS = ['shell', 'dv', 'dp', 'dq', 'dm', 'dtool'] as const
+const DAILY_PARAMS = ['shell', 'dv', 'dp', 'dq', 'dm', 'dtool', 'di'] as const
+export type IssueSegment = 'all' | 'open' | 'methods'
 
-function readParams(): { dv: DailyView; dp: string | null; dq: string; dm: string | null; dtool: string | null } {
+function readParams(): { dv: DailyView; dp: string | null; dq: string; dm: string | null; dtool: string | null; di: IssueSegment } {
   try {
     const s = new URLSearchParams(window.location.search)
     const dvRaw = s.get('dv')
     const dv: DailyView = dvRaw === 'overview' || dvRaw === 'issues' || dvRaw === 'tools' || dvRaw === 'settings'
       ? dvRaw : 'home'
-    return { dv, dp: s.get('dp'), dq: s.get('dq') ?? '', dm: s.get('dm'), dtool: s.get('dtool') }
+    const raw = s.get('di')
+    const di: IssueSegment = raw === 'open' || raw === 'methods' ? raw : 'all'
+    return { dv, dp: s.get('dp'), dq: s.get('dq') ?? '', dm: s.get('dm'), dtool: s.get('dtool'), di }
   } catch {
-    return { dv: 'home', dp: null, dq: '', dm: null, dtool: null }
+    return { dv: 'home', dp: null, dq: '', dm: null, dtool: null, di: 'all' }
   }
 }
 
-function writeParams(state: { dv: DailyView; dp: string | null; dq: string; dm: string | null; dtool: string | null }) {
+function writeParams(state: { dv: DailyView; dp: string | null; dq: string; dm: string | null; dtool: string | null; di: IssueSegment }) {
   if (typeof window === 'undefined') return
   const p = new URLSearchParams(window.location.search)
   const setOrDrop = (name: string, value: string | null) => {
@@ -49,6 +53,7 @@ function writeParams(state: { dv: DailyView; dp: string | null; dq: string; dm: 
   setOrDrop('dq', state.dq || null)
   setOrDrop('dm', state.dm)
   setOrDrop('dtool', state.dtool)
+  setOrDrop('di', state.di === 'all' ? null : state.di)
   const qs = p.toString()
   window.history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''))
 }
@@ -81,7 +86,6 @@ export function DailyApp(props: {
   const [solutionsWhy, setSolutionsWhy] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<Record<string, { verdict: string; note: string }>>({})
   const [copyState, setCopyState] = useState<Record<string, { ok: boolean; why?: string }>>({})
-  const searchRef = useRef<HTMLInputElement>(null)
 
   const navigate = useCallback((patch: Partial<typeof state>) => {
     setState((prev) => {
@@ -160,13 +164,13 @@ export function DailyApp(props: {
 
   const searchDisabledNote = error && !snap ? '数据源不可用，显示 OFFLINE，不加载演示数据' : null
 
-  // —— 全局快捷键：Ctrl/Cmd+K 聚焦搜索（快捷键不是搜索功能本身）——
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
-        searchRef.current?.focus()
-        searchRef.current?.select()
+        const box = document.getElementById('daily-global-search') as HTMLInputElement | null
+        box?.focus()
+        box?.select()
       }
       if (e.key === 'Escape') closeMethod()
     }
@@ -175,66 +179,24 @@ export function DailyApp(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const navItems: { id: DailyView; label: string }[] = [
-    { id: 'home', label: '项目' },
-    { id: 'issues', label: '问题与经验' },
-    { id: 'tools', label: '我的工具' },
-  ]
-
+  const transport = error && !snap
+    ? { label: '数据源不可用', tone: 'offline' as const }
+    : live
+      ? { label: '数据源就绪', tone: 'live' as const }
+      : snap
+        ? { label: '快照未验证', tone: 'unknown' as const }
+        : { label: '等待快照', tone: 'unknown' as const }
   const shell = (
     <div className="flex h-screen flex-col bg-[#10141A] text-[#E8EDF3]" data-shell="daily">
+      <TopBar query={state.dq} onQuery={(v) => navigate({ dq: v })} hudHint={null} />
       <div className="flex min-h-0 flex-1">
-        {/* 左侧窄栏：三个一级入口 + 设置底置 */}
-        <nav aria-label="主导航" className="flex w-[176px] shrink-0 flex-col border-r border-[#303A46] bg-[#171D25] px-3 py-4">
-          <div className="mb-6 px-2 text-sm font-semibold tracking-wide">WORK-LAB</div>
-          <div className="text-xs uppercase tracking-wider text-[#A6B0BE]">工作区</div>
-          <ul className="mt-2 space-y-1">
-            {navItems.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  onClick={() => navigate({ dv: item.id, dp: item.id === 'home' ? null : state.dp })}
-                  aria-current={state.dv === item.id ? 'page' : undefined}
-                  className={`w-full rounded px-3 py-2 text-left text-sm ${state.dv === item.id
-                    ? 'bg-[#1C2430] text-[#40B6C7]' : 'text-[#A6B0BE] hover:text-[#E8EDF3]'}`}
-                >
-                  {item.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-auto">
-            <button
-              type="button"
-              onClick={() => navigate({ dv: 'settings' })}
-              aria-current={state.dv === 'settings' ? 'page' : undefined}
-              className={`w-full rounded px-3 py-2 text-left text-sm ${state.dv === 'settings'
-                ? 'bg-[#1C2430] text-[#40B6C7]' : 'text-[#A6B0BE] hover:text-[#E8EDF3]'}`}
-            >
-              设置
-            </button>
-            <div className="mt-2 px-3 text-xs text-[#A6B0BE]">
-              数据源：{error && !snap ? 'OFFLINE' : live ? 'LIVE' : snap ? 'UNVERIFIED' : 'UNKNOWN'}
-            </div>
-          </div>
-        </nav>
+        <Rail
+          view={state.dv === 'overview' ? 'home' : state.dv}
+          onNavigate={(v) => navigate({ dv: v, dp: v === 'home' ? null : state.dp })}
+          transportLabel={transport.label} transportTone={transport.tone}
+        />
 
-        {/* 主区：顶栏（全局搜索）+ 内容。borderless 主窗口默认从这里进入，
-            顶栏容器是拖动区（Tauri 注入 data-tauri-drag-region 处理），
-            搜索框等交互元素不带该属性，点击行为不受影响。 */}
         <div className="flex min-h-0 flex-1 flex-col">
-          <div data-tauri-drag-region className="flex items-center gap-3 border-b border-[#303A46] bg-[#171D25] px-5 py-3">
-            <input
-              ref={searchRef}
-              type="search"
-              value={state.dq}
-              onChange={(e) => navigate({ dq: e.target.value })}
-              placeholder="搜索项目、问题、工具与方法…"
-              aria-label="全局搜索"
-              className="min-w-0 flex-1 rounded border border-[#303A46] bg-[#10141A] px-3 py-1.5 text-sm outline-none focus:border-[#40B6C7]"
-            />
-            <span className="daily-kbd-hint text-xs text-[#A6B0BE]">Ctrl+K</span>
-          </div>
           {searchDisabledNote && (
             <div role="alert" className="border-b border-[#303A46] bg-[#171D25] px-5 py-2 text-xs text-amber-300">
               {searchDisabledNote}
@@ -242,7 +204,8 @@ export function DailyApp(props: {
           )}
           <main className="min-h-0 flex-1 overflow-y-auto px-6 py-5" id="daily-content">
             {state.dv === 'home' && (
-              <HomeView cards={filteredProjects} totalCount={cards.length} onOpen={openProject} />
+              <HomeView cards={filteredProjects} totalCount={cards.length} onOpen={openProject}
+                query={state.dq} onQuery={(v) => navigate({ dq: v })} />
             )}
             {state.dv === 'overview' && (
               <OverviewView
@@ -258,6 +221,9 @@ export function DailyApp(props: {
                 rows={filteredIssues}
                 totalCount={issues.length}
                 issuesSummary={snap?.issuesSummary}
+                solutions={solutions}
+                segment={state.di}
+                onSegment={(di) => navigate({ di })}
                 onOpenMethod={openMethod}
                 onOpenProject={(id) => openProject(id)}
                 feedback={feedback}
@@ -300,23 +266,31 @@ export function DailyApp(props: {
   )
   void copyState
   void DAILY_PARAMS
-  // WindowControls portals to <body>; under a browser entry it renders null.
-  // The desktop main window is borderless (decorations:false), so without this
-  // cluster the default daily entry can neither minimize nor close from inside.
-  return (
-    <>
-      {shell}
-      <WindowControls />
-    </>
-  )
+  // The caption cluster and the drag surface live in TopBar (DailyChrome), because the
+  // desktop main window is borderless (decorations:false) and the default entry is this shell.
+  return shell
 }
 
-function HomeView(props: { cards: DailyProjectCard[]; totalCount: number; onOpen: (id: string) => void }) {
+function HomeView(props: {
+  cards: DailyProjectCard[]; totalCount: number; onOpen: (id: string) => void
+  query: string; onQuery: (v: string) => void
+}) {
   return (
-    <section aria-label="项目首页">
-      <div className="mb-4 flex items-baseline gap-3">
+    <section aria-label="项目首页" data-view="m01">
+      <div className="mb-5 flex flex-wrap items-center gap-3">
         <h1 className="text-xl font-semibold">项目</h1>
-        <span className="text-xs text-[#A6B0BE]">{props.totalCount} 个已注册项目</span>
+        <Chip>{props.totalCount} 个已注册项目</Chip>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="relative inline-flex items-center">
+            <input
+              type="search" value={props.query} onChange={(e) => props.onQuery(e.target.value)}
+              aria-label="按名称过滤项目" placeholder="按名称过滤…"
+              className="h-8 w-[188px] rounded-md border px-3 text-sm outline-none"
+              style={{ borderColor: '#303A46', background: '#10141A', color: '#E8EDF3' }}
+            />
+          </span>
+          <DisabledAction label="添加项目" reason="观察者只读：登记项目由项目侧完成" />
+        </div>
       </div>
       {props.cards.length === 0 ? (
         <div className={`${SURFACE} rounded-lg p-6 text-sm text-[#A6B0BE]`}>
@@ -325,25 +299,41 @@ function HomeView(props: { cards: DailyProjectCard[]; totalCount: number; onOpen
             : '没有匹配当前搜索的项目。清除搜索词可恢复完整列表。'}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           {props.cards.map((card) => (
-            <article key={card.projectId} className={`${SURFACE} flex flex-col rounded-lg p-4`}>
-              <div className="flex items-start justify-between gap-2">
-                <h2 className="text-base font-semibold">{card.displayName}</h2>
-                <span className="flex items-center gap-1.5 text-xs text-[#A6B0BE]">
-                  <StatusDot status={card.status} />{card.status}
-                </span>
+            <article key={card.projectId} data-landmark="project-card"
+              className="flex flex-col rounded-xl border bg-[#171D25] p-5"
+              style={{ borderColor: '#303A46' }}>
+              <div className="flex items-start gap-3">
+                <IconTile label={card.displayName} />
+                <div className="min-w-0 flex-1">
+                  <h2 className="truncate text-[15px] font-semibold">{card.displayName}</h2>
+                  <p className="mt-0.5 truncate font-mono text-xs text-[#A6B0BE]">{card.projectId}</p>
+                </div>
+                <StatusPill status={card.status} />
               </div>
-              <p className="mt-2 text-xs text-[#A6B0BE]">
-                最近变化：{card.latestChange ? fmtTimestamp(card.latestChange) : '待确认'}
-              </p>
-              {card.attentionNote && <p className="mt-2 text-xs text-amber-300">{card.attentionNote}</p>}
-              <p className="mt-2 text-xs text-[#A6B0BE]">
-                关联工具：{card.relatedTools.length ? card.relatedTools.join('、') : '未记录'}
-                {card.openIssueCount !== null && card.openIssueCount > 0 ? ` · ${card.openIssueCount} 个当前问题` : ''}
+              <div className="mt-4 rounded-lg bg-[#1C2430] p-3">
+                <div className="text-xs text-[#A6B0BE]">最近变化</div>
+                <p className="mt-1 text-sm">
+                  {card.latestChange ? fmtTimestamp(card.latestChange) : '待确认'}
+                </p>
+                {card.attentionNote && (
+                  <p className="mt-2 text-xs text-amber-300">{card.attentionNote}</p>
+                )}
+              </div>
+              <p className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-[#A6B0BE]">
+                <Link2 size={13} aria-hidden="true" />关联工具：
+                {card.relatedTools.length
+                  ? card.relatedTools.map((t) => <Chip key={t}>{t}</Chip>)
+                  : <span>未记录</span>}
+                {card.openIssueCount !== null && card.openIssueCount > 0 && (
+                  <Chip tone="warn">{card.openIssueCount} 个当前问题</Chip>
+                )}
               </p>
               <div className="mt-4 flex items-center justify-between border-t border-[#303A46] pt-3">
-                <span className="text-xs text-[#A6B0BE]">更新：{card.updatedAt ? fmtTimestamp(card.updatedAt) : 'UNKNOWN'}</span>
+                <MetaItem icon={<TimeIcon />}>
+                  更新：{card.updatedAt ? fmtTimestamp(card.updatedAt) : 'UNKNOWN'}
+                </MetaItem>
                 <button type="button" onClick={() => props.onOpen(card.projectId)}
                   className="text-sm text-[#40B6C7] hover:underline">
                   进入项目概览 →
@@ -353,6 +343,9 @@ function HomeView(props: { cards: DailyProjectCard[]; totalCount: number; onOpen
           ))}
         </div>
       )}
+      <p className="mt-5 text-xs text-[#A6B0BE]">
+        本页只投影真实快照；缺的字段保持 UNKNOWN，不用演示数据填满。
+      </p>
     </section>
   )
 }
@@ -367,8 +360,11 @@ function OverviewView(props: {
   const [techOpen, setTechOpen] = useState(false)
   if (!props.card) {
     return (
-      <section aria-label="项目概览">
-        <button type="button" onClick={props.onBack} className="text-sm text-[#40B6C7] hover:underline">← 所有项目</button>
+      <section aria-label="项目概览" data-view="m02">
+        <button type="button" onClick={props.onBack}
+          className="rounded border border-[#303A46] bg-[#1C2430] px-3 py-1.5 text-sm text-[#40B6C7]">
+          ← 所有项目
+        </button>
         <div className={`${SURFACE} mt-4 rounded-lg p-6 text-sm text-[#A6B0BE]`}>
           链接指向的项目在本机投影中不存在（不猜测最近的项目）。
         </div>
@@ -376,45 +372,77 @@ function OverviewView(props: {
     )
   }
   return (
-    <section aria-label="项目概览">
-      <button type="button" onClick={props.onBack} className="text-sm text-[#40B6C7] hover:underline">← 所有项目</button>
-      <header className={`${SURFACE} mt-3 rounded-lg p-5`}>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="flex items-center gap-3 text-xl font-semibold">
+    <section aria-label="项目概览" data-view="m02">
+      <button type="button" onClick={props.onBack}
+        className="rounded border border-[#303A46] bg-[#1C2430] px-3 py-1.5 text-sm text-[#40B6C7]">
+        ← 所有项目
+      </button>
+      <header className="mt-3 rounded-xl border border-[#303A46] bg-[#171D25] p-5">
+        <div className="flex flex-wrap items-start gap-3">
+          <IconTile label={props.card.displayName} size={40} />
+          <div className="min-w-0 flex-1">
+            <h1 className="flex flex-wrap items-center gap-2 text-xl font-semibold">
               {props.card.displayName}
-              <span className="flex items-center gap-1.5 text-xs font-normal text-[#A6B0BE]">
-                <StatusDot status={props.card.status} />{props.card.status}
-              </span>
+              <Chip>版本 UNKNOWN</Chip>
+              <StatusPill status={props.card.status} />
             </h1>
             <p className="mt-2 text-sm text-[#A6B0BE]">
-              最近变化：{props.card.latestChange ? fmtTimestamp(props.card.latestChange) : '待确认'}
-              {' · '}关联工具：{props.card.relatedTools.length ? props.card.relatedTools.join('、') : '未记录'}
+              {props.card.attentionNote
+                ?? `本轮状态由真实快照投影；关联工具：${props.card.relatedTools.length ? props.card.relatedTools.join('、') : '未记录'}。`}
             </p>
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              <MetaItem icon={<TimeIcon />}>
+                确认时间：{props.card.updatedAt ? fmtTimestamp(props.card.updatedAt) : 'UNKNOWN'}
+              </MetaItem>
+              <MetaItem icon={<Link2 size={13} aria-hidden="true" />}>
+                关联工具：{props.card.relatedTools.length ? props.card.relatedTools.join('、') : '未记录'}
+              </MetaItem>
+            </div>
           </div>
+          <DisabledAction label="打开对应工具" reason="观察者只读：不启动外部软件" primary />
         </div>
       </header>
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className={`${SURFACE} rounded-lg p-5 ${props.issues.length ? 'border-t-2 border-t-amber-400' : ''}`}>
-          <h2 className="text-sm font-semibold">需要关注的事项</h2>
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <TriangleAlert size={15} aria-hidden="true" className={props.issues.length ? 'text-amber-300' : 'text-[#A6B0BE]'} />
+            需要关注的事项
+          </h2>
           {props.issues.length === 0 ? (
             <p className="mt-2 text-xs text-[#A6B0BE]">本项目当前没有打开的问题（实测，非推断）。</p>
           ) : (
             <ul className="mt-3 space-y-3">
               {props.issues.map((issue) => (
                 <li key={issue.fingerprint} className="rounded border border-[#303A46] bg-[#10141A] p-3">
-                  <div className="text-sm font-medium">{issue.title}</div>
+                  <div className="text-sm font-medium">《{issue.title}》</div>
                   <p className="mt-1 text-xs text-[#A6B0BE]">{issue.classLabel} · {issue.priority} · 最近 {fmtTimestamp(issue.lastSeenAt)}</p>
-                  {issue.hasPack
-                    ? <p className="mt-1 text-xs text-[#40B6C7]">已有修复包草稿（未发送），在问题与经验页处理。</p>
-                    : <p className="mt-1 text-xs text-[#A6B0BE]">尚无修复包；可在问题与经验页查看可参考方法。</p>}
+                  <div className="mt-2 flex items-start justify-between gap-2 rounded bg-[#1C2430] p-2">
+                    <span className="flex items-start gap-2 text-xs">
+                      <Plug size={13} aria-hidden="true" className="mt-0.5 text-[#40B6C7]" />
+                      <span>
+                        <span className="text-[#40B6C7]">外部工具反馈</span>
+                        <span className="block text-[#A6B0BE]">
+                          {issue.hasPack ? '已有修复包草稿（未发送），可在问题与经验页交接。' : '尚无修复包；可在问题与经验页查看可参考方法。'}
+                        </span>
+                      </span>
+                    </span>
+                    <Chip tone="warn">未核验</Chip>
+                  </div>
+                  <button type="button" onClick={() => issue.hasPack && props.onOpenMethod(issue.packId ?? '')}
+                    className="mt-2 rounded bg-[#40B6C7] px-3 py-1.5 text-xs font-medium text-[#10141A] disabled:cursor-not-allowed disabled:bg-[#1C2430] disabled:text-[#A6B0BE]"
+                    disabled={!issue.hasPack}
+                    title={issue.hasPack ? '打开该问题的交接材料' : '本问题还没有修复包草稿'}>
+                    查看参考方法 →
+                  </button>
                 </li>
               ))}
             </ul>
           )}
         </div>
         <div className={`${SURFACE} rounded-lg p-5`}>
-          <h2 className="text-sm font-semibold">可参考的历史经验</h2>
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <Sparkles size={15} aria-hidden="true" className="text-[#40B6C7]" />可参考的历史经验
+          </h2>
           {!props.solutions ? (
             <p className="mt-2 text-xs text-[#A6B0BE]">方案库状态：读取中（不预填结果）。</p>
           ) : props.solutions.status === 'SOURCE_ABSENT' ? (
@@ -422,28 +450,36 @@ function OverviewView(props: {
           ) : props.solutions.results.length === 0 ? (
             <p className="mt-2 text-xs text-[#A6B0BE]">{props.solutions.reason}</p>
           ) : (
-            <ul className="mt-3 space-y-3">
-              {props.solutions.results.slice(0, 3).map((m) => (
-                <li key={m.solutionId} className="rounded border border-[#303A46] bg-[#10141A] p-3">
-                  <div className="text-sm font-medium">{m.title ?? m.solutionId}</div>
-                  <p className="mt-1 text-xs text-[#A6B0BE]">
-                    来源软件：{String(m.software.softwareId ?? '未记录')} · {m.versionHint?.message ?? '适用性待确认'}
-                  </p>
-                  <button type="button" onClick={() => props.onOpenMethod(m.solutionId)}
-                    className="mt-2 text-xs text-[#40B6C7] hover:underline">
-                    查看该方法详情 →
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="mt-1 text-xs text-[#A6B0BE]">发现 {props.solutions.results.length} 条相似经验可供参考</p>
+              <ul className="mt-3 space-y-3">
+                {props.solutions.results.slice(0, 3).map((m) => (
+                  <li key={m.solutionId} className="rounded border border-[#303A46] bg-[#10141A] p-3">
+                    <div className="text-sm font-medium">《{m.title ?? m.solutionId}》</div>
+                    <p className="mt-1 text-xs text-[#A6B0BE]">
+                      项目 {String(m.software.softwareId ?? '未记录')} · {m.versionHint?.message ?? '适用性待确认'}
+                    </p>
+                    <button type="button" onClick={() => props.onOpenMethod(m.solutionId)}
+                      className="mt-2 w-full rounded border border-[#303A46] bg-[#1C2430] px-3 py-1.5 text-left text-xs text-[#40B6C7]">
+                      查看该方法详情 →
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </div>
       </div>
       <div className={`${SURFACE} mt-4 rounded-lg`}>
         <button type="button" onClick={() => setTechOpen((o) => !o)} aria-expanded={techOpen}
           className="flex w-full items-center justify-between px-5 py-3 text-left text-sm">
-          技术依据（默认折叠）
-          <span aria-hidden="true">{techOpen ? '收起' : '展开'}</span>
+          <span className="flex items-center gap-2">
+            <FileText size={15} aria-hidden="true" className="text-[#A6B0BE]" />
+            查看详细依据与诊断记录
+            <span className="text-xs text-[#A6B0BE]">（{techOpen ? '已展开' : '已收起'}，点击{techOpen ? '收起' : '展开'}）</span>
+          </span>
+          <ChevronDown size={15} aria-hidden="true"
+            className={techOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
         </button>
         {techOpen && (
           <dl className="grid grid-cols-2 gap-2 px-5 pb-4 text-xs text-[#A6B0BE]">
@@ -460,6 +496,9 @@ function IssuesView(props: {
   rows: DailyIssueRow[]
   totalCount: number
   issuesSummary: SnapshotV3['issuesSummary']
+  solutions: SolutionSearchView | null
+  segment: IssueSegment
+  onSegment: (s: IssueSegment) => void
   onOpenMethod: (id: string) => void
   onOpenProject: (id: string) => void
   feedback: Record<string, { verdict: string; note: string }>
@@ -468,11 +507,20 @@ function IssuesView(props: {
 }) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const summary = props.issuesSummary
+  const visible = props.segment === 'methods' ? [] : props.rows
+  const methods = props.segment === 'open' ? [] : (props.solutions?.results ?? [])
+  const matchedMethod = (issue: DailyIssueRow) =>
+    (props.solutions?.results ?? []).find((m) => m.issueRefs.includes(issue.fingerprint)) ?? null
+
   return (
-    <section aria-label="问题与经验">
-      <h1 className="text-xl font-semibold">问题与经验</h1>
+    <section aria-label="问题与经验" data-view="m03">
+      <p className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-[#40B6C7]">
+        <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#40B6C7]" />
+        Diagnostics &amp; Knowledge Hub
+      </p>
+      <h1 className="mt-1 text-xl font-semibold">问题与经验</h1>
       <p className="mt-1 text-xs text-[#A6B0BE]">
-        正在影响软件项目的问题，以及可参考的过往解法。相似表现不等于相同根因。
+        查看正在影响软件项目的问题，以及可供参考的过往解法。相似表现不等于相同根因。
       </p>
       {summary && (
         <p className="mt-2 text-xs text-[#A6B0BE]">
@@ -480,40 +528,93 @@ function IssuesView(props: {
           {summary.truncated ? ' · 已截断' : summary.complete === false ? ' · 覆盖不完整' : ''}
         </p>
       )}
+
+      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-[#303A46] bg-[#171D25] p-2">
+        <div role="group" aria-label="问题筛选分段" className="flex items-center gap-1">
+          {([['all', '全部'], ['open', '需要处理'], ['methods', '方法与经验']] as [IssueSegment, string][]).map(([id, label]) => (
+            <button key={id} type="button" onClick={() => props.onSegment(id)} aria-pressed={props.segment === id}
+              className={`rounded px-3 py-1 text-xs ${props.segment === id
+                ? 'bg-[#40B6C7] font-medium text-[#10141A]' : 'text-[#A6B0BE] hover:text-[#E8EDF3]'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <span className="ml-auto text-xs text-[#A6B0BE]">
+          共 {props.segment === 'methods' ? methods.length : visible.length} 条
+          {props.totalCount !== null ? ` · 快照产出 ${props.totalCount} 条问题` : ''}
+        </span>
+      </div>
+
       <ul className="mt-4 space-y-3">
-        {props.rows.length === 0 && (
+        {visible.length === 0 && props.segment !== 'methods' && (
           <li className={`${SURFACE} rounded-lg p-6 text-sm text-[#A6B0BE]`}>
             {props.totalCount === 0
               ? '当前没有打开的问题（实测，非推断）。'
               : '没有匹配当前搜索的问题。'}
           </li>
         )}
-        {props.rows.map((issue) => {
+        {visible.map((issue) => {
           const open = expanded === issue.fingerprint
+          const method = matchedMethod(issue)
           return (
-            <li key={issue.fingerprint} className={`${SURFACE} rounded-lg border-l-4 border-l-amber-400 p-4`}>
-              <div className="flex items-start justify-between gap-3">
+            <li key={issue.fingerprint} data-landmark="issue-row"
+              className={`${SURFACE} rounded-lg border-l-4 ${issue.priority === 'P1' ? 'border-l-amber-400' : 'border-l-[#303A46]'} p-4`}>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <Chip tone="warn">当前需要处理</Chip>
+                {issue.projectId && (
+                  <button type="button" onClick={() => props.onOpenProject(issue.projectId as string)}
+                    className="rounded border border-[#303A46] bg-[#10141A] px-1.5 py-0.5 text-xs text-[#40B6C7] hover:underline">
+                    {issue.projectId}
+                  </button>
+                )}
+                <MetaItem icon={<TimeIcon />}>{issue.lastSeenAt ? fmtTimestamp(issue.lastSeenAt) : 'UNKNOWN'}</MetaItem>
                 <button type="button" onClick={() => setExpanded(open ? null : issue.fingerprint)}
-                  aria-expanded={open} className="min-w-0 flex-1 text-left">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded bg-amber-400/15 px-2 py-0.5 text-xs text-amber-300">当前需要处理</span>
-                    {issue.projectId && (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); props.onOpenProject(issue.projectId as string) }}
-                        className="text-xs text-[#40B6C7] hover:underline">
-                        {issue.projectId}
-                      </button>
-                    )}
-                    <span className="text-xs text-[#A6B0BE]">{issue.priority} · {fmtTimestamp(issue.lastSeenAt)}</span>
-                  </div>
-                  <h2 className="mt-1 text-sm font-medium">{issue.title}</h2>
-                  {issue.detail && <p className="mt-1 text-xs text-[#A6B0BE]">{issue.detail}</p>}
+                  aria-expanded={open} className="ml-auto text-xs text-[#40B6C7]">
+                  {open ? '收起' : '展开'}
                 </button>
               </div>
+              <button type="button" onClick={() => setExpanded(open ? null : issue.fingerprint)}
+                aria-expanded={open} className="mt-2 block w-full text-left text-sm font-medium">
+                《{issue.title}》
+              </button>
+              {issue.detail && <p className="mt-1 text-xs text-[#A6B0BE]">{issue.detail}</p>}
+              <p className="mt-1 text-xs text-[#A6B0BE]">{issue.classLabel} · {issue.priority}</p>
+
               {open && (
                 <div className="mt-3 border-t border-[#303A46] pt-3">
                   <div className="text-xs text-[#A6B0BE]">
                     证据位置：{issue.fingerprint.slice(0, 24)}…（同类表现未必同因）
                   </div>
+                  <div className="mt-3 rounded-lg border border-[#303A46] bg-[#10141A] p-3">
+                    <SectionTitle right={method ? '命中已收录方案' : '未命中已验证方案'}>
+                      智能经验推断 · 类似场景推荐方案
+                    </SectionTitle>
+                    <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3">
+                      <div className="rounded border border-[#303A46] bg-[#1C2430] p-2">
+                        <div className="text-xs text-[#A6B0BE]">1 当时的情况</div>
+                        <p className="mt-1 text-xs">
+                          “{method?.preconditions[0] ?? issue.detail ?? '未记录'}”
+                        </p>
+                      </div>
+                      <div className="rounded border border-[#303A46] bg-[#1C2430] p-2">
+                        <div className="text-xs text-[#A6B0BE]">2 采用的方法</div>
+                        <p className="mt-1 text-xs">“{method?.steps[0] ?? '待确认'}”</p>
+                      </div>
+                      <div className="rounded border border-[#303A46] bg-[#1C2430] p-2">
+                        <div className="text-xs text-[#A6B0BE]">3 实际结果</div>
+                        <p className="mt-1 text-xs">
+                          “{method ? '已核验关闭（来源记录未提供结果原文）' : '待确认'}”
+                        </p>
+                      </div>
+                    </div>
+                    {method && (
+                      <button type="button" onClick={() => props.onOpenMethod(method.solutionId)}
+                        className="mt-3 rounded bg-[#40B6C7] px-3 py-1.5 text-xs font-medium text-[#10141A]">
+                        查看方法 →
+                      </button>
+                    )}
+                  </div>
+
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
                     <span>处理反馈：</span>
                     {['已恢复', '仍有问题', '不确定'].map((v) => (
@@ -543,85 +644,181 @@ function IssuesView(props: {
             </li>
           )
         })}
+
+        {methods.map((m) => (
+          <li key={m.solutionId} data-landmark="method-row"
+            className={`${SURFACE} flex flex-wrap items-center gap-3 rounded-lg p-4`}>
+            <IconTile label={String(m.software.softwareId ?? '方法')} size={32} />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium">《{m.title ?? m.solutionId}》</span>
+                <Chip tone={m.recommended ? 'accent' : 'neutral'}>
+                  {m.recommended ? '已收录推荐' : '候选方法'}
+                </Chip>
+                <span className="text-xs text-[#A6B0BE]">{String(m.software.softwareId ?? '未记录')}</span>
+              </div>
+              <p className="mt-1 text-xs text-[#A6B0BE]">{m.versionHint?.message ?? '适用性待确认'}</p>
+            </div>
+            <button type="button" onClick={() => props.onOpenMethod(m.solutionId)}
+              className="text-xs text-[#40B6C7] hover:underline">查看方法 &gt;</button>
+          </li>
+        ))}
+        {props.segment === 'methods' && methods.length === 0 && (
+          <li className={`${SURFACE} rounded-lg p-6 text-sm text-[#A6B0BE]`}>
+            {props.solutions === null ? '方案库读取中（不预填结果）。' : `方案库：${props.solutions.reason}`}
+          </li>
+        )}
       </ul>
     </section>
   )
 }
 
 function ToolsView(props: { tools: DailyToolRow[]; selected: DailyToolRow | null; onSelect: (id: string) => void }) {
+  const quickAccess = [
+    { id: 'usage', title: '使用方法', desc: '查看向该工具提供受控上下文与排查指引的建议做法' },
+    { id: 'rules', title: '提示词与规则', desc: '查看推荐的交付格式模板与目录约束规则' },
+    { id: 'faq', title: '常见问题', desc: '查看连接中断或排查超时时的常见处理问答' },
+  ]
   return (
-    <section aria-label="我的工具">
-      <h1 className="text-xl font-semibold">我的工具</h1>
-      <p className="mt-1 text-xs text-[#A6B0BE]">管理外部 AI 与本地开发工具的连接身份与使用辅助。</p>
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
-        <ul className="space-y-2" aria-label="工具列表">
-          {props.tools.length === 0 && (
-            <li className={`${SURFACE} rounded-lg p-4 text-xs text-[#A6B0BE]`}>
-              快照未携带适配器能力卡（来源缺失，不是 0 个工具）。
-            </li>
-          )}
-          {props.tools.map((tool) => (
-            <li key={tool.clientId}>
-              <button type="button" onClick={() => props.onSelect(tool.clientId)}
-                aria-current={props.selected?.clientId === tool.clientId ? 'true' : undefined}
-                className={`w-full rounded-lg border p-3 text-left ${props.selected?.clientId === tool.clientId
-                  ? 'border-[#40B6C7] bg-[#1C2430]' : 'border-[#303A46] bg-[#171D25]'}`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{tool.displayName}</span>
-                  <span className="text-xs text-[#A6B0BE]">{tool.connection.includes('失败') || tool.connection.includes('未连接') ? '未连接' : '已连接'}</span>
+    <section aria-label="我的工具" data-view="m05">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-semibold">我的工具</h1>
+          <p className="mt-1 text-xs text-[#A6B0BE]">管理外部 AI 与本地开发工具的连接身份与使用辅助。</p>
+        </div>
+        <DisabledAction label="检测环境工具" reason="观察者只读：不发起探测运行" />
+        <DisabledAction label="登记新工具" reason="观察者只读：登记由项目侧完成" />
+      </div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
+        <div className={`${SURFACE} rounded-lg p-3`}>
+          <div className="mb-2 flex items-center justify-between px-1 text-xs uppercase tracking-wider text-[#A6B0BE]">
+            <span>已登记工具</span><span>FILTER: ALL</span>
+          </div>
+          <ul className="space-y-2" aria-label="工具列表">
+            {props.tools.length === 0 && (
+              <li className="p-4 text-xs text-[#A6B0BE]">
+                快照未携带适配器能力卡（来源缺失，不是 0 个工具）。
+              </li>
+            )}
+            {props.tools.map((tool) => {
+              const active = props.selected?.clientId === tool.clientId
+              return (
+                <li key={tool.clientId}>
+                  <button type="button" onClick={() => props.onSelect(tool.clientId)}
+                    aria-current={active ? 'true' : undefined}
+                    className={`relative w-full rounded-lg border p-3 text-left ${active
+                      ? 'border-[#40B6C7] bg-[#1C2430]' : 'border-[#303A46] bg-[#171D25]'}`}>
+                    {active && (
+                      <span aria-hidden="true" className="absolute left-0 top-3 bottom-3 w-[2px] rounded-full bg-[#40B6C7]" />
+                    )}
+                    <div className="flex items-start gap-2">
+                      <IconTile label={tool.displayName} size={28} tone="surface" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="truncate text-sm font-medium">{tool.displayName}</span>
+                          <Chip tone={tool.connection.includes('失败') || tool.connection.includes('未连接') ? 'warn' : 'accent'}>
+                            {tool.connection.includes('失败') || tool.connection.includes('未连接') ? '未连接' : '已连接'}
+                          </Chip>
+                        </div>
+                        <p className="mt-0.5 truncate text-xs text-[#A6B0BE]">{tool.version ?? '版本 UNKNOWN'}</p>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <MetaItem icon={<TimeIcon />}>
+                        {tool.observedAt ? fmtTimestamp(tool.observedAt) : 'UNKNOWN'}
+                      </MetaItem>
+                      <span className="text-xs uppercase tracking-wide"
+                        style={{ color: active ? '#40B6C7' : '#A6B0BE' }}>
+                        {active ? 'SELECTED' : 'IDLE'}
+                      </span>
+                    </div>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+        <div className="space-y-4">
+          <div className={`${SURFACE} rounded-lg p-5`}>
+            {!props.selected ? (
+              <p className="text-sm text-[#A6B0BE]">左侧选择一个工具查看详情。</p>
+            ) : (
+              <div className="flex flex-wrap items-start gap-3">
+                <IconTile label={props.selected.displayName} size={40} />
+                <div className="min-w-0 flex-1">
+                  <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
+                    {props.selected.displayName}
+                    <Chip tone="accent">{props.selected.connection}</Chip>
+                  </h2>
+                  <p className="mt-1 text-xs text-[#A6B0BE]">
+                    声明版本：{props.selected.version ?? 'UNKNOWN'} · 写入策略：{props.selected.writePolicy || 'UNKNOWN'}
+                  </p>
                 </div>
-                <p className="mt-1 text-xs text-[#A6B0BE]">{tool.version ?? '版本 UNKNOWN'}</p>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className={`${SURFACE} rounded-lg p-5`}>
-          {!props.selected ? (
-            <p className="text-sm text-[#A6B0BE]">左侧选择一个工具查看详情。</p>
-          ) : (
-            <>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">{props.selected.displayName}</h2>
-                <span className="text-xs text-[#A6B0BE]">{props.selected.connection}</span>
-              </div>
-              <dl className="mt-4 space-y-3 text-sm">
-                <div className="rounded border border-[#303A46] bg-[#10141A] p-3">
-                  <dt className="text-xs text-[#A6B0BE]">当前可用能力</dt>
-                  <dd className="mt-1">{props.selected.capabilitySentence}</dd>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
+                <DisabledAction label={`打开 ${props.selected.displayName} 外部客户端`}
+                  reason="观察者只读：不启动外部软件" primary />
+                <div className="mt-4 grid w-full grid-cols-1 gap-3 md:grid-cols-3">
+                  <div className="rounded border border-[#303A46] bg-[#10141A] p-3">
+                    <dt className="text-xs text-[#A6B0BE]">当前可用能力</dt>
+                    <dd className="mt-1 text-sm">{props.selected.capabilitySentence}</dd>
+                  </div>
                   <div className="rounded border border-[#303A46] bg-[#10141A] p-3">
                     <dt className="text-xs text-[#A6B0BE]">关联项目</dt>
-                    <dd className="mt-1">{props.selected.relatedProjects.length ? props.selected.relatedProjects.join('、') : '未记录'}</dd>
+                    <dd className="mt-1 text-sm">
+                      {props.selected.relatedProjects.length ? props.selected.relatedProjects.join('、') : '未记录'}
+                    </dd>
                   </div>
                   <div className="rounded border border-[#303A46] bg-[#10141A] p-3">
-                    <dt className="text-xs text-[#A6B0BE]">声明版本</dt>
-                    <dd className="mt-1">{props.selected.version ?? 'UNKNOWN'}</dd>
-                  </div>
-                  <div className="rounded border border-[#303A46] bg-[#10141A] p-3">
-                    <dt className="text-xs text-[#A6B0BE]">写入策略</dt>
-                    <dd className="mt-1">{props.selected.writePolicy || 'UNKNOWN'}</dd>
+                    <dt className="text-xs text-[#A6B0BE]">最近更新</dt>
+                    <dd className="mt-1 text-sm">
+                      {props.selected.observedAt ? fmtTimestamp(props.selected.observedAt) : 'UNKNOWN'}
+                    </dd>
                   </div>
                 </div>
-              </dl>
-              <div className="mt-5">
-                <h3 className="text-sm font-semibold">使用辅助</h3>
-                <ul className="mt-2 space-y-2 text-sm">
-                  <li className="rounded border border-[#303A46] bg-[#10141A] px-3 py-2">使用方法 · 查看向该工具提供上下文与排错的建议做法</li>
-                  <li className="rounded border border-[#303A46] bg-[#10141A] px-3 py-2">提示词与规则 · 查看现有交付格式模板与摘要约束</li>
-                  <li className="rounded border border-[#303A46] bg-[#10141A] px-3 py-2">常见问题 · 查看连接中断或排查超时的常见处理问答</li>
-                </ul>
               </div>
-              <p className="mt-4 text-xs text-[#A6B0BE]">
-                连接配置、专业接口与诊断在「设置 → 高级与专业视图」；本页不修改对方全局配置。
-              </p>
-            </>
-          )}
+            )}
+          </div>
+          <div className={`${SURFACE} rounded-lg p-5`}>
+            <SectionTitle right="QUICK ACCESS">使用辅助</SectionTitle>
+            <ul className="mt-3 divide-y divide-[#303A46]">
+              {quickAccess.map((row) => (
+                <li key={row.id}>
+                  <div className="flex items-center gap-3 py-3">
+                    <FileText size={15} aria-hidden="true" className="shrink-0 text-[#40B6C7]" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm">{row.title}</div>
+                      <p className="text-xs text-[#A6B0BE]">{row.desc}</p>
+                    </div>
+                    <ChevronDown size={15} aria-hidden="true" className="-rotate-90 text-[#A6B0BE]" />
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-[#A6B0BE]">
+              本页不修改对方全局配置；三条辅助内容是只读指引，不代为执行。
+            </p>
+          </div>
+          <div className={`${SURFACE} rounded-lg p-5`}>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <h3 className="flex items-center gap-2 text-sm font-semibold">
+                  连接配置与设置 <Chip>高级入口</Chip>
+                </h3>
+                <p className="mt-1 text-xs text-[#A6B0BE]">
+                  如需查看本地通信端口、工作区路径映射与授权状态，请进入专业投影的设置面板；本页不代为修改。
+                </p>
+              </div>
+              <a href="/index.html?view=settings"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#303A46] bg-[#10141A] px-3 py-1.5 text-sm text-[#40B6C7]">
+                进入工具设置面板 →
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   )
 }
+
 
 function SettingsView(props: { theme: string; onTheme: (t: 'dark' | 'light') => void; snap: SnapshotV3 | null }) {
   const advanced = [
@@ -697,6 +894,7 @@ function MethodDrawer(props: {
     targetTool: target,
   }), [props.projectName, props.method, linkedIssue, linkedPack, target])
 
+  const risks = props.method?.risks ?? []
   const doCopy = async () => {
     const outcome = await writeClipboardText(material.text)
     setCopyResult(outcome.ok ? { ok: true } : { ok: false, why: outcome.why })
@@ -714,12 +912,20 @@ function MethodDrawer(props: {
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-black/40" role="dialog" aria-modal="true" aria-label="方法详情与交接">
       <div className="flex h-full w-[440px] flex-col border-l border-[#303A46] bg-[#171D25]">
-        <div className="flex items-start justify-between border-b border-[#303A46] px-5 py-4">
+        <div className="flex items-start justify-between gap-3 border-b border-[#303A46] px-5 py-4">
           <div className="min-w-0">
-            <p className="text-xs text-[#A6B0BE]">方法详情</p>
-            <h2 className="truncate text-base font-semibold">
-              {props.method ? (props.method.title ?? props.method.solutionId) : '未找到该方法'}
+            <div className="flex flex-wrap items-center gap-2">
+              <Chip tone="accent">经验详情</Chip>
+              <Chip>来自 {props.method ? String(props.method.software.softwareId ?? '未记录') : '方案库'}</Chip>
+            </div>
+            <h2 className="mt-2 truncate text-base font-semibold">
+              {props.method ? `《${props.method.title ?? props.method.solutionId}》` : '未找到该方法'}
             </h2>
+            <p className="mt-1 text-xs text-[#A6B0BE]">
+              {props.method
+                ? `${props.method.recommended ? '已收录推荐' : '候选方法（未验证）'} · 修订 r${props.method.revision ?? '?'} · 状态 ${props.method.status ?? 'UNKNOWN'}`
+                : '链接可能指向未收录的方法'}
+            </p>
           </div>
           <button type="button" onClick={props.onClose} aria-label="关闭抽屉" className="text-[#A6B0BE] hover:text-[#E8EDF3]">✕</button>
         </div>
@@ -730,60 +936,86 @@ function MethodDrawer(props: {
               : <p className="text-[#A6B0BE]">方案库{props.solutionsState === 'LOADING' ? '读取中' : '暂无法获取'}：{props.solutionsWhy ?? '等待读取'}。</p>
           ) : (
             <>
-              <p className="text-xs text-[#A6B0BE]">
-                来源软件：{String(props.method.software.softwareId ?? '未记录')} · 修订 r{props.method.revision ?? '?'} · 状态 {props.method.status ?? 'UNKNOWN'}
-                {props.method.recommended ? ' · 已收录推荐' : ' · 候选方法（未验证）'}
-              </p>
-              <div className="mt-3 rounded border border-[#303A46] bg-[#10141A] p-3">
-                <h3 className="text-xs font-semibold text-[#40B6C7]">当前适用性</h3>
-                <p className="mt-1 text-xs">{props.method.versionHint?.message ?? '待确认'}</p>
-                {props.method.limits.length > 0 && (
-                  <ul className="mt-2 list-disc pl-4 text-xs text-[#A6B0BE]">
-                    {props.method.limits.map((s, i) => <li key={i}>{s}</li>)}
-                  </ul>
+              <SectionTitle>方法背景与历史成效</SectionTitle>
+              <div className="mt-2 space-y-2">
+                <div className="rounded-lg border border-[#303A46] bg-[#10141A] p-3">
+                  <div className="text-xs text-[#A6B0BE]">背景什么问题</div>
+                  <p className="mt-1 text-xs">
+                    {props.method.preconditions.length
+                      ? props.method.preconditions.join('；')
+                      : '来源记录未提供前提条件'}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-[#303A46] bg-[#10141A] p-3">
+                  <div className="text-xs text-[#A6B0BE]">过去取得了什么结果</div>
+                  <p className="mt-1 text-xs">
+                    {props.method.recommended
+                      ? '该方案已被收录为推荐修订（结果原文未在来源记录中提供，不代写）'
+                      : '未核验：候选方法，结果待确认'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <SectionTitle right={props.method.versionHint?.message ?? '适用性待确认'}>
+                  对当前 {props.projectName ?? '项目'} 的适用性
+                </SectionTitle>
+                <p className="mt-2 text-xs text-[#A6B0BE]">{props.method.limits.join('；') || '来源未记录限制条件'}</p>
+                {props.method.invalidWhen.length > 0 && (
+                  <div className="mt-2 rounded-lg border border-amber-400/40 bg-amber-400/5 p-3">
+                    <div className="text-xs font-semibold text-amber-300">失效条件</div>
+                    <ul className="mt-1 list-disc pl-4 text-xs text-[#A6B0BE]">
+                      {props.method.invalidWhen.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                  </div>
                 )}
               </div>
-              {props.method.preconditions.length > 0 && (
-                <div className="mt-3">
-                  <h3 className="text-xs font-semibold">用途与前提</h3>
-                  <ul className="mt-1 list-disc pl-4 text-xs text-[#A6B0BE]">
-                    {props.method.preconditions.map((s, i) => <li key={i}>{s}</li>)}
-                  </ul>
-                </div>
-              )}
-              <div className="mt-3">
-                <button type="button" onClick={() => setStepsOpen((o) => !o)} aria-expanded={stepsOpen}
-                  className="flex w-full items-center justify-between rounded border border-[#303A46] px-3 py-2 text-left text-xs">
-                  给外部工具参考的处理步骤（默认折叠，{props.method.steps.length} 步）
-                  <span aria-hidden="true">{stepsOpen ? '收起' : '展开'}</span>
-                </button>
-                {stepsOpen && (
-                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-xs text-[#A6B0BE]">
-                    {props.method.steps.map((s, i) => <li key={i}>{s}</li>)}
-                  </ol>
-                )}
+
+              <div className="mt-4">
+                <SectionTitle right={`供工具执行 · 共 ${props.method.steps.length} 步`}>
+                  给外部工具参考的处理步骤
+                </SectionTitle>
+                <p className="mt-1 text-xs text-[#A6B0BE]">
+                  以下为准备交由外部工具（如 {target || '手动复制'}）执行的专业排查指令，点击可展开完整技术核验细节。
+                </p>
+                <ol className="mt-2 space-y-2">
+                  {props.method.steps.map((s, i) => (
+                    <li key={i} className="rounded-lg border border-[#303A46] bg-[#10141A]">
+                      <div className="flex items-center gap-3 px-3 py-2">
+                        <span className="text-xs font-semibold text-[#40B6C7]">
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                        <span className="min-w-0 flex-1 text-xs">{s}</span>
+                        {risks[i] && <Chip tone="warn">含风险提示</Chip>}
+                      </div>
+                      {risks[i] && (
+                        <p className="border-t border-[#303A46] px-3 py-2 text-xs text-[#A6B0BE]">
+                          风险：{risks[i]}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                  {props.method.steps.length === 0 && (
+                    <li className="rounded-lg border border-[#303A46] bg-[#10141A] px-3 py-2 text-xs text-[#A6B0BE]">
+                      来源记录未提供步骤（不代写步骤）。
+                    </li>
+                  )}
+                </ol>
               </div>
-              {props.method.risks.length > 0 && (
-                <div className="mt-3">
-                  <h3 className="text-xs font-semibold">风险</h3>
-                  <ul className="mt-1 list-disc pl-4 text-xs text-[#A6B0BE]">
-                    {props.method.risks.map((s, i) => <li key={i}>{s}</li>)}
-                  </ul>
-                </div>
-              )}
-              {props.method.invalidWhen.length > 0 && (
-                <div className="mt-3 rounded border border-amber-400/40 bg-amber-400/5 p-3">
-                  <h3 className="text-xs font-semibold text-amber-300">失效条件</h3>
-                  <ul className="mt-1 list-disc pl-4 text-xs text-[#A6B0BE]">
-                    {props.method.invalidWhen.map((s, i) => <li key={i}>{s}</li>)}
-                  </ul>
+
+              {linkedPack && (
+                <div className="mt-4 rounded-lg border border-[#303A46] bg-[#10141A] p-3">
+                  <SectionTitle right="后端渲染 · 未发送">修复包交接文本</SectionTitle>
+                  <p className="mt-1 text-xs text-[#A6B0BE]">来源：修复包 {linkedPack.packId}</p>
                 </div>
               )}
             </>
           )}
         </div>
         <div className="border-t border-[#303A46] px-5 py-4">
-          <label className="text-xs text-[#A6B0BE]" htmlFor="daily-target-tool">目标交接工具</label>
+          <label className="text-xs text-[#A6B0BE]" htmlFor="daily-target-tool">
+            目标交接工具 <span className="ml-1">复制后在对应工具中粘贴</span>
+          </label>
           <select id="daily-target-tool" value={target} onChange={(e) => setTarget(e.target.value)}
             className="mt-1 w-full rounded border border-[#303A46] bg-[#10141A] px-2 py-1.5 text-sm">
             <option value="">手动复制（未指定工具）</option>

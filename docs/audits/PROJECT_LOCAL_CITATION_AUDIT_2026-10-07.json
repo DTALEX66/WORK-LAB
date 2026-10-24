@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-24T19:44:55Z",
+  "generatedAt": "2026-10-24T21:05:03Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2593,
-    "distinctProjectLocalTokens": 654,
+    "distinctProjectLocalTokens": 658,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 654,
-    "citationsToAbsentTokens": 1894
+    "tokensAbsent": 658,
+    "citationsToAbsentTokens": 1900
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 992,
-      "distinctPaths": 498
+      "citations": 998,
+      "distinctPaths": 502
     },
     "machine_local_runtime_pointer": {
       "citations": 245,
@@ -4128,6 +4128,12 @@
         "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
       },
       {
+        "path": ".project-local/runs/cl10/hud-strip-readback.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
         "path": ".project-local/runs/cl10/install-lifecycle",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
@@ -4148,6 +4154,12 @@
       {
         "path": ".project-local/runs/cl10/native-main-entry/native-main-entry.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 47,
+        "text": "| CL-08 | P1 | EXECUTED_20261024 / 日常壳四主入口＋设置置底已成为桌面默认主窗口入口（本轮改 tauri.conf main url 为 shell=daily，原生主窗口读回 13/13 绿）；31 个专业入口与全部 ?view= 旧深链原样保留（深链仍落专业壳，已实测） **2026-10-24 默认入口轮（本行「默认主窗口入口未切」的缺口已实测闭合）**：切"
+      },
+      {
+        "path": ".project-local/runs/cl10/native-main-entry/native-main-entry.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 51,
         "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
       },
@@ -4156,6 +4168,18 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 51,
         "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
+        "path": ".project-local/runs/cl11/ui-after-measurements.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 47,
+        "text": "| CL-08 | P1 | EXECUTED_20261024 / 日常壳四主入口＋设置置底已成为桌面默认主窗口入口（本轮改 tauri.conf main url 为 shell=daily，原生主窗口读回 13/13 绿）；31 个专业入口与全部 ?view= 旧深链原样保留（深链仍落专业壳，已实测） **2026-10-24 默认入口轮（本行「默认主窗口入口未切」的缺口已实测闭合）**：切"
+      },
+      {
+        "path": ".project-local/runs/cl11/ui-before-measurements.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 47,
+        "text": "| CL-08 | P1 | EXECUTED_20261024 / 日常壳四主入口＋设置置底已成为桌面默认主窗口入口（本轮改 tauri.conf main url 为 shell=daily，原生主窗口读回 13/13 绿）；31 个专业入口与全部 ?view= 旧深链原样保留（深链仍落专业壳，已实测） **2026-10-24 默认入口轮（本行「默认主窗口入口未切」的缺口已实测闭合）**：切"
       },
       {
         "path": ".project-local/runs/client_roots_probe.py",
@@ -6142,6 +6166,18 @@
         "file": "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json",
         "line": 3184,
         "text": "\"command\": \"python .project-local/runs/topbar-measure-20261006/measure_dom.py (headless Chrome on a scratch copy of the shipped dist, geometry read back through --dump-dom)\","
+      },
+      {
+        "path": ".project-local/runs/trae-handoff-20261024/WORK-LAB_TRAE交接包_20261024/MANIFEST.sha256.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 47,
+        "text": "| CL-08 | P1 | EXECUTED_20261024 / 日常壳四主入口＋设置置底已成为桌面默认主窗口入口（本轮改 tauri.conf main url 为 shell=daily，原生主窗口读回 13/13 绿）；31 个专业入口与全部 ?view= 旧深链原样保留（深链仍落专业壳，已实测） **2026-10-24 默认入口轮（本行「默认主窗口入口未切」的缺口已实测闭合）**：切"
+      },
+      {
+        "path": ".project-local/runs/trae-handoff-20261024/WORK-LAB_TRAE交接包_20261024/references",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 47,
+        "text": "| CL-08 | P1 | EXECUTED_20261024 / 日常壳四主入口＋设置置底已成为桌面默认主窗口入口（本轮改 tauri.conf main url 为 shell=daily，原生主窗口读回 13/13 绿）；31 个专业入口与全部 ?view= 旧深链原样保留（深链仍落专业壳，已实测） **2026-10-24 默认入口轮（本行「默认主窗口入口未切」的缺口已实测闭合）**：切"
       },
       {
         "path": ".project-local/runs/u19-msvc-20261006",
@@ -11459,7 +11495,7 @@
     "reviewQueue": 8,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 363
+    "presentOnThisMachine": 367
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
