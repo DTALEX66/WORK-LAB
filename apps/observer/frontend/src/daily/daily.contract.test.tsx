@@ -350,3 +350,33 @@ describe('CL-12 原生窄窗 surface（?surface=hud）', () => {
     expect(document.querySelector('[aria-label="HUD 状态切换"]')).toBeNull()
   })
 })
+
+describe('CL-12 原生窄窗的 H02 可达性', () => {
+  // 隐藏四态切换器后，H02（悬停摘要）在窄窗里就没有别的入口了。它按定义是悬停态，
+  // 所以挂在 H01 上：悬停/聚焦展开，且 H01 保持在场（替换式展开会让指针落在新卡片上，
+  // 离开又触发展开＝抖动）。
+  it('悬停 H01 追加摘要卡，H01 仍在场', () => {
+    window.history.replaceState(null, '', '/index.html?surface=hud')
+    render(<HudDaily snap={mockSnap as never} nativeStrip />)
+    expect(screen.queryByLabelText('悬停摘要')).toBeNull()
+    fireEvent.mouseEnter(screen.getByLabelText('工具额度窄面板'))
+    expect(screen.getByLabelText('悬停摘要')).toBeTruthy()
+    expect(screen.getByLabelText('工具额度窄面板')).toBeTruthy()
+    expect(screen.getByLabelText('悬停摘要').textContent).toContain('UNKNOWN')
+  })
+
+  it('键盘聚焦同样展开（悬停不是唯一通道）', () => {
+    window.history.replaceState(null, '', '/index.html?surface=hud')
+    render(<HudDaily snap={mockSnap as never} nativeStrip />)
+    fireEvent.focus(screen.getByLabelText('工具额度窄面板'))
+    expect(screen.getByLabelText('悬停摘要')).toBeTruthy()
+  })
+
+  it('面板层不追加（切换器仍在，展开会变两张重复卡）', () => {
+    window.history.replaceState(null, '', '/index.html?layout=compact&hud=daily')
+    render(<HudDaily snap={mockSnap as never} />)
+    fireEvent.mouseEnter(screen.getByLabelText('工具额度窄面板'))
+    expect(screen.queryByLabelText('悬停摘要')).toBeNull()
+    expect(screen.getByLabelText('HUD 状态切换')).toBeTruthy()
+  })
+})
