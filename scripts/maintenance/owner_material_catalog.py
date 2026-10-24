@@ -235,6 +235,10 @@ def render_index(data, members):
 
 """
     lines = [intro, f"本次登记 **{count} 条资料**及 **{len(members)} 条包内成员**。下表链接指向规范存储；压缩资料的成员链在 JSON/CSV 和可搜索目录中完整列出。\n"]
+    lines += ["\n## 项目派生归档容器\n", "以下为既有资料整理或用户授权的项目内交接归档；不冒充 Record 源文件，不改变 Record 来源盘点。成员可通过 find 查询。\n"]
+    for container in data.get("storageContainers", []):
+        relative = Path(os.path.relpath(inside(container["archivePath"]), BASE)).as_posix()
+        lines.append(f"- {container['id']}：[{Path(container['archivePath']).name}](<{relative}>)；{container['status']}。")
     for group in ("TASK_HANDOFF", "AUDIT", "BLUEPRINT_RESEARCH", "UI_REFERENCE", "UI_ASSET"):
         lines += [f"\n### {group}\n", "| ID | 原位置 / 包内位置 | 身份 | 规范存储 |", "| --- | --- | --- | --- |"]
         for item in data["records"]:

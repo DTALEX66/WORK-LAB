@@ -17,6 +17,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import { KPICard } from '@/components/dashboard/KPICard'
 import { ProjectSummaryTable } from '@/components/dashboard/ProjectSummaryTable'
 import { Badge } from '@/components/ui/badge'
+import { IssueCenter } from '@/views/IssueCenter'
 import { OVERVIEW_LABEL } from '@/lib/viewRegistry'
 import {
   fmtCostQuality, fmtTimestamp, tokenTruth, executionsToRows,
@@ -128,6 +129,10 @@ export function OverviewView({ snap, source, live }: OverviewViewProps) {
           search={typeof window !== 'undefined' ? window.location.search : ''}
         />
       </div>
+
+      {/* CL-07: the problem centre answers 需要处理的问题 on the landing page. It reads `snap.issues` and
+          `snap.issuesSummary` directly and keeps absent / empty / truncated as three different statements. */}
+      <IssueCenter snap={snap} />
 
       {/* B10 `.two-col` — source freshness + system status. The 执行趋势 panel is gone: the v3 snapshot
           carries no trend series, so the frame plotted nothing while looking like a chart. */}

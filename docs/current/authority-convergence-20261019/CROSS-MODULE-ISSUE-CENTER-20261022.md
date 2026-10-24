@@ -50,3 +50,22 @@ schema、生成合同 `packages/client-neutral-core/generated/contracts.ts` 与 
 无数据迁移、无外部副作用。
 `packages/client-neutral-core/scripts/canonical_store.py` 里健康表写入的收紧（ERR-290）是独立可回退的一处：
 它拒绝未映射键与空写，既有调用方与全部测试都用 camelCase 已映射键，实测不受影响。
+
+## 6. 2026-10-23 修订：界面边界已由 CL-07 取代
+
+本卡 §1 的「Observer 侧只新增合同声明，没有任何渲染消费者……`PINNED_REFINEMENT_PATHS` 故意不加入 `issues`/`issuesSummary`，所以界面仍不消费这两个键」
+与 §4 第一条「不做界面呈现、不加控件、不加路由」是 **2026-10-22 当日**的边界。用户 2026-10-23 以登记材料 `WL-REC-0107`
+下达 CL-07，把界面接入列为本轮交付，因此那两句不再是现行约束。现行事实：
+
+- `apps/observer/frontend/src/views/IssueCenter.tsx` 已挂在既有「项目监控」页（入口在 `apps/observer/frontend/src/views/OverviewView.tsx`），
+  消费 `issues` 与 `issuesSummary`，区分「来源缺席」「空且完整」「空但截断」三态；包内唯一按钮是「复制交接材料」。
+- `apps/observer/frontend/src/contractConformance.ts` 的 `PINNED_REFINEMENT_PATHS` 由 22 增至 24。
+- 新增 `apps/observer/frontend/src/lib/repairPack.ts`（只接受 `worklab/repair-packs-view/v1`，逐包复核未发送）与
+  `apps/observer/frontend/src/lib/api.ts` 的端点派生（回环、GET-only）。
+- 实测：`.project-local/artifacts/cl07/receipt.json` `verdict=PASS`、12/12 checks；前端 70 文件／843 例，
+  `OBSERVER_FRONTEND_CONTRACTS_PASS js=0 vitest=0`。
+
+**仍然成立的部分：** 不新增 Control 动词、不改 `config/adapter-registry.json`、没有自动派发、没有第二任务账本；
+Observer 仍是严格只读投影（本批没有给它 execute／approve／retry／apply／rollback 或任何写路径）；§2「为什么必须同时改两侧」
+的理由不变——`tests/workflow-assistance/test_snapshot_v3_schema_is_the_single_shape_authority.py` 仍双向比对 schema 与
+`apps/observer/frontend/src/types.ts`。§5 的回滚范围相应扩到上面点名的前端文件；CL-07 之外的切片仍不在本卡授权内。

@@ -386,5 +386,123 @@ class PolishTests(unittest.TestCase):
                         "a handoff with no check step cannot be verified by anyone")
 
 
+class ManualTargetTests(unittest.TestCase):
+    """CL-03: material a human copies to any tool, with no adapter capability borrowed.
+
+    The route exists because "the executor declares invoke" is a fact about a registry entry, and a user with
+    an issue and an arbitrary tool has no such entry. The tests below pin the two claims that could inflate:
+    a manual pack naming an adapter, and a user statement being stored where a receipt belongs.
+    """
+
+    def setUp(self) -> None:
+        self.pack = rpp.project_repair_packs(
+            issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")], registry=REGISTRY,
+            adapters=[], generated_at=GENERATED_AT, root_probe=make_root(), manual=True)["packs"][0]
+
+    def test_a_manual_pack_names_no_adapter_and_claims_no_invoke(self) -> None:
+        from jsonschema import Draft202012Validator
+        self.assertEqual("MANUAL_COPY", self.pack["target"]["kind"])
+        self.assertEqual("copy-handoff", self.pack["target"]["operation"])
+        self.assertIsNone(self.pack["target"]["adapter"])
+        self.assertIsNone(self.pack["target"]["adapterSupportLevel"])
+        self.assertEqual([], self.pack["target"]["declaredOperations"])
+        self.assertEqual("manual-copy", self.pack["plan"]["target"]["adapter"],
+                         "the plan body still needs a non-empty executor label; the reserved label is not "
+                         "an adapter id and the envelope's kind says so")
+        self.assertEqual("copy-handoff", self.pack["plan"]["target"]["operation"])
+        self.assertEqual([], rpp.validate_repair_pack(self.pack))
+        self.assertEqual([], [e.message for e in Draft202012Validator(PACK_SCHEMA).iter_errors(self.pack)])
+
+    def test_the_manual_route_does_not_read_the_adapter_registry(self) -> None:
+        out = rpp.project_repair_packs(issues=[issue("a" * 16, "work-lab")],
+                                       projects=[project("work-lab")], registry=None, adapters=[],
+                                       generated_at=GENERATED_AT, root_probe=make_root(), manual=True)
+        self.assertEqual(1, len(out["packs"]))
+        self.assertNotIn("adapterRegistry", out["summary"]["sources"],
+                         "a route that never consulted the registry may not report it as a missing source")
+        self.assertEqual("MANUAL_COPY", out["summary"]["targetKind"])
+
+    def test_the_same_issue_handed_manually_and_to_an_adapter_is_two_materials(self) -> None:
+        adapter_pack = rpp.project_repair_packs(
+            issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")], registry=REGISTRY,
+            adapters=["codex"], generated_at=GENERATED_AT, root_probe=make_root())["packs"][0]
+        self.assertNotEqual(self.pack["packId"], adapter_pack["packId"])
+        self.assertEqual("ADAPTER_INVOKE", adapter_pack["target"]["kind"])
+        self.assertEqual("invoke", adapter_pack["target"]["operation"])
+        self.assertEqual("codex", adapter_pack["target"]["adapter"])
+
+    def test_a_user_statement_cannot_fill_the_external_receipt(self) -> None:
+        from jsonschema import Draft202012Validator
+        forged = copy.deepcopy(self.pack)
+        forged["handoff"]["userDeclaredHandoff"] = {
+            "declared": True, "declaredAt": GENERATED_AT, "channel": "clipboard",
+            "claimedRecipient": "some-tool"}
+        self.assertTrue(any("userDeclaredHandoff" in p or "user statement" in p
+                            for p in rpp.validate_repair_pack(forged)))
+        self.assertIs(False, forged["handoff"]["externalReceipt"]["received"],
+                      "writing one field must not fill the other; the claim and the evidence are separate")
+        self.assertTrue(list(Draft202012Validator(PACK_SCHEMA).iter_errors(forged)))
+
+    def test_an_unknown_verification_command_blocks_a_manual_pack_too(self) -> None:
+        pack = rpp.project_repair_packs(
+            issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")], registry=REGISTRY,
+            adapters=[], generated_at=GENERATED_AT, root_probe=make_root(entry_present=False),
+            manual=True)["packs"][0]
+        self.assertEqual("BLOCKED", pack["status"])
+        self.assertEqual(["verification-command-unknown"], pack["readiness"]["reasons"])
+
+    def test_the_two_routes_cannot_be_combined_in_one_run(self) -> None:
+        self.assertEqual(4, rpp.main(["--adapter", "codex", "--manual"]),
+                         "the set-level check refuses to bind one issue twice, so the CLI must refuse the "
+                         "combination before it reads a store")
+
+
+class HandoffTextGuardTests(unittest.TestCase):
+    """The material is the product a human carries away; these are the ways it can lie."""
+
+    def setUp(self) -> None:
+        many = [issue(f"{i:016x}", "work-lab") for i in range(12)]
+        self.pack = rpp.project_repair_packs(issues=many, projects=[project("work-lab")],
+                                             registry=REGISTRY, adapters=["codex"],
+                                             generated_at=GENERATED_AT,
+                                             root_probe=make_root())["packs"][0]
+
+    def test_every_bound_evidence_ref_appears_in_the_material(self) -> None:
+        text = rpp.render_handoff_text(self.pack)
+        self.assertEqual([], rpp.validate_handoff_text(self.pack, text))
+        for ref in self.pack["binds"]["evidenceRefs"]:
+            self.assertIn(f"`{ref}`", text,
+                          "the material is what a tool reads; an omitted ref is a row nobody can re-read")
+
+    def test_the_guard_names_a_missing_ref(self) -> None:
+        text = rpp.render_handoff_text(self.pack)
+        missing = self.pack["binds"]["evidenceRefs"][0]
+        problems = rpp.validate_handoff_text(self.pack, text.replace(missing, "REMOVED"))
+        self.assertTrue(any("omits" in problem and missing in problem for problem in problems), problems)
+
+    def test_the_guard_rejects_a_completed_claim(self) -> None:
+        for phrase in rpp.HANDOFF_FORBIDDEN_PHRASES:
+            self.assertTrue(rpp.validate_handoff_text(self.pack, f"header\n{phrase}\nrest"),
+                            f"{phrase} must be refused")
+
+    def test_the_rendered_material_carries_none_of_them(self) -> None:
+        text = rpp.render_handoff_text(self.pack)
+        for phrase in ("已发送", "已执行", "已批准"):
+            self.assertNotIn(phrase, text,
+                             "the negative framing 未发送/未执行 is fine; the completed claim is not")
+
+    def test_the_preview_explains_the_blocking_condition(self) -> None:
+        blocked = rpp.project_repair_packs(
+            issues=[issue("a" * 16, "work-lab")], projects=[project("work-lab")], registry=REGISTRY,
+            adapters=["codex"], generated_at=GENERATED_AT,
+            root_probe=make_root(entry_present=False))["packs"][0]
+        text = rpp.render_handoff_text(blocked)
+        self.assertIn("还缺什么条件", text)
+        self.assertIn("verification-command-unknown", text)
+        self.assertIn("检查入口", text)
+        ready = rpp.render_handoff_text(self.pack)
+        self.assertIn("材料可以直接复制", ready)
+
+
 if __name__ == "__main__":
     unittest.main()

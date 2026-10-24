@@ -4,6 +4,10 @@ Real measurement behind this gate: with 22 keys pinned by the frontend contract,
 (`artifactHandles`, `artifactHandlesSummary`) had zero consumers in the interface source while the live
 v3 snapshot carried 200 projected handle rows. Nothing failed, because nothing looked.
 
+The population grew to 24 on 2026-10-23, when CL-07 wired the issue-centre sections into the project
+monitoring lane and added `issues` and `issuesSummary` to that same array. The count is asserted only to
+make an intentional contract change visible here; the render coverage itself is asserted separately.
+
 The synthetic cases exist so the gate cannot be quietly disabled: a key named only in a comment, or only
 in a type/contract declaration, still has to count as unrendered.
 """
@@ -46,7 +50,7 @@ def build_tree(root: Path, keys: list[str], consumers: dict[str, list[tuple[str,
 class SnapshotKeyCoverageTests(unittest.TestCase):
     def test_the_shipped_interface_consumes_every_pinned_snapshot_key(self) -> None:
         result = MODULE.analyze(ROOT)
-        self.assertEqual(22, len(result["keys"]),
+        self.assertEqual(24, len(result["keys"]),
                          "the contract pinned a different number of keys than this gate was written for; "
                          "re-read the source rather than editing the expectation")
         self.assertEqual([], result["unrendered"],

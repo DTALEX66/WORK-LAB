@@ -423,10 +423,10 @@ export interface SnapshotV3 {
   // trial pages render the two differently and never pad either to a zero.
   operationProgress?: OperationProgressRecord[]
   isolatedTrials?: IsolatedTrialRecord[]
-  // The problem centre (audit 2026-10-22, 闭环距离 row 2). Declared here so the contract has one shape in
-  // both directions; NOT yet rendered, because no lane consumes it — that is the Stitch pass. Absent means
-  // no source answered; `[]` with `issuesSummary.complete=true` means every source was read and nothing
-  // was wrong. A lane that cannot tell those two apart must show UNKNOWN, never a zero.
+  // The problem centre (audit 2026-10-22, 闭环距离 row 2). CL-07 renders it in
+  // `views/IssueCenter.tsx` on the 项目监控 lane. Absent means no source answered; `[]` with
+  // `issuesSummary.complete=true` means every source was read and nothing was wrong. The centre keeps
+  // those two apart and shows UNKNOWN for the first, never a zero.
   issues?: IssueRecord[]
   issuesSummary?: IssuesSummary
 }

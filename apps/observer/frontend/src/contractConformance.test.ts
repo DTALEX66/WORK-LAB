@@ -33,7 +33,10 @@ describe('contractConformance', () => {
     // from the declared key set, which is typed `keyof SnapshotV3`, so a rename fails the compile.
     const declaredOptional: (keyof SnapshotV3)[] = ['software', 'taskRecords', 'adapterCapabilities',
                                                    'artifactHandles', 'artifactHandlesSummary',
-                                                   'collectors', 'operationProgress', 'isolatedTrials']
+                                                   'collectors', 'operationProgress', 'isolatedTrials',
+                                                   // CL-07 pinned the problem centre once IssueCenter consumed
+                                                   // both keys; absent still means no source answered.
+                                                   'issues', 'issuesSummary']
     for (const path of PINNED_REFINEMENT_PATHS) {
       const present = keys.includes(path) || (declaredOptional as string[]).includes(path)
       expect(present, `pinned path ${path} is not on the projection`).toBe(true)
@@ -62,11 +65,9 @@ describe('contractConformance', () => {
                                                    'collectors', 'operationProgress', 'isolatedTrials',
                                                    // The problem centre (2026-10-22). Optional by the same rule
                                                    // as every section above: absent means no source answered.
-                                                   // Only the collapse list needs it, because
-                                                   // `issues[].magnitude` is the declared collapse -- the two
-                                                   // sections are deliberately NOT in PINNED_REFINEMENT_PATHS,
-                                                   // since no lane renders them yet.
-                                                   'issues']
+                                                   // CL-07 renders both sections in IssueCenter and pins them,
+                                                   // so this admission is about fixture shape only.
+                                                   'issues', 'issuesSummary']
     for (const path of GENERATED_COLLAPSED_PATHS) {
       const head = path.split('.')[0].replace('[]', '')
       const present = keys.includes(head)

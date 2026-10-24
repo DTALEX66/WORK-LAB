@@ -2,8 +2,8 @@
   "schemaVersion": "work-lab/record-source-census/v1",
   "root": "D:/All projects/Record",
   "snapshotDate": "2026-10-11",
-  "enumeratedFileCount": 187,
-  "archivedSourceFileCount": 51,
+  "enumeratedFileCount": 188,
+  "archivedSourceFileCount": 52,
   "excludedForeignFileCount": 136,
   "unresolved": 0,
   "files": [
@@ -1128,6 +1128,12 @@
       "bytes": 72322,
       "disposition": "ARCHIVED",
       "basis": "2026-10-21 owner-supplied independent closed-loop audit pack (WL-REC-0106)"
+    },
+    {
+      "sourceRelativePath": "WORK-LAB_既有规划对账与独立闭环交接包_20261023.zip",
+      "bytes": 42586,
+      "disposition": "ARCHIVED",
+      "basis": "2026-10-23 owner-supplied plan-reconciliation and independent closed-loop pack (WL-REC-0107)"
     }
   ],
   "incrementalAppends": [
@@ -1141,6 +1147,12 @@
       "at": "2026-10-21",
       "sourceRelativePath": "WORK-LAB_独立闭环审计包_20261021.zip",
       "materialId": "WL-REC-0106",
+      "basis": "appended without re-enumerating the source root; counts include this file"
+    },
+    {
+      "at": "2026-10-23",
+      "sourceRelativePath": "WORK-LAB_既有规划对账与独立闭环交接包_20261023.zip",
+      "materialId": "WL-REC-0107",
       "basis": "appended without re-enumerating the source root; counts include this file"
     }
   ]

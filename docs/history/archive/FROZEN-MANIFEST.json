@@ -2,11 +2,11 @@
   "schemaVersion": "work-lab/frozen-surface-manifest/v1",
   "root": "docs/history/archive",
   "normative": false,
-  "generatedFromCommit": "0045017acefb9bfc697bcdbfeb10fc28344d2843",
-  "generatedFromTree": "edd09da758b3dc421c2359ca990b55d532243c8e",
+  "generatedFromCommit": "b5b3a3190e725cf6737372ee7e4f73f12fac584b",
+  "generatedFromTree": "e8e43a66d9bfe38d8a4b942f624e4dd8e28377b8",
   "totals": {
-    "files": 158,
-    "bytes": 2316037
+    "files": 162,
+    "bytes": 2340667
   },
   "files": [
     {
@@ -773,6 +773,26 @@
       "path": "docs/history/archive/workflow-assistance/error-fixes/memory-compaction-2026-08-13.md",
       "bytes": 3246,
       "sha256": "30c96164c88940008fa553c86a4406870c1dc7ebc76ceca6addc37ecf3f8d78e"
+    },
+    {
+      "path": "docs/history/archive/workflow-assistance/handoffs/agent-rules-governance-20261024/ARCHIVE-RECEIPT.json",
+      "bytes": 1858,
+      "sha256": "7567e4f3359422a16d78c5c22776a002718f205d02a285a6a9fed285434a5ddd"
+    },
+    {
+      "path": "docs/history/archive/workflow-assistance/handoffs/agent-rules-governance-20261024/SOURCE-MANIFEST.json",
+      "bytes": 10414,
+      "sha256": "a334764a7170c5ef3ede64968bdb829d69b860336bd34f91398940f3828a2fab"
+    },
+    {
+      "path": "docs/history/archive/workflow-assistance/handoffs/agent-rules-governance-20261024/SUMMARY.md",
+      "bytes": 7405,
+      "sha256": "b9e17f166509e9124e01f8b7bde50f24abe9ada2f746894377d8d3322b5a7d8f"
+    },
+    {
+      "path": "docs/history/archive/workflow-assistance/handoffs/agent-rules-governance-20261024/WORK-LAB-INTAKE-PROMPT.md",
+      "bytes": 4953,
+      "sha256": "0c2f2b981ace7a2d28430b59af769eac4e49b0e6c7e80aa846b6127b999e8778"
     },
     {
       "path": "docs/history/archive/workflow-assistance/handoffs/hermes-desktop-source-root-repair-2026-07-24.md",

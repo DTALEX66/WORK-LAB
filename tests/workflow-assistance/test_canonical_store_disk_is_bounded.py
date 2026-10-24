@@ -70,7 +70,11 @@ class RetentionPolicyTests(unittest.TestCase):
         return int(self.store._conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])  # noqa: SLF001
 
     def test_the_retainable_set_is_derived_and_excludes_the_version_record(self) -> None:
-        self.assertGreaterEqual(len(RETAINABLE_TABLES), 8,
+        # The floor moved 8 -> 7 in CL-04: `action_plans` joined the exempt set because it holds one current
+        # row per plan identity (including the row a later imported result is checked against), not an
+        # append-only event stream. The derivation equation below is the real guard; this number only fails
+        # when the retainable set has shrunk to the point where retention guards almost nothing.
+        self.assertGreaterEqual(len(RETAINABLE_TABLES), 7,
                                 f"only {RETAINABLE_TABLES} may be retained; if the set is empty the feature "
                                 "guards nothing")
         for exempt in RETENTION_EXEMPT_TABLES:

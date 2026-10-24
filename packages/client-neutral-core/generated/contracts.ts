@@ -44,6 +44,7 @@ export type ContractId =
   | "software-installation-identity"
   | "software-update-postflight"
   | "software-update-preflight"
+  | "solution"
   | "source-ledger"
   | "task-card"
   | "task-ledger-event"
@@ -937,15 +938,16 @@ export type RepairPack = {
     reasons: ("no-open-issues" | "adapter-not-declared" | "adapter-does-not-declare-invoke" | "project-unregistered" | "project-root-missing" | "issue-has-no-project" | "verification-command-unknown" | "pack-cap-reached")[]
   },
     target: {
+    kind: "ADAPTER_INVOKE" | "MANUAL_COPY",
     projectId: string,
     projectName: string | null,
     projectRoot: string,
     projectStatus: string | null,
-    adapter: string,
+    adapter: string | null,
     adapterDisplayName: string | null,
     adapterSupportLevel: string | null,
     declaredOperations: ("detect" | "capabilities" | "plan" | "apply" | "invoke" | "observe" | "rollback")[],
-    operation: "invoke",
+    operation: "invoke" | "copy-handoff",
     routingSource: "caller-choice"
   },
     binds: {
@@ -963,13 +965,32 @@ export type RepairPack = {
     basis: string
   },
     handoff: {
+    mode: "manual-copy",
+    copyable: true,
     sent: false,
     dispatched: false,
+    copiedByUser: {
+    declared: false,
+    declaredAt: unknown,
+    channel: unknown
+  },
+    userDeclaredHandoff: {
+    declared: false,
+    declaredAt: unknown,
+    channel: unknown,
+    claimedRecipient: unknown
+  },
+    externalReceipt: {
+    received: false,
+    receivedAt: unknown,
+    externalId: unknown,
+    source: unknown
+  },
     authorizationRef: unknown,
     requiresOwnerAction: string
   },
     provenance: {
-    derivationScope: "open-issue-rows-plus-registered-projects-plus-adapter-registry",
+    derivationScope: "open-issue-rows-plus-registered-projects-plus-adapter-registry" | "open-issue-rows-plus-registered-projects",
     inferencePerformed: false,
     contentIncluded: false,
     authorityClaimed: false,
@@ -1128,6 +1149,46 @@ export type SoftwareUpdatePreflight = {
     location_readback_passed?: boolean | null,
     overall?: "PASS" | "FAIL" | "PENDING",
     reasons?: ("IN_PLACE_UPDATE_OK" | "INSTALL_ROOT_CHANGE_REQUIRES_EXPLICIT_RELOCATION" | "DUAL_INSTALLATION_UPDATE_BLOCKED" | "LOCATION_DRIFT_UPDATE_BLOCKED" | "MISSING_EXPECTED_INSTALL_NO_VENDOR_FALLBACK" | "SINGLE_UNVERIFIED_IDENTITY_VALIDATION_FIRST" | "OS_MANAGED_PRESERVE_OFFICIAL_CHANNEL" | "LOCATION_READBACK_FAIL" | "RELOCATION_APPROVED" | "RELOCATION_NOT_APPROVED")[]
+  };
+
+// @contract solution
+// schema: packages/contracts/schemas/workflow/solution.schema.json
+export type Solution = {
+    schemaVersion: "workflow/solution/v1",
+    solutionId: string,
+    revision: number,
+    title: string,
+    status: "VERIFIED" | "UNVERIFIED",
+    software: {
+    softwareId: string,
+    softwareVersion: string,
+    platform: string,
+    versionSource: "MEASURED" | "DECLARED" | "UNKNOWN"
+  },
+    source: {
+    kind: "REPAIR_RECORD" | "MANUAL",
+    ref: string,
+    updatedAt: string
+  },
+    preconditions: string[],
+    steps: string[],
+    expected: string[],
+    verificationSteps: string[],
+    invalidWhen: string[],
+    risks: {
+    risk: string,
+    recovery: string
+  }[],
+    limits: string[],
+    evidenceRefs: string[],
+    issueRefs: string[],
+    keywords: string[],
+    recommended: boolean,
+    supersedes: {
+    solutionId: string,
+    revision: number
+  } | null,
+    changes: string
   };
 
 // @contract source-ledger

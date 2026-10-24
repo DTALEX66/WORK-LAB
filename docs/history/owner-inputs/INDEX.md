@@ -35,8 +35,15 @@
 ## 原文件及别名目录
 
 
-本次登记 **106 条资料**及 **2415 条包内成员**。下表链接指向规范存储；压缩资料的成员链在 JSON/CSV 和可搜索目录中完整列出。
+本次登记 **107 条资料**及 **2465 条包内成员**。下表链接指向规范存储；压缩资料的成员链在 JSON/CSV 和可搜索目录中完整列出。
 
+
+## 项目派生归档容器
+
+以下为既有资料整理或用户授权的项目内交接归档；不冒充 Record 源文件，不改变 Record 来源盘点。成员可通过 find 查询。
+
+- WL-STORE-20261009：[WORK-LAB-HISTORICAL-RECORDS-20261009.zip](<record-20261009/WORK-LAB-HISTORICAL-RECORDS-20261009.zip>)；HISTORICAL_DERIVED_STORAGE_NOT_TASKPACK。
+- WL-STORE-AGENTRULES-20261024：[WORK-LAB-AgentRules-Governance-Intake-20261024.zip](<20261024/WORK-LAB-AgentRules-Governance-Intake-20261024.zip>)；HISTORICAL_DERIVED_HANDOFF_NOT_TASKPACK。
 
 ### TASK_HANDOFF
 
@@ -86,6 +93,7 @@
 | WL-REC-0040 | WORK-LAB_审计裁决_2026-10-01.json | 项目历史 | [原件](<../archive/recovered-originals/RECORD-20261008/WORK-LAB_审计裁决_2026-10-01.json>) |
 | WL-REC-0104 | AAOS-WORK-DESIGN-cloud-audit-20261011.zip | 当前输入 | [原件](<record-20261011/originals/AAOS-WORK-DESIGN-cloud-audit-20261011.zip>) |
 | WL-REC-0106 | WORK-LAB_独立闭环审计包_20261021.zip | 当前输入 | [原件](<20261021/WORK-LAB_独立闭环审计包_20261021.zip>) |
+| WL-REC-0107 | WORK-LAB_既有规划对账与独立闭环交接包_20261023.zip | 当前输入 | [原件](<20261023/WORK-LAB_既有规划对账与独立闭环交接包_20261023.zip>) |
 
 ### BLUEPRINT_RESEARCH
 

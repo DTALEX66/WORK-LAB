@@ -40,6 +40,8 @@ from canonical_store import CanonicalStore
 import evidence_range_reader
 from sse_hub import HEARTBEAT_SECONDS, LIVE, LiveProjection, SNAPSHOT, STALE, render_sse_frames
 from composition_root import build_v3_snapshot, load_approved_index
+import repair_pack_projection
+import solution_library
 from live_gate import evaluate_live
 from sse_revision import SseRevisionHub
 from snapshot_validator import validate_snapshot
@@ -47,6 +49,8 @@ from workspace_evidence import load_workspace_evidence
 
 COLLECTOR_FRESHNESS_SECONDS = 60.0
 CANONICAL_READBACK_FRESHNESS_SECONDS = 60.0
+REPAIR_PACKS_VIEW_SCHEMA_VERSION = "worklab/repair-packs-view/v1"
+SOLUTION_SEARCH_SCHEMA_VERSION = solution_library.SEARCH_SCHEMA_VERSION
 
 
 class WorkflowSidecar:
@@ -350,6 +354,74 @@ class WorkflowSidecar:
         )
         return snapshot
 
+    def repair_packs_view(self) -> dict[str, Any]:
+        """CL-07: the copyable handoff material behind the problem rows.
+
+        The text is rendered by the same `repair_pack_projection.render_handoff_text` the CLI uses, so the
+        browser copies the projection's own sentences instead of a second implementation that could drift.
+        `manual=True` names no adapter: a human copies the material to whatever tool they choose, and this
+        route never asserts that any adapter can invoke anything.
+
+        Absent issues and no issues are different statements. `issues` absent from the snapshot means no
+        source answered, so this route returns SOURCE_ABSENT with no packs rather than an empty list that
+        would read as "every source was read and there is nothing to hand off".
+        """
+        snapshot = self.v3_snapshot()
+        issues = snapshot.get("issues")
+        issues_summary = snapshot.get("issuesSummary")
+        generated_at = self._timestamp(time.time()) or ""
+        if issues is None:
+            return {
+                "schemaVersion": REPAIR_PACKS_VIEW_SCHEMA_VERSION,
+                "status": "SOURCE_ABSENT",
+                "reason": "问题投影缺席：没有来源作答，无法判断是否存在可交接的问题。",
+                "generatedAt": generated_at,
+                "issuesSummary": issues_summary,
+                "packs": [],
+                "summary": None,
+            }
+        projection = repair_pack_projection.project_repair_packs(
+            issues=issues,
+            projects=self.store.list_projects(),
+            registry=None,
+            adapters=[],
+            generated_at=generated_at,
+            manual=True,
+        )
+        packs, pack_summary = projection["packs"], projection["summary"]
+        for pack in packs:
+            pack["handoffText"] = repair_pack_projection.render_handoff_text(pack)
+        open_count = pack_summary.get("openIssueCount")
+        if open_count == 0:
+            status, reason = "NO_OPEN_ISSUES", "已读取问题投影：当前没有待交接的问题。"
+        elif not packs:
+            status, reason = "NO_PACK", "存在问题，但没有形成可交接的包；原因见 summary.refusals。"
+        else:
+            status, reason = "OK", "已生成人工交接材料：复制不等于发送，WORK-LAB 不执行任何操作。"
+        return {
+            "schemaVersion": REPAIR_PACKS_VIEW_SCHEMA_VERSION,
+            "status": status,
+            "reason": reason,
+            "generatedAt": generated_at,
+            "issuesSummary": issues_summary,
+            "packs": packs,
+            "summary": pack_summary,
+        }
+
+    def solutions_view(self, *, query: str = "", software_id: str | None = None,
+                       current_version: str | None = None, fingerprints: Any = (),
+                       limit: int = solution_library.MAX_RESULTS) -> dict[str, Any]:
+        """CL-06: local solution search. Read-only; no model and no AAOS are consulted.
+
+        A store that cannot be read is SOURCE_ABSENT, never an empty list: "the library has no
+        solutions" and "the library could not be read" are different statements, and only the first
+        one licenses a reader to conclude there is nothing to apply.
+        """
+        return solution_library.store_view(
+            self.store, query=query, software_id=software_id,
+            current_version=current_version, fingerprints=fingerprints, limit=limit,
+        )
+
     def live_projection_skeleton(self) -> dict:
         """Minimal valid snapshot skeleton for live-gate schema validation."""
         return build_v3_snapshot(
@@ -643,6 +715,30 @@ def create_server(
                 self.send_json(200, sidecar.projection())  # 旧 v1 兼容，保留
             elif path == "/api/v1/snapshot":
                 self.send_json(200, sidecar.v3_snapshot())  # P0-2: 真 v3
+            elif path == "/api/v1/repair-packs":
+                # CL-07: the problem rows' copyable handoff, rendered server-side by the same projection
+                # the CLI writes. GET-only like every other read; no adapter is named or invoked.
+                self.send_json(200, sidecar.repair_packs_view())
+            elif path == "/api/v1/solutions":
+                # CL-06: local search over solidified solutions. GET-only; the response carries its own
+                # typed status because a 200 with status EMPTY/NO_MATCH/SOURCE_ABSENT is not "found".
+                query = parse_qs(urlsplit(self.path).query)
+                try:
+                    limit = int((query.get("limit") or [str(solution_library.MAX_RESULTS)])[0])
+                except ValueError:
+                    self.send_json(400, {
+                        "schemaVersion": SOLUTION_SEARCH_SCHEMA_VERSION,
+                        "status": "REFUSED", "reason": "limit 必须是整数。",
+                        "query": "", "results": [], "summary": None,
+                    })
+                    return
+                self.send_json(200, sidecar.solutions_view(
+                    query=(query.get("q") or [""])[0],
+                    software_id=(query.get("softwareId") or [None])[0],
+                    current_version=(query.get("version") or [None])[0],
+                    fingerprints=query.get("fingerprint") or [],
+                    limit=limit,
+                ))
             elif path == "/api/v1/evidence-range":
                 # REQ-RANGE: a read-only slice of a large artifact, addressed by an exact byte interval.
                 # The typed verdict lives in the body (HTTP 200 never means the read succeeded). Two things

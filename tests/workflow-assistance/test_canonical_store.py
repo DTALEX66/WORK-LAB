@@ -24,7 +24,7 @@ class CanonicalStoreTests(unittest.TestCase):
         for table in (
             "projects", "tasks", "task_events", "telemetry_events",
             "usage_samples", "ci_runs", "source_quality", "action_plans",
-            "growth_candidates", "schema_migrations",
+            "solutions", "growth_candidates", "schema_migrations",
         ):
             self.assertIn(table, projection["tables"])
 

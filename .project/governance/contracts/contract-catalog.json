@@ -350,6 +350,15 @@
       ]
     },
     {
+      "id": "solution",
+      "owner": "workflow",
+      "schemaPath": "packages/contracts/schemas/workflow/solution.schema.json",
+      "consumers": [
+        "workflow",
+        "observer"
+      ]
+    },
+    {
       "id": "source-ledger",
       "owner": "root-governance",
       "schemaPath": ".project/governance/contracts/source-ledger.schema.json",

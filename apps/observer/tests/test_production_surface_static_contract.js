@@ -248,9 +248,9 @@ function run() {
     // issues / issuesSummary (问题中心, 2026-10-22) are absent-only under the artifactHandles rule: the
     // producer (issue_projection.load_issues) returns (None, None, reason) when no source answered, and
     // snapshot_api spreads the pair together or not at all. An empty pair there would say "every source was
-    // read and nothing is wrong", which is the opposite claim -- so both keys must stay optional in the type
-    // while the render population (contractConformance.PINNED_REFINEMENT_PATHS) still names neither, because
-    // no lane consumes them yet.
+    // read and nothing is wrong", which is the opposite claim -- so both keys stay optional in the type even
+    // though CL-07's IssueCenter now consumes them and both are in PINNED_REFINEMENT_PATHS: optionality here
+    // is about the producer's absent/empty distinction, not about whether a lane renders the section.
     const OPTIONAL = ["software", "taskRecords", "adapterCapabilities",
                       "artifactHandles", "artifactHandlesSummary", "collectors",
                       "operationProgress", "isolatedTrials", "issues", "issuesSummary"];
