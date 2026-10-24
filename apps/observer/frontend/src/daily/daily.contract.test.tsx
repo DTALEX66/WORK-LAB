@@ -302,3 +302,51 @@ describe('交接材料生成器', () => {
     expect(methodMaterial.text).toContain('适用限制')
   })
 })
+
+describe('CL-08 默认桌面入口（2026-10-24 owner「完成全部前后端任务」）', () => {
+  // 主窗口是 borderless（decorations:false），默认入口现在是日常壳：
+  // 标题控件簇与拖动面必须在原生壳里真渲染、在浏览器壳里真缺席——
+  // 两侧都断言，否则这条守卫永远无法判红。
+  it('原生壳（__TAURI_INTERNALS__ 存在）渲染窗口控件与拖动面', async () => {
+    ;(window as unknown as { __TAURI_INTERNALS__: unknown }).__TAURI_INTERNALS__ = { probe: true }
+    try {
+      render(<App />)
+      expect(document.querySelector('.winctl')).toBeTruthy()
+      expect(document.querySelector('[data-tauri-drag-region]')).toBeTruthy()
+    } finally {
+      delete (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__
+    }
+  })
+
+  it('浏览器壳不渲染窗口控件（同一地址，差一个垫片；拖动属性本身与壳无关，浏览器里是空操作）', () => {
+    render(<App />)
+    expect(document.querySelector('.winctl')).toBeNull()
+    expect(document.querySelector('[data-tauri-drag-region]')).toBeTruthy()
+  })
+
+  it('旧深链 ?view=evidence 仍落到专业投影壳，不静默改道', () => {
+    window.history.replaceState(null, '', '/index.html?view=evidence')
+    render(<App />)
+    expect(document.querySelector('[data-shell="daily"]')).toBeNull()
+    expect(document.querySelector('nav[aria-label="主导航"]')).toBeNull()
+  })
+})
+
+describe('CL-12 原生窄窗 surface（?surface=hud）', () => {
+  it('URL 写回不冲掉 surface 标记：窄窗保持窄窗，不回落到专业壳', () => {
+    // 实测过的缺陷：写回白名单漏了 surface，快照到达后的 replaceState 把地址改写成
+    // 不带 surface 的形式，下一次渲染就在 150px 里画出专业导航。
+    window.history.replaceState(null, '', '/index.html?surface=hud')
+    render(<App />)
+    expect(new URLSearchParams(window.location.search).get('surface')).toBe('hud')
+    expect(document.querySelector('[data-hud-frame="native-strip"]')).toBeTruthy()
+    expect(document.querySelector('[data-shell="daily"]')).toBeNull()
+  })
+
+  it('窄窗只渲染 HUD 本体，四态切换器留给面板（切换器是调试面，不占常驻窄窗）', () => {
+    window.history.replaceState(null, '', '/index.html?surface=hud')
+    render(<App />)
+    expect(document.querySelector('[aria-label="工具额度窄面板"]')).toBeTruthy()
+    expect(document.querySelector('[aria-label="HUD 状态切换"]')).toBeNull()
+  })
+})

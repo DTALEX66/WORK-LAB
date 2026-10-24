@@ -275,9 +275,10 @@ export default function App() {
     // vanish on the first lane switch.
     const shell = params.get('shell')
     if (shell) p.set('shell', shell)
-    // 2026-10-24 日常壳与 HUD 四态的自有地址参数（?dv/dp/dq/dm/dtool/hs）。
-    // 只保留 present 且非空的值，其余运行时参数不盲目搬运。
-    for (const name of ['dv', 'dp', 'dq', 'dm', 'dtool', 'hs']) {
+    // 2026-10-24 日常壳与 HUD 四态的自有地址参数（?dv/dp/dq/dm/dtool/hs），以及 CL-12
+    // 原生窄窗的 surface 标记。漏掉任何一个都会被下面的 replaceState 冲掉——实测过：
+    // surface 不被保留时，快照到达后的第一次重渲染就把 150px 窄窗渲染成了专业壳。
+    for (const name of ['dv', 'dp', 'dq', 'dm', 'dtool', 'hs', 'surface']) {
       const v = params.get(name)
       if (v) p.set(name, v)
     }
@@ -448,6 +449,20 @@ export default function App() {
     </div>
   ) : null
 
+  // CL-12 (2026-10-24): the native narrow strip (tauri label=hud, 150×480) is its own
+  // surface, not the compact panel squeezed to 150px. Measured: at that width the compact
+  // TopStatusBar pushes ten controls past the viewport while `.app{overflow:hidden}` keeps
+  // scrollWidth at 150 — a clipped, unreachable control bar. So this frame carries the
+  // HUD content only; the tray toggles it and its own header drags it.
+  if (typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('surface') === 'hud') {
+    return (
+      <LaneErrorBoundary lane="hud" onReset={() => { window.location.href = '/index.html?surface=hud' }}>
+        <HudDaily snap={snap} nativeStrip />
+      </LaneErrorBoundary>
+    )
+  }
+
   if (isCompact) {
     return (
       <div data-layout={layout} className="app app-compact">
@@ -481,12 +496,15 @@ export default function App() {
     )
   }
 
-  // 2026-10-24：?shell=daily 走日常壳（M01–M05）。它自带导航与设置底置，
-  // 不渲染专业壳的 rail/topbar；专业壳仍是默认入口，切换默认属 owner 决定。
-  if (typeof window !== 'undefined'
-    && new URLSearchParams(window.location.search).get('shell') === 'daily') {
+  // 2026-10-24：桌面主窗口入口已切到日常壳。入口由 `surface=daily` 声明，`shell=tauri`
+  // 保留为无边框壳的自声明（`apps/observer/tests/test_desktop_component_contract.js` 钉着：
+  // 前端没有别的确定性办法知道自己是桌面入口）。浏览器侧 `?shell=daily` 与
+  // `?view=` 专业深链都不受影响，31 个入口原样可达。
+  const entryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  if (entryParams
+    && (entryParams.get('shell') === 'daily' || entryParams.get('surface') === 'daily')) {
     return (
-      <LaneErrorBoundary lane="daily" onReset={() => { window.location.href = '/index.html' }}>
+      <LaneErrorBoundary lane="daily" onReset={() => { window.location.href = '/index.html?surface=daily' }}>
         <DailyApp snap={snap} live={live} error={error} theme={theme} onTheme={setTheme} />
       </LaneErrorBoundary>
     )

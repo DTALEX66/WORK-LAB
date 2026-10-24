@@ -4,7 +4,8 @@
   "description": "WORK-LAB Observer default capabilities (read-only + window drag for borderless shell)",
   "windows": [
     "main",
-    "panel"
+    "panel",
+    "hud"
   ],
   "permissions": [
     "core:default",

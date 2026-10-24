@@ -3,6 +3,7 @@
 // Two surfaces:
 //   A) "main"    — full desktop window (Full/Compact x Dark/Light observer UI)
 //   B) "panel"   — compact floating panel opened from the system tray
+//   C) "hud"     — CL-12 native narrow strip (150x480), tray-toggled, docks flush right
 // The UI is the static web/ frontend (Apple Liquid Glass). Read-only by design.
 
 use tauri::{
@@ -24,6 +25,7 @@ const CREATE_NO_WINDOW: u32 = 0;
 #[derive(Default)]
 struct AppState {
     panel_visible: std::sync::Mutex<bool>,
+    hud_visible: std::sync::Mutex<bool>,
 }
 
 fn validated_observer_api(raw: &str) -> Option<tauri::Url> {
@@ -87,10 +89,38 @@ fn toggle_panel(app: &AppHandle, state: &State<AppState>) {
     }
 }
 
+fn toggle_hud(app: &AppHandle, state: &State<AppState>) {
+    let mut vis = state.hud_visible.lock().unwrap();
+    if let Some(w) = app.get_webview_window("hud") {
+        if *vis {
+            let _ = w.hide();
+        } else {
+            // Dock flush against the right edge of the primary monitor (贴边).
+            // outer_size is physical, monitor size is physical — same unit, no
+            // logical conversion to get wrong under DPI scaling.
+            if let Some(m) = app.primary_monitor().ok().flatten() {
+                let size = w.outer_size().unwrap_or(PhysicalSize::new(150, 480));
+                let msize = m.size();
+                let x = msize.width as i32 - size.width as i32;
+                let _ = w.set_position(PhysicalPosition::new(x, 40));
+            }
+            let _ = w.show();
+            let _ = w.unminimize();
+            let _ = w.set_focus();
+        }
+        *vis = !*vis;
+    }
+}
+
 fn hide_to_tray(app: &AppHandle, state: &State<AppState>) {
     let mut vis = state.panel_visible.lock().unwrap();
     *vis = false;
+    let mut hud_vis = state.hud_visible.lock().unwrap();
+    *hud_vis = false;
     if let Some(w) = app.get_webview_window("panel") {
+        let _ = w.hide();
+    }
+    if let Some(w) = app.get_webview_window("hud") {
         let _ = w.hide();
     }
     if let Some(w) = app.get_webview_window("main") {
@@ -428,9 +458,10 @@ pub fn run() {
             // --- System tray (B: tray + floating panel) ---
             let show = MenuItem::with_id(app, "show", "打开观测台", true, None::<&str>)?;
             let panel = MenuItem::with_id(app, "panel", "悬浮面板", true, None::<&str>)?;
+            let hud = MenuItem::with_id(app, "hud", "HUD 窄窗", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
             let sep = PredefinedMenuItem::separator(app)?;
-            let menu = Menu::with_items(app, &[&show, &panel, &sep, &quit])?;
+            let menu = Menu::with_items(app, &[&show, &panel, &hud, &sep, &quit])?;
 
             let _tray = TrayIconBuilder::with_id("wl-observer")
                 .icon(app.default_window_icon().unwrap().clone())
@@ -440,6 +471,7 @@ pub fn run() {
                 .on_menu_event(move |app, event| match event.id().as_ref() {
                     "show" => show_main(app),
                     "panel" => toggle_panel(app, &app.state::<AppState>()),
+                    "hud" => toggle_hud(app, &app.state::<AppState>()),
                     "quit" => app.exit(0),
                     _ => {}
                 })
@@ -458,6 +490,18 @@ pub fn run() {
 
             // Close button hides to tray instead of quitting (portable, tray-friendly).
             let _ = handle;
+
+            // CL-12 measurement hook: opt-in, default-OFF. `toggle_hud` is the only code
+            // path that docks the strip to the screen edge, and it is reached from the tray
+            // menu — which no readback can click. Setting WORK_LAB_HUD_AUTOSHOW runs that
+            // exact path once at startup so the docked position is measured, not asserted
+            // in prose. The shipped default behaviour is unchanged: the window stays hidden
+            // until the tray asks for it.
+            if std::env::var("WORK_LAB_HUD_AUTOSHOW").is_ok() {
+                let h = app.handle().clone();
+                let state = h.state::<AppState>();
+                toggle_hud(&h, &state);
+            }
 
             // U19 (E2E): opt-in, default-OFF CDP probe window. In the shipped
             // binary this block is inert unless WORK_LAB_U19_CDP_PORT is set
@@ -538,7 +582,7 @@ pub fn run() {
             // Hiding to tray on close keeps the tray app alive.
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let label = window.label().to_string();
-                if label == "main" || label == "panel" {
+                if label == "main" || label == "panel" || label == "hud" {
                     let app = window.app_handle().clone();
                     api.prevent_close();
                     hide_to_tray(&app, &app.state::<AppState>());
