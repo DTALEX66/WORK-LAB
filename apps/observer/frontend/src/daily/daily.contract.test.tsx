@@ -192,6 +192,23 @@ describe('日常壳（?shell=daily）', () => {
     expect(screen.getByText(/会丢弃本地改动/)).toBeTruthy()
   })
 
+  it('步骤手风琴：带风险提示的项冷启动即展开，没有提示的步骤不长出假的展开控件', async () => {
+    window.history.replaceState(null, '', '/index.html?shell=daily&dv=overview&dp=proj-a&dm=sol-a')
+    render(<App />)
+    expect((await screen.findAllByText(/方法甲：检查更新后的构建产物/)).length).toBeGreaterThan(0)
+    expect(document.querySelectorAll('ol > li > button[aria-expanded]')).toHaveLength(0)
+    cleanup()
+
+    window.history.replaceState(null, '', '/index.html?shell=daily&dv=overview&dp=proj-a&dm=sol-b')
+    render(<App />)
+    const toggle = await screen.findByRole('button', { name: /步骤乙一/ })
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByText(/会丢弃本地改动/)).toBeTruthy()
+    await act(async () => { toggle.click() })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByText(/会丢弃本地改动/)).toBeNull()
+  })
+
   it('预览、复制与导出来自同一材料；复制失败给出可选择文本而不是假成功', async () => {
     window.history.replaceState(null, '', '/index.html?shell=daily&dv=overview&dp=proj-a&dm=sol-a')
     render(<App />)

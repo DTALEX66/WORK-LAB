@@ -71,14 +71,21 @@ export function Chip({ children, tone = 'neutral' }: { children: ReactNode; tone
 }
 
 /** Section heading with the reference's accent left bar. */
-export function SectionTitle({ children, right }: { children: ReactNode; right?: ReactNode }) {
+export function SectionTitle({ children, right, rightTone = 'text' }: {
+  children: ReactNode; right?: ReactNode; rightTone?: 'text' | 'chip'
+}) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <h2 className="flex items-center gap-2 text-sm font-semibold" style={{ color: T.text }}>
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+      <h2 className="flex shrink-0 items-center gap-2 text-sm font-semibold" style={{ color: T.text }}>
         <span aria-hidden="true" className="h-4 w-[3px] rounded-full" style={{ background: T.accent }} />
         {children}
       </h2>
-      {right ? <span className="text-xs" style={{ color: T.dim }}>{right}</span> : null}
+      {right ? (rightTone === 'chip' ? (
+        <span className="rounded-full border px-2 py-0.5 text-xs"
+          style={{ borderColor: T.line, color: T.dim }}>{right}</span>
+      ) : (
+        <span className="min-w-0 text-right text-xs" style={{ color: T.dim }}>{right}</span>
+      )) : null}
     </div>
   )
 }
@@ -98,7 +105,9 @@ export const TimeIcon = () => <Clock size={13} aria-hidden="true" />
  * project). The visual stays so the layout is a true 1:1, but the control is disabled and names
  * the blocked effect instead of pretending to work.
  */
-export function DisabledAction({ label, reason, primary = false }: { label: string; reason: string; primary?: boolean }) {
+export function DisabledAction({ label, reason, primary = false, icon }: {
+  label: string; reason: string; primary?: boolean; icon?: ReactNode
+}) {
   return (
     <span className="inline-flex flex-col items-end gap-1">
       <button type="button" disabled aria-disabled="true" title={reason}
@@ -106,7 +115,8 @@ export function DisabledAction({ label, reason, primary = false }: { label: stri
         style={primary
           ? { borderColor: T.line, background: T.surface, color: T.dim }
           : { borderColor: T.line, background: T.shell, color: T.dim }}>
-        {label}<SquareArrowOutUpRight size={13} aria-hidden="true" />
+        {icon ?? null}{label}
+        {icon ? null : <SquareArrowOutUpRight size={13} aria-hidden="true" />}
       </button>
       <span className="text-xs" style={{ color: T.dim }}>{reason}</span>
     </span>

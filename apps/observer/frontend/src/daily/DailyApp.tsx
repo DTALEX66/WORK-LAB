@@ -13,7 +13,7 @@ import {
   fetchSolutions, type SolutionSearchView, type SolutionItem,
 } from '@/daily/solutionsClient'
 import { Rail, TopBar, SectionTitle, StatusPill, IconTile, Chip, MetaItem, TimeIcon, DisabledAction, Link2 } from '@/daily/DailyChrome'
-import { ChevronDown, FileText, Plug, Sparkles, TriangleAlert } from 'lucide-react'
+import { ChevronDown, CheckCircle2, CircleAlert, FileText, Filter, Plug, Plus, Sparkles, TriangleAlert } from 'lucide-react'
 import {
   dailyProjectCards, dailyIssueRows, dailyToolRows, buildHandoverMaterial,
   type DailyProjectCard, type DailyIssueRow, type DailyToolRow,
@@ -223,6 +223,8 @@ export function DailyApp(props: {
                 issuesSummary={snap?.issuesSummary}
                 solutions={solutions}
                 segment={state.di}
+                query={state.dq}
+                onQuery={(dq) => navigate({ dq })}
                 onSegment={(di) => navigate({ di })}
                 onOpenMethod={openMethod}
                 onOpenProject={(id) => openProject(id)}
@@ -282,14 +284,19 @@ function HomeView(props: {
         <Chip>{props.totalCount} 个已注册项目</Chip>
         <div className="ml-auto flex items-center gap-2">
           <span className="relative inline-flex items-center">
+            <Filter size={13} aria-hidden="true" className="pointer-events-none absolute left-2.5 text-[#A6B0BE]" />
             <input
               type="search" value={props.query} onChange={(e) => props.onQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); props.onQuery('') } }}
               aria-label="按名称过滤项目" placeholder="按名称过滤…"
-              className="h-8 w-[188px] rounded-md border px-3 text-sm outline-none"
+              className="h-8 w-[212px] rounded-md border pl-8 pr-12 text-sm outline-none"
               style={{ borderColor: '#303A46', background: '#10141A', color: '#E8EDF3' }}
             />
+            <kbd className="pointer-events-none absolute right-2 rounded border px-1 text-xs"
+              style={{ borderColor: '#303A46', color: '#A6B0BE' }}>ESC</kbd>
           </span>
-          <DisabledAction label="添加项目" reason="观察者只读：登记项目由项目侧完成" />
+          <DisabledAction label="添加项目" reason="观察者只读：登记项目由项目侧完成"
+            icon={<Plus size={13} aria-hidden="true" />} />
         </div>
       </div>
       {props.cards.length === 0 ? (
@@ -498,6 +505,8 @@ function IssuesView(props: {
   issuesSummary: SnapshotV3['issuesSummary']
   solutions: SolutionSearchView | null
   segment: IssueSegment
+  query: string
+  onQuery: (q: string) => void
   onSegment: (s: IssueSegment) => void
   onOpenMethod: (id: string) => void
   onOpenProject: (id: string) => void
@@ -539,7 +548,15 @@ function IssuesView(props: {
             </button>
           ))}
         </div>
-        <span className="ml-auto text-xs text-[#A6B0BE]">
+        <span className="relative ml-auto inline-flex items-center">
+          <Filter size={13} aria-hidden="true" className="pointer-events-none absolute left-2.5 text-[#A6B0BE]" />
+          <input type="search" value={props.query} onChange={(e) => props.onQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); props.onQuery('') } }}
+            aria-label="检索标题、错误或经验" placeholder="检索标题、错误或经验…"
+            className="h-7 w-[212px] rounded border pl-8 pr-3 text-xs outline-none"
+            style={{ borderColor: '#303A46', background: '#10141A', color: '#E8EDF3' }} />
+        </span>
+        <span className="text-xs text-[#A6B0BE]">
           共 {props.segment === 'methods' ? methods.length : visible.length} 条
           {props.totalCount !== null ? ` · 快照产出 ${props.totalCount} 条问题` : ''}
         </span>
@@ -864,6 +881,39 @@ function SettingsView(props: { theme: string; onTheme: (t: 'dark' | 'light') => 
   )
 }
 
+function StepRow(props: { index: number; step: string; detail: string | null; open: boolean; onToggle: () => void }) {
+  const num = String(props.index + 1).padStart(2, '0')
+  const number = (
+    <span className="shrink-0 rounded bg-[#171D25] px-1.5 py-0.5 text-xs font-semibold text-[#40B6C7]">
+      {num}
+    </span>
+  )
+  const title = <span className="min-w-0 flex-1 text-xs">{props.step}</span>
+  if (!props.detail) {
+    return (
+      <li className="rounded-lg border border-[#303A46] bg-[#10141A]">
+        <div className="flex items-center gap-3 px-3 py-2">{number}{title}</div>
+      </li>
+    )
+  }
+  return (
+    <li className="rounded-lg border border-[#303A46] bg-[#10141A]">
+      <button type="button" onClick={props.onToggle} aria-expanded={props.open}
+        className="flex w-full items-center gap-3 px-3 py-2 text-left">
+        {number}{title}
+        <Chip tone="warn">含风险提示</Chip>
+        <ChevronDown size={14} aria-hidden="true"
+          className={`shrink-0 text-[#A6B0BE] transition-transform ${props.open ? 'rotate-180' : ''}`} />
+      </button>
+      {props.open && (
+        <p className="border-t border-[#303A46] px-3 py-2 text-xs text-[#A6B0BE]">
+          风险：{props.detail}
+        </p>
+      )}
+    </li>
+  )
+}
+
 function MethodDrawer(props: {
   method: SolutionItem | null
   solutionsState: 'LOADING' | 'OK' | 'UNREACHABLE' | 'BAD'
@@ -878,6 +928,11 @@ function MethodDrawer(props: {
   const [stepsOpen, setStepsOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(true)
   const [copyResult, setCopyResult] = useState<{ ok: boolean; why?: string } | null>(null)
+  // The reference opens the first step that carries detail; a step with nothing to expand
+  // renders no toggle at all, so the row never promises an interaction it cannot deliver.
+  // The default is derived on every render, not captured once in useState: on a cold open the
+  // method arrives after the first render, and a captured default would leave risk text hidden.
+  const [chosenStep, setChosenStep] = useState<number | undefined>(undefined)
   // 修复包接缝：方法经 issueRefs 指纹对上修复包时，材料用后端渲染的 handoffText；
   // 没对上才回退到方案库方法材料。两种来源都明确标注，不混用。
   const linkedIssue = props.method
@@ -895,6 +950,9 @@ function MethodDrawer(props: {
   }), [props.projectName, props.method, linkedIssue, linkedPack, target])
 
   const risks = props.method?.risks ?? []
+  const firstDetailed = risks.findIndex((r) => !!r)
+  const stepIsOpen = (i: number) => (chosenStep === undefined
+    ? i === firstDetailed : chosenStep === i)
   const doCopy = async () => {
     const outcome = await writeClipboardText(material.text)
     setCopyResult(outcome.ok ? { ok: true } : { ok: false, why: outcome.why })
@@ -939,7 +997,9 @@ function MethodDrawer(props: {
               <SectionTitle>方法背景与历史成效</SectionTitle>
               <div className="mt-2 space-y-2">
                 <div className="rounded-lg border border-[#303A46] bg-[#10141A] p-3">
-                  <div className="text-xs text-[#A6B0BE]">背景什么问题</div>
+                  <div className="flex items-center gap-1.5 text-xs text-[#A6B0BE]">
+                    <CircleAlert size={13} aria-hidden="true" className="shrink-0 text-amber-300" />背景什么问题
+                  </div>
                   <p className="mt-1 text-xs">
                     {props.method.preconditions.length
                       ? props.method.preconditions.join('；')
@@ -947,7 +1007,9 @@ function MethodDrawer(props: {
                   </p>
                 </div>
                 <div className="rounded-lg border border-[#303A46] bg-[#10141A] p-3">
-                  <div className="text-xs text-[#A6B0BE]">过去取得了什么结果</div>
+                  <div className="flex items-center gap-1.5 text-xs text-[#A6B0BE]">
+                    <CheckCircle2 size={13} aria-hidden="true" className="shrink-0 text-emerald-400" />过去取得了什么结果
+                  </div>
                   <p className="mt-1 text-xs">
                     {props.method.recommended
                       ? '该方案已被收录为推荐修订（结果原文未在来源记录中提供，不代写）'
@@ -957,8 +1019,8 @@ function MethodDrawer(props: {
               </div>
 
               <div className="mt-4">
-                <SectionTitle right={props.method.versionHint?.message ?? '适用性待确认'}>
-                  对当前 {props.projectName ?? '项目'} 的适用性
+                <SectionTitle right={props.method.versionHint?.message ?? '适用性待确认'} rightTone="chip">
+                  {props.projectName ? `对当前 ${props.projectName} 的适用性` : '对当前项目的适用性'}
                 </SectionTitle>
                 <p className="mt-2 text-xs text-[#A6B0BE]">{props.method.limits.join('；') || '来源未记录限制条件'}</p>
                 {props.method.invalidWhen.length > 0 && (
@@ -976,24 +1038,14 @@ function MethodDrawer(props: {
                   给外部工具参考的处理步骤
                 </SectionTitle>
                 <p className="mt-1 text-xs text-[#A6B0BE]">
-                  以下为准备交由外部工具（如 {target || '手动复制'}）执行的专业排查指令，点击可展开完整技术核验细节。
+                  以下为准备交由外部工具（如 {target || '手动复制'}）执行的专业排查指令；
+                  带风险提示的步骤可展开查看该提示原文。
                 </p>
                 <ol className="mt-2 space-y-2">
                   {props.method.steps.map((s, i) => (
-                    <li key={i} className="rounded-lg border border-[#303A46] bg-[#10141A]">
-                      <div className="flex items-center gap-3 px-3 py-2">
-                        <span className="text-xs font-semibold text-[#40B6C7]">
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                        <span className="min-w-0 flex-1 text-xs">{s}</span>
-                        {risks[i] && <Chip tone="warn">含风险提示</Chip>}
-                      </div>
-                      {risks[i] && (
-                        <p className="border-t border-[#303A46] px-3 py-2 text-xs text-[#A6B0BE]">
-                          风险：{risks[i]}
-                        </p>
-                      )}
-                    </li>
+                    <StepRow key={i} index={i} step={s} detail={risks[i] ?? null}
+                      open={stepIsOpen(i)}
+                      onToggle={() => setChosenStep(stepIsOpen(i) ? -1 : i)} />
                   ))}
                   {props.method.steps.length === 0 && (
                     <li className="rounded-lg border border-[#303A46] bg-[#10141A] px-3 py-2 text-xs text-[#A6B0BE]">
@@ -1022,9 +1074,11 @@ function MethodDrawer(props: {
             {props.tools.map((t) => <option key={t.clientId} value={t.displayName}>{t.displayName}</option>)}
           </select>
           <button type="button" onClick={() => setPreviewOpen((o) => !o)} aria-expanded={previewOpen}
-            className="mt-2 flex w-full items-center justify-between text-left text-xs text-[#A6B0BE]">
-            交接材料预览（{linkedPack ? `来源：修复包 ${linkedPack.packId} · 后端渲染 · 未发送` : '来源：方案库方法'}）
-            <span aria-hidden="true">{previewOpen ? '收起' : '展开'}</span>
+            className="mt-2 flex w-full items-start justify-between gap-2 text-left text-xs text-[#A6B0BE]">
+            <span className="min-w-0">
+              交接材料预览（{linkedPack ? `来源：修复包 ${linkedPack.packId} · 后端渲染 · 未发送` : '来源：方案库方法'}）
+            </span>
+            <span aria-hidden="true" className="shrink-0 whitespace-nowrap">{previewOpen ? '收起' : '展开'}</span>
           </button>
           {previewOpen && (
             <textarea readOnly value={material.text} aria-label="交接材料预览"
