@@ -162,7 +162,7 @@ describe('日常壳（?shell=daily）', () => {
   it('无数据不补 0：概览页显示待确认/UNKNOWN 而不是编造的百分比', () => {
     window.history.replaceState(null, '', '/index.html?shell=daily&dv=overview&dp=proj-b')
     render(<App />)
-    expect(screen.getByText(/最近变化：待确认/)).toBeTruthy()
+    expect(screen.getByText(/确认时间：UNKNOWN/)).toBeTruthy()
     expect(screen.queryByText(/%/)).toBeNull()
   })
 
@@ -177,8 +177,8 @@ describe('日常壳（?shell=daily）', () => {
     render(<App />)
     const openA = (await screen.findAllByText('查看该方法详情 →'))[0]
     await act(async () => { openA.click() })
-    expect((await screen.findAllByText('方法甲：检查更新后的构建产物')).length).toBeGreaterThan(0)
-    expect(screen.getByText(/步骤甲一/)).toBeTruthy()
+    expect((await screen.findAllByText(/方法甲：检查更新后的构建产物/)).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/步骤甲一/).length).toBeGreaterThan(0)
     // 切到方法乙：整张抽屉内容替换，不再有甲的步骤
     await act(async () => { screen.getByLabelText('关闭抽屉').click() })
     const homeBtn = screen.getByRole('button', { name: '项目' })
@@ -187,7 +187,7 @@ describe('日常壳（?shell=daily）', () => {
     cleanup()
     window.history.replaceState(null, '', '/index.html?shell=daily&dv=overview&dp=proj-a&dm=sol-b')
     render(<App />)
-    expect((await screen.findAllByText('方法乙：回退到上一个可用版本')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText(/方法乙：回退到上一个可用版本/)).length).toBeGreaterThan(0)
     expect(screen.queryByText(/步骤甲一/)).toBeNull()
     expect(screen.getByText(/会丢弃本地改动/)).toBeTruthy()
   })

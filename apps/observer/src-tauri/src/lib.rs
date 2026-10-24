@@ -328,6 +328,13 @@ fn capture<T: Copy>(field: &str, result: tauri::Result<T>, errors: &mut Vec<Stri
 /// local (tauri-2.11.3/src/webview/mod.rs:1823), which is why no capability file
 /// had to be widened for the probe window to reach it.
 #[tauri::command]
+fn show_hud(app: AppHandle, state: State<'_, AppState>) {
+    // Shell operation only, and the same path the tray item takes: showing/hiding the
+    // read-only strip window. No business write, no worker lifecycle.
+    toggle_hud(&app, &state);
+}
+
+#[tauri::command]
 fn window_metrics(app: AppHandle, label: Option<String>) -> WindowMetrics {
     let (resolved_label, resolution_succeeded, note) =
         resolve_target_label(&app, label.as_deref());
@@ -589,7 +596,7 @@ pub fn run() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![window_metrics])
+        .invoke_handler(tauri::generate_handler![window_metrics, show_hud])
         .build(tauri::generate_context!())
         .expect("error while building WORK-LAB Observer");
 

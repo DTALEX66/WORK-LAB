@@ -278,7 +278,7 @@ export default function App() {
     // 2026-10-24 日常壳与 HUD 四态的自有地址参数（?dv/dp/dq/dm/dtool/hs），以及 CL-12
     // 原生窄窗的 surface 标记。漏掉任何一个都会被下面的 replaceState 冲掉——实测过：
     // surface 不被保留时，快照到达后的第一次重渲染就把 150px 窄窗渲染成了专业壳。
-    for (const name of ['dv', 'dp', 'dq', 'dm', 'dtool', 'hs', 'surface']) {
+    for (const name of ['dv', 'dp', 'dq', 'dm', 'dtool', 'hs', 'surface', 'di']) {
       const v = params.get(name)
       if (v) p.set(name, v)
     }
