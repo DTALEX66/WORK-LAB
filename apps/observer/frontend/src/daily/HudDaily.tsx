@@ -31,7 +31,7 @@ function ToolIcon({ label }: { label: string }) {
 function RingSlot({ label }: { label: string }) {
   return (
     <span className="flex items-center justify-between gap-2">
-      <span className="relative inline-flex h-9 w-9 items-center justify-center">
+      <span className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center">
         <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
           <circle cx="18" cy="18" r="15" fill="none" stroke={LINE} strokeWidth="3" />
         </svg>
@@ -104,14 +104,14 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
         {/* 余额行：快照没有余额字段，槽位在、值未知 */}
         <li className="border-t pt-2" style={{ borderColor: LINE }}>
           <span className="flex items-center justify-between gap-2">
-            <span className="text-xs" style={{ color: '#A6B0BE' }}>余额</span>
-            <span className="text-sm font-semibold" style={{ color: '#FBBF24' }}>UNKNOWN</span>
+            <span className="shrink-0 text-xs" style={{ color: '#A6B0BE' }}>余额</span>
+            <span className="min-w-0 text-sm font-semibold" style={{ color: '#FBBF24' }}>UNKNOWN</span>
           </span>
         </li>
       </ul>
-      <div className="mt-3 flex items-center justify-between border-t pt-2 text-xs" style={{ borderColor: LINE }}>
-        <span style={{ color: '#A6B0BE' }}>项目 {activeProjects} · 待审 {waitingApprovals}</span>
-        <button type="button" onClick={() => onState('h03')} style={{ color: ACCENT }}>详情</button>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 border-t pt-2 text-xs" style={{ borderColor: LINE }}>
+        <span className="min-w-0" style={{ color: '#A6B0BE' }}>项目 {activeProjects} · 待审 {waitingApprovals}</span>
+        <button type="button" onClick={() => onState('h03')} className="shrink-0" style={{ color: ACCENT }}>详情</button>
       </div>
     </section>
   )
@@ -131,8 +131,8 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
       <p className="mt-3 text-xs" style={{ color: '#A6B0BE' }}>
         额度口径未提供（余额与额度分开显示，不做百分比）。
       </p>
-      <div className="mt-2 flex gap-2">
-        <button type="button" onClick={() => onState('h01')} className="text-xs" style={{ color: ACCENT }}>返回面板</button>
+      <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1">
+        <button type="button" onClick={() => onState('h01')} className="shrink-0 text-xs" style={{ color: ACCENT }}>返回面板</button>
         <button type="button" onClick={() => onState('h03')} className="text-xs" style={{ color: ACCENT }}>
           工具详情（键盘等效入口）
         </button>
@@ -151,30 +151,30 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
         </div>
       </div>
       <dl className="mt-4 space-y-2 text-xs">
-        <div className="flex justify-between gap-3"><dt>更新时间</dt>
-          <dd className="text-right" style={{ color: '#A6B0BE' }}>
+        <div className="flex flex-wrap justify-between gap-x-3 gap-y-0.5"><dt className="shrink-0">更新时间</dt>
+          <dd className="ml-auto text-right" style={{ color: '#A6B0BE' }}>
             {snap?.adapterCapabilities?.[0]?.observedAt ? fmtTimestamp(snap.adapterCapabilities[0].observedAt) : 'UNKNOWN'}
           </dd></div>
-        <div className="flex justify-between gap-3"><dt>相关会话</dt>
-          <dd style={{ color: '#A6B0BE' }}>{snap ? `${snap.executions.length} 条执行记录` : 'UNKNOWN'}</dd></div>
-        <div className="flex justify-between gap-3"><dt>关联项目</dt>
-          <dd className="text-right" style={{ color: '#A6B0BE' }}>
+        <div className="flex flex-wrap justify-between gap-x-3 gap-y-0.5"><dt className="shrink-0">相关会话</dt>
+          <dd className="ml-auto" style={{ color: '#A6B0BE' }}>{snap ? `${snap.executions.length} 条执行记录` : 'UNKNOWN'}</dd></div>
+        <div className="flex flex-wrap justify-between gap-x-3 gap-y-0.5"><dt className="shrink-0">关联项目</dt>
+          <dd className="ml-auto text-right" style={{ color: '#A6B0BE' }}>
             {(snap?.projects ?? []).length ? (snap?.projects ?? []).map((p) => p.displayName ?? p.projectId).join('、') : '未记录'}
           </dd></div>
       </dl>
       {/* 参考在此画 Tokens 柱状图；快照没有用量序列，槽位保留并写明没有数据 */}
       <div className="mt-3 rounded-lg border p-3" style={{ borderColor: LINE, background: '#10141A' }}>
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold">Tokens</span>
-          <span style={{ color: '#A6B0BE' }}>24h · UNKNOWN</span>
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs">
+          <span className="shrink-0 font-semibold">Tokens</span>
+          <span className="ml-auto" style={{ color: '#A6B0BE' }}>24h · UNKNOWN</span>
         </div>
         <p className="mt-1 text-xs" style={{ color: '#A6B0BE' }}>
           无用量序列数据：不绘制柱状图，不虚构数值。
         </p>
       </div>
-      <div className="mt-3 flex gap-3">
-        <button type="button" onClick={() => onState('h01')} className="text-xs" style={{ color: ACCENT }}>返回面板</button>
-        <button type="button" onClick={() => onState('h04')} className="text-xs" style={{ color: ACCENT }}>提醒</button>
+      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
+        <button type="button" onClick={() => onState('h01')} className="shrink-0 text-xs" style={{ color: ACCENT }}>返回面板</button>
+        <button type="button" onClick={() => onState('h04')} className="shrink-0 text-xs" style={{ color: ACCENT }}>提醒</button>
       </div>
     </section>
   )
@@ -182,17 +182,17 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
   const h04Section = (
     <section aria-label="新回复提醒" data-landmark="h04"
       className="w-full max-w-[380px] rounded-2xl border bg-[#171D25] p-4" style={{ borderColor: LINE }}>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-sm font-semibold">
             <Sparkles size={14} aria-hidden="true" style={{ color: '#FBBF24' }} />
-            外部回复提醒
+            <span className="min-w-0">外部回复提醒</span>
           </h2>
           <p className="mt-0.5 text-xs" style={{ color: '#A6B0BE' }}>
             工具：{toolIds[0]?.name ?? '未连接'} · 关联项目：{(snap?.projects ?? [])[0]?.displayName ?? '未记录'}
           </p>
         </div>
-        <span className="flex items-center gap-2">
+        <span className="flex shrink-0 items-center gap-2">
           <span className="rounded-full border px-2 py-0.5 text-xs" style={{ borderColor: LINE, color: ACCENT }}>新回复</span>
           <button type="button" onClick={() => onState('h01')} aria-label="关闭提醒" style={{ color: '#A6B0BE' }}>✕</button>
         </span>
@@ -201,19 +201,19 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
       <p className="mt-1 text-xs" style={{ color: '#A6B0BE' }}>
         当前数据源未提供外部回复事件，摘要保持 待确认；外部回复不等于系统确认，审批回到原工具处理。
       </p>
-      <div className="mt-2 flex items-center justify-between text-xs" style={{ color: '#A6B0BE' }}>
-        <span>时间：{snap ? fmtTimestamp(snap.sourceWatermark) : 'UNKNOWN'}</span>
-        <span className="rounded border px-1.5 py-0.5" style={{ borderColor: LINE }}>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs" style={{ color: '#A6B0BE' }}>
+        <span className="min-w-0">时间：{snap ? fmtTimestamp(snap.sourceWatermark) : 'UNKNOWN'}</span>
+        <span className="shrink-0 rounded border px-1.5 py-0.5" style={{ borderColor: LINE }}>
           项目: {(snap?.projects ?? [])[0]?.projectId ?? '未记录'}
         </span>
       </div>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-x-2 gap-y-1">
         <button type="button" onClick={() => onState('h03')}
-          className="rounded border px-2.5 py-1 text-xs" style={{ borderColor: LINE, color: '#A6B0BE' }}>
+          className="shrink-0 rounded border px-2.5 py-1 text-xs" style={{ borderColor: LINE, color: '#A6B0BE' }}>
           查看相关用量
         </button>
         <button type="button" onClick={() => onState('h03')}
-          className="flex-1 rounded bg-[#40B6C7] px-2.5 py-1 text-xs font-medium text-[#10141A]">
+          className="min-w-0 flex-1 rounded bg-[#40B6C7] px-2.5 py-1 text-xs font-medium text-[#10141A]">
           返回外部工具查看 ↗
         </button>
       </div>
