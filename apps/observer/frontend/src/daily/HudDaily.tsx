@@ -61,6 +61,29 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
     </div>
   )
 
+  // H02 在原生窄窗里没有切换器可点：它按定义就是"悬停摘要"，所以挂在 H01 卡片的
+  // 悬停/聚焦上，并且是**追加**而不是替换——若把 H01 换掉，指针就落在新卡片上，
+  // 离开又回到 H01（仍在指针下）会再次触发展开，形成 hover 抖动。
+  const [hoverSummary, setHoverSummary] = useState(false)
+  const h02Section = (
+    <section aria-label="悬停摘要" className="w-full max-w-[300px] rounded-2xl border border-[#303A46] bg-[#171D25] p-4">
+      <h2 className="text-xs font-semibold">当前工具对应窗口</h2>
+      {toolIds.length === 0
+        ? <p className="mt-2 text-xs text-[#A6B0BE]">未连接工具</p>
+        : toolIds.map((tool) => (
+          <div key={tool.id} className="mt-2 flex items-center justify-between text-xs">
+            <span>{tool.name}</span>
+            <span className="text-[#A6B0BE]">窗口 待确认 · 数值 UNKNOWN · 重置时间 待确认</span>
+          </div>
+        ))}
+      <p className="mt-3 text-xs text-[#A6B0BE]">额度口径未提供（余额与额度分开显示，不做百分比）。</p>
+      <div className="mt-2 flex gap-2">
+        <button type="button" onClick={() => onState('h01')} className="text-xs text-[#40B6C7]">返回面板</button>
+        <button type="button" onClick={() => onState('h03')} className="text-xs text-[#40B6C7]">工具详情（键盘等效入口）</button>
+      </div>
+    </section>
+  )
+
   return (
     <div className={`flex h-screen flex-col items-center gap-2 overflow-y-auto bg-[#10141A] p-2 text-[#E8EDF3] ${native ? 'justify-start' : 'justify-center gap-3'}`}
       data-hud-state={state} data-hud-frame={native ? 'native-strip' : 'panel'}>
@@ -71,7 +94,12 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
           className="h-6 w-full shrink-0 rounded-md border border-[#303A46] bg-[#171D25]" />
       )}
       {state === 'h01' && (
-        <section aria-label="工具额度窄面板" className="w-full max-w-[150px] rounded-2xl border border-[#303A46] bg-[#171D25] p-3">
+        <section aria-label="工具额度窄面板"
+          onMouseEnter={native ? () => setHoverSummary(true) : undefined}
+          onMouseLeave={native ? () => setHoverSummary(false) : undefined}
+          onFocus={native ? () => setHoverSummary(true) : undefined}
+          onBlur={native ? () => setHoverSummary(false) : undefined}
+          className="w-full max-w-[150px] rounded-2xl border border-[#303A46] bg-[#171D25] p-3">
           <ul className="space-y-2">
             {toolIds.length === 0 && (
               <li className="py-2 text-center text-xs text-[#A6B0BE]">未连接工具</li>
@@ -91,24 +119,9 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
         </section>
       )}
 
-      {state === 'h02' && (
-        <section aria-label="悬停摘要" className="w-full max-w-[300px] rounded-2xl border border-[#303A46] bg-[#171D25] p-4">
-          <h2 className="text-xs font-semibold">当前工具对应窗口</h2>
-          {toolIds.length === 0
-            ? <p className="mt-2 text-xs text-[#A6B0BE]">未连接工具</p>
-            : toolIds.map((tool) => (
-              <div key={tool.id} className="mt-2 flex items-center justify-between text-xs">
-                <span>{tool.name}</span>
-                <span className="text-[#A6B0BE]">窗口 待确认 · 数值 UNKNOWN · 重置时间 待确认</span>
-              </div>
-            ))}
-          <p className="mt-3 text-xs text-[#A6B0BE]">额度口径未提供（余额与额度分开显示，不做百分比）。</p>
-          <div className="mt-2 flex gap-2">
-            <button type="button" onClick={() => onState('h01')} className="text-xs text-[#40B6C7]">返回面板</button>
-            <button type="button" onClick={() => onState('h03')} className="text-xs text-[#40B6C7]">工具详情（键盘等效入口）</button>
-          </div>
-        </section>
-      )}
+      {native && state === 'h01' && hoverSummary && h02Section}
+
+      {state === 'h02' && h02Section}
 
       {state === 'h03' && (
         <section aria-label="工具详情" className="w-full max-w-[400px] rounded-2xl border border-[#303A46] bg-[#171D25] p-5">
