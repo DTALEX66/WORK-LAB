@@ -28,14 +28,16 @@ function ToolIcon({ label }: { label: string }) {
  * rendered as a full, un-filled track: the slot exists, the value says UNKNOWN, and no arc implies a
  * percentage nobody measured.
  */
-function RingSlot({ label }: { label: string }) {
+function RingSlot({ label, active = false }: { label: string; active?: boolean }) {
   return (
     <span className="flex items-center justify-between gap-2">
       <span className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center">
         <svg viewBox="0 0 36 36" width="36" height="36" aria-hidden="true">
-          <circle cx="18" cy="18" r="15" fill="none" stroke={LINE} strokeWidth="3" />
+          {/* 参考的 H02 给被悬停那一行亮琥珀环，值仍按真实数据走 UNKNOWN，不跟着变绿变高。 */}
+          <circle cx="18" cy="18" r="15" fill="none"
+            stroke={active ? '#FBBF24' : LINE} strokeWidth={active ? 3.5 : 3} />
         </svg>
-        <span className="absolute text-xs" style={{ color: ACCENT }}>{label}</span>
+        <span className="absolute text-xs" style={{ color: active ? '#FBBF24' : ACCENT }}>{label}</span>
       </span>
       <span className="text-xs" style={{ color: '#A6B0BE' }}>额度 UNKNOWN</span>
     </span>
@@ -94,7 +96,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
             onMouseLeave={native ? () => setHoveredTool((cur) => (cur === tool.id ? null : cur)) : undefined}
             onFocus={native ? () => setHoveredTool(tool.id) : undefined}
             onBlur={native ? () => setHoveredTool((cur) => (cur === tool.id ? null : cur)) : undefined}>
-            <RingSlot label={tool.name.slice(0, 2).toUpperCase()} />
+            <RingSlot label={tool.name.slice(0, 2).toUpperCase()} active={hoveredTool === tool.id} />
             {/* 参考的 H02 是悬停行旁的内联小胶囊，不是另起一张卡。放在行内：指针天然留在
                 展开区内，不会像追加卡那样要滚动才能看到自己唤出的内容。 */}
             {native && hoveredTool === tool.id && (
