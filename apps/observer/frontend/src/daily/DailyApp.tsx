@@ -696,12 +696,19 @@ function ToolsView(props: { tools: DailyToolRow[]; selected: DailyToolRow | null
     { id: 'rules', title: '提示词与规则', desc: '查看推荐的交付格式模板与目录约束规则' },
     { id: 'faq', title: '常见问题', desc: '查看连接中断或排查超时时的常见处理问答' },
   ]
+  // Executors first, observe-only clients after, each under its own caption. The grouping is the fix for
+  // a list that read every registered client as if it were an agent: a provider router, a VCS host and a
+  // design client are observed, they do not execute the work.
+  const ordered = [...props.tools].sort((a, b) => Number(b.executes) - Number(a.executes))
   return (
     <section aria-label="我的工具" data-view="m05">
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold">我的工具</h1>
-          <p className="mt-1 text-xs text-[#A6B0BE]">管理外部 AI 与本地开发工具的连接身份与使用辅助。</p>
+          <p className="mt-1 text-xs text-[#A6B0BE]">
+            管理外部 AI 与本地开发工具的连接身份与使用辅助。分组按各自声明的操作：只有声明 apply／invoke 的客户端会执行工作，
+            供应商路由、版本控制托管与设计客户端属仅观测类，不作为 agent 列出。
+          </p>
         </div>
         <DisabledAction label="检测环境工具" reason="观察者只读：不发起探测运行" />
         <DisabledAction label="登记新工具" reason="观察者只读：登记由项目侧完成" />
@@ -717,10 +724,16 @@ function ToolsView(props: { tools: DailyToolRow[]; selected: DailyToolRow | null
                 快照未携带适配器能力卡（来源缺失，不是 0 个工具）。
               </li>
             )}
-            {props.tools.map((tool) => {
+            {ordered.map((tool, index) => {
               const active = props.selected?.clientId === tool.clientId
+              const firstOfGroup = index === 0 || ordered[index - 1].executes !== tool.executes
               return (
                 <li key={tool.clientId}>
+                  {firstOfGroup && (
+                    <p className="pb-2 pt-3 text-xs uppercase tracking-wider text-[#A6B0BE]" data-group-label="true">
+                      {tool.executes ? '可执行客户端 · APPLY／INVOKE 已声明' : '仅观测客户端 · 不写入（非 agent 运行时）'}
+                    </p>
+                  )}
                   <button type="button" onClick={() => props.onSelect(tool.clientId)}
                     aria-current={active ? 'true' : undefined}
                     className={`relative w-full rounded-lg border p-3 text-left ${active
@@ -737,7 +750,9 @@ function ToolsView(props: { tools: DailyToolRow[]; selected: DailyToolRow | null
                             {tool.connection.includes('失败') || tool.connection.includes('未连接') ? '未连接' : '已连接'}
                           </Chip>
                         </div>
-                        <p className="mt-0.5 truncate text-xs text-[#A6B0BE]">{tool.version ?? '版本 UNKNOWN'}</p>
+                        <p className="mt-0.5 truncate text-xs text-[#A6B0BE]">
+                          {tool.version ?? '版本 UNKNOWN'} · {tool.registryStatus.toUpperCase()}
+                        </p>
                       </div>
                     </div>
                     <div className="mt-2 flex items-center justify-between">

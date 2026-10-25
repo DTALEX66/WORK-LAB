@@ -20,7 +20,10 @@ rem i.e. a random free port). The documented one-click chain therefore could not
 rem come up at all. It now serves the built Vite bundle from the sidecar's own
 rem --frontend-root and opens the URL that the sidecar's endpoint descriptor
 rem advertises, so no port is guessed and the UI's injected endpoint stays a
-rem loopback /api/v1 URL.
+rem loopback /api/v1 URL. The surface it opens is `surface=daily`, the same entry the native main
+rem window has used since 2026-10-24: one product may not hand its owner two different default
+rem screens. The professional shell stays reachable through its own deep link (`?view=`) instead of
+rem being this launcher's surprise default.
 
 set "ROOT=%~dp0..\.."
 set "RUNTIME=%ROOT%\.project-local\runs\workflow"
@@ -35,7 +38,7 @@ echo 1. Starting loopback sidecar (snapshot + events SSE + the static UI)...
 start "work-lab-sidecar" cmd /c "python "%ROOT%\services\orchestration\sidecar.py" --project-root "%ROOT%" --runtime-root "%RUNTIME%" --host 127.0.0.1 --port 0 --frontend-root "%ROOT%\apps\observer\frontend\dist""
 
 echo 2. Waiting for the endpoint descriptor (the descriptor decides the port, not a guess)...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$deadline=(Get-Date).AddSeconds(25); $path='%DESCRIPTOR%'; $url=''; while ((Get-Date) -lt $deadline) { if (Test-Path -LiteralPath $path) { try { $d = ConvertFrom-Json -InputObject (Get-Content -Raw -LiteralPath $path); if ($d.projectionUrl) { $url = [string]$d.projectionUrl; break } } catch { } }; Start-Sleep -Milliseconds 400 }; if ($url -ne '') { $ui = $url.Replace('/api/v1/snapshot',''); Set-Content -LiteralPath '%LAUNCH_FILE%' -Value ($ui + '/?api=' + $url + '&view=full&theme=dark') -Encoding ascii } else { Write-Host 'SIDECAR_DESCRIPTOR_MISSING' }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$deadline=(Get-Date).AddSeconds(25); $path='%DESCRIPTOR%'; $url=''; while ((Get-Date) -lt $deadline) { if (Test-Path -LiteralPath $path) { try { $d = ConvertFrom-Json -InputObject (Get-Content -Raw -LiteralPath $path); if ($d.projectionUrl) { $url = [string]$d.projectionUrl; break } } catch { } }; Start-Sleep -Milliseconds 400 }; if ($url -ne '') { $ui = $url.Replace('/api/v1/snapshot',''); Set-Content -LiteralPath '%LAUNCH_FILE%' -Value ($ui + '/?api=' + $url + '&surface=daily&theme=dark') -Encoding ascii } else { Write-Host 'SIDECAR_DESCRIPTOR_MISSING' }"
 
 if not exist "%LAUNCH_FILE%" (
   echo The sidecar never advertised an endpoint, so nothing was opened.
