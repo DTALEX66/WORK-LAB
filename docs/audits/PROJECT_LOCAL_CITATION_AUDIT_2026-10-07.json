@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-25T00:34:10Z",
+  "generatedAt": "2026-10-25T01:04:14Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2594,
     "distinctProjectLocalTokens": 682,
     "tokensResolvedOnDisk": 0,
     "tokensAbsent": 682,
-    "citationsToAbsentTokens": 1926
+    "citationsToAbsentTokens": 1927
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,7 +29,7 @@
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 1024,
+      "citations": 1025,
       "distinctPaths": 526
     },
     "machine_local_runtime_pointer": {
@@ -4135,6 +4135,12 @@
       },
       {
         "path": ".project-local/runs/cl10/hud-strip-readback.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
+        "path": ".project-local/runs/cl10/hud_narrow_probe.py",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 51,
         "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"

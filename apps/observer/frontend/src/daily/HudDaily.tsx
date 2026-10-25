@@ -162,6 +162,24 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
           <p className="text-xs" style={{ color: '#A6B0BE' }}>账户 UNKNOWN · 额度窗口 待确认</p>
         </div>
       </div>
+      {/* 参考的 H03 主体是三行额度表（圆点＋标签＋进度条＋值＋重置时间）。快照没有任何额度
+          字段，所以槽位照画、进度条画成空轨、值一律 UNKNOWN——不编百分比，也不把"没有字段"
+          画成"额度为零"。 */}
+      <div className="mt-4 space-y-2" data-landmark="h03-quota-rows">
+        {([['当前会话', '#34D399'], ['周额度', '#FBBF24'],
+          [`周上限 · ${toolIds[0]?.name ?? '未连接工具'}`, '#34D399']] as [string, string][]).map(([label, dot]) => (
+          <div key={label} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+            <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: dot }} />
+            <span className="shrink-0">{label}</span>
+            <span aria-hidden="true" className="h-1 w-12 shrink-0 rounded-full" style={{ background: LINE }} />
+            <span className="ml-auto shrink-0 font-medium" style={{ color: '#A6B0BE' }}>UNKNOWN</span>
+            <span className="w-full shrink-0 text-right" style={{ color: '#A6B0BE' }}>重置时间 待确认</span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-xs" style={{ color: '#A6B0BE' }}>
+        以上三项是参考面板的额度维度；当前快照未提供任何额度字段，全部保持 UNKNOWN。
+      </p>
       <dl className="mt-4 space-y-2 text-xs">
         <div className="flex flex-wrap justify-between gap-x-3 gap-y-0.5"><dt className="shrink-0">更新时间</dt>
           <dd className="ml-auto text-right" style={{ color: '#A6B0BE' }}>
