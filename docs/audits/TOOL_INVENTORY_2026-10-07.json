@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-25T11:41:04Z",
+  "generatedAt": "2026-10-25T12:26:58Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -247,9 +247,10 @@
       "lines": 243,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 5,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "tests/ci/test_cdp_instruments_refuse_by_name.py"

@@ -204,12 +204,14 @@ def cmd_preview(args: argparse.Namespace) -> int:
 def cmd_contracts(args: argparse.Namespace) -> int:
     """Run the two front-end contract suites so a local PASS means the same thing as CI.
 
-    Both were meant to be CI-only, and only one was: the vitest suite ran in the `observer` job, while
-    `apps/observer/tests/run_all_tests.js` was invoked by no workflow step at all until 2026-10-25 (CL-14 read
-    the workflows and found the claim false). That gap produced two reds on a green local gate — the legibility
-    micro-role rule, and an action row that folded every control away under jsdom. A host where the declared
-    runtime cannot be resolved prints a named NOT_RUN and exits non-zero, because a silently skipped required
-    check is the defect this project keeps having to re-learn.
+    Both are CI-only in the sense that mattered: the `observer` job runs the JS suite through the
+    `observer-web-contracts` group and vitest through `observer-frontend-test`, and until this stage existed
+    neither had a local route. That gap produced two reds on a green local gate — the legibility micro-role
+    rule, and an action row that folded every control away under jsdom. (A claim added on 2026-10-25 that the
+    JS suite had no CI runner at all was false: it came from grepping only the Python files under `scripts/ci/`
+    and not `scripts/ci/required_groups.json`, where the group's command actually lives.) A host where the
+    declared runtime cannot be resolved prints a named NOT_RUN and exits non-zero, because a silently skipped
+    required check is the defect this project keeps having to re-learn.
     """
     try:
         node = find_node()
