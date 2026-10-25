@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-25T16:02:32Z",
+  "generatedAt": "2026-10-25T16:54:09Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2595,
-    "distinctProjectLocalTokens": 714,
+    "trackedFilesScanned": 2603,
+    "distinctProjectLocalTokens": 715,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 714,
-    "citationsToAbsentTokens": 1974
+    "tokensAbsent": 715,
+    "citationsToAbsentTokens": 1975
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,8 +21,8 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 339,
-      "distinctPaths": 121
+      "citations": 340,
+      "distinctPaths": 122
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 15,
@@ -292,13 +292,13 @@
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_recovered_source_registry.py",
-        "line": 117,
+        "line": 121,
         "text": "self.assertTrue(e[\"path\"].startswith(\".project-local/\"),"
       },
       {
         "path": ".project-local",
         "file": "tests/workflow-assistance/test_recovered_source_registry.py",
-        "line": 147,
+        "line": 151,
         "text": "self.assertTrue(claim.startswith(\".project-local/\"),"
       },
       {
@@ -1446,6 +1446,12 @@
         "file": "reports/product-design/bench-20261019.md",
         "line": 12,
         "text": "> `.project-local/runs/agent-hud-ref/usage-statistics.webp` 与 `approvals.webp`，"
+      },
+      {
+        "path": ".project-local/runs/brand-build",
+        "file": "scripts/brand/build_work_brand.py",
+        "line": 315,
+        "text": "workdir = ROOT / \".project-local/runs/brand-build\""
       },
       {
         "path": ".project-local/runs/cache",
@@ -9628,7 +9634,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md",
         "file": ".project/governance/recovered-source-registry.json",
-        "line": 215,
+        "line": 224,
         "text": "\"extractionPath\": \".project-local/runs/convergence-20261007-j/ag19_extraction/WORK-LAB_MASTER_ATLAS_2026-09-29.zip__WORK-LAB-NEW-CHAT-HANDOFF-2026-09-03.md\""
       },
       {
@@ -10836,7 +10842,7 @@
       {
         "path": ".project-local/runs/convergence-20261007-j/ag19_extraction",
         "file": ".project/governance/recovered-source-registry.json",
-        "line": 204,
+        "line": 213,
         "text": "\"notes\": \"promoted out of the ignored run root into the tracked tree, so the versioned bytes are now the checked ones; the row previously said machine-local while the recovered copy was already versio"
       },
       {
@@ -11939,7 +11945,7 @@
     "reviewQueue": 8,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 419
+    "presentOnThisMachine": 417
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

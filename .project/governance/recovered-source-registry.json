@@ -147,9 +147,12 @@
       "sha256": "d62f7fc22ee40693ec2707374b202775652c86663ddfda1584f74e37c4e3b310",
       "observedAt": "2026-10-07",
       "originalLocation": "apps/observer/web/assets/brand/work-lab-observer-symbol.svg (retired tree, recoverable at 6de25fe)",
-      "coverageRelation": "byte-identical copy; the production path is the owner from 2026-10-07",
+      "coverageRelation": "diverged 2026-10-26: the top-bar and rail identity was rebuilt by the WORK brand build (`scripts/brand/build_work_brand.py`, CL-15); `sha256` stays the 2026-10-07 migration digest the recovery command reproduces, `currentSha256` is the shipped form asserted against HEAD",
       "verificationCommand": "git cat-file -p 6de25fe:apps/observer/web/assets/brand/work-lab-observer-symbol.svg | sha256sum  ;  current form is asserted against `git show HEAD:apps/observer/frontend/src/assets/brand/work-lab-observer-symbol.svg` by tests/workflow-assistance/test_recovered_source_registry.py",
-      "notes": "copied and compared before the source tree was deleted; the SVGs are asserted local and structurally valid by the production-surface static contract"
+      "notes": "copied and compared before the source tree was deleted; the SVGs are asserted local and structurally valid by the production-surface static contract [diverged 2026-10-26 by CL-15: shipped sha256 4bab6f1993c229c7…, previous shipped form was d62f7fc22ee40693…]",
+      "currentSha256": "4bab6f1993c229c753049c6ad7735362b79fc2914973a8e48ba44a92045cba4a",
+      "currentBytes": 1074,
+      "currentObservedAt": "2026-10-26"
     },
     {
       "id": "src-brand-work-lab-observer-tray.svg",
@@ -160,9 +163,12 @@
       "sha256": "1d01ce390094c7391387c2fbff60499107150413f9e935bcaa1051187d48bfe2",
       "observedAt": "2026-10-07",
       "originalLocation": "apps/observer/web/assets/brand/work-lab-observer-tray.svg (retired tree, recoverable at 6de25fe)",
-      "coverageRelation": "byte-identical copy; the production path is the owner from 2026-10-07",
+      "coverageRelation": "diverged 2026-10-26: the tray identity was rebuilt by the WORK brand build (`scripts/brand/build_work_brand.py`, CL-15); `sha256` stays the 2026-10-07 migration digest the recovery command reproduces, `currentSha256` is the shipped form asserted against HEAD",
       "verificationCommand": "git cat-file -p 6de25fe:apps/observer/web/assets/brand/work-lab-observer-tray.svg | sha256sum  ;  current form is asserted against `git show HEAD:apps/observer/frontend/src/assets/brand/work-lab-observer-tray.svg` by tests/workflow-assistance/test_recovered_source_registry.py",
-      "notes": "copied and compared before the source tree was deleted; the SVGs are asserted local and structurally valid by the production-surface static contract"
+      "notes": "copied and compared before the source tree was deleted; the SVGs are asserted local and structurally valid by the production-surface static contract [diverged 2026-10-26 by CL-15: shipped sha256 1e37dd33a2ec81b8…, previous shipped form was 1d01ce390094c739…]",
+      "currentSha256": "1e37dd33a2ec81b8f7da95b97a879fe3678b425321339232d1927d7d95e08699",
+      "currentBytes": 1073,
+      "currentObservedAt": "2026-10-26"
     },
     {
       "id": "src-brand-app-icon-512.png",
@@ -173,9 +179,12 @@
       "sha256": "5ea1ef2f20aecfba554f02897e5644bb7980d50c608f4aea6ce7d30c5e44f088",
       "observedAt": "2026-10-07",
       "originalLocation": "apps/observer/web/assets/brand/app-icon-512.png (retired tree, recoverable at 6de25fe)",
-      "coverageRelation": "byte-identical copy; the production path is the owner from 2026-10-07",
+      "coverageRelation": "diverged 2026-10-26: the app icon was rebuilt by the WORK brand build (`scripts/brand/build_work_brand.py`, CL-15); `sha256` stays the 2026-10-07 migration digest the recovery command reproduces, `currentSha256` is the shipped form asserted against HEAD",
       "verificationCommand": "git cat-file -p 6de25fe:apps/observer/web/assets/brand/app-icon-512.png | sha256sum  ;  current form is asserted against `git show HEAD:apps/observer/frontend/src/assets/brand/app-icon-512.png` by tests/workflow-assistance/test_recovered_source_registry.py",
-      "notes": "copied and compared before the source tree was deleted; the SVGs are asserted local and structurally valid by the production-surface static contract"
+      "notes": "copied and compared before the source tree was deleted; the SVGs are asserted local and structurally valid by the production-surface static contract [diverged 2026-10-26 by CL-15: shipped sha256 cfe1174d2fc2cab5…, previous shipped form was 5ea1ef2f20aecfba…]",
+      "currentSha256": "cfe1174d2fc2cab548f52dd137d96bdb169572dd5d82d1dffa057b3414f4ffbc",
+      "currentBytes": 15764,
+      "currentObservedAt": "2026-10-26"
     },
     {
       "id": "src-shared-dependencies-register-20260815",
