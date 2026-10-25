@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-25T12:22:13Z",
+  "generatedAt": "2026-10-25T13:12:36Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
     "trackedFilesScanned": 2595,
-    "distinctProjectLocalTokens": 712,
+    "distinctProjectLocalTokens": 713,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 712,
-    "citationsToAbsentTokens": 1972
+    "tokensAbsent": 713,
+    "citationsToAbsentTokens": 1973
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -29,8 +29,8 @@
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 1052,
-      "distinctPaths": 550
+      "citations": 1053,
+      "distinctPaths": 551
     },
     "machine_local_runtime_pointer": {
       "citations": 258,
@@ -2401,6 +2401,12 @@
       },
       {
         "path": ".project-local/artifacts/LOOP-CLOSURE-20261025.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 53,
+        "text": "| CL-14 | P1 | PARTIAL_20261025 | 闭环第三批（把「写了但没人跑」变成「跑且能红」＋方案库第一条 VERIFIED）：①**采集器按项目归属**：`packages/client-neutral-core/scripts/collectors.py` 的 `collect_task_ledger` 只统计 `project_id` 等于本项目的任务，未归属计数单独暴"
+      },
+      {
+        "path": ".project-local/artifacts/LOOP-CLOSURE-LIVE-20261025.json",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 53,
         "text": "| CL-14 | P1 | PARTIAL_20261025 | 闭环第三批（把「写了但没人跑」变成「跑且能红」＋方案库第一条 VERIFIED）：①**采集器按项目归属**：`packages/client-neutral-core/scripts/collectors.py` 的 `collect_task_ledger` 只统计 `project_id` 等于本项目的任务，未归属计数单独暴"
@@ -11927,7 +11933,7 @@
     "reviewQueue": 8,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 417
+    "presentOnThisMachine": 418
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }
