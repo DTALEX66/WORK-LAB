@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-25T04:08:22Z",
+  "generatedAt": "2026-10-25T06:12:25Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -446,18 +446,19 @@
     },
     {
       "path": "scripts/audit/hud_strip_geometry_via_cdp.py",
-      "sha256": "8468f8d31c9159b3fe321481b1b858219df9616925908a93a63af906c8a61905",
-      "bytes": 54496,
-      "lines": 968,
+      "sha256": "7bbbc032bd10b74adc69bd1c6b9db41e42cedc92f1ce9973f80e3b7a712a03b2",
+      "bytes": 53356,
+      "lines": 946,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 5,
+      "citedByRecords": 6,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "tests/ci/test_hud_strip_geometry_gate.py"
+        "tests/ci/test_hud_strip_geometry_gate.py",
+        "tests/ci/test_text_legibility_gate.py"
       ]
     },
     {
@@ -907,12 +908,12 @@
     },
     {
       "path": "scripts/audit/text_legibility_via_cdp.py",
-      "sha256": "457aa11f2a7275ed98420e0841a4dba13c5b96a3d9db14dfdfeceae941af9623",
-      "bytes": 54814,
-      "lines": 984,
+      "sha256": "d8c4c7304cf739256e4f67c82a80ccc5ea7264d8b31b1ff8cb570028911ba008",
+      "bytes": 61513,
+      "lines": 1100,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 17,
+      "citedByRecords": 18,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "apps/observer/frontend/DESIGN.md",

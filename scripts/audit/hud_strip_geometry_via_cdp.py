@@ -14,6 +14,12 @@ Division of labour, the same as the topbar and legibility gates:
     decided "this label is shattered" inside its own JS, and a judgement made in JS cannot be tested at
     all — that is the whole difference between an instrument and a gate.
 
+What it does not judge: the 12px type floor and the AA contrast ratio. Both standards are owned by
+`scripts/audit/text_legibility_via_cdp.py`, which since 2026-10-25 sweeps these same three shell surfaces
+through `--shell-surfaces`. This file used to assert the floor itself; two gates reading one rule means two
+exception lists and two thresholds to keep in step, which is how standards rot, so the duplicate is gone and
+geometry is the single thing claimed here.
+
 What it measures against: the built `dist`, served from ONE loopback origin that also answers
 `GET /api/v1/snapshot` with the declared fixture below. A fixture is deliberate, not a shortcut: the
 strip's geometry depends on how many tool rows the snapshot carries, so a gate bound to today's live
@@ -101,16 +107,11 @@ MOUNT_SELECTOR = {
 # one glyph on each line. 1.6 keeps a genuine two-word wrap (which is what flex-wrap is for) passing
 # while convicting 更/新/时/间 on four lines.
 CHAR_WRAP_LINE_MULTIPLE = 1.6
-TEXT_FLOOR_PX = 12.0          # DESIGN.md: no text a user must read below 12px
 QUOTA_ROW_COUNT = 3           # the reference H03 panel's three quota dimensions
 QUOTA_TRACK_MIN_W = 8.0       # a progress track, as opposed to the 6px status dot beside it
 QUOTA_TRACK_MAX_H = 6.0
 CONTROL_EDGE_TOLERANCE_PX = 2.0
 VIEWPORT_TOLERANCE_PX = 1.0
-# Roles permitted below the text floor. Ships empty, exactly as the legibility gate does: earning a slot
-# here means proving the glyph repeats information available elsewhere, and every candidate measured so
-# far (the strip's 12px rows) is text a user must read.
-TEXT_FLOOR_EXCEPTIONS: list[str] = []
 
 # --------------------------------------------------------------------------- measurement (facts only)
 
@@ -242,19 +243,6 @@ MEASURE_JS = r"""
         });
       }
       return found.slice(0, 40);
-    })(),
-    // Painted text at or below 13px, raw. The floor is applied in Python.
-    smallText: (() => {
-      const found = [];
-      for (const el of document.querySelectorAll('body *')) {
-        const hasOwnText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-        if (!hasOwnText) continue;
-        if (!el.getClientRects().length) continue;
-        const fs = parseFloat(getComputedStyle(el).fontSize) || 0;
-        if (fs > 13) continue;
-        found.push({text: (el.textContent || '').trim().slice(0, 24), fontSize: fs});
-      }
-      return found.slice(0, 60);
     })(),
     h01: (() => {
       const el = document.querySelector(H01);
@@ -488,9 +476,10 @@ class SnapshotFixture:
         self.port = self.httpd.server_port
         self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
 
-    def url_for(self, query: str) -> str:
+    def url_for(self, query: str, theme: str = "dark") -> str:
         api = f"api=http%3A%2F%2F127.0.0.1%3A{self.port}%2Fapi%2Fv1%2Fsnapshot"
-        return f"http://127.0.0.1:{self.port}/index.html?{query}&mode=UNKNOWN&theme=dark&{api}"
+        return (f"http://127.0.0.1:{self.port}/index.html?{query}"
+                f"&mode=UNKNOWN&theme={theme}&{api}")
 
     def start(self) -> None:
         self.thread.start()
@@ -551,8 +540,7 @@ def _surface_checks(checks: list[dict], name: str, spec: dict, surface: dict | N
     that need it. Returns None when the surface was never measured — which fails closed."""
     slug = _slug(name)
     families = ["no_horizontal_overflow", "no_unreachable_control",
-                "no_label_shatters_to_one_character", "no_label_leaves_a_single_glyph_alone",
-                "text_meets_the_12px_floor"]
+                "no_label_shatters_to_one_character", "no_label_leaves_a_single_glyph_alone"]
     if spec.get("readyProbe"):
         families.append("fixture_snapshot_reached_the_surface")
     if not isinstance(surface, dict):
@@ -641,16 +629,6 @@ def _surface_checks(checks: list[dict], name: str, spec: dict, surface: dict | N
                "(a lone number is a legitimate break; a lone ideograph is a row that has finished "
                "shattering)")
 
-    small = surface.get("smallText")
-    if not isinstance(small, list):
-        _check(checks, f"{slug}_text_meets_the_12px_floor", False,
-               f"smallText came back as {type(small).__name__}, not a list of measurements")
-    else:
-        below = [t for t in small if (t.get("fontSize") or 0) < TEXT_FLOOR_PX
-                 and str(t.get("text") or "") not in TEXT_FLOOR_EXCEPTIONS]
-        _check(checks, f"{slug}_text_meets_the_12px_floor", not below,
-               f"at_or_below_13px={len(small)} below_floor="
-               f"{json.dumps(below, ensure_ascii=False)[:280]} floor={TEXT_FLOOR_PX}px")
     return surface
 
 
