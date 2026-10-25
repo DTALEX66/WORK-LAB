@@ -71,6 +71,22 @@ class LiveSourceTests(unittest.TestCase):
             with self.subTest(client=card_row["clientId"]):
                 self.assertEqual([layer["layer"] for layer in card_row["layers"]], list(acp.LAYER_ORDER))
 
+    def test_the_role_the_operator_declares_reaches_the_card_and_absence_is_unknown(self) -> None:
+        cards = {row["clientId"]: row for row in self.cards()}
+        # The case that started this: a provider router must be identifiable as one in the payload, or
+        # every surface that lists clients has to guess — and it guessed wrong.
+        self.assertEqual(cards["cc-switch"]["role"], "provider_router")
+        self.assertEqual(cards["hermes"]["role"], "agent_runtime")
+        # openhuman declares no role in the matrix, so the projection answers UNKNOWN instead of naming
+        # a kind for software this repo cannot cite a source for.
+        self.assertEqual(cards["openhuman"]["role"], "UNKNOWN")
+        schema = json.loads((ROOT / "packages/contracts/schemas/workflow/snapshot-v3.schema.json")
+                            .read_text(encoding="utf-8"))
+        allowed = set(schema["properties"]["adapterCapabilities"]["items"]["properties"]["role"]["enum"])
+        for client_id, row in cards.items():
+            with self.subTest(client=client_id):
+                self.assertIn(row["role"], allowed, "a role outside the declared enum breaks the contract")
+
     def test_only_registration_is_met_without_an_install_probe(self) -> None:
         cards = self.cards()
         for card_row in cards:

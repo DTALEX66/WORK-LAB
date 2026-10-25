@@ -1397,7 +1397,8 @@ export type WorkflowSnapshotV3 = {
     layers: ({
     layer: "REGISTERED" | "INSTALLED" | "LOADED_CONNECTED" | "QUALIFIED" | "ENABLED_FOR_TASK" | "NATIVE_PROJECTION" | "OBSERVED_IN_EXECUTION",
     state: "MET" | "NOT_PROBED" | "NOT_SUPPORTED"
-  })[]
+  })[],
+    role?: "agent_runtime" | "provider_router" | "vcs_host" | "design_client" | "UNKNOWN"
   })[],
     artifactHandles?: ({
     handle: string,

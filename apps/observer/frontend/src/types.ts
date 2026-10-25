@@ -225,6 +225,10 @@ export interface AdapterCapabilityCard {
   operationsDrift: boolean
   registryStatus: string
   writePolicy: string
+  // Declared by the operator in config/capability-matrix.json#clients[].role and projected by the
+  // producer. Optional because the schema does not require it: a card without a role is a source gap,
+  // and the surfaces read that as UNKNOWN rather than guessing from the name.
+  role?: 'agent_runtime' | 'provider_router' | 'vcs_host' | 'design_client' | 'UNKNOWN'
   risk: string
   runtimeAdapter: string | null
   configOwnershipDefault: { layer?: string, mode?: string, preserve_unknown?: boolean } | null

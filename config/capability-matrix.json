@@ -26,6 +26,7 @@
   "clients": [
     {
       "id": "hermes",
+      "role": "agent_runtime",
       "support_level": "deep",
       "operations": [
         "detect",
@@ -52,6 +53,7 @@
     },
     {
       "id": "codex",
+      "role": "agent_runtime",
       "support_level": "deep",
       "operations": [
         "detect",
@@ -78,6 +80,7 @@
     },
     {
       "id": "cc-switch",
+      "role": "provider_router",
       "support_level": "deep",
       "operations": [
         "detect",
@@ -101,6 +104,7 @@
     },
     {
       "id": "github",
+      "role": "vcs_host",
       "support_level": "deep",
       "operations": [
         "detect",
@@ -150,6 +154,7 @@
     },
     {
       "id": "open-design",
+      "role": "design_client",
       "support_level": "experimental",
       "operations": [
         "detect",
@@ -173,6 +178,7 @@
     },
     {
       "id": "deepseek-harness",
+      "role": "agent_runtime",
       "support_level": "experimental",
       "operations": [
         "detect",

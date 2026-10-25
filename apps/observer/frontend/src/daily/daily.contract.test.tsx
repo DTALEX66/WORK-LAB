@@ -233,48 +233,48 @@ describe('日常壳（?shell=daily）', () => {
     expect(screen.queryByText('声明操作：read（READ_ONLY）')).toBeNull()
   })
 
-  it('工具列表按各自声明的操作分组，执行类排在仅观测类之前', async () => {
+  it('工具列表按声明的角色分组：路由与未声明条目不混进 agent 运行时', async () => {
     const cards = (mockSnap as unknown as { adapterCapabilities: Record<string, unknown>[] }).adapterCapabilities
     const routerLike = { ...cards[0], clientId: 'cc-switch', displayName: 'CC Switch',
       declaredOperations: ['detect', 'capabilities', 'observe'], writePolicy: 'unavailable',
-      registryStatus: 'legacy_observe' }
-    const executorLike = { ...cards[0], clientId: 'hermes', displayName: 'Hermes',
+      registryStatus: 'legacy_observe', role: 'provider_router' }
+    const agentLike = { ...cards[0], clientId: 'hermes', displayName: 'Hermes',
       declaredOperations: ['apply', 'invoke', 'observe'], writePolicy: 'approval_required',
-      registryStatus: 'active' }
-    cards.push(routerLike, executorLike)
+      registryStatus: 'active', role: 'agent_runtime' }
+    cards.push(routerLike, agentLike)
     try {
       render(<App />)
       await act(async () => { screen.getByRole('button', { name: '我的工具' }).click() })
-      const labels = await screen.findAllByText(/可执行客户端|仅观测客户端/)
-      expect(labels.length).toBe(2)
-      expect(labels[0].textContent?.startsWith('可执行客户端')).toBe(true)
-      expect(labels[1].textContent?.startsWith('仅观测客户端')).toBe(true)
-      const hermesNodes = screen.getAllByText('Hermes')
-      const switchNodes = screen.getAllByText('CC Switch')
-      expect(hermesNodes.length).toBeGreaterThan(0)
-      expect(switchNodes.length).toBeGreaterThan(0)
-      // DOM order is the claim: an executor must not sit below a router in a list the owner reads top-down.
-      const follows = hermesNodes[0].compareDocumentPosition(switchNodes[0]) & Node.DOCUMENT_POSITION_FOLLOWING
-      expect(follows).toBeTruthy()
+      const labels = (await screen.findAllByText(/agent 运行时|供应商路由|角色未声明/))
+        .filter((node) => node.hasAttribute('data-group-label'))
+      expect(labels.map((node) => node.getAttribute('data-role'))).toEqual(
+        ['agent_runtime', 'provider_router', 'UNKNOWN'])
+      const hermes = screen.getAllByText('Hermes')[0]
+      const router = screen.getAllByText('CC Switch')[0]
+      const qoder = screen.getAllByText('Qoder')[0]
+      // DOM order is the claim: a router must not sit among the agents, and an undeclared row must not
+      // be silently promoted into either group.
+      expect(hermes.compareDocumentPosition(router) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(router.compareDocumentPosition(qoder) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
       expect(screen.getByText(/LEGACY_OBSERVE/)).toBeTruthy()
     } finally {
       cards.length = 2
     }
   })
 
-  it('executes 由卡片自己的 declaredOperations 派生，不由名字或 supportLevel 决定', () => {
+  it('role 从卡片自己的声明字段读出，缺声明就是 UNKNOWN，不从名字猜', () => {
     const rows = dailyToolRows({
       adapterCapabilities: [
-        { clientId: 'router', displayName: 'Router', declaredOperations: ['detect', 'observe'],
-          registryStatus: 'legacy_observe', writePolicy: 'unavailable' },
-        { clientId: 'agent', displayName: 'Agent', declaredOperations: ['invoke'],
-          registryStatus: 'active', writePolicy: 'approval_required' },
+        { clientId: 'cc-switch', displayName: 'CC Switch', registryStatus: 'legacy_observe',
+          writePolicy: 'unavailable', declaredOperations: [], role: 'provider_router' },
+        { clientId: 'mystery', displayName: 'Mystery Tool', registryStatus: 'active',
+          writePolicy: 'approval_required', declaredOperations: ['apply'] },
       ],
       projects: [],
     } as never)
-    expect(rows.map((r) => [r.clientId, r.executes, r.registryStatus])).toEqual([
-      ['router', false, 'legacy_observe'],
-      ['agent', true, 'active'],
+    expect(rows.map((r) => [r.clientId, r.role])).toEqual([
+      ['cc-switch', 'provider_router'],
+      ['mystery', 'UNKNOWN'],
     ])
   })
 

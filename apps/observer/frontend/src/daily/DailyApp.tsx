@@ -690,24 +690,40 @@ function IssuesView(props: {
   )
 }
 
+// The operator declares each client's role in config/capability-matrix.json; the producer projects it onto
+// the capability card. Agents come first, everything else under its own kind, and an undeclared role is
+// shown as one instead of being guessed from the name.
+const ROLE_RANK = ['agent_runtime', 'provider_router', 'vcs_host', 'design_client', 'UNKNOWN']
+const ROLE_LABEL: Record<string, string> = {
+  agent_runtime: 'agent 运行时',
+  provider_router: '供应商路由 · 仅观测，不执行任务',
+  vcs_host: '版本控制与托管 · 仅观测，不是 agent',
+  design_client: '设计客户端 · 仅观测，不是 agent',
+  UNKNOWN: '角色未声明（来源缺声明，不是「没有角色」）',
+}
+const roleRank = (role: string) => {
+  const index = ROLE_RANK.indexOf(role)
+  return index === -1 ? ROLE_RANK.length : index
+}
+
 function ToolsView(props: { tools: DailyToolRow[]; selected: DailyToolRow | null; onSelect: (id: string) => void }) {
   const quickAccess = [
     { id: 'usage', title: '使用方法', desc: '查看向该工具提供受控上下文与排查指引的建议做法' },
     { id: 'rules', title: '提示词与规则', desc: '查看推荐的交付格式模板与目录约束规则' },
     { id: 'faq', title: '常见问题', desc: '查看连接中断或排查超时时的常见处理问答' },
   ]
-  // Executors first, observe-only clients after, each under its own caption. The grouping is the fix for
-  // a list that read every registered client as if it were an agent: a provider router, a VCS host and a
-  // design client are observed, they do not execute the work.
-  const ordered = [...props.tools].sort((a, b) => Number(b.executes) - Number(a.executes))
+  // Ordered by declared role so a router or a repository host cannot read as a coding agent, and each
+  // group gets its own caption at its first row.
+  const ordered = [...props.tools].sort(
+    (a, b) => roleRank(a.role) - roleRank(b.role) || a.displayName.localeCompare(b.displayName))
   return (
     <section aria-label="我的工具" data-view="m05">
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold">我的工具</h1>
           <p className="mt-1 text-xs text-[#A6B0BE]">
-            管理外部 AI 与本地开发工具的连接身份与使用辅助。分组按各自声明的操作：只有声明 apply／invoke 的客户端会执行工作，
-            供应商路由、版本控制托管与设计客户端属仅观测类，不作为 agent 列出。
+            管理外部 AI 与本地开发工具的连接身份与使用辅助。分组按操作者声明的角色（agent 运行时／供应商路由／版本控制托管／设计客户端），
+            未声明角色的条目单列为 UNKNOWN，不按名字猜它是哪类软件。
           </p>
         </div>
         <DisabledAction label="检测环境工具" reason="观察者只读：不发起探测运行" />
@@ -726,12 +742,12 @@ function ToolsView(props: { tools: DailyToolRow[]; selected: DailyToolRow | null
             )}
             {ordered.map((tool, index) => {
               const active = props.selected?.clientId === tool.clientId
-              const firstOfGroup = index === 0 || ordered[index - 1].executes !== tool.executes
+              const firstOfGroup = index === 0 || ordered[index - 1].role !== tool.role
               return (
                 <li key={tool.clientId}>
                   {firstOfGroup && (
-                    <p className="pb-2 pt-3 text-xs uppercase tracking-wider text-[#A6B0BE]" data-group-label="true">
-                      {tool.executes ? '可执行客户端 · APPLY／INVOKE 已声明' : '仅观测客户端 · 不写入（非 agent 运行时）'}
+                    <p className="pb-2 pt-3 text-xs tracking-wide text-[#A6B0BE]" data-group-label="true" data-role={tool.role}>
+                      {ROLE_LABEL[tool.role] ?? `角色 ${tool.role}`}
                     </p>
                   )}
                   <button type="button" onClick={() => props.onSelect(tool.clientId)}

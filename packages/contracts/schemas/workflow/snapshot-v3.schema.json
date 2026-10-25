@@ -748,6 +748,16 @@
                 }
               }
             }
+          },
+          "role": {
+            "enum": [
+              "agent_runtime",
+              "provider_router",
+              "vcs_host",
+              "design_client",
+              "UNKNOWN"
+            ],
+            "description": "What kind of software this row is, so a provider router or a repository host is never painted as if it executed the work. Declared by the operator in config/capability-matrix.json#clients[].role; UNKNOWN means the matrix declares none for this client, which is a source gap and not a guess."
           }
         }
       },
