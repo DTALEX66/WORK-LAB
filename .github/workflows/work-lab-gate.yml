@@ -367,6 +367,24 @@ jobs:
       - name: Desktop geometry gate (CDP measurement of the built shell)
         working-directory: .
         run: python scripts/audit/topbar_geometry_via_cdp.py --json-out .project-local/runs/ci/geometry_gate.json
+      # CL-12: the narrow strip's shape checks lived in `.project-local/runs/cl10/hud_narrow_probe.py`,
+      # the evidence area. They caught a CJK label shattered one character per line at 150px and a hover
+      # state that pushed the pinned footer to y=874 inside a 480px window, went green again after each
+      # fix -- and nothing re-ran them, so the next commit could re-break either shape silently. This is
+      # the tracked successor, and this step is the reason it exists: an instrument no job executes is a
+      # description of a gate, not a gate (the same G3 finding, pointing the other way).
+      # Cost is measured, not guessed: six surfaces, one browser per surface, 19 s wall on the development
+      # host (receipt `.project-local/runs/cl13/hud-strip-gate-final.json`, 66 checks). The harvest
+      # runs against a declared fixture snapshot -- the strip's geometry depends on how many tool rows the
+      # snapshot carries, and a gate bound to today's live ledger reds when the data changes and greens
+      # when the layout breaks; the receipt names the data shape it measured. Each surface waits for its
+      # own data condition first, because the HUD frame mounts before the snapshot arrives and a harvest
+      # taken in between would measure a strip with no rows to hover (found on the first run of this
+      # gate, which is why the wait is a check rather than a sleep).
+      # Exit 3 is NOT_RUN (no dist, no browser, no measurement) and is left to fail the job on purpose.
+      - name: HUD narrow-strip geometry gate (CDP, 150x480 strip + 440x680 panel + daily entry)
+        working-directory: .
+        run: python scripts/audit/hud_strip_geometry_via_cdp.py --json-out .project-local/runs/ci/hud_strip_gate.json
       # LEG-2: the legibility sweep's arithmetic has been pinned in CI by tests/ci/test_text_legibility_gate.py
       # (57 cases) since it was written, but the step that drives a real browser over the built bundle was never
       # run by any job -- so the numeric clauses DESIGN.md and SCREEN_SPEC.md state (12px floor, 4.5:1 / 3:1 AA,
