@@ -327,6 +327,10 @@ def project_adapter_capabilities(*, registry: dict[str, Any], conformance: dict[
             "operationsDrift": bool(matrix_entry) and registry_operations != matrix_operations,
             "registryStatus": (matrix_entry or {}).get("registry_status") or "NOT_IN_MATRIX",
             "writePolicy": (matrix_entry or {}).get("writes") or "UNKNOWN",
+            # The operator's own declaration of WHAT this software is. Absent from the matrix is UNKNOWN,
+            # never a guess from the name: a provider router and a repository host are not agent runtimes,
+            # and the surfaces that list them have no other way to tell them apart.
+            "role": (matrix_entry or {}).get("role") or "UNKNOWN",
             "risk": (matrix_entry or {}).get("risk") or "UNKNOWN",
             "runtimeAdapter": (matrix_entry or {}).get("runtime_adapter"),
             "configOwnershipDefault": (matrix_entry or {}).get("config_ownership_default"),

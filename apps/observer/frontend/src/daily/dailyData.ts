@@ -103,10 +103,9 @@ export interface DailyToolRow {
   observedAt: string | null
   writePolicy: string
   registryStatus: string
-  // Derived from the card's OWN declared operations, never from a name: a client that declares no
-  // apply/invoke is not an executor, whatever it is called. CC Switch (provider router), GitHub (VCS
-  // host) and Open Design (design client) land here alongside the observe-only runtimes.
-  executes: boolean
+  // The operator's declared role for this client (agent runtime, provider router, repository host,
+  // design client). UNKNOWN means the matrix declares none — a source gap, never a guess from the name.
+  role: string
 }
 
 export function dailyToolRows(snap: SnapshotV3 | null): DailyToolRow[] {
@@ -135,7 +134,7 @@ export function dailyToolRows(snap: SnapshotV3 | null): DailyToolRow[] {
       observedAt: card.observedAt ?? null,
       writePolicy: card.writePolicy,
       registryStatus: card.registryStatus,
-      executes: declared.includes('apply') || declared.includes('invoke'),
+      role: card.role ?? 'UNKNOWN',
     }
   })
 }
