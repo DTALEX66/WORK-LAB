@@ -21,6 +21,7 @@ Read-only. Exit 0 = all pass, 1 = a failure, 2 = discovery problem.
 from __future__ import annotations
 
 import re
+import ast
 import subprocess
 import sys
 from pathlib import Path
@@ -46,8 +47,9 @@ def vacuity_reason(returncode: int, output: str) -> str | None:
     """Why a green exit cannot be trusted, or None when the module showed it ran.
 
     A module with no ``unittest.main()`` entry point executes zero tests and exits 0, so discovery
-    alone would report it as coverage. Measured on the current suite: every one of the 31 executed
-    modules prints something and none prints ``Ran 0 tests``, so this refuses nothing today.
+    alone would report it as coverage. Measured 2026-10-25 on the live suite: 59 executed modules, every
+    one printing something, none printing ``Ran 0 tests`` -- so this refuses nothing today, while
+    ``shape_reason`` covers the case where a module runs *some* tests and silently skips the rest.
     """
     if returncode != 0:
         return None
@@ -69,6 +71,33 @@ EXCLUSIONS = {
         "NOT referenced by the CI integration job for the same reason."
     ),
 }
+
+
+def shape_reason(path: Path) -> str | None:
+    """Why this module's shape cannot be executed faithfully as a script, or None when it can.
+
+    This suite runs every module with `python <file>`, so anything defined after the `unittest.main()` call is
+    never collected -- measured 2026-10-25: `test_cdp_harness_waits_for_mount.py` ran 14 tests as a script while
+    pytest collected 21, and the seven invisible ones were two classes appended below the guard. Discovery and the
+    vacuity check cannot see that, because the module looks healthy and prints `Ran 14 tests`.
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+        tree = ast.parse(text)
+    except (SyntaxError, UnicodeDecodeError, OSError) as error:
+        return f"UNPARSEABLE({type(error).__name__})"
+    guard_line = None
+    for node in tree.body:
+        if isinstance(node, ast.If) and "unittest.main(" in (ast.get_source_segment(text, node) or ""):
+            guard_line = node.lineno
+            break
+    if guard_line is None:
+        return None
+    below = [node.name for node in tree.body
+             if isinstance(node, ast.ClassDef) and node.lineno > guard_line
+             and any(isinstance(child, ast.FunctionDef) and child.name.startswith("test")
+                     for child in node.body)]
+    return f"CLASS_BELOW_MAIN_GUARD({', '.join(below)})" if below else None
 
 
 def _discover() -> list[Path]:
@@ -109,7 +138,9 @@ def main() -> int:
         if completed.returncode != 0:
             verdict = f"rc={completed.returncode}"
         else:
-            verdict = vacuity_reason(completed.returncode, output)
+            # The shape check comes before the vacuity check: a module whose tail is unreachable still
+            # prints a healthy `Ran N tests`, so silence is not the only way to report no coverage.
+            verdict = shape_reason(module) or vacuity_reason(completed.returncode, output)
         if verdict is not None:
             failed_modules += 1
             failures.append(f"{module.name} ({verdict})")

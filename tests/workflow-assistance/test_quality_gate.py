@@ -27,6 +27,29 @@ class QualityGateTests(unittest.TestCase):
         with patch.object(MODULE.importlib.util, "find_spec", return_value=None):
             self.assertEqual(MODULE.dependency_preflight(), 2)
 
+    def test_a_missing_bash_is_a_named_not_run_rather_than_a_pass(self) -> None:
+        """AGENTS.md: a missing or skipped required job fails the aggregate."""
+        with patch.object(MODULE, "usable_bash", return_value=None):
+            self.assertEqual(MODULE.gate_shell(), 3)
+
+    def test_a_missing_pwsh_is_a_named_not_run_rather_than_a_pass(self) -> None:
+        with patch.object(MODULE.shutil, "which", return_value=None):
+            self.assertEqual(MODULE.gate_powershell(), 3)
+
+    def test_the_retirement_exclusion_excludes_a_file_that_actually_exists(self) -> None:
+        # The four declared retired names point at files the 2026-10-19 archive normalization deleted, so
+        # the original assertion -- a subtraction against paths that cannot exist -- could never fail. Pin
+        # the mechanism instead: a discovered, mandatory test file leaves the mandatory set the moment it is
+        # declared retired, and only that one file leaves.
+        present = next(p.name for p in (ROOT / "tests" / "workflow-assistance").glob("test_*.py"))
+        baseline = MODULE.governance_test_files()
+        self.assertIn(f"tests/workflow-assistance/{present}", baseline)
+        with patch.object(MODULE, "RETIRED_ORDINARY_TESTS", frozenset({present})):
+            after = MODULE.governance_test_files()
+        self.assertNotIn(f"tests/workflow-assistance/{present}", after)
+        self.assertEqual(len(baseline) - len(after), 1,
+                         "declaring one retirement must exclude exactly one file, not a whole glob")
+
     def test_runtime_adapter_gate_is_explicit_but_not_in_default_verify(self) -> None:
         self.assertIn("portable-install-runtime", MODULE.GATES)
         self.assertNotIn("portable-install-runtime", MODULE.VERIFY_ORDER)

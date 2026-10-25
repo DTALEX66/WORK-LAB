@@ -169,8 +169,6 @@ class EvaluateBudgetTests(unittest.TestCase):
                       "a failed sweep must exit NOT_RUN, not continue with fewer lanes")
 
 
-if __name__ == "__main__":
-    unittest.main()
 
 
 class SweepRetryTests(unittest.TestCase):
@@ -282,3 +280,9 @@ class OneBudgetAcrossBothLayersTests(unittest.TestCase):
         init = init[:init.index("def send(")]
         self.assertNotIn("timeout=10)", init,
                          "a per-read timeout below the declared answer budget re-creates the silent 10 s wall")
+
+# The runner is the last statement on purpose. This suite executes each module as a script, so a
+# class defined below `unittest.main()` is never collected: 2026-10-25 measured 14 tests run against
+# 21 collected here, and the seven invisible ones were exactly the two classes appended after the guard.
+if __name__ == "__main__":
+    unittest.main()
