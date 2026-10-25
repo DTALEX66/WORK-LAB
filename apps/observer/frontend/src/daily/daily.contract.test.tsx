@@ -381,6 +381,10 @@ describe('CL-12 原生窄窗的 H02 可达性', () => {
     const summary = screen.getByLabelText('悬停摘要')
     expect(summary.textContent).toContain('UNKNOWN')
     expect(li.contains(summary)).toBe(true)
+    // 参考的 H02 还会把被悬停那一行本身点亮（琥珀环），只出现摘要不算还原
+    expect(li.querySelector('circle')?.getAttribute('stroke')).toBe('#FBBF24')
+    const other = screen.getByLabelText('工具额度窄面板').querySelectorAll('li')[1]
+    expect(other.querySelector('circle')?.getAttribute('stroke')).not.toBe('#FBBF24')
     expect(screen.getAllByLabelText('悬停摘要')).toHaveLength(1)
     expect(screen.getByLabelText('工具额度窄面板')).toBeTruthy()
   })
