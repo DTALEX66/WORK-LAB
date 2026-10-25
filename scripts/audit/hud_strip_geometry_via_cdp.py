@@ -903,6 +903,14 @@ def main() -> int:
                     help="restrict to these surface names (default: every declared one)")
     ap.add_argument("--json-out", default=None)
     args = ap.parse_args()
+    names = args.surface or [s["name"] for s in SURFACES]
+    unknown = sorted(set(names) - {s["name"] for s in SURFACES})
+    if unknown:
+        # Validated before anything is looked for on disk: a misspelled surface is bad input whatever
+        # the machine happens to have built. Found on the runner, where the workflow-assistance job has
+        # no `dist` at all and this check used to be reached only after the DIST_ABSENT refusal.
+        print(f"HUD_STRIP_GATE_NOT_RUN UNKNOWN_SURFACE {json.dumps(unknown)}")
+        return 2
 
     root = Path(args.root).resolve()
     if not (root / "apps" / "observer" / "frontend" / "dist" / "index.html").is_file():
@@ -914,11 +922,6 @@ def main() -> int:
         print("HUD_STRIP_GATE_NOT_RUN BROWSER_NOT_FOUND "
               "set WL_CHROME to a Chrome/Edge binary; a named category is not a pass")
         return 3
-    names = args.surface or [s["name"] for s in SURFACES]
-    unknown = sorted(set(names) - {s["name"] for s in SURFACES})
-    if unknown:
-        print(f"HUD_STRIP_GATE_NOT_RUN UNKNOWN_SURFACE {json.dumps(unknown)}")
-        return 2
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     # `serve_and_eval` writes each Chrome profile and its log under the geometry gate's own output dir;

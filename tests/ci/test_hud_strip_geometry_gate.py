@@ -559,17 +559,50 @@ class InstrumentTests(unittest.TestCase):
         finally:
             shutil.rmtree(scratch, ignore_errors=False)
 
+    def _scratch_tree(self, prefix: str, with_dist: bool) -> Path:
+        scratch = Path(tempfile.mkdtemp(prefix=prefix, dir=ROOT / ".project-local" / "runs"))
+        if with_dist:
+            dist = scratch / "apps" / "observer" / "frontend" / "dist"
+            dist.mkdir(parents=True, exist_ok=True)
+            (dist / "index.html").write_text("<html></html>", encoding="utf-8")
+        return scratch
+
     def test_a_tree_without_a_browser_refuses_by_name(self) -> None:
+        # The refusal has to be reachable on any checkout. Measured on the runner: the
+        # workflow-assistance job builds nothing under `apps/observer/frontend/dist`, so pointing at the
+        # real tree returned `DIST_ABSENT` where the assertion demanded `BROWSER_NOT_FOUND`. A test whose
+        # answer depends on whether somebody ran `npm run build` here is not a gate.
         class NoBrowser:
             @staticmethod
             def find_browser():
                 return None
 
-        with mock.patch.object(gate, "load_geometry", return_value=NoBrowser), \
-                mock.patch.object(sys, "argv", ["x"]), mock.patch("builtins.print") as printed:
-            self.assertEqual(gate.main(), 3)
-        self.assertTrue(any("BROWSER_NOT_FOUND" in str(c.args[0]) for c in printed.call_args_list),
-                        printed.call_args_list)
+        scratch = self._scratch_tree("hud-strip-nobrowser-", with_dist=True)
+        try:
+            with mock.patch.object(gate, "load_geometry", return_value=NoBrowser), \
+                    mock.patch.object(sys, "argv", ["x", "--root", str(scratch)]), \
+                    mock.patch("builtins.print") as printed:
+                self.assertEqual(gate.main(), 3)
+            self.assertTrue(any("BROWSER_NOT_FOUND" in str(c.args[0]) for c in printed.call_args_list),
+                            printed.call_args_list)
+        finally:
+            shutil.rmtree(scratch)
+
+    def test_bad_input_is_bad_input_whatever_the_machine_has_built(self) -> None:
+        # A misspelled `--surface` must come back as exit 2 with the name listed, on a tree that has no
+        # dist at all — otherwise the runner reports a typo as DIST_ABSENT and the reader loses the only
+        # signal that says what they typed wrong.
+        scratch = self._scratch_tree("hud-strip-badname-", with_dist=False)
+        try:
+            with mock.patch.object(sys, "argv",
+                                   ["x", "--root", str(scratch), "--surface", "strip-h9"]), \
+                    mock.patch("builtins.print") as printed:
+                self.assertEqual(gate.main(), 2)
+            self.assertTrue(any("UNKNOWN_SURFACE" in str(c.args[0]) for c in printed.call_args_list),
+                            printed.call_args_list)
+            self.assertFalse(any("DIST_ABSENT" in str(c.args[0]) for c in printed.call_args_list))
+        finally:
+            shutil.rmtree(scratch)
 
     def test_the_receipt_reports_what_the_browser_bootstrap_could_not_clean_up(self) -> None:
         # The gate reuses the geometry probe's Chrome launcher, and that launcher keeps a profile dir it
