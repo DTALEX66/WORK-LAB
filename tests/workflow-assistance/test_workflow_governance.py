@@ -2780,7 +2780,8 @@ class WorkflowGovernanceTests(unittest.TestCase):
             "--runtime",
             "scan_agent_rules.py",
             "usable_bash()",
-            "Git Bash / GNU bash not found",
+            "QUALITY_GATE_NOT_RUN gate=shell reason=BASH_ABSENT",
+            "QUALITY_GATE_NOT_RUN gate=powershell reason=PWSH_ABSENT",
             "shutil.which(\"pwsh\") or shutil.which(\"powershell.exe\")",
             "ParseFile((Resolve-Path ./scripts/setup-workflow.ps1)",
         ):

@@ -826,8 +826,11 @@ def gate_mcp_audit() -> int:
 def gate_shell() -> int:
     bash = usable_bash()
     if not bash:
-        print("\n=== SKIP shell: Git Bash / GNU bash not found ===")
-        return 0
+        # AGENTS.md: a failed, cancelled, MISSING or skipped required job fails the aggregate. Printing a
+        # SKIP and returning 0 certified a syntax check that never ran, so an environment without bash
+        # (or without Git Bash on Windows) reports exactly the verdict a healthy tree would.
+        print("\nQUALITY_GATE_NOT_RUN gate=shell reason=BASH_ABSENT")
+        return 3
     return run([bash, "-n", "scripts/setup-workflow.sh"])
 
 
@@ -886,8 +889,8 @@ def gate_runtime_convergence() -> int:
 def gate_powershell() -> int:
     pwsh = shutil.which("pwsh") or shutil.which("powershell.exe")
     if not pwsh:
-        print("\n=== SKIP powershell: pwsh/powershell.exe not found ===")
-        return 0
+        print("\nQUALITY_GATE_NOT_RUN gate=powershell reason=PWSH_ABSENT")
+        return 3
     script = (
         "$tokens = $null; $errors = $null; "
         "[System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path ./scripts/setup-workflow.ps1), [ref]$tokens, [ref]$errors) | Out-Null; "
