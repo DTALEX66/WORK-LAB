@@ -95,7 +95,6 @@ def strip_h01() -> dict:
         "hoverDispatch": "not-requested", "bodyText": BODY_H01, "readyWait": READY_WAIT,
         "ready": True, "readyWaitMs": 2, "readyProbe": "an adapter ring row is painted",
         "readyBudgetMs": gate.READY_BUDGET_MS,
-        "smallText": [{"text": "CO", "fontSize": 12}, {"text": "额度 UNKNOWN", "fontSize": 12}],
         "controls": [control(), control("HUD 设置", 128, 457, 14, 14)],
     }
 
@@ -143,7 +142,6 @@ def panel_h01() -> dict:
         "quotaRows": None, "nav": [], "labelLines": [], "hoverDispatch": "not-requested",
         "readyWait": READY_WAIT, "ready": True, "readyWaitMs": 1,
         "readyProbe": "an adapter ring row is painted", "readyBudgetMs": gate.READY_BUDGET_MS,
-        "smallText": [{"text": "通知", "fontSize": 12}, {"text": "工作区", "fontSize": 12}],
         "controls": [control("通知", 134, 16, 38, 30), control("关闭窗口", 391, 21, 32, 32)],
     }
 
@@ -157,7 +155,6 @@ def daily_home() -> dict:
         "ready": True, "readyWaitMs": 0, "readyProbe": None, "readyBudgetMs": None,
         "nav": [{"label": label, "rect": box(12, top, 151, 36)}
                 for label, top in (("项目", 96), ("问题与经验", 136), ("我的工具", 176), ("设置", 726))],
-        "smallText": [{"text": "K", "fontSize": 12}, {"text": "HUDAlt+H", "fontSize": 12}],
         "controls": [control("全局搜索", 230.6, 9.5, 560, 32), control("关闭窗口", 1231, 21, 32, 32)],
     }
 
@@ -175,7 +172,7 @@ def expected_check_names() -> set:
         names |= {f"{slug}_measured", f"{slug}_no_horizontal_overflow",
                   f"{slug}_no_unreachable_control", f"{slug}_no_label_shatters_to_one_character",
                   f"{slug}_no_label_leaves_a_single_glyph_alone",
-                  f"{slug}_text_meets_the_12px_floor"}
+                  }
         if spec_row.get("readyProbe"):
             names.add(f"{slug}_fixture_snapshot_reached_the_surface")
         if spec_row["kind"] == "strip":
@@ -282,17 +279,14 @@ class VerdictTests(unittest.TestCase):
         self.assertFalse(self.check("strip_h01_no_label_shatters_to_one_character", measured)["pass"])
         self.assertFalse(self.check("strip_h01_no_label_leaves_a_single_glyph_alone", measured)["pass"])
 
-    def test_text_below_the_twelve_px_floor_is_convicted_by_its_own_string(self) -> None:
-        measured = good_measurement()
-        measured["strip-h01"]["smallText"] = [{"text": "额度 UNKNOWN", "fontSize": 11}]
-        bad = self.check("strip_h01_text_meets_the_12px_floor", measured)
-        self.assertFalse(bad["pass"], bad)
-        self.assertIn("11", bad["detail"])
-
-    def test_the_floor_exception_list_is_empty_and_nobody_sneaks_a_role_in(self) -> None:
-        self.assertEqual(gate.TEXT_FLOOR_EXCEPTIONS, [])
-
-    # --- reachability: overflow, controls, viewport -------------------------------------------
+    def test_the_type_floor_is_not_owned_here_anymore(self) -> None:
+        # Two gates reading one standard means two thresholds and two exception lists to keep in step.
+        # `scripts/audit/text_legibility_via_cdp.py --shell-surfaces` judges the 12px floor and the AA
+        # ratio on these same surfaces, so this gate harvests geometry only.
+        names = {c["check"] for c in self.v["checks"]}
+        self.assertFalse([n for n in names if "text_meets_the_12px_floor" in n], sorted(names))
+        self.assertNotIn("smallText", gate.MEASURE_JS)
+        self.assertFalse(hasattr(gate, "TEXT_FLOOR_EXCEPTIONS"))
 
     def test_a_control_pushed_past_the_strip_edge_is_named(self) -> None:
         measured = good_measurement()

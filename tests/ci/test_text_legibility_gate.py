@@ -617,5 +617,117 @@ class DisabledControlTests(unittest.TestCase):
         self.assertTrue(legibility.verdict("dark", harvest)["passed"])
 
 
+
+class ShellSurfaceTests(unittest.TestCase):
+    """The 150x480 strip, the 440x680 panel and the 1280x820 daily entry joined this sweep on
+    2026-10-25. Before that the gate read only `view=full`/`view=overview`, so the two surfaces an owner
+    actually looks at had no 12px floor and no AA ratio judged by any tracked gate.
+
+    Measured on the shipped bundle with the declared fixture snapshot: the strip paints 16 readable text
+    nodes, the panel 24, the daily shell 38. A single shell-wide floor of 30 would convict the strip for
+    being 150px wide, so the floor is per surface — and each case below proves the smaller floor still
+    refuses an empty render rather than excusing one.
+    """
+
+    def setUp(self) -> None:
+        self.strip = legibility.load_strip_gate()
+        self.surfaces = {s["label"]: s for s in legibility.shell_surfaces(self.strip)}
+
+    def test_the_density_floor_is_per_surface_and_not_a_blanket_loosening(self) -> None:
+        asked_without_a_floor = legibility.verdict("dark", clean_harvest(16), surface="strip-h01")
+        self.assertFalse(checks_of(asked_without_a_floor)["harvest_is_dense_enough"]["pass"],
+                         "the shell floor must still apply when the caller forgets to narrow it")
+        with_strip_floor = legibility.verdict("dark", clean_harvest(16),
+                                              legibility.MIN_SHELL_NODES, "strip-h01")
+        dense = checks_of(with_strip_floor)["harvest_is_dense_enough"]
+        self.assertTrue(dense["pass"], dense)
+        self.assertIn("floor=12 surface=strip-h01", dense["detail"])
+        empty = legibility.verdict("dark", clean_harvest(9), legibility.MIN_SHELL_NODES, "strip-h01")
+        self.assertFalse(checks_of(empty)["harvest_is_dense_enough"]["pass"])
+
+    def test_a_low_contrast_label_on_the_strip_fails_the_same_rule_as_the_shell(self) -> None:
+        # The planted footer grey this round measured at 2.44:1 on the strip's own #10141A card. The
+        # judgement must be the shell's, not a softer one for small surfaces.
+        harvest = clean_harvest(16)
+        harvest["pageBackground"] = "rgb(16, 20, 26)"
+        for n in harvest["nodes"]:
+            n["bg"] = ["rgba(0, 0, 0, 0)", "rgb(16, 20, 26)"]
+            n["color"] = "rgb(75, 85, 99)"
+        bad = checks_of(legibility.verdict("dark", harvest, legibility.MIN_SHELL_NODES,
+                                          "strip-h01"))["every_text_node_meets_AA"]
+        self.assertFalse(bad["pass"], bad)
+        self.assertIn("2.44:1", bad["detail"])
+
+    def test_the_surfaces_come_from_the_strip_gate_not_a_second_copy(self) -> None:
+        declared = {s["name"]: s for s in self.strip.SURFACES}
+        self.assertEqual(set(self.surfaces), set(legibility.SHELL_SURFACE_KINDS))
+        for label, surface in self.surfaces.items():
+            self.assertEqual(surface["size"], declared[label]["size"], label)
+            self.assertEqual(surface["query"], declared[label]["query"], label)
+            self.assertEqual(surface["mount"], self.strip.MOUNT_SELECTOR[declared[label]["kind"]], label)
+
+    def test_a_surface_the_strip_gate_stops_declaring_refuses_the_sweep(self) -> None:
+        class Narrowed:
+            SURFACES = [s for s in self.strip.SURFACES if s["name"] != "panel-h01"]
+            MOUNT_SELECTOR = self.strip.MOUNT_SELECTOR
+
+        with self.assertRaises(RuntimeError) as caught:
+            legibility.shell_surfaces(Narrowed())
+        self.assertIn("SHELL_SURFACE_MISSING", str(caught.exception))
+
+    def test_the_shell_harvest_asks_the_fixture_origin_for_the_theme_it_was_given(self) -> None:
+        class Fixture:
+            def __init__(self) -> None:
+                self.calls: list = []
+
+            def url_for(self, query, theme):
+                self.calls.append((query, theme))
+                return f"http://127.0.0.1:9/{query}&theme={theme}"
+
+        class Geometry:
+            def __init__(self, harvest) -> None:
+                self.harvest, self.calls = harvest, []
+
+            def serve_and_eval(self, root, path, window, expr, browser, u19, shot, **kw):
+                self.calls.append(kw)
+                return dict(self.harvest)
+
+        surface = self.surfaces["strip-h01"]
+        fixture, geom = Fixture(), Geometry(clean_harvest(16))
+        out = legibility.harvest_shell_surface(self.strip, geom, ROOT, "browser", "u19",
+                                               fixture, "light", surface)
+        self.assertEqual(fixture.calls, [(surface["query"], "light")])
+        self.assertEqual(len(geom.calls), 2, "the settled-pair rule still needs two samples")
+        self.assertEqual(geom.calls[0]["viewport"], (150, 480))
+        self.assertEqual(geom.calls[0]["mount_selector"], surface["mount"])
+        for call in geom.calls:
+            self.assertEqual(call["serve_url"],
+                             f"http://127.0.0.1:9/{surface['query']}&theme=light")
+        self.assertEqual(out["backend"], "declared-fixture")
+
+    def test_a_shell_surface_that_renders_nothing_is_refused_before_it_is_judged(self) -> None:
+        class Fixture:
+            def url_for(self, query, theme):
+                return "http://127.0.0.1:9/x"
+
+        class Geometry:
+            def serve_and_eval(self, root, path, window, expr, browser, u19, shot, **kw):
+                return clean_harvest(4)
+
+        with self.assertRaises(RuntimeError) as caught:
+            legibility.harvest_shell_surface(self.strip, Geometry(), ROOT, "b", "u", Fixture(),
+                                             "dark", self.surfaces["strip-h01"])
+        self.assertIn("THIN_HARVEST", str(caught.exception))
+
+    def test_the_floor_and_ratio_standards_have_one_owner_for_these_surfaces(self) -> None:
+        # The narrow-strip gate used to assert the 12px floor as well. Two gates reading one standard
+        # means two thresholds and two exception lists; the geometry gate now keeps geometry, and the
+        # type/colour rules live here for every surface including the shell.
+        strip_source = (ROOT / "scripts" / "audit" / "hud_strip_geometry_via_cdp.py"
+                        ).read_text(encoding="utf-8")
+        self.assertNotIn("text_meets_the_12px_floor", strip_source)
+        self.assertIn("--shell-surfaces", (ROOT / ".github" / "workflows" / "work-lab-gate.yml"
+                                           ).read_text(encoding="utf-8"))
+
 if __name__ == "__main__":
     unittest.main()

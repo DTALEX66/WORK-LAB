@@ -43,6 +43,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "audit"))
 import bundle_provenance  # noqa: E402  # every receipt names the bytes the browser loaded
 GEOMETRY = ROOT / "scripts" / "audit" / "topbar_geometry_via_cdp.py"
+STRIP_GATE = ROOT / "scripts" / "audit" / "hud_strip_geometry_via_cdp.py"
 OUT_DIR = ROOT / ".project-local" / "artifacts" / "legibility"
 
 WINDOW_SIZE = "1280,820"
@@ -67,6 +68,14 @@ AA_DISABLED = 3.0
 LARGE_PX = 24.0          # 18pt
 LARGE_BOLD_PX = 18.66    # 14pt bold
 MIN_NODES = 30           # a harvest thinner than this measured nothing
+# The shell surfaces are smaller by design, and a floor written for a 1280px shell would convict a
+# 150px strip for being a strip. Measured 2026-10-25 on the built bundle with the declared fixture
+# snapshot: the 150x480 strip paints 16 readable text nodes, the 440x680 panel 24, the 1280x820 daily
+# shell 38. 12 is therefore the strip/panel floor — the same value `MIN_VIEW_NODES` already uses for one
+# rail lane's own surface — and it still refuses an empty render: 12 is 25% of the thinnest real surface,
+# not zero. The daily shell keeps the shell floor of 30 because it clears it.
+MIN_SHELL_NODES = 12
+MIN_DAILY_NODES = MIN_NODES
 
 # Roles permitted below the floor. An entry must name a glyph that repeats information available
 # elsewhere; `no_stale_floor_exception` fails any entry that matches nothing on the measured screen,
@@ -83,6 +92,45 @@ def load_geometry():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)  # type: ignore[attr-defined]
     return module
+
+
+def load_strip_gate():
+    """Reuse the narrow-strip gate's declared surfaces and its fixture origin.
+
+    The shell surfaces are not re-declared here on purpose: window shapes have one owner
+    (`apps/observer/src-tauri/tauri.conf.json` → `hud_strip_geometry_via_cdp.SURFACES`), and a second
+    copy of "150, 480" in this file is a constant that nothing checks against the first.
+    """
+    spec = importlib.util.spec_from_file_location("hud_strip_geometry_via_cdp", STRIP_GATE)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)  # type: ignore[attr-defined]
+    return module
+
+
+# Which declared surfaces the legibility sweep reads, and the density floor each one owes. Keyed by the
+# strip gate's own surface names, so a rename there lands here as a test failure, not a silent skip.
+SHELL_SURFACE_KINDS = {
+    "strip-h01": MIN_SHELL_NODES,
+    "panel-h01": MIN_SHELL_NODES,
+    "daily-home": MIN_DAILY_NODES,
+}
+
+
+def shell_surfaces(strip) -> list[dict]:
+    """The shell surfaces to sweep, taken from the strip gate's declarations."""
+    out = []
+    for spec in strip.SURFACES:
+        name = spec["name"]
+        if name not in SHELL_SURFACE_KINDS:
+            continue
+        out.append({"label": name, "query": spec["query"], "size": spec["size"],
+                    "mount": strip.MOUNT_SELECTOR[spec["kind"]],
+                    "minNodes": SHELL_SURFACE_KINDS[name]})
+    missing = sorted(set(SHELL_SURFACE_KINDS) - {s["label"] for s in out})
+    if missing:
+        raise RuntimeError(f"SHELL_SURFACE_MISSING {missing} — the strip gate no longer declares them")
+    return out
 
 
 # --------------------------------------------------------------------------- colour maths
@@ -648,6 +696,23 @@ def views_verdict(theme: str, collected: dict, size: int | None = None,
                        "thinViews": len(thin)}}
 
 
+def require_settled(first: dict, second: dict, label: str, min_nodes: int) -> dict:
+    """Two identical samples, or refuse. `.nav button`/`.panel`/the buttons transition `.2s ease`, so a
+    single read can catch an interpolating colour that no user ever sees. A harvest thinner than
+    `min_nodes` rendered nothing readable and is not a measurement."""
+    a = {(n["path"], n["text"]): (n["color"], n["size"]) for n in first["nodes"]}
+    b = {(n["path"], n["text"]): (n["color"], n["size"]) for n in second["nodes"]}
+    shared = set(a) & set(b)
+    moved = sorted(str(key) + f" {a[key]} vs {b[key]}" for key in shared if a[key] != b[key])
+    if len(second["nodes"]) < min_nodes:
+        raise RuntimeError(f"THIN_HARVEST({label}) only {len(second['nodes'])} text nodes "
+                           f"(need {min_nodes}) — that surface rendered nothing readable")
+    if moved:
+        raise RuntimeError(f"NOT_SETTLED({label}) {len(moved)} of {len(shared)} nodes changed colour "
+                           f"between samples: {moved[:3]}")
+    return second
+
+
 def harvest_settled(root: Path, browser: str, u19, u19_geometry, theme: str,
                     api: str | None = None, window_size: str = WINDOW_SIZE) -> dict:
     """Load one theme and require two identical samples before reporting anything.
@@ -665,22 +730,40 @@ def harvest_settled(root: Path, browser: str, u19, u19_geometry, theme: str,
     label = "live" if api else "static"
     first = u19_geometry.serve_and_eval(root, path, window_size, HARVEST, browser, u19)
     second = u19_geometry.serve_and_eval(root, path, window_size, HARVEST, browser, u19)
-    a = {(n["path"], n["text"]): (n["color"], n["size"]) for n in first["nodes"]}
-    b = {(n["path"], n["text"]): (n["color"], n["size"]) for n in second["nodes"]}
-    shared = set(a) & set(b)
-    moved = sorted(str(key) + f" {a[key]} vs {b[key]}" for key in shared if a[key] != b[key])
-    if len(second["nodes"]) < MIN_NODES:
-        raise RuntimeError(f"THIN_HARVEST({label}) only {len(second['nodes'])} text nodes "
-                           f"(need {MIN_NODES}); api={api or 'static-preview'} rendered nothing readable")
-    if moved:
-        raise RuntimeError(f"NOT_SETTLED({label}) {len(moved)} of {len(shared)} nodes changed colour "
-                           f"between samples: {moved[:3]}")
-    second["backend"] = api or "static-preview"
-    return second
+    settled = require_settled(first, second, label, MIN_NODES)
+    settled["backend"] = api or "static-preview"
+    return settled
 
 
-def verdict(theme: str, harvest: dict) -> dict:
-    """Pure: no browser, no filesystem. Every check is one line of the written standard."""
+def harvest_shell_surface(strip, geometry, root: Path, browser: str, u19, fixture,
+                          theme: str, surface: dict) -> dict:
+    """One shell surface, populated by the declared fixture snapshot, at the shape it declares.
+
+    Same-origin is not a convenience: the front refuses a non-loopback `?api=`, and a second port would
+    be a second origin the browser then blocks with CORS. Two launches per surface keep the settled-pair
+    rule intact for these surfaces too — the strip's chips and rows animate on mount like the shell does.
+    """
+    url = fixture.url_for(surface["query"], theme)
+    width, height = surface["size"]
+    first = geometry.serve_and_eval(root, "/index.html", WINDOW_SIZE, HARVEST, browser, u19, None,
+                                    viewport=(width, height), serve_url=url,
+                                    mount_selector=surface["mount"])
+    second = geometry.serve_and_eval(root, "/index.html", WINDOW_SIZE, HARVEST, browser, u19, None,
+                                     viewport=(width, height), serve_url=url,
+                                     mount_selector=surface["mount"])
+    settled = require_settled(first, second, f"{surface['label']}/{theme}", surface["minNodes"])
+    settled["backend"] = "declared-fixture"
+    return settled
+
+
+def verdict(theme: str, harvest: dict, min_nodes: int = MIN_NODES,
+            surface: str | None = None) -> dict:
+    """Pure: no browser, no filesystem. Every check is one line of the written standard.
+
+    `min_nodes` is the density floor for the surface being judged — the shell, a rail lane and a 150px
+    strip are different sizes, and one number would convict the small one for being small. It defaults to
+    the shell floor, so nothing that called this before changes behaviour.
+    """
     page_background = harvest.get("pageBackground") or harvest.get("htmlBackground") or "rgb(0,0,0)"
     scored = [node_contrast(n, page_background) for n in harvest.get("nodes") or []]
     checks: list[dict] = []
@@ -688,8 +771,9 @@ def verdict(theme: str, harvest: dict) -> dict:
     def add(name: str, ok: bool, detail: str) -> None:
         checks.append({"check": name, "pass": bool(ok), "detail": detail})
 
-    add("harvest_is_dense_enough", len(scored) >= MIN_NODES,
-        f"nodes={len(scored)} floor={MIN_NODES}")
+    add("harvest_is_dense_enough", len(scored) >= min_nodes,
+        f"nodes={len(scored)} floor={min_nodes}"
+        + (f" surface={surface}" if surface else ""))
 
     # A theme that did not apply would make the whole light-theme column meaningless and green.
     announced = harvest.get("theme")
@@ -880,6 +964,12 @@ def main() -> int:
                          "surfaces the product can take are 1280 (main default), 900 (main "
                          "minWidth/minHeight floor) and 440 (the HUD); narrower values are legal as "
                          "text stress but are not product surfaces (SCREEN_SPEC: Window surfaces).")
+    ap.add_argument("--shell-surfaces", action="store_true",
+                    help="also judge the shell surfaces the narrow-strip gate declares — the 150x480 "
+                         "HUD strip, the 440x680 panel and the 1280x820 daily entry — populated by that "
+                         "gate's declared fixture snapshot. Without this flag the sweep reads only the "
+                         "professional shell at `view=full`/`view=overview`, which is how the 12px floor "
+                         "and AA standard went unmeasured on the two surfaces owners actually look at.")
     args = ap.parse_args()
     try:
         sizes = [int(token) for token in args.sizes.split(",") if token.strip()]
@@ -953,6 +1043,32 @@ def main() -> int:
                     return 3
                 reports.append({"theme": theme, "verdict": verdict(theme, harvest),
                                 "harvest": harvest, "browser": browser})
+            if args.shell_surfaces:
+                strip = load_strip_gate()
+                surfaces = shell_surfaces(strip)
+                fixture = strip.SnapshotFixture(root / "apps/observer/frontend/dist")
+                fixture.start()
+                try:
+                    for theme in THEMES:
+                        for surface in surfaces:
+                            try:
+                                harvest = harvest_shell_surface(strip, geometry, root, browser, u19,
+                                                                fixture, theme, surface)
+                            except Exception as exc:  # noqa: BLE001 — NOT_RUN, never a quiet skip
+                                print(f"LEGIBILITY_GATE_NOT_RUN shell/{surface['label']}/{theme} "
+                                      f"{exc!r}")
+                                return 3
+                            label = f"{theme}-{surface['label']}"
+                            reports.append({
+                                "theme": label,
+                                "verdict": verdict(theme, harvest, surface["minNodes"],
+                                                   surface["label"]),
+                                "harvest": harvest, "browser": browser,
+                                "surface": {"declaredSize": list(surface["size"]),
+                                            "minNodes": surface["minNodes"],
+                                            "data": "declared fixture snapshot"}})
+                finally:
+                    fixture.stop_server()
         finally:
             if server is not None:
                 server.shutdown()
