@@ -173,7 +173,10 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
             <span className="shrink-0">{label}</span>
             <span aria-hidden="true" className="h-1 w-12 shrink-0 rounded-full" style={{ background: LINE }} />
             <span className="ml-auto shrink-0 font-medium" style={{ color: '#A6B0BE' }}>UNKNOWN</span>
-            <span className="w-full shrink-0 text-right" style={{ color: '#A6B0BE' }}>重置时间 待确认</span>
+            {/* 「重置时间 待确认」 needs ~87px and this row has 85 after the strip's own padding and the
+                scrollbar the long states reserve, so it broke as 「重置时间 待确」+「认」 — one ideograph
+                alone on a line. The shorter label is the same statement and fits on one line. */}
+            <span className="w-full shrink-0 text-right" style={{ color: '#A6B0BE' }}>重置 待确认</span>
           </div>
         ))}
       </div>

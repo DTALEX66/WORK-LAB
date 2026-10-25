@@ -1,13 +1,13 @@
 {
   "schemaVersion": "work-lab/project-local-citation-audit/v2",
-  "generatedAt": "2026-10-25T01:04:14Z",
+  "generatedAt": "2026-10-25T04:08:26Z",
   "generatedBy": "scripts/audit/project_local_citation_audit.py",
   "scope": {
-    "trackedFilesScanned": 2594,
-    "distinctProjectLocalTokens": 682,
+    "trackedFilesScanned": 2596,
+    "distinctProjectLocalTokens": 693,
     "tokensResolvedOnDisk": 0,
-    "tokensAbsent": 682,
-    "citationsToAbsentTokens": 1927
+    "tokensAbsent": 693,
+    "citationsToAbsentTokens": 1944
   },
   "classificationRules": {
     "path_pattern_or_truncated_token": "the token carries a placeholder, glob, or is cut mid-name; it never named one file",
@@ -21,20 +21,20 @@
   },
   "countsByClass": {
     "declared_output_destination_or_fixture_in_code": {
-      "citations": 335,
-      "distinctPaths": 118
+      "citations": 338,
+      "distinctPaths": 120
     },
     "machine_field_pointing_at_absent_path": {
       "citations": 15,
       "distinctPaths": 5
     },
     "machine_local_runtime_narration": {
-      "citations": 1025,
-      "distinctPaths": 526
+      "citations": 1035,
+      "distinctPaths": 535
     },
     "machine_local_runtime_pointer": {
-      "citations": 245,
-      "distinctPaths": 126
+      "citations": 249,
+      "distinctPaths": 130
     },
     "negative_assertion_or_removal_record": {
       "citations": 186,
@@ -1490,6 +1490,18 @@
         "text": "\".project-local/runs/ci/plan.json carried a plan\")"
       },
       {
+        "path": ".project-local/runs/cl10/hud_narrow_probe.py",
+        "file": "scripts/audit/hud_strip_geometry_via_cdp.py",
+        "line": 4,
+        "text": "The strip's shape checks were written as `.project-local/runs/cl10/hud_narrow_probe.py`, in the"
+      },
+      {
+        "path": ".project-local/runs/cl10/hud_narrow_probe.py",
+        "file": "tests/ci/test_hud_strip_geometry_gate.py",
+        "line": 3,
+        "text": "The strip's shape checks lived in `.project-local/runs/cl10/hud_narrow_probe.py`, the project's"
+      },
+      {
         "path": ".project-local/runs/convergence-20261007-c/absorb_local_assets.py",
         "file": "scripts/audit/project_local_citation_audit.py",
         "line": 206,
@@ -1584,6 +1596,12 @@
         "file": "scripts/audit/project_local_citation_audit.py",
         "line": 187,
         "text": "\".project-local/runs/frontend-baseline-vitest-only.py\":"
+      },
+      {
+        "path": ".project-local/runs/geometry-gate",
+        "file": "scripts/audit/hud_strip_geometry_via_cdp.py",
+        "line": 889,
+        "text": "sitting in `.project-local/runs/geometry-gate` on the machine this gate was written on. A gate that"
       },
       {
         "path": ".project-local/runs/hud-preview/verify-20261019d.log",
@@ -3036,6 +3054,24 @@
         "text": "**新红 ④：`test_temp_fixture_residue_is_bounded` 点出一个 6.5 小时前的孤儿 `.project-local/runs/tmp/node-jiti`**（1 个文件、2,250 B、无嵌套 git），是本轮早前为读基线跑 node 工具链留下的编译缓存。走仓内既有工具做有清单的回收：`scripts/maintenance/release_temp_f"
       },
       {
+        "path": ".project-local/artifacts/temp-residue-reclaim/manifest-20261025T024206Z.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
+        "path": ".project-local/artifacts/temp-residue-reclaim/manifest-20261025T040016Z.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
+        "path": ".project-local/artifacts/temp-residue-reclaim/manifest-20261025T040033Z.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
         "path": ".project-local/artifacts/ui-audit-20261007",
         "file": "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "line": 1565,
@@ -4158,6 +4194,12 @@
         "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
       },
       {
+        "path": ".project-local/runs/cl10/hud_narrow_probe.py",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
         "path": ".project-local/runs/cl10/install-lifecycle",
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 48,
@@ -4342,6 +4384,36 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 47,
         "text": "| CL-08 | P1 | EXECUTED_20261024 / 日常壳四主入口＋设置置底已成为桌面默认主窗口入口（本轮改 tauri.conf main url 为 shell=daily，原生主窗口读回 13/13 绿）；31 个专业入口与全部 ?view= 旧深链原样保留（深链仍落专业壳，已实测） **2026-10-24 默认入口轮（本行「默认主窗口入口未切」的缺口已实测闭合）**：切"
+      },
+      {
+        "path": ".project-local/runs/cl13/ci-observer-strip-step.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
+        "path": ".project-local/runs/cl13/ci-wa.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
+        "path": ".project-local/runs/cl13/hud-strip-gate-final.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
+        "path": ".project-local/runs/cl13/hud-strip-gate-planted-longlabel.json",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
+      },
+      {
+        "path": ".project-local/runs/cl13/tests-no-dist-py312.log",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
       },
       {
         "path": ".project-local/runs/client_roots_probe.py",
@@ -6256,6 +6328,12 @@
         "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
         "line": 955,
         "text": "- **Rust/制品与封印**：token-monitor release 重建 `hermes-token-monitor.exe` 8,939,008 B / `bcb86b48…`；WUI-19 的旧 exe 哈希 `1ee8e0fd…` 已按实测字节机械重绑（`.project-local/runs/tmp/fix_wui19_exe_hash.py`，写后回读）。前端改动按交接重封：`"
+      },
+      {
+        "path": ".project-local/runs/tmp/node-compile-cache",
+        "file": "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "line": 51,
+        "text": "| CL-12 | P2 | EXECUTED_20261024 / 真实字段与数据合同已实测就位并受门（已提交 a01f6ed6）；HUD 四态已接面板（已提交 123ebbdf，网页层）；原生窄窗已交付并实测（label=hud 150×480、贴边停靠、拖动面、scale 1.25 读回全绿，H02 悬停/聚焦在窄窗内可达，2026-10-25 真实侧车下原生读回 16/16）；多显示器未测"
       },
       {
         "path": ".project-local/runs/tmp/node-jiti",
@@ -9256,7 +9334,7 @@
       {
         "path": ".project-local/runs/ci/desktop_capability.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 411,
+        "line": 429,
         "text": ".project-local/runs/ci/desktop_capability.json"
       },
       {
@@ -9268,7 +9346,7 @@
       {
         "path": ".project-local/runs/ci/gate-stages.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 409,
+        "line": 427,
         "text": ".project-local/runs/ci/gate-stages.json"
       },
       {
@@ -9286,13 +9364,19 @@
       {
         "path": ".project-local/runs/ci/geometry_gate.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 410,
+        "line": 428,
         "text": ".project-local/runs/ci/geometry_gate.json"
+      },
+      {
+        "path": ".project-local/runs/ci/hud_strip_gate.json",
+        "file": ".github/workflows/work-lab-gate.yml",
+        "line": 387,
+        "text": "run: python scripts/audit/hud_strip_geometry_via_cdp.py --json-out .project-local/runs/ci/hud_strip_gate.json"
       },
       {
         "path": ".project-local/runs/ci/legibility_sweep.json",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 381,
+        "line": 399,
         "text": "run: python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --json-out .project-local/runs/ci/legibility_sweep.json"
       },
       {
@@ -9306,6 +9390,24 @@
         "file": "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
         "line": 1618,
         "text": "实测不是源码自述：`.project-local/runs/cl07_render_probe.py` 起真实 sidecar、已构建 dist 与 headless Chrome，"
+      },
+      {
+        "path": ".project-local/runs/cl10/hud_narrow_probe.py",
+        "file": ".github/workflows/work-lab-gate.yml",
+        "line": 370,
+        "text": "# CL-12: the narrow strip's shape checks lived in `.project-local/runs/cl10/hud_narrow_probe.py`,"
+      },
+      {
+        "path": ".project-local/runs/cl13/hud-strip-gate-final.json",
+        "file": ".github/workflows/work-lab-gate.yml",
+        "line": 377,
+        "text": "# host (receipt `.project-local/runs/cl13/hud-strip-gate-final.json`, 66 checks). The harvest"
+      },
+      {
+        "path": ".project-local/runs/cl13/hud-strip-gate-pass-final.json",
+        "file": "tests/ci/test_hud_strip_geometry_gate.py",
+        "line": 10,
+        "text": "`.project-local/runs/cl13/hud-strip-gate-pass-final.json` (generated from that receipt, not retyped)."
       },
       {
         "path": ".project-local/runs/convergence-20261007-c/ag19_register.py",
@@ -10934,7 +11036,7 @@
       {
         "path": ".project-local/runs/ci/ci-summary-",
         "file": ".github/workflows/work-lab-gate.yml",
-        "line": 408,
+        "line": 426,
         "text": ".project-local/runs/ci/ci-summary-*.json"
       },
       {
@@ -11657,7 +11759,7 @@
     "reviewQueue": 8,
     "unadjudicated": 0,
     "checkoutVerifiable": 0,
-    "presentOnThisMachine": 391
+    "presentOnThisMachine": 401
   },
   "disposition": "Read the classes before quoting a number. Existence is answered from the repository, not from this box: `.project-local/` is the declared git-ignored runtime root, so nothing under it is checkout-verifiable anywhere and `counts.checkoutVerifiable` is 0 by construction, while `counts.presentOnThisMachine` reports how much the authoring machine actually holds. Before that rule the verdict moved with the machine and CI failed on the author's own runtime paths (ERR-142). The number that matters is unavailableEvidenceReviewQueue: citations in reader-facing documents or tracked machine fields that claim recoverable evidence while the bytes are not verifiable from the repository. Everything else is a pattern, a destination a program will create, a negative assertion, frozen narrative, or a declared machine-local runtime pointer/narration — all correct states, and deleting those records would destroy provenance rather than protect it. A machine-local citation counts as adjudicated only when the record says how to re-measure it or names the tracked observation that stands in for it; that is what the dispositions do, path by path."
 }

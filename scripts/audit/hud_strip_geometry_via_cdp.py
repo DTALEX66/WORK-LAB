@@ -1,0 +1,968 @@
+#!/usr/bin/env python
+"""HUD narrow-strip geometry gate — measure the declared 150x480 strip in a real browser, PASS or FAIL.
+
+The strip's shape checks were written as `.project-local/runs/cl10/hud_narrow_probe.py`, in the
+project's designated evidence area. That probe found real defects — a CJK label shattered one character
+per line at 150px, and the hover state pushed the pinned footer to y=874 inside a 480px window — and it
+went green again after each fix. Nothing in CI re-runs it, so the next commit may re-break either shape
+silently. This file moves the load-bearing judgements into tracked, executed code.
+
+Division of labour, the same as the topbar and legibility gates:
+  * the browser harvests RAW facts only — boxes, per-line box widths, font sizes, painted strings;
+  * `verdict()` holds every threshold and every judgement, so it is unit-testable without a browser and
+    falsifiable with a planted fault (see `tests/ci/test_hud_strip_geometry_gate.py`). The evidence probe
+    decided "this label is shattered" inside its own JS, and a judgement made in JS cannot be tested at
+    all — that is the whole difference between an instrument and a gate.
+
+What it measures against: the built `dist`, served from ONE loopback origin that also answers
+`GET /api/v1/snapshot` with the declared fixture below. A fixture is deliberate, not a shortcut: the
+strip's geometry depends on how many tool rows the snapshot carries, so a gate bound to today's live
+ledger reds when the data changes and greens when the layout breaks. The live-data desktop readback
+stays where it belongs (real sidecar, real window); this gate answers one question — does the strip hold
+its declared shape at a declared data shape — and says in every receipt which data shape that was.
+
+Exit: 0 HUD_STRIP_GATE_PASS, 1 HUD_STRIP_GATE_FAIL, 2 bad input, 3 HUD_STRIP_GATE_NOT_RUN.
+"""
+from __future__ import annotations
+
+import argparse
+import http.server
+import importlib.util
+import json
+import sys
+import threading
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts" / "audit"))
+import bundle_provenance  # noqa: E402  # every receipt names the bytes the browser loaded
+
+GEOMETRY_SCRIPT = ROOT / "scripts" / "audit" / "topbar_geometry_via_cdp.py"
+DIST = ROOT / "apps" / "observer" / "frontend" / "dist"
+OUT_DIR = ROOT / ".project-local" / "runs" / "hud-strip-gate"
+
+# The declared window shapes, read from `apps/observer/src-tauri/tauri.conf.json` and bound to it by a
+# test, never restated from memory. `--window-size` sizes the OUTER window and Chrome clamps a too-narrow
+# one, so every surface is measured through a CDP device-metrics override at its own declared size.
+STRIP = (150, 480)
+PANEL = (440, 680)
+DAILY = (1280, 820)
+
+H01_SECTION = 'section[aria-label="工具额度窄面板"]'
+SUMMARY = '[aria-label="悬停摘要"]'
+AMBER = "#FBBF24"
+
+# The condition the page must satisfy before a harvest counts as measuring the populated surface. The
+# frame mounts on the very first render, which happens while the snapshot is still in flight, so a probe
+# that reads as soon as `[data-hud-frame]` exists can measure the pre-snapshot shape — with no adapter
+# rows there is nothing to hover and H03 says 未连接工具, and every geometry claim would then be about a
+# surface the product does not ship. This is the cold-runner failure the topbar gate already documents
+# for its own first session; the budget is the runner's boot, not the development host's.
+#
+# The two probes differ because the two states paint different things. This one exists because the
+# obvious choice was wrong: H01 renders initials (`CO`, `HE`) and 额度 UNKNOWN, never the tool name, so
+# waiting for a name on the strip would time out on a perfectly healthy render — the same
+# "names appear in the body" mistake the register already records once for this surface.
+FIXTURE_MARKER = "Codex"
+RING_ROW_PROBE = "document.querySelectorAll(H01 + ' li circle').length > 0"
+MARKER_PROBE = "painted().indexOf(%s) !== -1" % json.dumps(FIXTURE_MARKER, ensure_ascii=False)
+READY_BUDGET_MS = 24000
+READY_POLL_MS = 400
+
+# One entry per rendered surface. `kind` selects which assertion families apply; `state` is the HUD
+# state the URL declares, which the render has to answer with (the state travels in the URL and in
+# nothing else — web storage is forbidden in this product); `readyProbe` is the JS condition the surface
+# must satisfy before being measured, or None when its claims do not depend on snapshot data.
+SURFACES: list[dict] = [
+    {"name": "strip-h01", "query": "surface=hud", "size": STRIP, "kind": "strip", "state": "h01",
+     "readyProbe": RING_ROW_PROBE, "readyWhy": "an adapter ring row is painted"},
+    {"name": "strip-h02", "query": "surface=hud", "size": STRIP, "kind": "strip", "state": "h01",
+     "hover": True, "readyProbe": RING_ROW_PROBE, "readyWhy": "an adapter ring row is painted"},
+    {"name": "strip-h03", "query": "surface=hud&hs=h03", "size": STRIP, "kind": "strip", "state": "h03",
+     "readyProbe": MARKER_PROBE, "readyWhy": f"the fixture tool {FIXTURE_MARKER!r} is named in the header"},
+    {"name": "strip-h04", "query": "surface=hud&hs=h04", "size": STRIP, "kind": "strip", "state": "h04",
+     "readyProbe": MARKER_PROBE, "readyWhy": f"the fixture tool {FIXTURE_MARKER!r} is named in the header"},
+    {"name": "panel-h01", "query": "view=compact&layout=compact&shell=tauri&hud=daily",
+     "size": PANEL, "kind": "panel", "state": "h01",
+     "readyProbe": RING_ROW_PROBE, "readyWhy": "an adapter ring row is painted"},
+    {"name": "daily-home", "query": "surface=daily&shell=tauri", "size": DAILY, "kind": "daily",
+     "state": None, "readyProbe": None, "readyWhy": None},
+]
+
+MOUNT_SELECTOR = {
+    "strip": "[data-hud-frame]",
+    "panel": ".app.app-compact [data-hud-frame]",
+    "daily": "[data-shell]",
+}
+
+# A leaf label of 2-8 characters whose widest line box is no bigger than this multiple of its own font
+# size is not "wrapped", it is shattered: CJK breaks between any two characters, so a squeezed row puts
+# one glyph on each line. 1.6 keeps a genuine two-word wrap (which is what flex-wrap is for) passing
+# while convicting 更/新/时/间 on four lines.
+CHAR_WRAP_LINE_MULTIPLE = 1.6
+TEXT_FLOOR_PX = 12.0          # DESIGN.md: no text a user must read below 12px
+QUOTA_ROW_COUNT = 3           # the reference H03 panel's three quota dimensions
+QUOTA_TRACK_MIN_W = 8.0       # a progress track, as opposed to the 6px status dot beside it
+QUOTA_TRACK_MAX_H = 6.0
+CONTROL_EDGE_TOLERANCE_PX = 2.0
+VIEWPORT_TOLERANCE_PX = 1.0
+# Roles permitted below the text floor. Ships empty, exactly as the legibility gate does: earning a slot
+# here means proving the glyph repeats information available elsewhere, and every candidate measured so
+# far (the strip's 12px rows) is text a user must read.
+TEXT_FLOOR_EXCEPTIONS: list[str] = []
+
+# --------------------------------------------------------------------------- measurement (facts only)
+
+MEASURE_JS = r"""
+(async () => {
+  const HOVER = __HOVER__;
+  const READY = () => (__READY_PROBE__);
+  const BUDGET_MS = __BUDGET_MS__;
+  const POLL_MS = __POLL_MS__;
+  const H01 = __H01__;
+  const SUMMARY = __SUMMARY__;
+  const r1 = (n) => Math.round(n * 10) / 10;
+  const painted = () => (document.body && document.body.innerText) || '';
+  // Wait for the snapshot to reach the surface BEFORE anything is measured, and before the hover is
+  // dispatched: dispatching on the pre-snapshot row finds a `li` with no handlers, which then reads as
+  // a successful dispatch that revealed nothing.
+  let readyWaitMs = 0;
+  if (!READY()) {
+    const t0 = performance.now();
+    while (!READY()) {
+      if (performance.now() - t0 > BUDGET_MS) break;
+      await new Promise((res) => setTimeout(res, POLL_MS));
+    }
+    readyWaitMs = Math.round(performance.now() - t0);
+  }
+  const ready = READY();
+  const box = (el) => {
+    const r = el.getBoundingClientRect();
+    return {left: r1(r.left), right: r1(r.right), top: r1(r.top), bottom: r1(r.bottom),
+            width: r1(r.width), height: r1(r.height)};
+  };
+  const de = document.documentElement;
+  let hoverDispatch = 'not-requested';
+  if (HOVER) {
+    const li = document.querySelector(H01 + ' li');
+    if (!document.querySelector(H01)) hoverDispatch = 'no-h01-section';
+    else if (!li) hoverDispatch = 'no-row';
+    else {
+      // React 18 derives onMouseEnter from a bubbling mouseover whose TARGET is the element under the
+      // pointer, so the event goes on the row itself; dispatching on the section leaves every row's own
+      // handler un-triggered and the summary never appears.
+      li.dispatchEvent(new MouseEvent('mouseover', {bubbles: true}));
+      hoverDispatch = 'dispatched';
+      await new Promise((res) => setTimeout(
+        () => requestAnimationFrame(() => setTimeout(res, 150)), 60));
+    }
+  }
+
+  const out = {
+    hoverDispatch,
+    ready, readyWaitMs,
+    readyProbe: __READY_WHY__,
+    readyBudgetMs: BUDGET_MS,
+    viewport: {clientW: de.clientWidth, clientH: de.clientHeight,
+               scrollW: de.scrollWidth, scrollH: de.scrollHeight,
+               innerW: window.innerWidth, innerH: window.innerHeight, dpr: window.devicePixelRatio},
+    hudFrame: document.querySelector('[data-hud-frame]')?.getAttribute('data-hud-frame') ?? null,
+    hudState: document.querySelector('[data-hud-state]')?.getAttribute('data-hud-state') ?? null,
+    shell: document.querySelector('[data-shell]')?.getAttribute('data-shell') ?? null,
+    // Every interactive element with its raw box and its raw visibility. Which of these a user can
+    // actually reach is decided in Python: the action band keeps an off-screen `.action-sizer`
+    // (visibility:hidden, pointer-events:none) whose boxes would otherwise be convicted as controls
+    // pushed to x=-9999, and that distinction is a judgement, not a measurement.
+    controls: [...document.querySelectorAll('button,a,input,select')].map((el) => {
+      const b = box(el);
+      const cs = getComputedStyle(el);
+      return {name: ((el.getAttribute('aria-label') || el.textContent || el.className || '')
+                     .trim().slice(0, 28)),
+              visibility: cs.visibility, display: cs.display, ...b};
+    }).slice(0, 80),
+    // Short leaf labels that occupy more than one line box, with the text and width OF EACH LINE.
+    // Line widths alone cannot tell a shattered CJK label from a legitimate break after a number, so
+    // the harvest keeps which characters landed on which line and Python does the convicting.
+    // The LINE BOXES are the platform's own (a Range over the whole label); a single character's rect
+    // is only used to decide which box it fell in. Grouping by character top instead would split one
+    // line into several, because a digit's glyph box sits higher than the CJK beside it — and a label
+    // then looks shattered when nothing is. Characters are located through their own text node, since
+    // JSX turns `{n} 个已注册项目` into TWO text nodes and reading only `firstChild` drops every
+    // interpolated count from the census.
+    labelLines: (() => {
+      const found = [];
+      for (const el of document.querySelectorAll('dt, dd, span, button, p, h2')) {
+        if (el.children.length) continue;
+        if (!el.getClientRects().length) continue;
+        const nodes = [...el.childNodes].filter((n) => n.nodeType === 3 && n.textContent);
+        if (!nodes.length) continue;
+        const chars = [];
+        for (const node of nodes) {
+          for (let i = 0; i < node.textContent.length; i++) chars.push({node, offset: i});
+        }
+        const txt = chars.map((c) => c.node.textContent[c.offset]).join('').trim();
+        if (txt.length < 2 || txt.length > 8) continue;
+        const whole = document.createRange();
+        whole.selectNodeContents(el);
+        const lineBoxes = [...whole.getClientRects()].filter((r) => r.width > 0 && r.height > 0);
+        if (lineBoxes.length < 2) continue;
+        const lineOf = (r) => {
+          const centre = r.top + r.height / 2;
+          const i = lineBoxes.findIndex((b) => centre >= b.top - 1 && centre <= b.bottom + 1);
+          return i === -1 ? lineBoxes.length : i;
+        };
+        const groups = [];
+        chars.forEach((c, i) => {
+          const rg = document.createRange();
+          rg.setStart(c.node, c.offset);
+          rg.setEnd(c.node, c.offset + 1);
+          const last = groups[groups.length - 1];
+          const index = lineOf(rg.getBoundingClientRect());
+          if (!last || last.line !== index) groups.push({line: index, from: i, to: i});
+          else last.to = i;
+        });
+        found.push({
+          text: txt, fontSize: parseFloat(getComputedStyle(el).fontSize) || 0,
+          lines: groups.map((g) => {
+            // Measure the group's glyphs, not its trailing whitespace: 「认 」 would otherwise report
+            // a wider line than the character that actually sits on it.
+            let from = g.from, to = g.to;
+            while (from <= to && /\s/.test(chars[from].node.textContent[chars[from].offset])) from += 1;
+            while (to >= from && /\s/.test(chars[to].node.textContent[chars[to].offset])) to -= 1;
+            if (from > to) return {text: '', width: 0};
+            const a = chars[from], b = chars[to];
+            const rg = document.createRange();
+            rg.setStart(a.node, a.offset);
+            rg.setEnd(b.node, b.offset + 1);
+            return {text: chars.slice(from, to + 1).map((c) =>
+                      c.node.textContent[c.offset]).join(''),
+                    width: r1(rg.getBoundingClientRect().width)};
+          }),
+        });
+      }
+      return found.slice(0, 40);
+    })(),
+    // Painted text at or below 13px, raw. The floor is applied in Python.
+    smallText: (() => {
+      const found = [];
+      for (const el of document.querySelectorAll('body *')) {
+        const hasOwnText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+        if (!hasOwnText) continue;
+        if (!el.getClientRects().length) continue;
+        const fs = parseFloat(getComputedStyle(el).fontSize) || 0;
+        if (fs > 13) continue;
+        found.push({text: (el.textContent || '').trim().slice(0, 24), fontSize: fs});
+      }
+      return found.slice(0, 60);
+    })(),
+    h01: (() => {
+      const el = document.querySelector(H01);
+      return el ? {rect: box(el), text: (el.innerText || '').slice(0, 600)} : null;
+    })(),
+    // Strip rows as painted: which carry a ring, which ring colour, which one holds the summary.
+    rows: [...document.querySelectorAll(H01 + ' li')].map((li) => {
+      const c = li.querySelector('circle');
+      return {hasRing: !!c, stroke: c ? c.getAttribute('stroke') : null,
+              strokeWidth: c ? c.getAttribute('stroke-width') : null,
+              hasSummary: !!li.querySelector(SUMMARY)};
+    }),
+    summary: (() => {
+      const el = document.querySelector(SUMMARY);
+      if (!el) return null;
+      return {...box(el),
+              insideLi: !!el.closest('li'),
+              insideH01Row: !!el.closest(H01),
+              // The nearest scrollable ancestor, so "below the fold" can be told apart from
+              // "reachable by scrolling" in Python rather than in this script.
+              scrollerOverflow: (() => {
+                for (let a = el; a; a = a.parentElement) {
+                  if (/(auto|scroll)/.test(getComputedStyle(a).overflowY)) {
+                    return Math.round(a.scrollHeight - a.clientHeight);
+                  }
+                }
+                return null;
+              })()};
+    })(),
+    switcherButtons: document.querySelectorAll('[aria-label="HUD 状态切换"] button').length,
+    switcherRect: (() => {
+      const el = document.querySelector('[aria-label="HUD 状态切换"]');
+      return el ? box(el) : null;
+    })(),
+    dragRegions: document.querySelectorAll('[data-tauri-drag-region]').length,
+    footer: (() => {
+      const el = document.querySelector('[data-landmark="hud-footer"]');
+      return el ? box(el) : null;
+    })(),
+    // H03's three quota rows, raw: painted text plus every aria-hidden box in the row. Which box is a
+    // progress track and which is a status dot is decided by geometry in Python.
+    quotaRows: (() => {
+      const box_ = document.querySelector('[data-landmark="h03-quota-rows"]');
+      if (!box_) return null;
+      return [...box_.children].map((row) => ({
+        text: (row.textContent || '').trim(),
+        boxes: [...row.querySelectorAll('[aria-hidden="true"]')].map((s) => {
+          const b = s.getBoundingClientRect();
+          return {w: r1(b.width), h: r1(b.height)};
+        }),
+      }));
+    })(),
+    nav: [...document.querySelectorAll('nav[aria-label="主导航"] button')].map((b) => ({
+      label: (b.innerText || '').trim(), rect: box(b),
+    })),
+    bodyText: (document.body.innerText || '').slice(0, 1500),
+  };
+  return JSON.stringify(out);
+})()
+"""
+
+
+def expression_for(surface: dict) -> str:
+    """Substitute the selectors, the hover flag and the readiness probe, so the JS holds no product
+    knowledge of its own.
+
+    `ensure_ascii=False` keeps the Chinese aria labels readable in the expression that is actually sent
+    to the page; the escaped form works but nobody reviewing a failure can read it.
+    """
+    probe = surface.get("readyProbe")
+    return (MEASURE_JS
+            .replace("__HOVER__", "true" if surface.get("hover") else "false")
+            .replace("__READY_PROBE__", probe if probe else "true")
+            .replace("__READY_WHY__", json.dumps(surface.get("readyWhy") or "no data condition",
+                                                 ensure_ascii=False))
+            .replace("__BUDGET_MS__", str(READY_BUDGET_MS))
+            .replace("__POLL_MS__", str(READY_POLL_MS))
+            .replace("__H01__", json.dumps(H01_SECTION, ensure_ascii=False))
+            .replace("__SUMMARY__", json.dumps(SUMMARY, ensure_ascii=False)))
+
+
+# --------------------------------------------------------------------------- the declared data shape
+# A fixture, declared as one. Six adapters so the strip's row cap and its honest "另有 N 个工具未在此
+# 列出" remainder line are both exercised; one project pair so 关联项目 carries real names instead of a
+# null; one waiting execution so 待审 is a counted fact rather than a padded zero. No field here is a
+# quota, a balance, or a reset time, because the snapshot contract carries none — which is exactly the
+# state the strip must render as UNKNOWN.
+FIXTURE_SNAPSHOT: dict = {
+    "schemaVersion": "workflow/snapshot/v3",
+    "revision": 1,
+    "generatedAt": "2026-10-25T09:00:00+08:00",
+    "sourceWatermark": "2026-10-25T09:00:00+08:00",
+    "transport": {"transportState": "LIVE", "lastEventId": None, "resyncRequired": False},
+    "coverage": {"projects": 2, "executions": 2, "note": "fixture"},
+    "governance": {"authority": "WORK-LAB-AUTHORITY.md", "state": "FROZEN_FOR_GATE"},
+    "git": {"branch": "gate-fixture", "sha": "0" * 40, "dirty": False},
+    "workspace": {"root": "fixture"},
+    "tasks": {},
+    "tokenSummary": {},
+    "ci": [],
+    "sourceRefs": [],
+    "projects": [
+        {"projectId": "work-lab", "displayName": "WORK-LAB", "agentPlatform": "Hermes",
+         "identityState": "VERIFIED", "activityState": "ACTIVE", "attentionState": "NORMAL",
+         "activeExecutionCount": 1, "workingAreas": ["observer"], "visibility": "PRIVATE",
+         "quality": "UNKNOWN", "lastStrongEvidenceAt": None, "repositories": [],
+         "git": {}, "token": {}, "ci": [], "executionIds": ["exec-1"], "sourceRefs": []},
+        {"projectId": "design-lab", "displayName": "DESIGN-LAB 界面与资产", "agentPlatform": None,
+         "identityState": "DECLARED", "activityState": "IDLE", "attentionState": "NORMAL",
+         "activeExecutionCount": 0, "workingAreas": [], "visibility": "PRIVATE",
+         "quality": "UNKNOWN", "lastStrongEvidenceAt": None, "repositories": [],
+         "git": {}, "token": {}, "ci": [], "executionIds": [], "sourceRefs": []},
+    ],
+    "executions": [
+        {"executionId": "exec-1", "anchorProjectId": "work-lab", "workingArea": "observer",
+         "state": "WAITING_APPROVAL", "stateQuality": "OBSERVED", "agent": "Hermes",
+         "sessionId": None, "sourceRef": None},
+        {"executionId": "exec-2", "anchorProjectId": "design-lab", "workingArea": None,
+         "state": "SUCCEEDED", "stateQuality": "OBSERVED", "agent": "Codex",
+         "sessionId": None, "sourceRef": None},
+    ],
+    "adapterCapabilities": [
+        {"clientId": "codex", "displayName": "Codex", "supportLevel": "MANAGE",
+         "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
+         "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
+         "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": "0.22.2",
+         "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
+         "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+        {"clientId": "hermes", "displayName": "Hermes", "supportLevel": "MANAGE",
+         "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
+         "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
+         "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": "0.22.2",
+         "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
+         "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+        {"clientId": "deepseek-harness", "displayName": "DeepSeek Harness", "supportLevel": "OBSERVE",
+         "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
+         "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
+         "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": "0.2.1-rc.2",
+         "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
+         "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+        {"clientId": "qoder", "displayName": "Qoder", "supportLevel": "OBSERVE",
+         "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
+         "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
+         "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": "0.4.11",
+         "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
+         "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+        {"clientId": "open-design", "displayName": "Open Design", "supportLevel": "MANAGE",
+         "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
+         "registryStatus": "DECLARED", "writePolicy": "none", "risk": "MEDIUM",
+         "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": None,
+         "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
+         "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_IMPLEMENTED"},
+        {"clientId": "openhuman", "displayName": "OpenHuman", "supportLevel": "OBSERVE",
+         "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
+         "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
+         "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": None,
+         "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
+         "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+    ],
+}
+
+DAILY_ENTRY_LABELS = ("项目", "问题与经验", "我的工具", "设置")
+
+
+# --------------------------------------------------------------------------- the browser, reused
+
+def load_geometry():
+    """Reuse the CDP client and the headless launcher the geometry gate already proved out."""
+    spec = importlib.util.spec_from_file_location("topbar_geometry_via_cdp", GEOMETRY_SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)  # type: ignore[attr-defined]
+    return module
+
+
+def load_u19(geometry):
+    return geometry.load_u19()
+
+
+class SnapshotFixture:
+    """One loopback origin that serves the built bundle AND answers the snapshot GET.
+
+    Same-origin on purpose: the front refuses an untrusted `?api=` endpoint unless it is loopback http
+    on `/api/v1/snapshot`, and a second port would be a second origin the browser then blocks with CORS.
+    The events stream is held open with a `retry:` field so `EventSource` reports `open` and does not
+    reconnect-storm the gate; nothing is replayed, because the fixture has no revision history.
+    """
+
+    def __init__(self, dist: Path) -> None:
+        self.dist = dist
+        self.stop = threading.Event()
+        holder = self
+
+        class Handler(http.server.SimpleHTTPRequestHandler):
+            def __init__(self, *a, **kw):
+                super().__init__(*a, directory=str(holder.dist), **kw)
+
+            def log_message(self, *a):  # noqa: ANN002 — the gate's stdout is the verdict, not request noise
+                pass
+
+            def do_GET(self):  # noqa: N802 — http.server naming
+                if self.path.split("?")[0] == "/api/v1/snapshot":
+                    body = json.dumps(FIXTURE_SNAPSHOT, ensure_ascii=False).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+                    self.wfile.write(body)
+                    return
+                if self.path.split("?")[0] == "/api/v1/events":
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+                    self.wfile.write(b"retry: 30000\n\n")
+                    self.wfile.flush()
+                    holder.stop.wait(timeout=600.0)
+                    return
+                return super().do_GET()
+
+        self.httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.httpd.daemon_threads = True
+        self.httpd.block_on_close = False
+        self.port = self.httpd.server_port
+        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+
+    def url_for(self, query: str) -> str:
+        api = f"api=http%3A%2F%2F127.0.0.1%3A{self.port}%2Fapi%2Fv1%2Fsnapshot"
+        return f"http://127.0.0.1:{self.port}/index.html?{query}&mode=UNKNOWN&theme=dark&{api}"
+
+    def start(self) -> None:
+        self.thread.start()
+
+    def stop_server(self) -> None:
+        self.stop.set()
+        self.httpd.shutdown()
+        self.httpd.server_close()
+
+
+# --------------------------------------------------------------------------- the verdict (pure)
+
+def _check(checks: list[dict], name: str, ok: bool, detail: str) -> None:
+    checks.append({"check": name, "pass": bool(ok), "detail": detail})
+
+
+def _slug(name: str) -> str:
+    return name.replace("-", "_")
+
+
+def _line_texts(label_lines: list) -> list[dict]:
+    """Leaf labels measured on more than one line, with each line's own text and width."""
+    out = []
+    for item in label_lines or []:
+        lines = [l for l in (item.get("lines") or [])
+                 if isinstance(l, dict) and isinstance(l.get("width"), (int, float))
+                 and str(l.get("text") or "")]
+        size = item.get("fontSize") or 0
+        if len(lines) >= 2 and size:
+            out.append({**item, "lines": lines, "fontSize": size})
+    return out
+
+
+def _shattered(labels: list[dict]) -> list[dict]:
+    """Labels whose widest line is no wider than one glyph: the row is broken, not wrapped."""
+    return [{**item, "widestLine": max(l["width"] for l in item["lines"])} for item in labels
+            if max(l["width"] for l in item["lines"]) <= item["fontSize"] * CHAR_WRAP_LINE_MULTIPLE]
+
+
+def _orphan_glyph_lines(labels: list[dict]) -> list[dict]:
+    """Labels that leave exactly one CJK glyph alone on a line.
+
+    A number landing on a line by itself is a legitimate break; an ideograph is how a squeezed row
+    finishes shattering. Measured 2026-10-25: the H03 reset label broke as 「重置时间 待确」+「认」 in
+    the 85px the strip's quota row has left — one line box, one character, and every width check green.
+    """
+    offenders = []
+    for item in labels:
+        lonely = [l for l in item["lines"]
+                  if len(l.get("text") or "") == 1 and not str(l["text"]).isascii()]
+        if lonely:
+            offenders.append({**item, "lonelyLines": [l["text"] for l in lonely]})
+    return offenders
+
+
+def _surface_checks(checks: list[dict], name: str, spec: dict, surface: dict | None) -> dict | None:
+    """The geometry claims every measured surface owes, and the surface's harvest for the families below
+    that need it. Returns None when the surface was never measured — which fails closed."""
+    slug = _slug(name)
+    families = ["no_horizontal_overflow", "no_unreachable_control",
+                "no_label_shatters_to_one_character", "no_label_leaves_a_single_glyph_alone",
+                "text_meets_the_12px_floor"]
+    if spec.get("readyProbe"):
+        families.append("fixture_snapshot_reached_the_surface")
+    if not isinstance(surface, dict):
+        _check(checks, f"{slug}_measured", False,
+               f"surface {name!r} is in the declared SURFACES list but the harvest has no entry for it; "
+               "an unmeasured surface is not a passing one")
+        for family in families:
+            _check(checks, f"{slug}_{family}", False, "not measured: the surface produced no harvest")
+        return None
+    vp = surface.get("viewport") or {}
+    want_w, want_h = spec["size"]
+    got = (vp.get("clientW"), vp.get("clientH"))
+    _check(checks, f"{slug}_measured", got == (want_w, want_h),
+           f"layout viewport={got[0]}x{got[1]} declared={want_w}x{want_h} "
+           f"scroll={vp.get('scrollW')}x{vp.get('scrollH')} dpr={vp.get('dpr')} "
+           f"mountWait={json.dumps(surface.get('readyWait'))}")
+    if got != (want_w, want_h):
+        # Everything below would be measured at a size the product does not declare, so saying
+        # "overflow-free" about it would be a lie about a surface nobody ships.
+        for family in families:
+            _check(checks, f"{slug}_{family}", False,
+                   f"not judged: measured at {got[0]}x{got[1]}, not the declared {want_w}x{want_h}")
+        return surface
+
+    if spec.get("readyProbe"):
+        _check(checks, f"{slug}_fixture_snapshot_reached_the_surface",
+               surface.get("ready") is True,
+               f"condition={spec['readyWhy']!r} ready={surface.get('ready')} "
+               f"waitedMs={surface.get('readyWaitMs')} budgetMs={surface.get('readyBudgetMs')} "
+               "(a surface harvested before the snapshot lands has no rows to hover and no values to "
+               "hold at UNKNOWN, so every claim below it would be about a shape the product does not ship)")
+
+    client_w = vp.get("clientW") or 0
+    scroll_w = vp.get("scrollW")
+    _check(checks, f"{slug}_no_horizontal_overflow",
+           isinstance(scroll_w, (int, float)) and scroll_w <= client_w + VIEWPORT_TOLERANCE_PX,
+           f"scrollWidth={scroll_w} clientWidth={client_w}")
+
+    controls = surface.get("controls")
+    if not isinstance(controls, list):
+        _check(checks, f"{slug}_no_unreachable_control", False,
+               f"the harvest returned controls as {type(controls).__name__}; the gate cannot read it "
+               "and refuses to call an unreadable shape a pass")
+        unreachable = []
+        painted = []
+    else:
+        # "painted" is a real box that is actually shown. `.app` clips with overflow:hidden, so
+        # scrollWidth stays at the window width while a control is pushed past the edge: reachability
+        # is a rect question, and the sizer scaffold that paints nothing is not a control.
+        painted = [c for c in controls
+                   if c.get("visibility") == "visible" and c.get("display") != "none"
+                   and (c.get("width") or 0) > 0 and (c.get("height") or 0) > 0]
+        # Horizontal only, on purpose. A control below the fold inside a scroll region is reachable by
+        # scrolling, so the vertical claims are carried by the footer and summary checks below, which
+        # name the box they measured. The strip's own defect class was a control pushed past 150px.
+        unreachable = [c for c in painted
+                       if c.get("right", 0) > client_w + CONTROL_EDGE_TOLERANCE_PX
+                       or c.get("left", 0) < -CONTROL_EDGE_TOLERANCE_PX]
+        _check(checks, f"{slug}_no_unreachable_control", bool(painted) and not unreachable,
+               f"painted={len(painted)} of={len(controls)} outside="
+               f"{json.dumps(unreachable, ensure_ascii=False)[:320]}"
+               + (" -- nothing painted a clickable box: a surface with no control to reach is not "
+                  "a reachable one" if not painted else ""))
+
+    label_lines = surface.get("labelLines")
+    if not isinstance(label_lines, list):
+        _check(checks, f"{slug}_no_label_shatters_to_one_character", False,
+               f"labelLines came back as {type(label_lines).__name__}, not a list of measurements")
+        _check(checks, f"{slug}_no_label_leaves_a_single_glyph_alone", False,
+               f"labelLines came back as {type(label_lines).__name__}, not a list of measurements")
+    else:
+        labels = _line_texts(label_lines)
+        shattered = _shattered(labels)
+        shattered_named = json.dumps([{"text": s["text"], "lines": len(s["lines"]),
+                                       "widestLine": s["widestLine"], "fontSize": s["fontSize"]}
+                                      for s in shattered], ensure_ascii=False)[:320]
+        _check(checks, f"{slug}_no_label_shatters_to_one_character", not shattered,
+               f"candidates={len(labels)} shattered={shattered_named} "
+               f"limit=widest line <= fontSize*{CHAR_WRAP_LINE_MULTIPLE}")
+        orphans = _orphan_glyph_lines(labels)
+        orphans_named = json.dumps([{"text": o["text"], "lonely": o["lonelyLines"],
+                                     "lines": [l["text"] for l in o["lines"]]}
+                                    for o in orphans], ensure_ascii=False)[:320]
+        _check(checks, f"{slug}_no_label_leaves_a_single_glyph_alone", not orphans,
+               f"candidates={len(labels)} lonely_cjk_line={orphans_named} "
+               "(a lone number is a legitimate break; a lone ideograph is a row that has finished "
+               "shattering)")
+
+    small = surface.get("smallText")
+    if not isinstance(small, list):
+        _check(checks, f"{slug}_text_meets_the_12px_floor", False,
+               f"smallText came back as {type(small).__name__}, not a list of measurements")
+    else:
+        below = [t for t in small if (t.get("fontSize") or 0) < TEXT_FLOOR_PX
+                 and str(t.get("text") or "") not in TEXT_FLOOR_EXCEPTIONS]
+        _check(checks, f"{slug}_text_meets_the_12px_floor", not below,
+               f"at_or_below_13px={len(small)} below_floor="
+               f"{json.dumps(below, ensure_ascii=False)[:280]} floor={TEXT_FLOOR_PX}px")
+    return surface
+
+
+def verdict(measured: dict) -> dict:
+    """Pure: no browser, no filesystem. `measured` maps a declared surface name to its harvest.
+
+    Every threshold lives here, so a planted fault is a line of data, not a rebuilt bundle.
+    """
+    measured = measured if isinstance(measured, dict) else {}
+    checks: list[dict] = []
+    harvests: dict[str, dict] = {}
+
+    for spec in SURFACES:
+        surface = _surface_checks(checks, spec["name"], spec, measured.get(spec["name"]))
+        if surface is not None:
+            harvests[spec["name"]] = surface
+
+    strip_names = [s["name"] for s in SURFACES if s["kind"] == "strip"]
+    strips = {n: harvests[n] for n in strip_names if n in harvests}
+
+    # --- claims that are about the strip as a surface, not about one state -------------------
+    frames = {n: s.get("hudFrame") for n, s in strips.items()}
+    _check(checks, "strip_frame_is_the_native_strip_not_the_panel",
+           bool(strips) and all(f == "native-strip" for f in frames.values()),
+           f"data-hud-frame={json.dumps(frames, ensure_ascii=False)}")
+
+    for name in strip_names:
+        slug = _slug(name)
+        surface = strips.get(name)
+        if not surface:
+            _check(checks, f"{slug}_footer_pinned_in_viewport", False, "not measured")
+            _check(checks, f"{slug}_state_renders_as_declared", False, "not measured")
+            _check(checks, f"{slug}_state_switcher_is_not_painted", False, "not measured")
+            continue
+        client_h = (surface.get("viewport") or {}).get("clientH") or 0
+        footer = surface.get("footer")
+        if not isinstance(footer, dict):
+            _check(checks, f"{slug}_footer_pinned_in_viewport", False,
+                   f"no [data-landmark=\"hud-footer\"] painted in a {client_h}px window: the reference "
+                   "keeps the footer resident, so its absence is a failure, not an absence of problem")
+        else:
+            _check(checks, f"{slug}_footer_pinned_in_viewport",
+                   footer.get("height", 0) > 0 and footer.get("top", -1) >= -VIEWPORT_TOLERANCE_PX
+                   and footer.get("bottom", 1e9) <= client_h + VIEWPORT_TOLERANCE_PX,
+                   f"footer top={footer.get('top')} bottom={footer.get('bottom')} "
+                   f"height={footer.get('height')} viewportHeight={client_h}")
+        want_state = next(s["state"] for s in SURFACES if s["name"] == name)
+        _check(checks, f"{slug}_state_renders_as_declared", surface.get("hudState") == want_state,
+               f"data-hud-state={surface.get('hudState')!r} declared={want_state!r}")
+        _check(checks, f"{slug}_state_switcher_is_not_painted", surface.get("switcherButtons") == 0,
+               f"switcherButtons={surface.get('switcherButtons')} "
+               "(the four-state switcher is the 440px panel's affordance; the strip switches by drag "
+               "and by deep link)")
+
+    _check(checks, "strip_has_a_drag_surface",
+           bool(strips) and all((s.get("dragRegions") or 0) >= 1 for s in strips.values()),
+           f"dragRegions={json.dumps({n: s.get('dragRegions') for n, s in strips.items()})} "
+           "min=1 (a decorations:false window is moved only by its drag handle)")
+
+    h01_surfaces = {n: s for n, s in strips.items() if (s.get("h01") or {}).get("rect")}
+    _check(checks, "h01_card_stays_inside_the_declared_strip_width",
+           bool(h01_surfaces) and all(
+               0 <= (s["h01"]["rect"].get("left") or -1)
+               and (s["h01"]["rect"].get("width") or 0) > 0
+               and (s["h01"]["rect"].get("width") or 9e9) <= STRIP[0]
+               and (s["h01"]["rect"].get("right") or 9e9)
+               <= (s.get("viewport") or {}).get("clientW", 0) + VIEWPORT_TOLERANCE_PX
+               for s in h01_surfaces.values()),
+           f"rects={json.dumps({n: s['h01']['rect'] for n, s in h01_surfaces.items()})} "
+           f"declaredWidth={STRIP[0]}")
+
+    # --- H02: the hover summary is an inline capsule in the hovered row, with the ring lit -------
+    hover_spec = next((s for s in SURFACES if s.get("hover")), None)
+    hover = harvests.get(hover_spec["name"]) if hover_spec else None
+    if not hover:
+        _check(checks, "hover_reveals_the_summary_inside_the_row", False, "no hover surface measured")
+        _check(checks, "hover_summary_is_readable_without_scrolling", False, "no hover surface measured")
+        _check(checks, "hover_row_is_the_one_highlighted_amberly", False, "no hover surface measured")
+        _check(checks, "hover_keeps_h01_mounted", False, "no hover surface measured")
+    else:
+        summary = hover.get("summary")
+        _check(checks, "hover_reveals_the_summary_inside_the_row",
+               isinstance(summary, dict) and summary.get("insideLi") is True
+               and summary.get("insideH01Row") is True,
+               f"dispatch={hover.get('hoverDispatch')!r} summary="
+               f"{json.dumps(summary, ensure_ascii=False)}")
+        client_h = (hover.get("viewport") or {}).get("clientH") or 0
+        _check(checks, "hover_summary_is_readable_without_scrolling",
+               isinstance(summary, dict)
+               and summary.get("top", -1) >= -VIEWPORT_TOLERANCE_PX
+               and summary.get("bottom", 1e9) <= client_h + VIEWPORT_TOLERANCE_PX,
+               f"summary top={summary and summary.get('top')} bottom={summary and summary.get('bottom')} "
+               f"viewportHeight={client_h} nearestScrollerOverflow="
+               f"{summary and summary.get('scrollerOverflow')} "
+               "(below the fold inside a scroll box would be reported here as pxBelowFold)")
+        rows = hover.get("rows")
+        lit = [i for i, r in enumerate(rows or []) if r.get("hasRing") and r.get("stroke") == AMBER]
+        with_summary = [i for i, r in enumerate(rows or []) if r.get("hasSummary")]
+        _check(checks, "hover_row_is_the_one_highlighted_amberly",
+               bool(rows) and len(with_summary) == 1 and len(lit) == 1 and lit == with_summary,
+               f"rows={json.dumps(rows, ensure_ascii=False)[:300]} amberRows={lit} "
+               f"summaryRows={with_summary} expectedRing={AMBER}")
+        _check(checks, "hover_keeps_h01_mounted", bool((hover.get("h01") or {}).get("rect")),
+               f"h01={json.dumps(hover.get('h01') and hover['h01']['rect'])}")
+
+    # --- H03: the reference's three quota rows, painted as slots and valued as UNKNOWN -------------
+    h03 = harvests.get("strip-h03")
+    quota = (h03 or {}).get("quotaRows")
+    if not isinstance(quota, list):
+        _check(checks, "h03_quota_rows_are_three_slots_and_honest", False,
+               f"[data-landmark=\"h03-quota-rows\"] came back as {type(quota).__name__}: the row block "
+               "the reference draws is missing, so nothing can be claimed about it")
+    else:
+        tracks = []
+        for row in quota:
+            boxes = row.get("boxes") or []
+            tracks.append(any(b.get("w", 0) >= QUOTA_TRACK_MIN_W
+                              and 0 < b.get("h", 0) <= QUOTA_TRACK_MAX_H for b in boxes))
+        all_text = " ".join(str(r.get("text") or "") for r in quota)
+        problems = []
+        if len(quota) != QUOTA_ROW_COUNT:
+            problems.append(f"rows={len(quota)} expected={QUOTA_ROW_COUNT}")
+        if any("UNKNOWN" not in str(r.get("text") or "") for r in quota):
+            problems.append("a row states a value instead of UNKNOWN")
+        if any("待确认" not in str(r.get("text") or "") for r in quota):
+            problems.append("a row states a reset time instead of 待确认")
+        if not all(tracks):
+            problems.append(f"empty tracks missing={json.dumps(tracks)}")
+        if "%" in all_text:
+            problems.append(f"a fabricated percentage is painted: {all_text[:120]!r}")
+        _check(checks, "h03_quota_rows_are_three_slots_and_honest", not problems,
+               f"rows={json.dumps(quota, ensure_ascii=False)[:420]} problems="
+               f"{json.dumps(problems, ensure_ascii=False)}")
+
+    # --- the truth rule, asserted on painted strings rather than on the source --------------------
+    painted: dict[str, str] = {}
+    unpainted: list[str] = []
+    for name, surface in strips.items():
+        text = surface.get("bodyText")
+        if not isinstance(text, str) or not text.strip():
+            unpainted.append(name)
+            text = ""
+        painted[name] = text
+    with_percent = {n: text for n, text in painted.items() if "%" in text}
+    percent_context = json.dumps({n: t[max(0, t.index("%") - 24):t.index("%") + 8]
+                                  for n, t in with_percent.items()}, ensure_ascii=False)[:300]
+    _check(checks, "strip_never_fabricates_a_percentage",
+           bool(strips) and not unpainted and not with_percent,
+           f"no_painted_text_harvested={json.dumps(unpainted, ensure_ascii=False)} "
+           f"surfaces_with_percent={percent_context}")
+    missing_unknown = [n for n, s in h01_surfaces.items()
+                       if "额度 UNKNOWN" not in str((s.get("h01") or {}).get("text") or "")]
+    _check(checks, "strip_keeps_quota_unknown_instead_of_zero",
+           bool(h01_surfaces) and not missing_unknown,
+           f"surfaces_without_the_unknown_quota_line={json.dumps(missing_unknown, ensure_ascii=False)} "
+           f"h01PaintedOn={json.dumps(sorted(h01_surfaces), ensure_ascii=False)}")
+
+    # --- the 440px panel keeps what the strip deliberately does not paint -------------------------
+    panel = harvests.get("panel-h01")
+    if not panel:
+        _check(checks, "panel_keeps_the_four_state_switcher", False, "no panel surface measured")
+    else:
+        rect = panel.get("switcherRect") or {}
+        client_w = (panel.get("viewport") or {}).get("clientW") or 0
+        _check(checks, "panel_keeps_the_four_state_switcher",
+               panel.get("switcherButtons") == 4 and panel.get("hudFrame") == "panel"
+               and rect.get("width", 0) > 0 and rect.get("right", 9e9) <= client_w + VIEWPORT_TOLERANCE_PX,
+               f"switcherButtons={panel.get('switcherButtons')} hudFrame={panel.get('hudFrame')} "
+               f"switcher={json.dumps(rect)} clientWidth={client_w}")
+
+    # --- CL-08's default entry, whose bottom-pinned 设置 was only ever an evidence-area claim ------
+    daily = harvests.get("daily-home")
+    labels = {b.get("label"): (b.get("rect") or {}).get("top") for b in (daily or {}).get("nav") or []}
+    entry_tops = {label: labels.get(label) for label in DAILY_ENTRY_LABELS}
+    _check(checks, "daily_renders_the_four_entries",
+           daily is not None and daily.get("shell") == "daily"
+           and all(t is not None for t in entry_tops.values()),
+           f"shell={daily and daily.get('shell')!r} entries="
+           f"{json.dumps(entry_tops, ensure_ascii=False)}")
+    settings_top = entry_tops.get("设置")
+    others = [t for label, t in entry_tops.items() if label != "设置" and t is not None]
+    _check(checks, "daily_settings_sits_below_the_four_entries",
+           bool(others) and settings_top is not None and settings_top > max(others),
+           f"设置top={settings_top} others={json.dumps(others)} (底置 is a geometry claim: a nav that "
+           "lists 设置 in reading order but paints it first fails here, not in prose)")
+
+    return {"passed": all(c["pass"] for c in checks), "checks": checks,
+            "surfaces": sorted(measured), "fixture": {"revision": FIXTURE_SNAPSHOT["revision"],
+                                                       "adapters": len(FIXTURE_SNAPSHOT["adapterCapabilities"]),
+                                                       "projects": len(FIXTURE_SNAPSHOT["projects"]),
+                                                       "executions": len(FIXTURE_SNAPSHOT["executions"])}}
+
+
+# --------------------------------------------------------------------------- the run (impure)
+
+def measure_all(geometry, u19, browser: str, fixture: SnapshotFixture,
+                names: list[str]) -> dict[str, dict]:
+    """One browser per surface, deliberately.
+
+    A fresh document is what makes the measurement reproducible: this project's own evidence logs show a
+    reused tab whose websocket dropped between creation and capture, and the fix there was a retry loop.
+    `--window-size` cannot express a 150px window (Chrome clamps it), so the layout viewport is pinned
+    through CDP device metrics, exactly as the floor view of the topbar gate is.
+    """
+    harvests: dict[str, dict] = {}
+    for spec in SURFACES:
+        if spec["name"] not in names:
+            continue
+        url = fixture.url_for(spec["query"])
+        width, height = spec["size"]
+        last: Exception | None = None
+        for attempt in range(2):
+            try:
+                harvest = geometry.serve_and_eval(
+                    ROOT, "/index.html", "1280,820", expression_for(spec), browser, u19, None,
+                    viewport=(width, height), serve_url=url,
+                    mount_selector=MOUNT_SELECTOR[spec["kind"]])
+                harvest["_url"] = url
+                harvests[spec["name"]] = harvest
+                last = None
+                break
+            except Exception as exc:  # noqa: BLE001 — retried once, then reported by name
+                last = exc
+                time.sleep(1.0)
+        if last is not None:
+            raise RuntimeError(f"{spec['name']}: measure failed after retry: {last!r}")
+    return harvests
+
+
+def browser_leftovers(geometry) -> dict:
+    """What the shared browser bootstrap could not clean up, and whether Chrome answered on a port
+    other than the one it was asked for.
+
+    Both travel with the receipt and get printed, never swallowed: ERR-140 exists for the habit of
+    ignoring undeletable residue, and an undeleted `udf-*` profile from an earlier geometry run is still
+    sitting in `.project-local/runs/geometry-gate` on the machine this gate was written on. A gate that
+    leaves a browser profile behind and says nothing has told the reader less than it knows.
+    """
+    return {"residue": list(geometry.RESIDUE), "portAnnouncedMismatch": list(geometry.ANNOUNCED_MISMATCH)}
+
+
+def main() -> int:
+    # The details quote CJK labels, and a runner whose console code page cannot encode them would die
+    # in the print, not in the product. (Precedent: half the tracked readback scripts already do this.)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--root", default=str(ROOT))
+    ap.add_argument("--surface", action="append", default=None,
+                    help="restrict to these surface names (default: every declared one)")
+    ap.add_argument("--json-out", default=None)
+    args = ap.parse_args()
+    names = args.surface or [s["name"] for s in SURFACES]
+    unknown = sorted(set(names) - {s["name"] for s in SURFACES})
+    if unknown:
+        # Validated before anything is looked for on disk: a misspelled surface is bad input whatever
+        # the machine happens to have built. Found on the runner, where the workflow-assistance job has
+        # no `dist` at all and this check used to be reached only after the DIST_ABSENT refusal.
+        print(f"HUD_STRIP_GATE_NOT_RUN UNKNOWN_SURFACE {json.dumps(unknown)}")
+        return 2
+
+    root = Path(args.root).resolve()
+    if not (root / "apps" / "observer" / "frontend" / "dist" / "index.html").is_file():
+        print(f"HUD_STRIP_GATE_NOT_RUN DIST_ABSENT {root / 'apps/observer/frontend/dist'}")
+        return 3
+    geometry = load_geometry()
+    browser = geometry.find_browser()
+    if not browser:
+        print("HUD_STRIP_GATE_NOT_RUN BROWSER_NOT_FOUND "
+              "set WL_CHROME to a Chrome/Edge binary; a named category is not a pass")
+        return 3
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    # `serve_and_eval` writes each Chrome profile and its log under the geometry gate's own output dir;
+    # asking it to open a log there without the dir existing fails as MEASURE_FAILED, which would look
+    # like a product defect and is only this script having run on its own.
+    geometry.OUT_DIR.mkdir(parents=True, exist_ok=True)
+    u19 = load_u19(geometry)
+    fixture = SnapshotFixture(root / "apps" / "observer" / "frontend" / "dist")
+    fixture.start()
+    try:
+        try:
+            harvests = measure_all(geometry, u19, browser, fixture, names)
+        except Exception as exc:  # noqa: BLE001
+            print(f"HUD_STRIP_GATE_NOT_RUN MEASURE_FAILED {exc!r}")
+            return 3
+        result = verdict(harvests)
+        result["startedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+        result["browser"] = browser
+        result["servedBundle"] = bundle_provenance.describe(root)
+        result["fixturePort"] = fixture.port
+        result["measured"] = harvests
+        result.update(browser_leftovers(geometry))
+        out = Path(args.json_out) if args.json_out else (
+            OUT_DIR / f"hud_strip_{int(time.time())}.json")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+        for c in result["checks"]:
+            print(f"{c['check']:<52} {'PASS' if c['pass'] else 'FAIL'} {c['detail']}")
+        print(f"HUD_STRIP_GATE_{'PASS' if result['passed'] else 'FAIL'} "
+              f"checks={sum(1 for c in result['checks'] if c['pass'])}/{len(result['checks'])} "
+              f"data=fixture(adapters={result['fixture']['adapters']},"
+              f"projects={result['fixture']['projects']},executions={result['fixture']['executions']}) "
+              + str(out))
+        for label, items in (("RESIDUE", result["residue"]),
+                             ("PORT_MISMATCH", result["portAnnouncedMismatch"])):
+            if items:
+                print(f"HUD_STRIP_GATE_{label} " + json.dumps(items, ensure_ascii=False))
+        return 0 if result["passed"] else 1
+    finally:
+        fixture.stop_server()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-23T16:38:27Z",
+  "generatedAt": "2026-10-25T04:08:22Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 79,
+    "trackedTools": 80,
     "withLedgerPromise": 21,
-    "referencedSomewhere": 79,
+    "referencedSomewhere": 80,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -442,6 +442,22 @@
         "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
         "taskpacks/current/error-ledger.json",
         "tests/ci/test_handle_latency_attribution.py"
+      ]
+    },
+    {
+      "path": "scripts/audit/hud_strip_geometry_via_cdp.py",
+      "sha256": "8468f8d31c9159b3fe321481b1b858219df9616925908a93a63af906c8a61905",
+      "bytes": 54496,
+      "lines": 968,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 5,
+      "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
+        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/ci/test_hud_strip_geometry_gate.py"
       ]
     },
     {
