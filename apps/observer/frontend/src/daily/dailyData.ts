@@ -102,6 +102,11 @@ export interface DailyToolRow {
   version: string | null
   observedAt: string | null
   writePolicy: string
+  registryStatus: string
+  // Derived from the card's OWN declared operations, never from a name: a client that declares no
+  // apply/invoke is not an executor, whatever it is called. CC Switch (provider router), GitHub (VCS
+  // host) and Open Design (design client) land here alongside the observe-only runtimes.
+  executes: boolean
 }
 
 export function dailyToolRows(snap: SnapshotV3 | null): DailyToolRow[] {
@@ -129,6 +134,8 @@ export function dailyToolRows(snap: SnapshotV3 | null): DailyToolRow[] {
       version: card.declaredVersion ?? null,
       observedAt: card.observedAt ?? null,
       writePolicy: card.writePolicy,
+      registryStatus: card.registryStatus,
+      executes: declared.includes('apply') || declared.includes('invoke'),
     }
   })
 }

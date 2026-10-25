@@ -141,7 +141,7 @@ vi.mock('@/daily/solutionsClient', async (importOriginal) => {
 
 import App from '@/App'
 import { HudDaily } from '@/daily/HudDaily'
-import { buildHandoverMaterial } from '@/daily/dailyData'
+import { buildHandoverMaterial, dailyToolRows } from '@/daily/dailyData'
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/index.html?shell=daily')
@@ -231,6 +231,51 @@ describe('日常壳（?shell=daily）', () => {
     expect(screen.getByText('无已声明操作记录')).toBeTruthy()
     expect(screen.getByText('未连接（无入口探测记录）')).toBeTruthy()
     expect(screen.queryByText('声明操作：read（READ_ONLY）')).toBeNull()
+  })
+
+  it('工具列表按各自声明的操作分组，执行类排在仅观测类之前', async () => {
+    const cards = (mockSnap as unknown as { adapterCapabilities: Record<string, unknown>[] }).adapterCapabilities
+    const routerLike = { ...cards[0], clientId: 'cc-switch', displayName: 'CC Switch',
+      declaredOperations: ['detect', 'capabilities', 'observe'], writePolicy: 'unavailable',
+      registryStatus: 'legacy_observe' }
+    const executorLike = { ...cards[0], clientId: 'hermes', displayName: 'Hermes',
+      declaredOperations: ['apply', 'invoke', 'observe'], writePolicy: 'approval_required',
+      registryStatus: 'active' }
+    cards.push(routerLike, executorLike)
+    try {
+      render(<App />)
+      await act(async () => { screen.getByRole('button', { name: '我的工具' }).click() })
+      const labels = await screen.findAllByText(/可执行客户端|仅观测客户端/)
+      expect(labels.length).toBe(2)
+      expect(labels[0].textContent?.startsWith('可执行客户端')).toBe(true)
+      expect(labels[1].textContent?.startsWith('仅观测客户端')).toBe(true)
+      const hermesNodes = screen.getAllByText('Hermes')
+      const switchNodes = screen.getAllByText('CC Switch')
+      expect(hermesNodes.length).toBeGreaterThan(0)
+      expect(switchNodes.length).toBeGreaterThan(0)
+      // DOM order is the claim: an executor must not sit below a router in a list the owner reads top-down.
+      const follows = hermesNodes[0].compareDocumentPosition(switchNodes[0]) & Node.DOCUMENT_POSITION_FOLLOWING
+      expect(follows).toBeTruthy()
+      expect(screen.getByText(/LEGACY_OBSERVE/)).toBeTruthy()
+    } finally {
+      cards.length = 2
+    }
+  })
+
+  it('executes 由卡片自己的 declaredOperations 派生，不由名字或 supportLevel 决定', () => {
+    const rows = dailyToolRows({
+      adapterCapabilities: [
+        { clientId: 'router', displayName: 'Router', declaredOperations: ['detect', 'observe'],
+          registryStatus: 'legacy_observe', writePolicy: 'unavailable' },
+        { clientId: 'agent', displayName: 'Agent', declaredOperations: ['invoke'],
+          registryStatus: 'active', writePolicy: 'approval_required' },
+      ],
+      projects: [],
+    } as never)
+    expect(rows.map((r) => [r.clientId, r.executes, r.registryStatus])).toEqual([
+      ['router', false, 'legacy_observe'],
+      ['agent', true, 'active'],
+    ])
   })
 
   it('反馈是内存态：显示“你反馈”，并明确提示刷新后丢失，不宣称系统已验证', async () => {
