@@ -202,6 +202,43 @@ jobs:
           python services/orchestration/run_quality_gate.py mcp-audit
           python services/orchestration/run_quality_gate.py shell
           python services/orchestration/run_quality_gate.py powershell
+          # CL-14 (2026-10-25): the canonical local `verify` run performs 50 stages, and this job invoked 23 of
+          # them by name. The other 27 were neither invoked nor declared anywhere, so nothing could distinguish
+          # "CI does not require this" from "CI requires it under another name" -- and an unstated absence is a
+          # coverage claim. Each line below was run on this branch first: all 27 exited 0, together in 44 s, and
+          # their own reports carry counts rather than silence (`MODEL_REGISTRY_INTEGRITY_PASS providers=9
+          # models=10`, `OBSERVER_READONLY_PASS sources_scanned=90`, `EVIDENCE_TIER_PASS bundles=7`,
+          # `THREE_PROJECT_BOUNDARY_PASS splits=6 markers=5 seams=3`, `ACP_HONESTY_PASS operations=40`). Every
+          # verifier they drive resolves its paths inside the repository, so a runner with no sibling projects
+          # and no external volumes still judges them; the two stages that cannot be judged here are declared
+          # under `ci.stage_coverage` in the profile instead of being left unmentioned.
+          # ERR-261/263/264 recorded this blind spot three times for one stage (`root-governance-suite`); the
+          # count of stages that had it was 27.
+          python services/orchestration/run_quality_gate.py model-registry-integrity
+          python services/orchestration/run_quality_gate.py registry-closure-report
+          python services/orchestration/run_quality_gate.py acp-adapter-honesty
+          python services/orchestration/run_quality_gate.py evidence-tiering
+          python services/orchestration/run_quality_gate.py plugin-inventory-honesty
+          python services/orchestration/run_quality_gate.py observer-readonly-boundary
+          python services/orchestration/run_quality_gate.py blueprint-projection
+          python services/orchestration/run_quality_gate.py context-control-plane
+          python services/orchestration/run_quality_gate.py external-libraries-index
+          python services/orchestration/run_quality_gate.py protected-drives-consistency
+          python services/orchestration/run_quality_gate.py three-project-boundary
+          python services/orchestration/run_quality_gate.py github-delivery
+          python services/orchestration/run_quality_gate.py project-identity-contract
+          python services/orchestration/run_quality_gate.py agent-adapter-readonly-contract
+          python services/orchestration/run_quality_gate.py execution-state-machine
+          python services/orchestration/run_quality_gate.py collector-noninterference
+          python services/orchestration/run_quality_gate.py canonical-single-writer
+          python services/orchestration/run_quality_gate.py observer-no-business-write
+          python services/orchestration/run_quality_gate.py snapshot-schema-v3
+          python services/orchestration/run_quality_gate.py sse-browser-reconnect
+          python services/orchestration/run_quality_gate.py field-quality-no-fabrication
+          python services/orchestration/run_quality_gate.py privacy-redaction
+          python services/orchestration/run_quality_gate.py windows-project-resolution
+          python services/orchestration/run_quality_gate.py tauri-readonly-shell
+          python services/orchestration/run_quality_gate.py work-lab-os-canary
       # W10: a small redacted summary + the per-stage record, uploaded even when the gates above failed.
       # An auditor reads this file first; the log stays the place you go when the summary is not enough.
       - name: Assemble the run summary
@@ -302,6 +339,17 @@ jobs:
         id: fe-test
         working-directory: .
         run: python scripts/ci/failfast_group.py --group observer-frontend-test
+      # CL-14 (2026-10-25): the JS static-contract suite had no runner at all. `frontend_toolchain.py contracts`
+      # (the local gate's `observer-frontend-contracts` stage) says both front-end suites are "CI-only today",
+      # and the vitest half is true -- the group above runs it -- but no workflow step ever invoked
+      # `apps/observer/tests/run_all_tests.js`, so the legibility micro-role rule that produced one of the two
+      # reds the stage was written for was judged locally only, on the author's host. The suite is pure Node with
+      # no runtime dependency, so this costs one process: measured on this branch inside the stage, the JS half
+      # ran and printed PASS while the whole stage (both suites) took 26 s.
+      - name: Observer JS static contract suite (the shipped shell's declared shape)
+        id: fe-js-contracts
+        working-directory: apps/observer
+        run: node tests/run_all_tests.js
       # W02: the Rust dependency sources and the crate's target directory are the two things this job pays
       # for on every run. The registry/git key follows Cargo.lock (a dependency change must miss); the
       # target key additionally carries the commit, so a source change can never be served a whole stale
@@ -410,6 +458,43 @@ jobs:
       - name: Text legibility sweep (CDP, both themes, every rail lane, the shell surfaces)
         working-directory: .
         run: python scripts/audit/text_legibility_via_cdp.py --all-views --live-backend --sizes 1280 --shell-surfaces --json-out .project-local/runs/ci/legibility_sweep.json
+      # CL-14 (2026-10-25): four instruments were tracked, self-refusing (exit 3 `*_NOT_RUN` with the reason
+      # named) and green on the author's machine, and no job executed any of them -- the same defect G3 and
+      # CL-12 named, pointed at the tools this repo had already written. Each was re-run against the bundle
+      # this branch builds before being made required, and each printed its own PASS line, which is the
+      # condition G3 states for turning an instrument into a gate. Receipts read on 2026-10-25 in
+      # `.project-local/runs/cl15/cdp-wire/`: `DISPLAY_SCALING_GATE_PASS`, `SSE_REVISION_GATE_PASS`,
+      # `HANDLE_LATENCY_PASS`, `CONTROL_SHELL_IDENTITY_PASS screens=3/3 rows=1 receipts=1`.
+      # Runner-independent, which is why it can be required here at all: the LAYOUT half is a CDP device-metrics
+      # override (a maximised window at 150% hands the page a 1706px CSS viewport), and the PHYSICAL half is
+      # arithmetic on the sizes the shell declares in `tauri.conf.json` against the 2560x1440 surface the
+      # taskpack names -- not against whatever display the runner happens to have. Each scale asserts its own
+      # `window.devicePixelRatio`, so a sweep whose four runs all report dpr 1 fails instead of measuring one
+      # DPI four times.
+      - name: Display scaling gate (CDP, declared windows at 100/125/150/200% scaling)
+        working-directory: .
+        run: python scripts/audit/display_scaling_via_cdp.py --json-out .project-local/runs/ci/display_scaling_gate.json
+      # The revision a stream carries is the product promise behind every "this is current" sentence in the
+      # shell, and reconnect-cursor semantics are the half a Python test cannot reach: only a page that is
+      # reloaded keeps its scroll, focus and selection.
+      - name: SSE revision + reconnect state gate (CDP, three revisions over one stream)
+        working-directory: .
+        run: python scripts/audit/sse_revision_via_cdp.py --json-out .project-local/runs/ci/sse_revision_gate.json
+      # Report-only by design and labelled as such by the instrument itself (`HANDLE_LATENCY_BUDGET_NOT_SET`):
+      # 172 rows measured 244-246 ms from navigation to visible, twice, and no tracked document states a
+      # latency budget, so inventing a `--fail-over-ms` number would have made the gate pass by asserting a
+      # promise the owner never made. What is required here is the measurement and its refusal to be skipped;
+      # the budget value is an owner ask, registered as such.
+      - name: Handle-block latency measurement (CDP, list-to-visible timing for the built bundle)
+        working-directory: .
+        run: python scripts/audit/handle_block_visibility_via_cdp.py --json-out .project-local/runs/ci/handle_latency_measure.json
+      # The Control shell, not the Observer: this job is the only one with a browser, and the instrument's
+      # write lands in a store the harness creates under `.project-local/runs` and re-reads -- it never opens
+      # the live ledger or the Telemetry Ledger, so the Observer's read-only boundary is untouched. It proves
+      # the behavioural half of WUI-10 (a lost refresh re-QUERIES the same operation and never re-writes).
+      - name: Control shell identity readback (CDP, restore / fresh / absent over one real write)
+        working-directory: .
+        run: python scripts/audit/control_shell_identity_via_cdp.py --json-out .project-local/runs/ci/control_shell_identity.json
       # W10: the four frontend stages exist because W02 split one combined step; the artifact is what makes
       # that split readable after the run, without opening the log.
       - name: Assemble the run summary
@@ -440,6 +525,10 @@ jobs:
             .project-local/runs/ci/gate-stages.json
             .project-local/runs/ci/geometry_gate.json
             .project-local/runs/ci/desktop_capability.json
+            .project-local/runs/ci/display_scaling_gate.json
+            .project-local/runs/ci/sse_revision_gate.json
+            .project-local/runs/ci/handle_latency_measure.json
+            .project-local/runs/ci/control_shell_identity.json
           if-no-files-found: warn
           retention-days: 14
 

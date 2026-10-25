@@ -106,6 +106,13 @@ def post_operation(base: str, key: str) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
+def _release(server, plane) -> None:
+    """One way out: stop serving and drop the store handle, so every exit path leaves no locked file."""
+    server.shutdown()
+    server.server_close()
+    plane.store.close()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json-out", default=None)
@@ -128,11 +135,16 @@ def main() -> int:
     created = post_operation(base, "idem-shell-first")
     if created.get("status") != "ACCEPTED":
         print(f"SHELL_EVIDENCE_NOT_RUN the real write did not land: {created}", flush=True)
+        _release(server, plane)
         return 2
 
     browser = gate.find_browser()
     if not browser:
         print("SHELL_EVIDENCE_NOT_RUN BROWSER_NOT_FOUND — set WL_CHROME to a Chrome/Edge binary")
+        # A refusal that leaves the store open behind it is not a clean exit: the fixture directory the run
+        # registered for cleanup cannot be deleted while the sqlite handle is live, so the residue census
+        # reports it. Close on the way out, the same way the measured paths do.
+        _release(server, plane)
         return 3
     u19 = gate.load_u19()
 
@@ -223,9 +235,7 @@ def main() -> int:
         print(f"FAIL {failure}")
     print(f"{verdict} screens={sum(1 for r in screens.values() if r['status'] == 'PASS')}/{len(shots)} "
           f"rows={len(rows)} receipts={len(receipt_lines)} receipt={out}")
-    server.shutdown()
-    server.server_close()
-    plane.store.close()
+    _release(server, plane)
     return 0 if not failures else 1
 
 

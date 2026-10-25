@@ -40,7 +40,7 @@ Esc 关闭 / 断点 tablet 1024 / mobile 767 / 密度 comfortable 68 / default 5
 `prefers-reduced-motion` 降级已存在，保留。
 
 ## D7 组件依赖
-不新增 npm 依赖。既有 cva/clsx/tailwind-merge/lucide-react/recharts + vitest/RTL 足够。
+不新增 npm 依赖。既有 cva/clsx/tailwind-merge/lucide-react + vitest/RTL 足够。（2026-10-25：`recharts` 已从依赖中移除——它在 `src/` 里零 `import`，只是被装着；此句原样保留以免改写当时的决定。）
 Modal/Drawer/Toast/CommandPalette 全部手写（L8 可运行原型 `packages/ui-core` 作 API 参考，不照抄）。
 
 ## D8 资产边界

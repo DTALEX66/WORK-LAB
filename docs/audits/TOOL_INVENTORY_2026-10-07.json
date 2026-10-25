@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-25T07:21:53Z",
+  "generatedAt": "2026-10-25T11:41:04Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -242,15 +242,17 @@
     },
     {
       "path": "scripts/audit/control_shell_identity_via_cdp.py",
-      "sha256": "e9b9233f9bba9d67f72bbad550e997443a8b187829342eb3c480de5cd4ac6c43",
-      "bytes": 12097,
-      "lines": 233,
+      "sha256": "1395811188f6656fb3516005978d8ceb6baef39a3accfb7b0c57fdfdbb9ba6d0",
+      "bytes": 12627,
+      "lines": 243,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 4,
       "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/ci/test_cdp_instruments_refuse_by_name.py"
       ]
     },
     {
@@ -277,14 +279,14 @@
       "lines": 245,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 8,
       "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
         ".workbuddy/memory/2026-10-13.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/history/archive/ui-priority-20261009/UIV2-ACCEPTANCE-CHECKLIST.csv",
-        "docs/history/archive/ui-priority-20261009/WUI-19-FINAL-ACCEPTANCE-20261012.md",
-        "taskpacks/current/OPEN-TASK-REGISTER.md"
+        "docs/history/archive/ui-priority-20261009/WUI-19-FINAL-ACCEPTANCE-20261012.md"
       ]
     },
     {
@@ -306,16 +308,17 @@
     },
     {
       "path": "scripts/audit/evidence_handles_render_via_headless_chromium.py",
-      "sha256": "0b9d931acfaf04bd0f2c276509a7f916bf1cecd42af9af8ff3ec1eebf38c1cf0",
-      "bytes": 5301,
-      "lines": 110,
+      "sha256": "32e9067f60353477a8d8b4889603349ca639df2990768da13bfb56e7fd98d16c",
+      "bytes": 5881,
+      "lines": 117,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 4,
+      "citedByRecords": 5,
       "citedBy": [
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/authority-convergence-20261019/ROADMAP.md",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
         "taskpacks/current/WORK-LAB-AUTHORITY-CONVERGENCE-TASKPACK-20261019.md"
       ]
     },
@@ -434,14 +437,14 @@
       "lines": 450,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 6,
+      "citedByRecords": 8,
       "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/current/authority-convergence-20261019/AUTHORITY-CONVERGENCE-20261019.md",
-        "taskpacks/current/error-ledger.json",
-        "tests/ci/test_handle_latency_attribution.py"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -879,14 +882,14 @@
       "lines": 380,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 8,
       "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
         "apps/observer/frontend/DESIGN.md",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "taskpacks/current/error-ledger.json"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {

@@ -263,6 +263,42 @@ def _from_collector_health(rows: list[dict[str, Any]], index: dict[str, Any]) ->
     return issues
 
 
+def _group_by_source(rows: list[dict[str, Any]]) -> dict[tuple[str | None, str], list[dict[str, Any]]]:
+    """Rows per (project, producer), oldest first -- the newest row is the only present-tense claim.
+
+    The loop below used to emit an anomaly for every historical row, so a producer whose every later reading
+    was healthy kept raising `SOURCE_INCOMPLETE_COVERAGE` forever: the shipped store carried a 2026-10-19
+    PARTIAL row as a standing issue that no repair could close, which also made an independent re-read
+    unable to answer RESOLVED. Recency now decides whether the producer is in the state at all, while the
+    older anomalous rows still set `firstSeenAt` and the occurrence count -- history is folded, not dropped.
+    """
+    grouped: dict[tuple[str | None, str], list[dict[str, Any]]] = {}
+    for row in rows:
+        key = (str(row.get("project_id") or "") or None, str(row.get("producer") or "") or "UNKNOWN")
+        grouped.setdefault(key, []).append(row)
+    for entries in grouped.values():
+        entries.sort(key=lambda row: str(row.get("occurred_at") or ""))
+    return grouped
+
+
+def _latest_is_anomalous(entries: list[dict[str, Any]], field: str, vocabulary: tuple[str, ...]) -> bool:
+    """Whether the readings at the newest timestamp still show the anomaly.
+
+    Recency gates the claim; it does not aggregate it. Every anomalous row is still emitted as its own
+    candidate so `_ordered_unique` remains the single place folding happens -- pre-folding here would make
+    the fold read as zero occurrences, which is a bug this module's own comment warned about and a test
+    still catches. What changes is only that a producer whose newest readings are healthy stops claiming
+    a present-tense problem: the shipped store carried a 2026-10-19 PARTIAL row as an issue no repair could
+    ever close, so an independent re-read could not answer RESOLVED.
+
+    Rows tied at the newest timestamp are ALL current. Two readings that cannot be ordered do not license
+    suppressing either one -- that would claim more knowledge about recency than the rows carry.
+    """
+    newest = max((str(row.get("occurred_at") or "") for row in entries), default="")
+    return any(str(row.get(field) or "").upper() in vocabulary
+               for row in entries if str(row.get("occurred_at") or "") == newest)
+
+
 def _from_telemetry(rows: list[dict[str, Any]], index: dict[str, Any]) -> list[dict[str, Any]]:
     """Freshness and coverage per event — the honest "this reading is old / only partial" signal.
 
@@ -274,6 +310,7 @@ def _from_telemetry(rows: list[dict[str, Any]], index: dict[str, Any]) -> list[d
     already happened as zero, and a denominator reading 0 when the truth is 2.
     """
     issues: list[dict[str, Any]] = []
+    grouped = _group_by_source(rows)
     for row in rows:
         project = str(row.get("project_id") or "") or None
         producer = str(row.get("producer") or "") or "UNKNOWN"
@@ -282,14 +319,15 @@ def _from_telemetry(rows: list[dict[str, Any]], index: dict[str, Any]) -> list[d
         coverage = str(row.get("coverage") or "").upper()
         evidence = f"telemetry:{row.get('event_id') or '?'}"
         software = _resolve_software(index, None if producer == "UNKNOWN" else producer)
-        if freshness in STALE_FRESHNESS:
+        entries = grouped[(project, producer)]
+        if freshness in STALE_FRESHNESS and _latest_is_anomalous(entries, "freshness", STALE_FRESHNESS):
             issues.append(_issue(
                 issue_class="SOURCE_STALE", project=project, subject=f"{producer}:freshness",
                 source="telemetry_events", evidence_ref=evidence,
                 first_seen=occurred, last_seen=occurred, occurrences=1,
                 magnitude={"freshness": freshness},
                 detail=f"producer={producer} 读数新鲜度为 {freshness}", software=software))
-        if coverage in INCOMPLETE_COVERAGE:
+        if coverage in INCOMPLETE_COVERAGE and _latest_is_anomalous(entries, "coverage", INCOMPLETE_COVERAGE):
             issues.append(_issue(
                 issue_class="SOURCE_INCOMPLETE_COVERAGE", project=project, subject=f"{producer}:coverage",
                 source="telemetry_events", evidence_ref=evidence,

@@ -50,12 +50,14 @@ class RealRegister(unittest.TestCase):
                          f"the live register is the single WUI table; the parser saw {live_tables}")
         # 25 was the count on 2026-10-10; the 2026-10-11/12 cloud-audit batch appended WUI-21..WUI-24 and the
         # 2026-10-23 independent-closed-loop programme (source WL-REC-0107) appended CL-01..CL-12, taking the
-        # ledger to 37. CL-13 (2026-10-25, the audit's "make the checks able to fail" batch) appended one row,
-        # so 38. The number is a tripwire for a *lost* row or a parser that stopped splitting them, not a claim
+        # ledger to 37. CL-13 (2026-10-25, the audit's "make the checks able to fail" batch) and CL-14 (the same
+        # day, the gate-wiring and loop-closure batch) each appended one row, so 39 -- the count the verifier
+        # itself prints: `REGISTER_TABLE_SHAPE_PASS ... tables=1 rows=39 wrong_width=0`.
+        # The number is a tripwire for a *lost* row or a parser that stopped splitting them, not a claim
         # that the register never grows: adding a row must move this figure in the same commit that adds it,
         # otherwise a deleted row can hide behind a stale floor.
-        self.assertEqual(38, live_rows,
-                         f"the live register carried 37 rows before CL-13 on 2026-10-25; {live_rows} were "
+        self.assertEqual(39, live_rows,
+                         f"the live register carried 38 rows before CL-14 on 2026-10-25; {live_rows} were "
                          "judged, so a row was lost or the parser stopped splitting them")
         self.assertEqual([], live_bad)
 
