@@ -1,16 +1,25 @@
-<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- WORK-LAB Observer brand mark — Apple Liquid Glass (generated with Kimi K3) -->
-  <defs>
-    <linearGradient id="wlglass" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#0a1826"/>
-      <stop offset="1" stop-color="#060d15"/>
-    </linearGradient>
-  </defs>
-  <rect x="4" y="4" width="248" height="248" rx="52" fill="url(#wlglass)"/>
-  <rect x="4" y="4" width="248" height="248" rx="52" stroke="#0a84ff" stroke-opacity=".55" stroke-width="3"/>
-  <!-- glass top reflection -->
-  <path d="M30 56 a100 100 0 0 1 196 0" stroke="white" stroke-opacity=".10" stroke-width="6" stroke-linecap="round" fill="none"/>
-  <path d="M28 128C58 84 92 64 128 64C164 64 198 84 228 128C198 172 164 192 128 192C92 192 58 172 28 128Z" stroke="white" stroke-width="9" stroke-linejoin="round"/>
-  <circle cx="128" cy="128" r="34" stroke="#0a84ff" stroke-width="9"/>
-  <circle cx="200" cy="60" r="13" fill="#30d158"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"><rect x="0" y="0" width="512" height="512" rx="112.6" fill="#231815"/><g transform="translate(52.534 108.640) scale(1.313831)">
+<g>
+	
+	
+	
+	
+	
+	
+	
+	
+</g>
+<g>
+	<path style="fill:#F4F1EC;" d="M147.87,116.85c-18.09,41.13-20.52,51.33-20.52,67.22C111.17,115.21,18.47,84.2,18.47,84.2&#10;&#9;&#9;c47.27,4.19,61.39-11.03,61.39-11.03c18.91,13.65,39.93,58.84,39.93,58.84l17.74-35.87c4.13,4.92,7.47,10.4,9.11,16.33&#10;&#9;&#9;L147.87,116.85z"/>
+	<path style="fill:#F4F1EC;" d="M161.86,116.85c18.09,41.13,20.52,51.33,20.52,67.22c16.18-68.85,108.88-99.87,108.88-99.87&#10;&#9;&#9;c-47.27,4.19-61.39-11.03-61.39-11.03c-18.91,13.65-39.93,58.84-39.93,58.84L172.2,96.14c-4.13,4.92-7.47,10.4-9.11,16.33&#10;&#9;&#9;L161.86,116.85L161.86,116.85z"/>
+	<path style="fill:#F4F1EC;" d="M192.05,77.43c-31.13,3.34-33.84,6.05-37.18,37.18c-3.34-31.13-6.05-33.84-37.18-37.18&#10;&#9;&#9;c31.13-3.34,33.84-6.05,37.18-37.18C158.21,71.38,160.92,74.09,192.05,77.43L192.05,77.43z"/>
+</g>
+<g>
+	
+	
+	
+	
+	
+	
+</g>
+</g></svg>

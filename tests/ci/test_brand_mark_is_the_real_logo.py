@@ -28,8 +28,13 @@ B10 = SRC / "skins" / "b10.css"
 SIDEBAR = SRC / "components" / "layout" / "Sidebar.tsx"
 ASSET = SRC / "assets" / "brand" / "work-lab-mark.png"
 
-# Measured from the supplied artwork: ink box x=77..1119, y=262..809.
-MARK_ASPECT = 1043 / 548
+# Measured from the supplied artwork, 2026-10-25: the WORK symbol's ink box is 272.79 x 143.82 viewBox
+# units in `docs/history/owner-inputs/20261025/WORK-1.svg` (paths above the type block), and the same
+# 1.8968 ratio falls out of the wide cut in WORK-2.svg -- two independent cuts of one artwork agreeing is
+# the check that the split is where the designer put it. The assets themselves are built by
+# `scripts/brand/build_work_brand.py`, which refuses to write if the measured ratio moves (it pins 1.8968
+# too), so this constant and that script describe the same measurement rather than two guesses.
+MARK_ASPECT = 272.79 / 143.82
 ASPECT_TOLERANCE = 0.02
 SLOTS = {
     ".topbar-brand-mark": (42, 22),
