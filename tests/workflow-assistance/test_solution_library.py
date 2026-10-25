@@ -356,6 +356,35 @@ class SolutionLibraryTestCase(unittest.TestCase):
         ascii_hit = solution_library.search_solutions(self.store.list_solutions(), query="auth-cache")
         self.assertEqual(["sol-dsh-cache-new"], [item["solutionId"] for item in ascii_hit["results"]])
 
+    def test_a_term_that_ends_a_sentence_is_still_findable(self) -> None:
+        """The token class admits `.` inside a word, so a prose sentence's last word carried the period.
+
+        Measured on the first real corpus: 253 folded ledger root causes end in `.`, and querying the very
+        word written in the record (`denylist`) returned NO_MATCH. Terms are derived at query time from the
+        same text, so the fix belongs in `_terms`, applied to both sides -- not in the stored documents.
+        """
+        document = solution_library.build_solution(
+            solution_id="sol-sentence-final-term",
+            title="命名与全局敏感键冲突",
+            software={"softwareId": "dsh", "softwareVersion": "0.2.0", "platform": "win32",
+                      "versionSource": "MEASURED"},
+            source={"kind": "MANUAL", "ref": "taskpacks/current/error-ledger.json#ERR-003",
+                    "updatedAt": "2026-10-25T00:00:00Z"},
+            steps=["The budget field name collided with the global sensitive-key denylist."],
+            verification_steps=["python tests/ci/test_x.py"],
+            keywords=["命名", "conflict"],
+            changes="首版：守护句末标点的分词",
+        )
+        self.store.save_solution({
+            "solutionId": document["solutionId"], "revision": document["revision"],
+            "title": document["title"], "status": document["status"],
+            "keywords": document["keywords"], "payload": document,
+        })
+        hit = solution_library.search_solutions(self.store.list_solutions(), query="denylist")
+        self.assertIn("sol-sentence-final-term", [item["solutionId"] for item in hit["results"]],
+                      "a word that happens to end a sentence must remain findable")
+        self.assertEqual(["denylist"], hit["summary"]["terms"])
+
     def test_an_issue_fingerprint_hit_ranks_first_and_the_summary_is_self_describing(self) -> None:
         self._seed_two_versions()
         with_fingerprint = self.store.read_solution("sol-dsh-cache-old")["payload"]

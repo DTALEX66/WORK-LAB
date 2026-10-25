@@ -50,7 +50,12 @@ def _terms(text: object) -> set[str]:
     measured choice: `"缓存"` must hit `"清理缓存目录"`, and no model or word list is consulted.
     """
     lowered = str(text or "").lower()
-    terms = set(_ASCII_TERM.findall(lowered))
+    # The token class allows `.`, `_` and `-` inside a word (file names, kebab ids), which also swallows
+    # the period at the end of a prose sentence: `denylist.` never matches the query `denylist`. Real
+    # sentences only entered the library once ledger rows were folded, so the trailing-punctuation strip is
+    # part of term extraction itself, applied to both the indexed text and the query, not to one side.
+    terms = {token.strip("._-") for token in _ASCII_TERM.findall(lowered)}
+    terms.discard("")
     for run in _CJK_RUN.findall(lowered):
         if len(run) == 1:
             terms.add(run)
@@ -313,6 +318,114 @@ def import_unverified(store: Any, document: Mapping[str, Any],
             "contentIncluded": False}
 
 
+def documents_from_error_ledger(ledger: Mapping[str, Any], *, ledger_ref: str,
+                                ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    """Fold closed error-ledger rows into UNVERIFIED recipe documents.
+
+    Every field is a quotation of a recorded field or a statement about the record itself; nothing here
+    supplies a step, a version or a platform the ledger did not write down. Rows missing the two things a
+    recipe cannot be read without -- what was done and how it was re-checked -- are returned as skipped
+    with the reason, because silently dropping them would make "253 folded" mean something else.
+    """
+    documents: list[dict[str, Any]] = []
+    skipped: list[dict[str, str]] = []
+    generated_at = str(ledger.get("generated_at") or "").strip()
+    for entry in ledger.get("errors") or []:
+        if not isinstance(entry, Mapping):
+            continue
+        error_id = str(entry.get("error_id") or "").strip()
+        if not error_id:
+            skipped.append({"errorId": "(absent)", "reason": "no error_id to cite"})
+            continue
+        status_after = str(entry.get("status_after") or "")
+        if status_after != "PASS":
+            skipped.append({"errorId": error_id, "reason": f"status_after={status_after or '(absent)'}"})
+            continue
+        fix = str(entry.get("fix") or "").strip()
+        regression = str(entry.get("regression_test") or "").strip()
+        if not fix:
+            skipped.append({"errorId": error_id, "reason": "no recorded fix"})
+            continue
+        if not regression:
+            skipped.append({"errorId": error_id, "reason": "no recorded regression_test"})
+            continue
+        root_cause = str(entry.get("root_cause") or "").strip() or fix
+        classification = str(entry.get("classification") or "").strip()
+        phase = str(entry.get("phase") or "").strip().lower()
+        entrypoint = str(entry.get("entrypoint") or "").strip()
+        evidence_level = str(entry.get("evidence_level") or "").strip()
+        boundary = str(entry.get("remaining_boundary") or "").strip()
+        keywords: list[str] = []
+        for candidate in (classification.lower(), phase,
+                          *(_ASCII_TERM.findall(entrypoint.lower())[:4])):
+            token = str(candidate or "").strip()
+            if len(token) >= 2 and token not in keywords:
+                keywords.append(token)
+        if not keywords:
+            keywords = ["error-ledger", classification.lower() or "unclassified"]
+        issue_refs = [error_id]
+        task_id = str(entry.get("task_id") or "").strip()
+        if task_id and task_id not in issue_refs:
+            issue_refs.append(task_id)
+        limits = [f"折入自错误台账 {error_id}：证据等级 {evidence_level or 'UNKNOWN'}，"
+                  "台账未绑定修复提交（fixedCommit 缺失），本方案未经 WORK-LAB 复核"]
+        documents.append(build_solution(
+            solution_id=f"sol-{error_id.lower()}",
+            title=root_cause,
+            software={"softwareId": "work-lab", "softwareVersion": "", "platform": "",
+                      "versionSource": "UNKNOWN"},
+            source={"kind": "MANUAL", "ref": f"{ledger_ref}#{error_id}",
+                    "updatedAt": generated_at or "UNKNOWN"},
+            revision=1,
+            status="UNVERIFIED",
+            steps=[fix],
+            verification_steps=[regression],
+            invalid_when=([f"台账记录的剩余边界（原文）：{boundary}"] if boundary else []),
+            limits=limits,
+            evidence_refs=[f"{ledger_ref}#{error_id}"],
+            issue_refs=issue_refs,
+            keywords=keywords,
+            changes=f"首版：由错误台账 {error_id}（status_after={status_after}）折入；"
+                    "保持 UNVERIFIED，不自动推荐。",
+        ))
+    return documents, skipped
+
+
+def fold_error_ledger(store: Any, *, ledger_path: Path, dry_run: bool = False,
+                      limit: int | None = None,
+                      schema: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Write each eligible ledger row as an UNVERIFIED revision, or report what would be written."""
+    ledger = json.loads(Path(ledger_path).read_text(encoding="utf-8"))
+    documents, skipped = documents_from_error_ledger(
+        ledger, ledger_ref=Path(ledger_path).as_posix())
+    selected = documents[:limit] if limit else documents
+    result: dict[str, Any] = {
+        "schemaVersion": "worklab/solution-fold/v1",
+        "ledger": Path(ledger_path).as_posix(),
+        "eligible": len(documents),
+        "skipped": skipped,
+        "selected": len(selected),
+        "dryRun": bool(dry_run),
+        "imported": 0,
+        "unchanged": 0,
+        "refused": [],
+    }
+    if dry_run:
+        return result
+    for document in selected:
+        problems = validate_solution(document, schema=schema)
+        if problems:
+            result["refused"].append({"solutionId": document.get("solutionId"),
+                                      "problems": problems})
+            continue
+        outcome = import_unverified(store, document, schema=schema)
+        if outcome["status"] == "IMPORTED":
+            result["imported"] += 1
+        else:
+            result["unchanged"] += 1
+    return result
+
+
 def _version_hint(software: Mapping[str, Any], current_version: str | None) -> dict[str, Any]:
     recorded = str(software.get("softwareVersion") or "")
     if not recorded or not current_version:
@@ -437,15 +550,34 @@ def _render_line(item: Mapping[str, Any]) -> str:
             f"versionHint={hint} title={item.get('title')}")
 
 
+def _print_fold(summary: Mapping[str, Any]) -> None:
+    reasons: dict[str, int] = {}
+    for item in summary["skipped"]:
+        key = str(item["reason"]).split("=")[0]
+        reasons[key] = reasons.get(key, 0) + 1
+    print(f"SOLUTION_FOLD ledger={summary['ledger']} eligible={summary['eligible']} "
+          f"selected={summary['selected']} dryRun={str(summary['dryRun']).lower()} "
+          f"imported={summary['imported']} unchanged={summary['unchanged']} "
+          f"refused={len(summary['refused'])} skipped={len(summary['skipped'])} "
+          f"skipReasons={json.dumps(reasons, ensure_ascii=False, sort_keys=True)}")
+    for item in summary["refused"][:5]:
+        print(f"SOLUTION_FOLD_REFUSED {item['solutionId']} "
+              f"{'; '.join(item['problems'][:3])}")
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI over one canonical store. The store is never created here (see `repair_state`)."""
     root = Path(__file__).resolve().parents[3]
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("solidify", "import", "list", "search", "show"))
+    parser.add_argument("command", choices=("solidify", "import", "fold-ledger", "list", "search", "show"))
     parser.add_argument("--runtime-root", type=Path,
                         default=root / ".project-local" / "runs" / "issues-live-readback")
     parser.add_argument("--plan-id")
     parser.add_argument("--document", type=Path)
+    parser.add_argument("--ledger", type=Path,
+                        default=root / "taskpacks" / "current" / "error-ledger.json")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="report what fold-ledger would write; never touches the store")
     parser.add_argument("--solution-id")
     parser.add_argument("--revision", type=int)
     parser.add_argument("--query", default="")
@@ -453,7 +585,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version")
     parser.add_argument("--fingerprint", action="append", default=[])
     parser.add_argument("--limit", type=int, default=MAX_RESULTS)
+    parser.add_argument("--max", type=int,
+                        help="fold-ledger only: cap the rows written (default: every eligible row)")
     args = parser.parse_args(argv)
+
+    if args.command == "fold-ledger" and args.dry_run:
+        if not args.ledger.is_file():
+            print(f"SOLUTION_FOLD_LEDGER_MISSING {args.ledger}")
+            return 3
+        _print_fold(fold_error_ledger(None, ledger_path=args.ledger, dry_run=True,
+                                      limit=args.max, schema=load_schema()))
+        return 0
 
     db = args.runtime_root / "canonical.sqlite"
     if not db.is_file():
@@ -482,6 +624,14 @@ def main(argv: list[str] | None = None) -> int:
                   f"revision={result['revision']} documentStatus={result['documentStatus']} "
                   f"recommended={str(result['recommended']).lower()}")
             return 0
+        if args.command == "fold-ledger":
+            if not args.ledger.is_file():
+                print(f"SOLUTION_FOLD_LEDGER_MISSING {args.ledger}")
+                return 3
+            summary = fold_error_ledger(store, ledger_path=args.ledger, limit=args.max,
+                                        schema=load_schema())
+            _print_fold(summary)
+            return 0 if not summary["refused"] else 1
         if args.command == "list":
             outcome = store_view(store, limit=args.limit)
         elif args.command == "search":

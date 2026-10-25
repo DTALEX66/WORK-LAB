@@ -470,8 +470,6 @@ class ScratchStaysInsideTheBoundary(unittest.TestCase):
         self.assertFalse(_outside_repo("ordering-probe").exists())
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
 
 
 class DefaultEntryAndHudWindowContract(unittest.TestCase):
@@ -536,8 +534,21 @@ class DefaultEntryAndHudWindowContract(unittest.TestCase):
 
     def test_the_daily_shell_carries_the_window_controls_it_needs_when_borderless(self):
         daily = ROOT / "apps" / "observer" / "frontend" / "src" / "daily" / "DailyApp.tsx"
+        chrome = ROOT / "apps" / "observer" / "frontend" / "src" / "daily" / "DailyChrome.tsx"
         src = daily.read_text(encoding="utf-8")
-        self.assertIn("WindowControls", src,
+        chrome_src = chrome.read_text(encoding="utf-8")
+        # The caption cluster and the drag surface live in DailyChrome's TopBar since the STITCH
+        # replication; the claim has not weakened -- it now reads the module that renders them AND
+        # requires the daily entry to mount that TopBar, so neither file may drop its half.
+        self.assertIn("<TopBar", src,
+                      "importing TopBar without rendering it leaves the borderless window uncontrollable")
+        self.assertIn("WindowControls", chrome_src,
                       "the default desktop entry cannot minimize/close without the caption cluster")
-        self.assertIn("data-tauri-drag-region", src,
+        self.assertIn("data-tauri-drag-region", chrome_src,
                       "a borderless default entry with no drag surface is un-movable")
+
+# The runner stays at the very bottom on purpose: a `unittest.main()` guard placed above a class
+# silently excludes every class below it. The 2026-10-25 audit found exactly that -- six tests,
+# one of them genuinely red on main, that no gate or CI job had ever executed.
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
