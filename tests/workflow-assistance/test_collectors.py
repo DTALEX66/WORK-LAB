@@ -31,6 +31,82 @@ def _make_git_project(root: Path, name: str) -> Path:
     return project
 
 
+class TaskLedgerCoverageTests(unittest.TestCase):
+    """Coverage is an observation about the ledger, not a word written next to it.
+
+    The old collector stamped `coverage: "PARTIAL"` unconditionally and counted every project's tasks while
+    attributing the record to one project. `issue_projection` turns PARTIAL into a standing
+    `SOURCE_INCOMPLETE_COVERAGE` issue, so the shipped store carried an issue that no repair could close.
+    """
+
+    def setUp(self) -> None:
+        self._dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._dir.cleanup)
+        self.root = Path(self._dir.name)
+        self.store = CanonicalStore(self.root / "canonical.sqlite")
+        self.addCleanup(self.store.close)
+
+    def _collect(self, project: str):
+        result = collect_task_ledger(self.store, project)
+        self.assertEqual(len(result.records), 1)
+        return result.records[0]
+
+    def test_counts_are_scoped_to_the_project_they_are_attributed_to(self) -> None:
+        self.store.upsert_task({"task_id": "a1", "project_id": "alpha", "status": "PENDING"})
+        self.store.upsert_task({"task_id": "b1", "project_id": "beta", "status": "PENDING"})
+        self.store.upsert_task({"task_id": "b2", "project_id": "beta", "status": "COMPLETED_LOCAL"})
+        self.assertEqual(self._collect("alpha")["total"], 1)
+        self.assertEqual(self._collect("beta")["total"], 2)
+
+    def test_a_fully_attributed_ledger_reads_full_and_names_why(self) -> None:
+        self.store.upsert_task({"task_id": "a1", "project_id": "alpha", "status": "PENDING"})
+        record = self._collect("alpha")
+        self.assertEqual(record["coverage"], "FULL")
+        self.assertTrue(str(record["coverage_why"]).strip(), "a FULL claim still has to say what it compared")
+
+    def test_an_empty_ledger_is_a_complete_read_of_nothing_not_a_partial_read(self) -> None:
+        record = self._collect("alpha")
+        self.assertEqual(record["coverage"], "FULL")
+        self.assertEqual(record["total"], 0)
+
+    def test_unattributed_or_unclassified_rows_are_what_makes_it_partial(self) -> None:
+        self.store.upsert_task({"task_id": "a1", "project_id": "alpha", "status": "PENDING"})
+        self.store.upsert_task({"task_id": "x1", "project_id": "", "status": "PENDING"})
+        self.store.upsert_task({"task_id": "a2", "project_id": "alpha", "status": "UNKNOWN"})
+        record = self._collect("alpha")
+        self.assertEqual(record["coverage"], "PARTIAL")
+        self.assertEqual(record["unattributed"], 1)
+        self.assertIn("1 行无项目归属", record["coverage_why"])
+
+    def test_a_full_read_produces_no_standing_coverage_issue(self) -> None:
+        import issue_projection
+
+        self.store.register_project("alpha", str(self.root / "alpha"), display_name="alpha")
+        self.store.upsert_task({"task_id": "a1", "project_id": "alpha", "status": "PENDING"})
+        record = self._collect("alpha")
+        self.store.append_telemetry(record)
+        issues, _summary, _absent = issue_projection.load_issues(
+            self.store, generated_at="2026-10-25T00:00:00+00:00")
+        self.assertEqual(
+            [], [row for row in issues
+                 if row.get("subject") == "task-ledger-collector:coverage"
+                 and row.get("class") == "SOURCE_INCOMPLETE_COVERAGE"],
+            "the shipped store carried exactly this issue forever, because PARTIAL was a constant")
+
+    def test_the_partial_read_still_produces_the_issue(self) -> None:
+        import issue_projection
+
+        self.store.register_project("alpha", str(self.root / "alpha"), display_name="alpha")
+        self.store.upsert_task({"task_id": "x1", "project_id": "", "status": "PENDING"})
+        self.store.upsert_task({"task_id": "a1", "project_id": "alpha", "status": "PENDING"})
+        self.store.append_telemetry(self._collect("alpha"))
+        issues, _summary, _absent = issue_projection.load_issues(
+            self.store, generated_at="2026-10-25T00:00:00+00:00")
+        self.assertTrue([row for row in issues
+                         if row.get("subject") == "task-ledger-collector:coverage"],
+                        "a genuinely incomplete read must still arrive as an issue")
+
+
 class CollectorsTests(unittest.TestCase):
     def setUp(self) -> None:
         self._temporary = tempfile.TemporaryDirectory()

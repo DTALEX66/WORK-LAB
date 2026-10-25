@@ -10,7 +10,6 @@ carry the assertions: `src/views/evidenceHandles.contract.test.tsx` (component t
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -21,25 +20,33 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-ROOT = Path(r"D:/All projects/WORK-LAB")
+ROOT = Path(__file__).resolve().parents[2]
 OBS = ROOT / "apps/observer"
 RUNS = ROOT / ".project-local/runs/standalone-20261019"
 ARTIFACTS = ROOT / ".project-local/artifacts/standalone-run-20261019"
-CHROME = r"C:\Users\ALEX\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe"
 WINDOWS = {"full": (1280, 820), "tall": (1280, 2600), "floor": (900, 600)}
 
 sys.path.insert(0, str(OBS / "scripts"))
+sys.path.insert(0, str(ROOT / "scripts" / "audit"))
 from u19_webview_e2e import start_sidecar  # noqa: E402
+# The browser is resolved, never asserted: this host's earlier copy pinned one Playwright build by absolute
+# path, so on any other machine -- and in CI -- the tool refused for a reason that had nothing to do with the
+# product. `find_browser` is the same resolution the geometry, legibility and HUD gates use (WL_CHROME wins,
+# then Chrome, then Edge), and a refusal now names what is missing instead of printing a path that only
+# exists here.
+from topbar_geometry_via_cdp import find_browser  # noqa: E402
 
 
 def main() -> int:
-    if not os.path.exists(CHROME):
-        print("EVIDENCE_PAINT_SKIPPED_NO_CHROMIUM")
-        return 2
+    browser = find_browser()
+    if not browser:
+        print("EVIDENCE_PAINT_NOT_RUN BROWSER_NOT_FOUND — set WL_CHROME to a Chrome/Edge binary")
+        return 3
     dist = OBS / "frontend" / "dist"
     if not (dist / "index.html").is_file():
-        print("EVIDENCE_PAINT_FAIL frontend/dist absent — run npm run build first")
-        return 1
+        print(f"EVIDENCE_PAINT_NOT_RUN DIST_ABSENT {dist} — run npm run build first")
+        return 3
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
 
     sidecar, sidecar_port, thread, server = start_sidecar()
     backend = f"http://127.0.0.1:{sidecar_port}"
@@ -67,7 +74,7 @@ def main() -> int:
             attempts = []
             for take in range(1, 3):
                 png = ARTIFACTS / f"15-evidence-{name}-{take}.png"
-                command = [CHROME, "--headless=new", "--no-sandbox", "--disable-gpu", "--no-first-run",
+                command = [str(browser), "--headless=new", "--no-sandbox", "--disable-gpu", "--no-first-run",
                            "--disable-crash-reporter", "--hide-scrollbars", f"--user-data-dir={profile}",
                            f"--window-size={size[0]},{size[1]}", "--timeout=20000",
                            f"--screenshot={png}", url]

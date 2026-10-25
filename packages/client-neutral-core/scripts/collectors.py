@@ -61,23 +61,40 @@ def _sanitize_path(path: str) -> str:
 
 
 def collect_task_ledger(store: CanonicalStore, project_id: str) -> CollectorResult:
-    """Collector 1: task ledger counts as canonical facts."""
+    """Collector 1: task ledger counts as canonical facts, for THIS project.
+
+    Two things the previous version got wrong with one constant. It counted `store.list_tasks()` -- every
+    project's rows -- while stamping the record with a single `project_id`, so a second registered project
+    was silently included in the first one's totals. And it wrote `coverage: "PARTIAL"` unconditionally,
+    which `issue_projection` turns into a standing `SOURCE_INCOMPLETE_COVERAGE` issue that no repair can
+    ever close, because it was never an observation. Coverage is now derived: the ledger is the whole
+    population of tasks it holds, so a complete read is FULL, and what makes it PARTIAL is a row this
+    collector actually could not attribute -- an empty `project_id`, or a status it cannot classify.
+    """
     tasks = store.list_tasks()
+    mine = [task for task in tasks if str(task.get("project_id") or "") == project_id]
+    unattributed = sum(1 for task in tasks if not str(task.get("project_id") or "").strip())
     by_status: dict[str, int] = {}
-    for task in tasks:
-        status = task.get("status", "UNKNOWN")
+    for task in mine:
+        status = str(task.get("status") or "UNKNOWN")
         by_status[status] = by_status.get(status, 0) + 1
+    unclassified = by_status.get("UNKNOWN", 0)
+    coverage = "FULL" if not (unattributed or unclassified) else "PARTIAL"
     records = [
         {
-            "event_id": _stable_id("task-ledger", project_id, by_status),
+            "event_id": _stable_id("task-ledger", project_id, by_status, unattributed),
             "project_id": project_id,
             "producer": "task-ledger-collector",
             "occurred_at": _now(),
             "freshness": "EXACT_SOURCE",
-            "coverage": "PARTIAL",
+            "coverage": coverage,
             "quality": "EXACT_SOURCE",
             "task_counts": by_status,
-            "total": len(tasks),
+            "total": len(mine),
+            "unattributed": unattributed,
+            "coverage_why": (
+                "台账内每行都归到了本项目且状态可分类" if coverage == "FULL"
+                else f"{unattributed} 行无项目归属、{unclassified} 行状态为 UNKNOWN"),
         }
     ]
     return CollectorResult(kind="telemetry", ok=True, records=records)
@@ -287,7 +304,11 @@ def collect_growth_watcher(store: CanonicalStore, project_id: str, search_root: 
                 "producer": "growth-watcher-collector",
                 "occurred_at": _now(),
                 "freshness": "EXACT_SOURCE",
-                "coverage": "PARTIAL",
+                # Derived, not declared: a candidate this collector could not intake is the only thing that
+                # makes the growth read incomplete, and that count is already computed above.
+                "coverage": "PARTIAL" if refusals else "FULL",
+                "coverage_why": (f"{sum(refusals.values())} 个候选被具名拒绝" if refusals
+                                 else "扫描到的候选全部入账"),
                 "quality": "EXACT_SOURCE",
                 "candidate_id": item["candidateId"],
                 "candidate_status": item["status"],

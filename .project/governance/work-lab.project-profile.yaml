@@ -122,6 +122,19 @@ ci:
     capsule-verify:
       local_route: null
       note: "CI-only: the job's export/verify/redact round-trip and its two negative controls have no local test module. Declared rather than implied so the gap is visible."
+  # CL-14 (2026-10-25): the fifth direction. `run_quality_gate.py verify` performs VERIFY_ORDER -- 50 stages --
+  # and the workflows previously invoked 23 of them by name while the other 27 were mentioned nowhere, so the
+  # reader could not tell an intentional local-only stage from an accidental omission. 25 of the 27 are now
+  # invoked in the `workflow` job (each was run on this branch first and each prints counts, not silence). The
+  # two left here are the ones CI genuinely cannot judge, and saying which is the point.
+  stage_coverage:
+    observer-frontend-contracts:
+      status: covered_by_ci_step
+      covered_by: observer
+      reason: "the stage drives two suites and the `observer` job now runs both on the bundle it builds: vitest through the `observer-frontend-test` group (`npm run test`) and the JS static-contract suite through its own step (`node tests/run_all_tests.js`, added 2026-10-25 because until then no workflow invoked that file at all). Invoking the wrapper in this Python job instead would re-measure bytes this job never builds and would need a Node runtime a second time."
+    exact-sha-ci:
+      status: is_ci_verdict_itself
+      reason: "the stage's subject is the exact-SHA Actions evidence, which does not exist until the run that would check it has finished; locally it can only print PENDING. It becomes a real judgement only with WLGM_EXACT_SHA_CI_REQUIRED=1 against a completed run, and the `aggregate` job is what reads that evidence, so this is the CI verdict rather than a product check."
   exact_sha_required_for:
     - critical
     - release

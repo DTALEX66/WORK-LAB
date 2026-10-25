@@ -116,6 +116,51 @@ def project_all(fixture: dict, **over):
                           executions=fixture["executions"], tasks=fixture["tasks"], **over)
 
 
+class TelemetryRecencyTests(unittest.TestCase):
+    """A producer's newest readings decide whether it currently has the problem.
+
+    Before this rule the projection emitted one issue per historical row, so a single PARTIAL reading from
+    weeks ago kept the issue alive forever: nothing a repair did could make the list go empty, and `RESOLVED`
+    on an independent re-read was unreachable by construction. The fix is recency only -- older anomalous rows
+    still count, and rows tied at the newest timestamp are all treated as current.
+    """
+
+    def _issues(self, *rows):
+        return project_issues(collector_health=[], telemetry=list(rows), executions=[], tasks=[])["issues"]
+
+    def test_a_healthier_newer_reading_retires_the_standing_coverage_issue(self) -> None:
+        issues = self._issues(
+            telemetry_row(event_id="old", coverage="PARTIAL",
+                          occurred_at="2026-10-19T13:27:45Z"),
+            telemetry_row(event_id="new", coverage="FULL", occurred_at="2026-10-25T10:06:00Z"))
+        self.assertEqual([], [row for row in issues
+                              if row["class"] == "SOURCE_INCOMPLETE_COVERAGE"],
+                         "the newest reading says the coverage is complete; the list must stop claiming it")
+
+    def test_an_anomaly_with_no_healthier_successor_still_claims_the_issue(self) -> None:
+        issues = self._issues(telemetry_row(event_id="only", coverage="PARTIAL"))
+        self.assertEqual(1, len([row for row in issues if row["class"] == "SOURCE_INCOMPLETE_COVERAGE"]))
+
+    def test_recurrence_still_folds_and_counts_when_the_newest_reading_is_the_anomaly(self) -> None:
+        issues = self._issues(
+            telemetry_row(event_id="a", coverage="PARTIAL", occurred_at="2026-10-21T00:00:00Z"),
+            telemetry_row(event_id="b", coverage="DEGRADED", occurred_at="2026-10-22T00:00:00Z"),
+            telemetry_row(event_id="c", coverage="PARTIAL", occurred_at="2026-10-23T00:00:00Z"))
+        coverage = [row for row in issues if row["class"] == "SOURCE_INCOMPLETE_COVERAGE"]
+        self.assertEqual(1, len(coverage), "one producer-subject stays one issue")
+        self.assertEqual(3, coverage[0]["occurrences"], "history is folded, not dropped")
+        self.assertEqual("2026-10-21T00:00:00Z", coverage[0]["firstSeenAt"])
+
+    def test_rows_tied_at_the_newest_timestamp_are_all_current(self) -> None:
+        issues = self._issues(
+            telemetry_row(event_id="s", freshness="STALE", occurred_at="2026-10-25T10:00:00Z"),
+            telemetry_row(event_id="c", coverage="PARTIAL", occurred_at="2026-10-25T10:00:00Z"))
+        produced = {row["class"] for row in issues}
+        self.assertIn("SOURCE_STALE", produced,
+                      "two readings that cannot be ordered do not license suppressing either one")
+        self.assertIn("SOURCE_INCOMPLETE_COVERAGE", produced)
+
+
 class VocabularyTests(unittest.TestCase):
     def test_every_declared_class_is_reachable_from_a_source_row(self) -> None:
         result = project_all(one_row_per_class())
