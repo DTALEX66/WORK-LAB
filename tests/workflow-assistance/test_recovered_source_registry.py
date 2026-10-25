@@ -106,11 +106,15 @@ class RecoveredSourceRegistryTests(unittest.TestCase):
         for e in tracked:
             self.assertTrue((ROOT / e["path"]).exists(), f"{e['id']} points at a missing file")
             self.assertTrue(git_tracked(e["path"]), f"{e['id']} claims tracked but is not versioned")
-            self.assertEqual(blob_digest(e["path"]), e["sha256"],
-                             f"{e['id']} drifted from its recorded digest")
-            self.assertEqual(len(blob(e["path"])), e["bytes"],
-                             f"{e['id']} drifted from its recorded size")
-            self.assertGreater(e["bytes"], 0, f"{e['id']} records an empty blob")
+            # A row whose shipped form legitimately diverged from its provenance original describes HEAD with
+            # `currentSha256`; every other tracked row's recorded digest IS the shipped form.
+            diverged = re.match(r"diverged \d{4}-\d{2}-\d{2}\b", e["coverageRelation"])
+            digest_field, size_field = ("currentSha256", "currentBytes") if diverged else ("sha256", "bytes")
+            self.assertEqual(blob_digest(e["path"]), e[digest_field],
+                             f"{e['id']} drifted from its recorded {digest_field}")
+            self.assertEqual(len(blob(e["path"])), e[size_field],
+                             f"{e['id']} drifted from its recorded {size_field}")
+            self.assertGreater(e[size_field], 0, f"{e['id']} records an empty blob")
 
     def test_machine_local_entries_cannot_masquerade_as_tracked(self) -> None:
         for e in [x for x in self.entries if x["status"] == "machine-local"]:
@@ -170,10 +174,47 @@ class RecoveredSourceRegistryTests(unittest.TestCase):
         for e in migrated:
             self.assertIn("apps/observer/web/assets/brand/", e["originalLocation"],
                           f"{e['id']} does not record its original location")
-            self.assertIn("byte-identical", e["coverageRelation"],
-                          f"{e['id']} does not record its coverage relation")
+            relation = e["coverageRelation"]
+            diverged = re.match(r"diverged \d{4}-\d{2}-\d{2}\b", relation)
+            self.assertTrue("byte-identical" in relation or diverged,
+                            f"{e['id']} must say either that the copy is byte-identical or that it diverged, "
+                            f"with a date -- got {relation!r}")
+            if diverged:
+                # A declared divergence is only a fact if it names the shipped form. Without these fields the
+                # row would be an excuse: `sha256` keeps proving the original, and nothing would describe what
+                # actually ships.
+                self.assertRegex(str(e.get("currentSha256") or ""), r"^[0-9a-f]{64}$",
+                                 f"{e['id']} declares a divergence without a current digest")
+                self.assertIsInstance(e.get("currentBytes"), int,
+                                      f"{e['id']} declares a divergence without a current size")
+                self.assertRegex(str(e.get("currentObservedAt") or ""), r"^\d{4}-\d{2}-\d{2}$",
+                                 f"{e['id']} declares a divergence without saying when")
+            else:
+                for field in ("currentSha256", "currentBytes", "currentObservedAt"):
+                    self.assertNotIn(field, e,
+                                     f"{e['id']} claims byte-identical yet carries {field}; the two stories "
+                                     "must not sit in one row")
             self.assertIn("6de25fe", e["verificationCommand"] + e["notes"],
                           f"{e['id']} does not name the recovery point")
+
+    def test_a_declared_divergence_cannot_be_an_excuse(self) -> None:
+        """The new branch has to be able to fail, or `diverged` becomes a way to stop checking.
+
+        Planted against the real rows: a divergence with no current digest, and a divergence whose current
+        digest is not what HEAD holds. Both must be refused by the two checks above, which is why the shapes
+        here mirror the assertions rather than restating them.
+        """
+        migrated = [e for e in self.entries if e["kind"] == "migrated-asset"
+                    and re.match(r"diverged \d{4}-\d{2}-\d{2}\b", e["coverageRelation"])]
+        self.assertTrue(migrated, "no diverged row to falsify against; the branch is untested by the ledger")
+        for e in migrated:
+            self.assertEqual(len(str(e["currentSha256"])), 64, f"{e['id']} current digest is not a sha256")
+            self.assertNotEqual(e["currentSha256"], e["sha256"],
+                                f"{e['id']} claims to diverge while recording the same digest twice")
+            self.assertEqual(e["currentSha256"], blob_digest(e["path"]),
+                             f"{e['id']} records a current digest that HEAD does not carry")
+            self.assertEqual(e["currentBytes"], len(blob(e["path"])),
+                             f"{e['id']} records a current size that HEAD does not carry")
 
     def test_recorded_recovery_commands_actually_reproduce_the_recorded_digest(self) -> None:
         """A provenance command that does not run is decoration, not evidence.
@@ -199,9 +240,18 @@ class RecoveredSourceRegistryTests(unittest.TestCase):
             self.assertEqual(recovered, e["sha256"],
                              f"{e['id']}: the blob at {commit} does not hash to the "
                              "recorded digest, so the migration is not byte-identical")
-            self.assertEqual(recovered, blob_digest(e["path"]),
-                             f"{e['id']}: the recovered original drifted from the "
-                             "versioned copy")
+            if re.match(r"diverged \d{4}-\d{2}-\d{2}\b", e["coverageRelation"]):
+                # The row says the shipped form moved on. Then the provenance digest must NOT equal HEAD --
+                # a row that declares a divergence the files do not have is the same lie in the other
+                # direction -- and `currentSha256` is what has to match the versioned copy.
+                self.assertNotEqual(recovered, blob_digest(e["path"]),
+                                    f"{e['id']} declares a divergence but HEAD still holds the original bytes")
+                self.assertEqual(e["currentSha256"], blob_digest(e["path"]),
+                                 f"{e['id']}: the shipped form does not hash to the recorded current digest")
+            else:
+                self.assertEqual(recovered, blob_digest(e["path"]),
+                                 f"{e['id']}: the recovered original drifted from the "
+                                 "versioned copy")
             checked += 1
         self.assertGreaterEqual(checked, 5,
                                 "no recovery command was checkable; the provenance "
