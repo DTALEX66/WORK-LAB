@@ -114,5 +114,70 @@ class ResidueIsBoundedTests(unittest.TestCase):
         self.assertFalse(outside.exists(), "the refusal still created the directory it refused")
 
 
+class ManifestIdentityTests(unittest.TestCase):
+    """The record of what was deleted must survive the next measurement of what is there.
+
+    Measured 2026-10-25: the manifest name was a second-granularity timestamp with no mode, so a dry run
+    landing in the same second as `--apply` resolved to the same path and rewrote the applied record — the
+    census line and the release line printed the identical filename. A deletion log that can be replaced by
+    a later read-only pass is not evidence of anything.
+    """
+
+    def setUp(self) -> None:
+        self.dir = Path(project_temp.fixture_dir(prefix="residue-manifest-"))
+
+    def test_a_dry_run_cannot_replace_an_applied_record(self) -> None:
+        stamp = "20261026T110000Z-000000"
+        applied = tool.write_manifest(self.dir, "apply", stamp, {"apply": True, "released": [{"path": "x"}]})
+        before = applied.read_bytes()
+        dry = tool.write_manifest(self.dir, "dry", stamp, {"apply": False, "released": []})
+        self.assertNotEqual(applied, dry, "a dry run resolved onto the applied manifest's own path")
+        self.assertEqual(before, applied.read_bytes(), "the applied record changed under a dry run")
+        self.assertIn("apply", applied.name)
+        self.assertIn("dry", dry.name)
+
+    def test_two_passes_in_the_same_instant_get_two_files(self) -> None:
+        stamp = "20261026T110000Z-000000"
+        first = tool.write_manifest(self.dir, "dry", stamp, {"n": 1})
+        second = tool.write_manifest(self.dir, "dry", stamp, {"n": 2})
+        self.assertNotEqual(first, second)
+        self.assertEqual({"n": 1}, __import__("json").loads(first.read_text(encoding="utf-8")))
+        self.assertEqual({"n": 2}, __import__("json").loads(second.read_text(encoding="utf-8")))
+
+    def test_the_allocation_refuses_to_overwrite_silently(self) -> None:
+        # The counter is bounded: a collision storm must surface as a refusal, not as a clobber.
+        for attempt in range(1000):
+            tool.write_manifest(self.dir, "dry", "flood", {"attempt": attempt})
+        with self.assertRaises(RuntimeError):
+            tool.write_manifest(self.dir, "dry", "flood", {"attempt": 1000})
+
+
+class BrowserProfileCensusTests(unittest.TestCase):
+    """A killed geometry gate leaves its Chrome profile behind, and it never lived in the census root."""
+
+    def setUp(self) -> None:
+        self.dir = Path(project_temp.fixture_dir(prefix="residue-profiles-"))
+        for name in ("udf-1792341448-10404", "chrome-profile-old", "profile-keep", "unrelated-keep"):
+            path = self.dir / name
+            (path / "Default").mkdir(parents=True)
+            (path / "Default" / "Preferences").write_text("{}", encoding="utf-8")
+            os.utime(path, (time.time() - 9 * 3600, time.time() - 9 * 3600))
+
+    def test_only_the_declared_profile_prefixes_are_candidates(self) -> None:
+        rows = tool.candidates(self.dir, tool.DEFAULT_OLDER_THAN_HOURS, time.time(),
+                               tool.PROFILE_PREFIXES)
+        self.assertEqual(["chrome-profile-old", "profile-keep", "udf-1792341448-10404"],
+                         sorted(row["name"] for row in rows),
+                         "the filter either missed a browser scratch dir or reached into unrelated ones")
+
+    def test_the_default_census_reports_a_browser_profile_count(self) -> None:
+        result = subprocess.run([sys.executable, str(SCRIPT)], cwd=ROOT, capture_output=True,
+                                text=True, encoding="utf-8", errors="replace")
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("browser_profiles=", result.stdout,
+                      "the census still only counts the bounded temp root, so a leftover Chrome profile "
+                      "stays invisible to the tool that exists to reclaim it")
+
+
 if __name__ == "__main__":
     unittest.main()

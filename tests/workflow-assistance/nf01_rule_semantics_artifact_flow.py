@@ -132,12 +132,11 @@ class NestedSecretDetectorTests(unittest.TestCase):
         hits = AFP_MOD.find_nested_secrets({"items": [{"password": "p"}, {"ok": "v"}]})
         self.assertTrue(any("password" in h for h in hits))
 
-    def test_high_entropy_value_in_free_text(self):
-        # sk- prefix + 60+ chars triggers value pattern
+    def test_high_entropy_value_embedded_in_free_text(self):
+        """An embedded key is still a key: the whole-string anchor used to let it through."""
         secret_val = "sk-" + "a" * 60
         hits = AFP_MOD.find_nested_secrets({"goal": f"use {secret_val} to run"})
-        self.assertEqual(len(hits), 0)  # embedded in free text, not a standalone key
-        # but a token *as a value* matching the pattern is caught:
+        self.assertTrue(any("goal" in h for h in hits))
         hits2 = AFP_MOD.find_nested_secrets({"bearer": secret_val})
         self.assertTrue(any("bearer" in h for h in hits2))
 

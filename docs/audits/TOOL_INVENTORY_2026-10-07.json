@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-25T16:56:41Z",
+  "generatedAt": "2026-10-26T16:14:56Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 80,
+    "trackedTools": 81,
     "withLedgerPromise": 21,
-    "referencedSomewhere": 80,
+    "referencedSomewhere": 81,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -258,19 +258,19 @@
     },
     {
       "path": "scripts/audit/desktop_capability_probe.py",
-      "sha256": "411e192fbb004db8deae1f7492665ecd2529a0a169020a86811930711bddde15",
-      "bytes": 12227,
-      "lines": 250,
+      "sha256": "536381cd8d6b2d4a38601800a3989e7a7d5ced7fef81a88f4bfb694dd4eae616",
+      "bytes": 14911,
+      "lines": 300,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 7,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
+        "apps/observer/scripts/u19_webview_e2e.py",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/history/archive/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "tests/ci/test_desktop_capability_probe.py"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -679,6 +679,21 @@
       ]
     },
     {
+      "path": "scripts/audit/pressed_state_motion_via_cdp.py",
+      "sha256": "395146c0b2f3342199001d6094b2d78020407b8ea16a85cb3876b6c3f4680a98",
+      "bytes": 15929,
+      "lines": 326,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 4,
+      "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/ci/test_archived_native_evidence_names_its_commit.py"
+      ]
+    },
+    {
       "path": "scripts/audit/project_definition_path_check.py",
       "sha256": "8ddbf5e6b69c8fd9f6c475897bc99ed4c5727cadea2e33ab3324e71bb6af272f",
       "bytes": 2373,
@@ -816,9 +831,9 @@
     },
     {
       "path": "scripts/audit/reseal_wui_evidence.py",
-      "sha256": "31bfc15b1a825ba04c9a74207f2b8052e662abcca71bb8280ee6b92f77f36e22",
-      "bytes": 7855,
-      "lines": 153,
+      "sha256": "dc9f3635d8cab0ee6012a79f9f3309816509793c9fdc4ad46ac43f6e46b6cb90",
+      "bytes": 8151,
+      "lines": 157,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 10,
@@ -861,9 +876,9 @@
     },
     {
       "path": "scripts/audit/seal_wui_evidence.py",
-      "sha256": "12425f7284869b88efe6f88cdedd0788fe79daaf3274f5866718a23ab91364cd",
-      "bytes": 10807,
-      "lines": 218,
+      "sha256": "047cb4b39bc35db8a74e2f3f796de65141c6b77c0d345f555b70bb6e45a286a1",
+      "bytes": 13058,
+      "lines": 253,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 11,
@@ -917,14 +932,14 @@
       "lines": 1100,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 18,
+      "citedByRecords": 19,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "apps/observer/frontend/DESIGN.md",
         "apps/observer/frontend/SCREEN_SPEC.md",
+        "apps/observer/frontend/src/daily/DailyChrome.tsx",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
-        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/DOCUMENT-CENSUS.md"
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
       ]
     },
     {
@@ -963,9 +978,9 @@
     },
     {
       "path": "scripts/audit/topbar_geometry_via_cdp.py",
-      "sha256": "23d2092fd32426377c2e16af97518f16905a00dd88f62e4fb9799c68cbe8711a",
-      "bytes": 47738,
-      "lines": 877,
+      "sha256": "02a3ce08812dbfa6ce7aea85a0acb01f60e389eea325c0922d2675e3d136f976",
+      "bytes": 48258,
+      "lines": 884,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 2,
       "citedByRecords": 23,
@@ -1284,9 +1299,9 @@
     },
     {
       "path": "scripts/maintenance/release_temp_fixture_residue.py",
-      "sha256": "daaedcabd3b63a572a1993a67c9df5330043addd6c3dd7f2b67c588f779a8631",
-      "bytes": 6504,
-      "lines": 149,
+      "sha256": "57d7759ab733b2cad8629ef229271176a1355d95ebe9fec995a089b3ec5b4a86",
+      "bytes": 9339,
+      "lines": 192,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 11,

@@ -12,13 +12,22 @@ receipt carries (`servedBundle.bundleDigest` from the CDP instruments, `distBund
 keyboard gate), and sorts every file BOUND / STALE / UNBOUND against the digest computed from `dist` right
 now. A PNG has no self-describing bundle, so it is bound through the receipt that lists it.
 
-usage: python scripts/audit/seal_wui_evidence.py [--write]
+The seal's own identity is the bytes and the commit it measured, never a folder label. It used to be written
+to a single stable path (`evidence-seal.json` inside a directory named after the date the set was first
+sealed), which meant a seal from one commit could be re-read as the verdict for the next: the folder name
+told you when the set was started, and nothing told you what it judged. The seal is now named
+`evidence-seal.g<commit12>.b<bundleDigest16>.json`, carries `gitHead` in its payload, and refuses to be
+written at all when the commit cannot be resolved. The directory it reads stays a parameter, because the
+cited receipt set physically lives there and several tracked documents quote those paths.
+
+usage: python scripts/audit/seal_wui_evidence.py [--write] [--artifacts-dir DIR]
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -27,7 +36,16 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "audit"))
 import bundle_provenance  # noqa: E402
 
+# Where the cited receipt set lives. A location, not an identity: the identity of a seal is in its file
+# name and payload. Override with `--artifacts-dir` when a re-seal starts a new set.
 ARTIFACTS = ROOT / ".project-local" / "artifacts" / "wui-20261009"
+
+
+def git_head() -> str:
+    done = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+                          capture_output=True, text=True, encoding="utf-8", errors="replace",
+                          check=False)
+    return done.stdout.strip() or "UNKNOWN"
 
 # The set the register actually cites. An artifact nobody quotes is not evidence and is not sealed.
 CITED = (
@@ -138,20 +156,24 @@ def pictures_bound_by(receipt_paths: list[Path], current_digest: str) -> dict[st
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--write", action="store_true", help="write evidence-seal.json")
+    parser.add_argument("--write", action="store_true", help="write the identity-named evidence seal")
+    parser.add_argument("--artifacts-dir", type=Path, default=None,
+                        help="the receipt set to seal (default: the set this script has always sealed)")
     args = parser.parse_args()
+    artifacts = args.artifacts_dir if args.artifacts_dir else ARTIFACTS
 
-    if not ARTIFACTS.is_dir():
-        print(f"EVIDENCE_SEAL_NOT_RUN no {ARTIFACTS}")
+    if not artifacts.is_dir():
+        print(f"EVIDENCE_SEAL_NOT_RUN no {artifacts}")
         return 2
     bundle = bundle_provenance.describe(ROOT)
     digest = bundle["bundleDigest"]
+    head = git_head()
     index_sha = next(f["sha256"] for f in bundle["files"] if f["path"] == "index.html")
-    pictures = pictures_bound_by([ARTIFACTS / name for name in CITED if name.endswith(".json")], digest)
+    pictures = pictures_bound_by([artifacts / name for name in CITED if name.endswith(".json")], digest)
 
     rows = []
-    for path in sorted(p for p in ARTIFACTS.iterdir() if p.is_file()):
-        if path.name == "evidence-seal.json":
+    for path in sorted(p for p in artifacts.iterdir() if p.is_file()):
+        if path.name == "evidence-seal.json" or path.name.startswith("evidence-seal.g"):
             continue  # the seal describes the set; it is not a member of it
         state, detail = binding_of(path, digest, index_sha)
         if state == "PICTURE":
@@ -176,13 +198,21 @@ def main() -> int:
                 for name, reason in CEILING.items()]
     for name in CITED:
         if not any(row["file"] == name for row in rows):
-            problems.append(f"{name} is missing from {ARTIFACTS}")
+            problems.append(f"{name} is missing from {artifacts}")
+    # A seal that cannot name its commit is exactly the reusable verdict this rewrite removes, so it is
+    # refused rather than written with a placeholder.
+    if head == "UNKNOWN":
+        problems.append("gitHead is UNKNOWN: a seal that names no commit can be read as any commit's "
+                        "verdict, so nothing is written")
 
     unbound_extra = [row["file"] for row in rows if row["state"] == "UNBOUND"
                      and row["file"] not in CITED]
     seal = {
         "gate": "WUI evidence seal against the built front end",
         "sealedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "gitHead": head,
+        "boundTo": f"commit:{head[:12] if head != 'UNKNOWN' else 'UNKNOWN'}+"
+                   f"bundle:{digest[:16]}",
         "bundle": bundle,
         "files": rows,
         "cited": list(CITED),
@@ -192,8 +222,8 @@ def main() -> int:
         "failures": problems,
         "verdictToken": "EVIDENCE_SEAL_PASS" if not problems else "EVIDENCE_SEAL_FAIL",
     }
-    out = ARTIFACTS / "evidence-seal.json"
-    if args.write:
+    out = artifacts / f"evidence-seal.g{head[:12]}.b{digest[:16]}.json"
+    if args.write and head != "UNKNOWN":
         out.write_text(json.dumps(seal, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
     for row in rows:
@@ -209,7 +239,12 @@ def main() -> int:
     for row in rows:
         counts[row["state"]] = counts.get(row["state"], 0) + 1
     print(f"bundle={digest[:16]} files={len(rows)} states={counts} cited={len(cited_rows)}/{len(CITED)}")
-    print((f"SEAL_OUT {out}") if args.write else "SEAL_OUT (not written; pass --write)")
+    if head == "UNKNOWN":
+        print(f"EVIDENCE_SEAL_REFUSE reason=no_git_head seal_not_written intended_path={out}")
+    elif args.write:
+        print(f"SEAL_OUT {out}")
+    else:
+        print(f"SEAL_OUT (not written; pass --write; would be {out})")
     print(seal["verdictToken"])
     return 0 if not problems else 1
 

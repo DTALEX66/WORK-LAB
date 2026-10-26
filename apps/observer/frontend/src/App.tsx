@@ -278,7 +278,10 @@ export default function App() {
     // 2026-10-24 日常壳与 HUD 四态的自有地址参数（?dv/dp/dq/dm/dtool/hs），以及 CL-12
     // 原生窄窗的 surface 标记。漏掉任何一个都会被下面的 replaceState 冲掉——实测过：
     // surface 不被保留时，快照到达后的第一次重渲染就把 150px 窄窗渲染成了专业壳。
-    for (const name of ['dv', 'dp', 'dq', 'dm', 'dtool', 'hs', 'surface', 'di']) {
+    // targets 是 E2 的显示筛选（同一类 omission，同一类后果），必须在名单里。
+    // tools 是它的另一维（工具／软件对象），与 dv/dp/dq 同级：三处同步——这里的写回白名单、
+    // DailyApp 的 readParams 与 writeParams（以及那份 DAILY_PARAMS 名单），少一处就会冷启动丢参数。
+    for (const name of ['dv', 'dp', 'dq', 'dm', 'dtool', 'hs', 'surface', 'di', 'targets', 'tools']) {
       const v = params.get(name)
       if (v) p.set(name, v)
     }

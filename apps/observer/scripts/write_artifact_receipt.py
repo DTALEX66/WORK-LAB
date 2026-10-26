@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import time
@@ -107,6 +108,87 @@ def git_head(root: Path) -> str:
     return done.stdout.strip() or "UNKNOWN"
 
 
+# Archived native evidence. `src-tauri/target/` is a cargo cache: the workflow restores it, nothing
+# uploads it, and a runner deletes it — so a receipt written only there is evidence for as long as the
+# cache lives (defect 3). `.project-local/artifacts/` is the declared evidence root, and the commit and
+# the binary digest go into the FILE NAME as well as the payload so a reader cannot mistake yesterday's
+# verdict for this commit's.
+NATIVE_EVIDENCE_DIR = Path(".project-local") / "artifacts" / "native-evidence"
+HEAD_PREFIX = 12
+SHA_PREFIX = 16
+# `kind.g<commit12>.x<exe-sha16>.inputs.json` — the identity is in the name, so a directory listing
+# already says which commit each artifact claims, before anyone opens it.
+ARCHIVED_NAME = re.compile(r"^(?P<kind>.+)\.g(?P<head>[0-9a-f]{12})\.x(?P<sha>[0-9a-f]{16})"
+                           + re.escape(RECEIPT_SUFFIX) + "$")
+
+
+def archive_native_evidence(root: Path, kind: str, payload: dict,
+                            artifacts_dir: Path | None = None) -> Path:
+    """Write `payload` into the evidence root under a name that carries its commit and its bytes.
+
+    Refuses a payload that names no commit: an archived artifact that cannot say which tree it describes
+    is the stale-evidence problem again, just filed more tidily.
+    """
+    head = str(payload.get("gitHead", "")).strip()
+    if not head or head == "UNKNOWN":
+        raise SystemExit(f"WRITE_RECEIPT_ARCHIVE_REFUSED kind={kind} reason=no_git_head_in_payload")
+    binary = payload.get("binary") if isinstance(payload.get("binary"), dict) else {}
+    exe_sha = str(binary.get("sha256") or payload.get("exeSha256") or "")
+    out_dir = artifacts_dir if artifacts_dir is not None else root / NATIVE_EVIDENCE_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+    name = f"{kind}.g{head[:HEAD_PREFIX]}.x{exe_sha[:SHA_PREFIX] or '0' * SHA_PREFIX}{RECEIPT_SUFFIX}"
+    out = out_dir / name
+    document = dict(payload)
+    document["archivedFrom"] = str(root)
+    document["archivedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+    document["commitPrefix"] = head[:HEAD_PREFIX]
+    document["archivedName"] = name
+    out.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    return out
+
+
+def verify_native_evidence(root: Path, expected_head: str,
+                           artifacts_dir: Path | None = None) -> list[str]:
+    """Every archived native artifact must name the commit it describes — and mean it.
+
+    Three refusals, each one a way an old verdict can pass as a fresh one: nothing archived for this
+    commit; a file whose NAME claims one commit while its PAYLOAD says another; a payload with no commit
+    at all. Files for other commits stay on disk and are ignored — history is not a defect.
+    """
+    problems: list[str] = []
+    expected = (expected_head or "").strip()
+    if not expected or expected == "UNKNOWN":
+        return [f"expected head is not a commit: {expected_head!r}"]
+    out_dir = artifacts_dir if artifacts_dir is not None else root / NATIVE_EVIDENCE_DIR
+    if not out_dir.is_dir():
+        return [f"no archived native evidence at {out_dir}"]
+    matching = 0
+    for path in sorted(out_dir.glob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            problems.append(f"{path.name} is unreadable ({type(exc).__name__})")
+            continue
+        head = str(payload.get("gitHead", "")).strip()
+        if not head or head == "UNKNOWN":
+            problems.append(f"{path.name} records no commit — it cannot be evidence about this one")
+            continue
+        named = ARCHIVED_NAME.match(path.name)
+        if named is None:
+            problems.append(f"{path.name} does not follow the archived-evidence naming rule "
+                            "(kind.g<commit12>.x<exe16>.inputs.json), so nothing binds it to a commit")
+            continue
+        if named.group("head") != head[:HEAD_PREFIX]:
+            problems.append(f"{path.name} names a commit it does not describe: the file name carries "
+                            f"g{named.group('head')} but the payload says g{head[:HEAD_PREFIX]}")
+            continue
+        if head[:HEAD_PREFIX] == expected[:HEAD_PREFIX]:
+            matching += 1
+    if matching == 0:
+        problems.append(f"no archived native evidence describes commit {expected[:HEAD_PREFIX]}")
+    return problems
+
+
 def write_receipt(root: Path, obs: Path, exe: Path) -> dict:
     if not exe.is_file():
         raise SystemExit(f"WRITE_RECEIPT_FAIL no binary at {exe}")
@@ -132,6 +214,8 @@ def write_receipt(root: Path, obs: Path, exe: Path) -> dict:
     out = exe.with_name(exe.name + RECEIPT_SUFFIX)
     out.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     receipt["receiptPath"] = str(out)
+    archived = archive_native_evidence(root, "app-receipt", receipt)
+    receipt["archivedReceiptPath"] = str(archived)
     return receipt
 
 
@@ -143,7 +227,24 @@ def main() -> int:
     ap.add_argument("--exe", default=None,
                     help="the binary just built; defaults to "
                          "$CARGO_TARGET_DIR or src-tauri/target release/app.exe")
+    ap.add_argument("--verify-against", default=None, metavar="COMMIT",
+                    help="do not write: check that the archived native evidence names this commit "
+                         "(CI passes github.sha) and exit 1 if any of it describes a different tree")
     args = ap.parse_args()
+    if args.verify_against:
+        expected = args.verify_against
+        if expected in ("", "HEAD"):
+            expected = git_head(root)
+        problems = verify_native_evidence(root, expected)
+        for problem in problems:
+            print(f"NATIVE_EVIDENCE_REFUSE {problem}")
+        if problems:
+            print(f"NATIVE_EVIDENCE_FAIL problems={len(problems)} "
+                  f"root={root / NATIVE_EVIDENCE_DIR}")
+            return 1
+        print(f"NATIVE_EVIDENCE_PASS commit={expected[:HEAD_PREFIX]} "
+              f"dir={root / NATIVE_EVIDENCE_DIR}")
+        return 0
     if args.exe:
         exe = Path(args.exe)
     else:
@@ -158,7 +259,8 @@ def main() -> int:
           f"inputs={receipt['inputCount']} "
           f"frontendInputs={receipt['frontendInputCount']} "
           f"gitHead={receipt['gitHead'][:9]} "
-          f"receipt={receipt['receiptPath']}")
+          f"receipt={receipt['receiptPath']} "
+          f"archived={receipt['archivedReceiptPath']}")
     return 0
 
 

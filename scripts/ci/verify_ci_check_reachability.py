@@ -39,13 +39,14 @@ WORKFLOWS = REPO / ".github" / "workflows"
 # 2026-10-08: widening the canonical compile step to every tracked .py made the gate name that file, so by
 # this tool's definition it has a local route now. The route is syntactic only -- its behaviour is still
 # exercised by CI's receipt gates -- and that limit belongs in the record, not in a frozen exemption list.
-DECLARED_CI_ONLY = {
-    "apps/observer/scripts/u19_webview_e2e.py": "drives a built Tauri bundle through WebView2 on a "
-                                                "Windows runner (the step carries "
-                                                "working-directory: apps/observer); there is no "
-                                                "cargo/rustc here, so the honest local state is "
-                                                "NOT_RUN and the register says so",
-}
+#
+# `apps/observer/scripts/u19_webview_e2e.py` was declared here for the same syntactic reason and the
+# staleness rule removed it on 2026-10-26, when `tests/ci/test_native_surface_skip_is_granted_by_the_probe.py`
+# began running its verdict rule locally. The limit stays on the record, because it is real: the harness
+# still drives a built Tauri bundle through WebView2 on a Windows runner (the step carries
+# `working-directory: apps/observer`), there is no cargo/rustc or drawable surface in a local run, and the
+# only thing a writer can reproduce here is the decision -- the render itself stays CI's evidence.
+DECLARED_CI_ONLY: dict[str, str] = {}
 
 OPERAND = re.compile(r"(?:scripts|packages|services|apps|tests|integrations)/[\w./-]+\.py")
 

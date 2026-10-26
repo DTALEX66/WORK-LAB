@@ -3,18 +3,61 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
 from canonical_store import CanonicalStore
+import collectors
 from collectors import (
     collect_git_ci,
     collect_source_quality,
     collect_task_ledger,
     collect_usage_files,
 )
+
+
+def _make_directory_link(link: Path, target: Path) -> str | None:
+    """Point `link` at the directory `target`. Returns None on success, or why the host refused.
+
+    A Windows junction is tried first because that is the shape the probe used and it needs no privilege;
+    a POSIX symlink (or a Windows one, where the host allows it) covers the same traversal.
+    """
+    attempts: list[str] = []
+    if os.name == "nt":
+        result = subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)],
+                                capture_output=True, text=True,
+                                encoding="utf-8", errors="replace")
+        if result.returncode == 0 and link.is_dir():
+            return None
+        attempts.append(f"mklink /J rc={result.returncode}")
+    try:
+        os.symlink(str(target), str(link), target_is_directory=True)
+        return None
+    except OSError as exc:
+        attempts.append(f"os.symlink {type(exc).__name__}(errno={exc.errno})")
+    return "; ".join(attempts)
+
+
+def _remove_directory_link(link: Path) -> None:
+    """Remove the link itself, never its target: a recursive delete may otherwise walk through it."""
+    for action in (os.rmdir, os.unlink):
+        try:
+            if link.exists():
+                action(link)
+            return
+        except OSError:
+            continue
+
+
+def _skip_if_no_link_support(reason: str | None) -> None:
+    if reason is None:
+        return
+    raise unittest.SkipTest(
+        f"host cannot create a directory link ({reason}); the real-link case cannot run here. "
+        "The platform-independent containment cases below convict the same guard and do run in CI.")
 
 
 def _make_git_project(root: Path, name: str) -> Path:
@@ -292,6 +335,135 @@ class CollectorsTests(unittest.TestCase):
         self.store.append_quality(result.records[0])
         self.store.append_quality(repeated.records[0])
         self.assertEqual(len(self.store.list_source_quality()), 1)
+
+
+class SearchRootContainmentTests(unittest.TestCase):
+    """A link planted in the searched root is not a boundary — and must not read like one.
+
+    Measured defect: `rglob("*")` on CPython 3.11 walks through a directory link, `is_file()` follows it,
+    and the record then cited `linked/hermes_usage.jsonl` while the bytes came from outside the root. The
+    guard is the resolved-path containment; these cases convict it with a real link where the host can make
+    one and without one everywhere else.
+    """
+
+    LINE = json.dumps({"provider": "deepseek", "model": "deepseek-v4-flash",
+                       "input_tokens": 40, "output_tokens": 11, "total_tokens": 51})
+
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        base = Path(temporary.name)
+        self.root = base / "task-artifacts"
+        self.root.mkdir()
+        # "Outside" means outside the search root the collector is handed, not outside the fixture.
+        self.outside = base / "other-project-data"
+        self.outside.mkdir()
+        (self.outside / "hermes_usage.jsonl").write_text(self.LINE + "\n", encoding="utf-8")
+
+    def _plant_link_to(self, target: Path) -> Path:
+        link = self.root / "linked"
+        _skip_if_no_link_support(_make_directory_link(link, target))
+        self.addCleanup(_remove_directory_link, link)
+        return link
+
+    def _honest_row(self) -> Path:
+        path = self.root / "usage.jsonl"
+        path.write_text(self.LINE + "\n", encoding="utf-8")
+        return path
+
+    def test_a_link_out_of_the_search_root_is_refused_not_read(self) -> None:
+        self._plant_link_to(self.outside)
+        result = collect_usage_files(None, "p", self.root)
+        self.assertEqual([], result.records,
+                         "bytes from outside the root were turned into canonical records")
+        self.assertEqual(1, result.refusals.get("symlink_outside_root"),
+                         f"the escape was not counted and named: {result.refusals}")
+        sample = result.refusal_samples["symlink_outside_root"]
+        self.assertIn("linked", sample, f"the refusal does not locate the link: {sample}")
+        self.assertNotIn(str(self.outside), json.dumps(result.refusal_samples),
+                         "the refusal leaked the outside absolute path into the reported sample")
+
+    def test_containment_convicts_an_outside_target_without_needing_a_real_link(self) -> None:
+        """The CI-portable case, on Linux and Windows alike: the guard reads the resolved path.
+
+        The same fixture that reads cleanly one line below is convicted once resolution reports an outside
+        target, so a blanket "refuse everything" fix could not pass this either.
+        """
+        self._honest_row()
+        baseline = collect_usage_files(None, "p", self.root)
+        self.assertEqual(1, len(baseline.records),
+                         f"the fixture itself is unreadable, so the guard proves nothing: {baseline.refusals}")
+
+        real_resolve = collectors._resolved_path
+
+        def resolves_files_outside(path: Path) -> Path:
+            candidate = Path(path)
+            return self.outside / candidate.name if candidate.is_file() else real_resolve(candidate)
+
+        collectors._resolved_path = resolves_files_outside
+        try:
+            result = collect_usage_files(None, "p", self.root)
+        finally:
+            collectors._resolved_path = real_resolve
+        self.assertEqual([], result.records)
+        self.assertEqual(1, result.refusals.get("symlink_outside_root"),
+                         f"refusals: {result.refusals}")
+
+    def test_a_candidate_that_is_itself_a_link_is_refused_by_name(self) -> None:
+        self._honest_row()
+        baseline = collect_usage_files(None, "p", self.root)
+        self.assertEqual(1, len(baseline.records), "fixture control: a plain file must read")
+
+        real_is_link = collectors._is_link
+        collectors._is_link = lambda path: True
+        try:
+            result = collect_usage_files(None, "p", self.root)
+        finally:
+            collectors._is_link = real_is_link
+        self.assertEqual([], result.records)
+        self.assertEqual(1, result.refusals.get("symlink_candidate_refused"),
+                         f"refusals: {result.refusals}")
+
+    def test_one_escape_is_counted_once_however_many_files_hang_behind_it(self) -> None:
+        """The refusal counts escapes, not the files reached through them -- so it agrees on every platform.
+
+        This is the shape that made CI disagree with every local run: the enumeration descended into the
+        link, so the total scaled with the number of files behind it and differed between a POSIX symlink
+        and a Windows junction. A count that depends on the walker's platform cannot be evidence about the
+        fixture at all.
+        """
+        for name in ("other_usage.jsonl", "third_usage.jsonl"):
+            (self.outside / name).write_text(self.LINE + "\n", encoding="utf-8")
+        link = self._plant_link_to(self.outside)
+        self.assertEqual(3, len(list(link.glob("*.jsonl"))),
+                         "the linked directory itself must hold three readable files for this to mean anything")
+        result = collect_usage_files(None, "p", self.root)
+        self.assertEqual([], result.records, "bytes behind an escaping link must not be read at all")
+        self.assertEqual(1, result.refusals.get("symlink_outside_root"),
+                         f"one escape must be one refusal, however many files sit behind it: {result.refusals}")
+
+    def test_a_link_that_stays_inside_the_root_is_cited_by_where_the_bytes_live(self) -> None:
+        """`source_ref` must not launder the origin: an inside link is read, and cited by its real location."""
+        real = self.root / "real-store"
+        real.mkdir()
+        (real / "hermes_usage.jsonl").write_text(self.LINE + "\n", encoding="utf-8")
+        self._plant_link_to(real)
+        result = collect_usage_files(None, "p", self.root)
+        self.assertEqual({}, result.refusals, f"an in-root link is not an escape: {result.refusals}")
+        cited = {record["source_ref"] for record in result.records}
+        self.assertEqual({"real-store/hermes_usage.jsonl"}, cited,
+                         "the link's in-root name was recorded instead of where the bytes came from")
+
+    def test_a_measured_refusal_makes_coverage_partial_and_a_clean_read_stays_full(self) -> None:
+        self._honest_row()
+        self.assertEqual("FULL", collect_usage_files(None, "p", self.root).records[0]["coverage"],
+                         "a clean read must not be stamped PARTIAL")
+        self._plant_link_to(self.outside)
+        result = collect_usage_files(None, "p", self.root)
+        self.assertEqual(1, len(result.records),
+                         "the honest in-root row must not be collateral damage of the refused neighbour")
+        self.assertEqual("PARTIAL", result.records[0]["coverage"])
+        self.assertIn("symlink_outside_root", result.records[0]["coverage_why"])
 
 
 if __name__ == "__main__":

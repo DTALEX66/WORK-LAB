@@ -52,14 +52,18 @@ class RealRegister(unittest.TestCase):
         # 2026-10-23 independent-closed-loop programme (source WL-REC-0107) appended CL-01..CL-12, taking the
         # ledger to 37. CL-13 and CL-14 (2026-10-25: "make the checks able to fail", then gate wiring and the
         # live loop closure) took it to 39; CL-15 (the WORK brand build) and CL-16 (the motion layer, registered
-        # with its evidence and no code) make 41 -- the count the verifier itself prints:
-        # `REGISTER_TABLE_SHAPE_PASS ... tables=1 rows=41 wrong_width=0`.
+        # with its evidence and no code) make 41, and CL-17 (the seven P2 closures, 2026-10-26) makes 42 -- the
+        # count the verifier itself prints: `REGISTER_TABLE_SHAPE_PASS ... tables=1 rows=42 wrong_width=0`.
         # The number is a tripwire for a *lost* row or a parser that stopped splitting them, not a claim
         # that the register never grows: adding a row must move this figure in the same commit that adds it,
         # otherwise a deleted row can hide behind a stale floor.
-        self.assertEqual(41, live_rows,
-                         f"the live register carried 39 rows before CL-15 on 2026-10-25; {live_rows} were "
-                         "judged, so a row was lost or the parser stopped splitting them")
+        #
+        # Measured, not copied: exact-SHA CI run 40335931495 went red here with `41 != 42` because CL-17 was
+        # registered in 20292c45 without moving this floor. The delta is one row and its origin is the diff --
+        # `shape.scan` over `git show` bytes reads 41 at 99013978 and 42 at 20292c45.
+        self.assertEqual(42, live_rows,
+                         f"the live register carried 41 rows through CL-16 and CL-17 (2026-10-26) added the "
+                         f"42nd; {live_rows} were judged, so a row was lost or the parser stopped splitting them")
         self.assertEqual([], live_bad)
 
 

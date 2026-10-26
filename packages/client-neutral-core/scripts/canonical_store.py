@@ -17,6 +17,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, Mapping
+from urllib.parse import quote
 
 SCHEMA_VERSION = 1
 WAL_TABLES = (
@@ -148,8 +149,15 @@ class CanonicalStore:
             # OperationalError (attempt to write a readonly database).
             if not self.path.is_file():
                 raise FileNotFoundError(f"canonical store missing: {self.path}")
+            # Raw interpolation was the defect: SQLite URI syntax reads `#` as a
+            # fragment terminator and decodes `%XX`, so a store named `with#hash.db`
+            # opened (and CREATED) a truncated writable `with` file while is_file()
+            # checked the real path. quote() escapes both; safe="/" keeps the
+            # as_posix() directory separators usable as a literal path.
             self._conn = sqlite3.connect(
-                f"file:{self.path}?mode=ro", uri=True, check_same_thread=False
+                f"file:{quote(self.path.as_posix(), safe='/')}?mode=ro",
+                uri=True,
+                check_same_thread=False,
             )
             self._conn.row_factory = sqlite3.Row
             self._conn.execute("PRAGMA foreign_keys=ON")
@@ -669,6 +677,19 @@ class CanonicalStore:
     def record_usage_sample(self, sample: dict[str, Any]) -> str:
         validate_record(sample, allow_usage_tokens=True)
         sample_id = str(sample.get("sample_id") or uuid.uuid4().hex)
+        # Unknown usage is not zero: a cache-only probe used to land as
+        # total_tokens=0 labelled EXACT_SOURCE, and SUM(total_tokens) in the
+        # projection plus snapshot_api._sum then rendered a real-looking 0.
+        # Sum only what is known; both addends absent stays NULL (0,0 -> 0).
+        inp = sample.get("input_tokens")
+        out = sample.get("output_tokens")
+        total_tokens = (
+            sample.get("total_tokens")
+            if sample.get("total_tokens") is not None
+            else None
+            if inp is None and out is None
+            else (inp or 0) + (out or 0)
+        )
         with self._lock:
             self._conn.execute(
                 """
@@ -717,9 +738,7 @@ class CanonicalStore:
                     sample.get("reasoning_tokens"),
                     sample.get("tool_tokens"),
                     sample.get("subagent_tokens"),
-                    sample.get("total_tokens")
-                    if sample.get("total_tokens") is not None
-                    else (sample.get("input_tokens") or 0) + (sample.get("output_tokens") or 0),
+                    total_tokens,
                     sample.get("billing_type"),
                     sample.get("cost_estimate"),
                     sample.get("cost_reconciled"),
@@ -1360,10 +1379,24 @@ class CanonicalStore:
                 task_counts[row["status"]] = row["n"]
             usage = self._conn.execute(
                 "SELECT provider, model, COUNT(*) AS samples, "
+                "SUM(total_tokens IS NOT NULL) AS samples_with_tokens, "
                 "SUM(input_tokens) AS input_tokens, SUM(output_tokens) AS output_tokens, "
                 "SUM(total_tokens) AS tokens, MAX(observed_at) AS observed_at "
                 "FROM usage_samples GROUP BY provider, model"
             ).fetchall()
+            # `SUM` ignores NULLs, so a group of three samples where two are unknown used to arrive as
+            # one bare number with nothing to say it covered a third of the rows -- the same
+            # unknown-as-exact defect one level above the row, just aggregated. The coverage words are
+            # the collector's existing FULL/PARTIAL/NONE; the number of contributing rows travels with
+            # the sum so a reader never has to infer it.
+            usage_summary = []
+            for row in usage:
+                item = dict(row)
+                samples, with_tokens = item["samples"], item["samples_with_tokens"]
+                item["token_coverage"] = (
+                    "NONE" if not with_tokens else "FULL" if with_tokens == samples else "PARTIAL"
+                )
+                usage_summary.append(item)
             ci = self._conn.execute(
                 "SELECT status, conclusion, COUNT(*) AS n FROM ci_runs GROUP BY status, conclusion"
             ).fetchall()
@@ -1373,7 +1406,7 @@ class CanonicalStore:
                 "tables": {table: self._conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0] for table in WAL_TABLES},
                 "telemetry_events": telemetry_count,
                 "tasks_by_status": task_counts,
-                "usage_summary": [dict(row) for row in usage],
+                "usage_summary": usage_summary,
                 "ci_summary": [dict(row) for row in ci],
                 "observed_at": _now(),
             }

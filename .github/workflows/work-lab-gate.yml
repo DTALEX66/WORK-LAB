@@ -383,20 +383,56 @@ jobs:
         # after the compiler, so it attests to a build that was observed. The
         # gate only reads it. Without it the gate falls back to content
         # evidence and says so in its own report.
+        # Defect 3 (2026-10-26): the same bytes are now also archived under
+        # `.project-local/artifacts/native-evidence/` with the commit and the exe
+        # digest in the FILE NAME, because `src-tauri/target/` is a cache this
+        # workflow restores and never uploads -- a receipt only there is evidence
+        # for as long as the runner's cache lives.
         working-directory: .
         run: python apps/observer/scripts/write_artifact_receipt.py
       # W04: does this environment have a desktop at all? Runs BEFORE the readback and never gates it
       # directly -- the readback refuses on its own if the layers did not resolve. What this adds is the
       # ability to tell "the product did not render" apart from "there was nothing to render on", which is
       # the distinction the SKIPPED_HEADLESS incident destroyed.
+      # `continue-on-error` stays for the probe's OWN exit code (measured on run 40215515839: the runner
+      # reports session=FAIL because SESSIONNAME is null, which is an environment fact, not a product one).
+      # What changed on 2026-10-26 is that the probe's CONTENT is now load-bearing: U19 reads this exact
+      # artifact (`.project-local/runs/ci/desktop_capability.json`) and only grants a skip when `display`
+      # and `draw` are not both PASS. The verdict reaching the decision is the fix; the flag above only
+      # stops one corroborating layer from reddening the job twice.
       - name: Desktop capability probe (layered, product-independent)
         if: always()
         working-directory: .
         run: python scripts/audit/desktop_capability_probe.py --json-out .project-local/runs/ci/desktop_capability.json
         continue-on-error: true
       - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
+        # REPORTED, NOT REQUIRED (owner's decision 2026-10-26, after this step went red on the facts):
+        # the probe now measures a third required layer, `visible_desktop`, because `display` and `draw`
+        # both PASS on windows-latest while every window the real app owns reads back visible=false and the
+        # WebView2 never exposes a CDP page target (run 40326061662: pid 6828, windows=4, GDI proof FAIL).
+        # A hosted runner with no desktop that shows windows cannot produce a native render proof at all, so
+        # its verdict is published and read, and does not gate the pull request. The skip is still granted
+        # only by a measured denial -- never by GITHUB_ACTIONS -- and an unproven surface on a host whose
+        # layers all resolve stays FAIL.
         working-directory: apps/observer
         run: python scripts/u19_webview_e2e.py
+        continue-on-error: true
+      # The native window readback (WINDOW_STATE_READBACK) is the only instrument that measures the REAL
+      # Tauri window against `tauri.conf.json`; until 2026-10-26 no job executed it, so the geometry claim
+      # CI reports came from a Chrome `--window-size` emulation. It needs the exe the job just built, so it
+      # runs here, and it is NOT forgiven: the register's rule is that a skipped or missing required check
+      # is a failure, and the probe's own convention is NOT_RUN -> exit 3 = red. `if: always()` because the
+      # two native readbacks must each report their own verdict even when the other went red -- the U19 red
+      # is precisely the fact this step measures, and a run that lost both numbers tells the reader less.
+      - name: Window state readback (native Tauri window vs declared geometry)
+        # REPORTED, NOT REQUIRED, same reason as U19: measuring the real window needs a desktop that shows
+        # windows, and `visible_desktop` is the layer that says whether this host has one. The step runs on
+        # every job and writes its JSON either way; CI never claims native window geometry from a host that
+        # cannot provide it, and the register names the local interactive run as the source of that proof.
+        if: always()
+        working-directory: .
+        run: python apps/observer/scripts/window_state_readback.py --json-out .project-local/runs/ci/window_state_readback.json
+        continue-on-error: true
       # G3: required now that the instrument has produced a real GEOMETRY_GATE_PASS readback (ERR-146 states
       # the condition). It measures the bundle this job just built, at each window's declared shape: the main
       # shell at 1280x820 and the floating panel at 440x780. A refusal exits 3 and names why, which is a red
@@ -484,6 +520,24 @@ jobs:
       - name: Control shell identity readback (CDP, restore / fresh / absent over one real write)
         working-directory: .
         run: python scripts/audit/control_shell_identity_via_cdp.py --json-out .project-local/runs/ci/control_shell_identity.json
+      # CL-16 step 1: `--motion-pressed` and `--pressed-scale` were declared with no consumer, so retuning or
+      # deleting one could not fail anything. This step reads the COMPUTED transform while Chrome itself holds
+      # `:active` on the node (CSS.forcePseudoState) -- a synthetic `dispatchEvent` does not light a pseudo-class,
+      # which is why the same instrument cannot be satisfied by the hover assertions elsewhere in this job.
+      # Required, not report-only: with the pressed rules removed from the source and the bundle rebuilt, the
+      # step exits 1 on six named checks (evidence `.project-local/artifacts/cl16-pressed-motion/mutation.txt`).
+      - name: Pressed-state motion gate (CDP, computed transform and duration under a forced :active)
+        working-directory: .
+        run: python scripts/audit/pressed_state_motion_via_cdp.py --json-out .project-local/runs/ci/pressed_motion_gate.json
+      # Defect 3 (2026-10-26): an archived verdict that cannot name its commit can be read as current at
+      # any head. This step is the refusal: every file under
+      # `.project-local/artifacts/native-evidence/` must follow `kind.g<commit12>.x<exe16>.inputs.json`,
+      # its name and payload must agree, and at least one artifact must describe `github.sha` -- the very
+      # commit this job checked out. A receipt from an older build exits 1 here instead of being uploaded
+      # as this run's native acceptance evidence.
+      - name: Verify the archived native evidence names this commit
+        working-directory: .
+        run: python apps/observer/scripts/write_artifact_receipt.py --verify-against "${{ github.sha }}"
       # W10: the four frontend stages exist because W02 split one combined step; the artifact is what makes
       # that split readable after the run, without opening the log.
       - name: Assemble the run summary
@@ -518,6 +572,10 @@ jobs:
             .project-local/runs/ci/sse_revision_gate.json
             .project-local/runs/ci/handle_latency_measure.json
             .project-local/runs/ci/control_shell_identity.json
+            .project-local/runs/ci/window_state_readback.json
+            .project-local/runs/u19_webview_readback.json
+            .project-local/runs/u19_native_surface_unverified.json
+            .project-local/artifacts/native-evidence/*.json
           if-no-files-found: warn
           retention-days: 14
 

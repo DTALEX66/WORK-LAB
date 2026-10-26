@@ -99,12 +99,20 @@ export function IssueCenter({ snap, reader, endpoint }: IssueCenterProps) {
   const [preview, setPreview] = React.useState<Preview>({ kind: 'idle' })
   const [copyState, setCopyState] = React.useState<{ ok: boolean; message: string } | null>(null)
   const [showAll, setShowAll] = React.useState(false)
+  // `alive` gates the awaited continuations of `loadProject` and `copyPack`, which live in `useCallback`
+  // bodies, so it cannot be an effect-local closure. StrictMode runs setup -> cleanup -> setup on one
+  // mount and the ref survives it: an effect that only ever un-armed the flag left a LIVE component
+  // reading `false`, so the preview hung on 正在读取投影… and the copy confirmation was swallowed.
+  // Re-arm on every setup. Pinned by `issueCenterStrictMode.contract.test.tsx`.
   const alive = React.useRef(true)
   const activeRead = React.useRef<AbortController | null>(null)
 
-  React.useEffect(() => () => {
-    alive.current = false
-    activeRead.current?.abort()
+  React.useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+      activeRead.current?.abort()
+    }
   }, [])
 
   // The page derives the endpoint from the same loopback descriptor the snapshot uses. Tests inject a
