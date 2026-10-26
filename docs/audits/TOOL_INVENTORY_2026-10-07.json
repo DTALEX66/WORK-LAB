@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-25T16:56:41Z",
+  "generatedAt": "2026-10-26T12:26:29Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -263,14 +263,14 @@
       "lines": 250,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 7,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
+        "apps/observer/scripts/u19_webview_e2e.py",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "docs/history/archive/ui-priority-20261009/DESKTOP-VERIFICATION-LAYERS.md",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "tests/ci/test_desktop_capability_probe.py"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -816,9 +816,9 @@
     },
     {
       "path": "scripts/audit/reseal_wui_evidence.py",
-      "sha256": "31bfc15b1a825ba04c9a74207f2b8052e662abcca71bb8280ee6b92f77f36e22",
-      "bytes": 7855,
-      "lines": 153,
+      "sha256": "dc9f3635d8cab0ee6012a79f9f3309816509793c9fdc4ad46ac43f6e46b6cb90",
+      "bytes": 8151,
+      "lines": 157,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 10,
@@ -861,9 +861,9 @@
     },
     {
       "path": "scripts/audit/seal_wui_evidence.py",
-      "sha256": "12425f7284869b88efe6f88cdedd0788fe79daaf3274f5866718a23ab91364cd",
-      "bytes": 10807,
-      "lines": 218,
+      "sha256": "047cb4b39bc35db8a74e2f3f796de65141c6b77c0d345f555b70bb6e45a286a1",
+      "bytes": 13058,
+      "lines": 253,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 11,
@@ -917,14 +917,14 @@
       "lines": 1100,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 18,
+      "citedByRecords": 19,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "apps/observer/frontend/DESIGN.md",
         "apps/observer/frontend/SCREEN_SPEC.md",
+        "apps/observer/frontend/src/daily/DailyChrome.tsx",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
-        "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "docs/current/DOCUMENT-CENSUS.md"
+        "docs/audits/TOOL_INVENTORY_2026-10-07.json"
       ]
     },
     {
@@ -1284,9 +1284,9 @@
     },
     {
       "path": "scripts/maintenance/release_temp_fixture_residue.py",
-      "sha256": "daaedcabd3b63a572a1993a67c9df5330043addd6c3dd7f2b67c588f779a8631",
-      "bytes": 6504,
-      "lines": 149,
+      "sha256": "57d7759ab733b2cad8629ef229271176a1355d95ebe9fec995a089b3ec5b4a86",
+      "bytes": 9339,
+      "lines": 192,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 11,
