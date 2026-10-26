@@ -10,8 +10,8 @@ green tick meant "we did not check" -- the exact conflation the project forbids.
 
 This probe answers the question the harness needs answered BEFORE it can trust any product readback:
 *is this environment capable of drawing at all?* It never launches the product. Each layer returns its own
-machine verdict, and the layers are the ones the plan names: interactive session, display, real drawing,
-WebView2 runtime, loopback, and cleanup.
+machine verdict, and the layers are the ones the plan names: interactive session, display, real drawing, a desktop that shows
+windows, WebView2 runtime, loopback, and cleanup.
 
 Verdict discipline (the whole point)
 ------------------------------------
@@ -35,7 +35,7 @@ from pathlib import Path
 SCHEMA_VERSION = "work-lab/desktop-capability/v1"
 DEFAULT_DEADLINE_SECONDS = 90.0
 
-LAYERS = ("session", "display", "draw", "webview2", "loopback", "cleanup")
+LAYERS = ("session", "display", "draw", "visible_desktop", "webview2", "loopback", "cleanup")
 REQUIRED = ("display", "draw", "loopback", "cleanup")
 
 
@@ -129,6 +129,55 @@ def probe_webview2() -> tuple[str, dict]:
     return "FAIL", {"reason": "no WebView2 runtime registered for machine or user"}
 
 
+def probe_visible_desktop() -> tuple[str, dict]:
+    """Is there a desktop that actually SHOWS a top-level window? Measured, not inferred from a flag.
+
+    This is a different capability from `draw`: `draw` proves GDI can paint into a window this process
+    created, which a service session can do with nothing on screen. What a native window-state proof needs
+    is a window a user could see. The two came apart on the GitHub `windows-latest` runner, measured
+    2026-10-26: `display` and `draw` both PASSed while every window the real app owned read back
+    `visible=false` and the WebView2 never exposed a CDP page target, so the native proof was unobtainable
+    in an environment a two-layer probe called capable. Enumerating the desktop's own visible top-level
+    windows is the reading that separates those two situations.
+    """
+    if sys.platform != "win32":
+        return "NOT_APPLICABLE", {"platform": sys.platform, "reason": "not a Windows host"}
+    try:
+        import ctypes  # noqa: PLC0415 - Windows-only capability
+        from ctypes import wintypes as _wt  # noqa: PLC0415
+        user32 = ctypes.windll.user32
+        user32.GetShellWindow.restype = _wt.HWND
+        user32.IsWindowVisible.restype = _wt.BOOL
+        user32.GetWindowTextLengthW.restype = _wt.INT
+        callback = ctypes.WINFUNCTYPE(_wt.BOOL, _wt.HWND, _wt.LPARAM)
+    except Exception as exc:  # noqa: BLE001 - an unavailable API is a fact about the host, not a crash
+        return "NOT_AVAILABLE", {"error": f"{type(exc).__name__}: {exc}"}
+
+    counts = {"visible": 0, "titled": 0, "enumerated": 0}
+
+    def _each(hwnd, _lparam):  # noqa: ANN001 - the Win32 callback shape
+        counts["enumerated"] += 1
+        try:
+            if user32.IsWindowVisible(hwnd):
+                counts["visible"] += 1
+                if user32.GetWindowTextLengthW(hwnd):
+                    counts["titled"] += 1
+        except OSError:
+            return True
+        return True
+
+    user32.EnumWindows(callback(_each), 0)
+    shell = bool(user32.GetShellWindow())
+    evidence = {"visibleTopLevel": counts["visible"], "titledVisible": counts["titled"],
+                "windowsEnumerated": counts["enumerated"], "shellWindowPresent": shell}
+    if counts["enumerated"] == 0:
+        return "FAIL", {**evidence, "reason": "the desktop exposes no top-level window at all"}
+    if counts["titled"] == 0 or not shell:
+        return "FAIL", {**evidence,
+                        "reason": "no titled visible window and/or no shell window: nothing could show a window here"}
+    return "PASS", evidence
+
+
 def probe_loopback() -> tuple[str, dict]:
     """Bind and release a loopback port. The harness needs one for CDP readback; a session that cannot bind
     is not a session where a readback can happen -- and the port must come back, or the next run inherits the
@@ -174,6 +223,7 @@ PROBES = {
     "session": probe_session,
     "display": probe_display,
     "draw": probe_draw,
+    "visible_desktop": probe_visible_desktop,
     "webview2": probe_webview2,
     "loopback": probe_loopback,
     "cleanup": probe_cleanup,

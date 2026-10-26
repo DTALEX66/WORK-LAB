@@ -87,6 +87,56 @@ class ObserverStoreTests(unittest.TestCase):
             finally:
                 store.close()
 
+    def test_readonly_uri_surves_special_characters_in_paths(self) -> None:
+        """A1: the read-only URI must be percent-encoded, never interpolated.
+
+        A raw `f"file:{path}?mode=ro"` reads `#` as a fragment terminator and
+        `%XX` as an escape, so a store named `with#hash.db` opened (and
+        CREATED) a truncated writable file while is_file() checked the real
+        path. The stray-file assertion below is what convicts a dropped
+        quote(): without it the bug is invisible to a reads-succeed test.
+        """
+        for name in ("with#hash.db", "pct%20.db", "space name.db"):
+            with self.subTest(name=name):
+                with tempfile.TemporaryDirectory() as raw:
+                    project = Path(raw)
+                    (project / ".git").mkdir()
+                    path = project / ".hermes" / "task-runtime" / "workflow" / name
+                    writer = CanonicalStore(path)
+                    writer.register_project("work-lab", "<redacted>")
+                    writer.close()
+                    store_dir = path.parent
+
+                    def listing() -> list[Path]:
+                        # A read-only connection on a WAL database recreates
+                        # the -wal/-shm sidecars; they are correct behaviour
+                        # for the RIGHT path. Anything else appearing is the
+                        # truncated stray file a dropped quote() would create.
+                        sidecars = {path.name + "-wal", path.name + "-shm"}
+                        return sorted(
+                            p for p in store_dir.iterdir() if p.name not in sidecars
+                        )
+
+                    before = listing()
+                    store = CanonicalStore(path, readonly=True)
+                    try:
+                        # (a) opens read-only and reads THE right file: the
+                        #     registered project is visible, not an empty or
+                        #     truncated database (pre-fix, `with#hash.db` opened
+                        #     a brand-new writable `with` file with no tables).
+                        self.assertEqual(
+                            [p["project_id"] for p in store.list_projects()],
+                            ["work-lab"],
+                        )
+                        # (b) any write fails closed on the real path.
+                        with self.assertRaises(Exception) as ctx:
+                            store.register_project("nope", "<redacted>")
+                        self.assertIn("readonly", str(ctx.exception).lower())
+                    finally:
+                        store.close()
+                    # (c) no truncated/writable stray file appeared.
+                    self.assertEqual(before, listing())
+
 
 if __name__ == "__main__":
     unittest.main()

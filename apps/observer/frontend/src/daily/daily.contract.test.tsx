@@ -2,7 +2,7 @@
 // 钉住提示词 §13 的真实回归问题：四主入口＋设置底置、UNKNOWN 不补 0、
 // 不同方法/工具对应各自记录、预览＝复制＝导出同一材料、反馈是内存态并明说刷新丢失。
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, cleanup, act, fireEvent } from '@testing-library/react'
+import { render, screen, cleanup, act, fireEvent, within } from '@testing-library/react'
 
 const mockSnap = {
   schemaVersion: 'workflow/snapshot/v3',
@@ -222,12 +222,17 @@ describe('日常壳（?shell=daily）', () => {
     expect(screen.getByRole('alert').textContent).toContain('可手动选择复制')
   })
 
+  // E2 adds a display-filter chip row above the list, and the chips carry the same tool names as the
+  // rows. A global getAllByText(name)[0] therefore lands on a chip (which toggles ?tools=) instead of
+  // the row (which selects the tool), so both claims below are read out of the list itself.
+  const toolList = () => screen.getByRole('list', { name: '工具列表' })
+
   it('我的工具：切换工具整个详情同步替换', async () => {
     render(<App />)
     await act(async () => { screen.getByRole('button', { name: '我的工具' }).click() })
     expect((await screen.findAllByText('Qoder')).length).toBeGreaterThan(0)
     expect(screen.getByText('声明操作：read（READ_ONLY）')).toBeTruthy()
-    await act(async () => { fireEvent.click(screen.getAllByText('Codex')[0]) })
+    await act(async () => { fireEvent.click(within(toolList()).getAllByText('Codex')[0]) })
     expect(screen.getByText('无已声明操作记录')).toBeTruthy()
     expect(screen.getByText('未连接（无入口探测记录）')).toBeTruthy()
     expect(screen.queryByText('声明操作：read（READ_ONLY）')).toBeNull()
@@ -249,9 +254,9 @@ describe('日常壳（?shell=daily）', () => {
         .filter((node) => node.hasAttribute('data-group-label'))
       expect(labels.map((node) => node.getAttribute('data-role'))).toEqual(
         ['agent_runtime', 'provider_router', 'UNKNOWN'])
-      const hermes = screen.getAllByText('Hermes')[0]
-      const router = screen.getAllByText('CC Switch')[0]
-      const qoder = screen.getAllByText('Qoder')[0]
+      const hermes = within(toolList()).getAllByText('Hermes')[0]
+      const router = within(toolList()).getAllByText('CC Switch')[0]
+      const qoder = within(toolList()).getAllByText('Qoder')[0]
       // DOM order is the claim: a router must not sit among the agents, and an undeclared row must not
       // be silently promoted into either group.
       expect(hermes.compareDocumentPosition(router) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()

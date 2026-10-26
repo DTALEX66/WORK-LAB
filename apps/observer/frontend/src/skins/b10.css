@@ -186,6 +186,13 @@ a{text-decoration:none;color:inherit}
   box-shadow:0 12px 30px color-mix(in srgb,var(--primary) 28%, transparent);
 }
 .primary-btn:hover{transform:translateY(-1px) scale(1.01)}
+/* The pressed state is the only motion a pointer user feels while the button is still down, and
+   --motion-pressed / --pressed-scale were declared with no consumer at all. Each selector is placed AFTER
+   its own :hover rule so the equal-specificity tie resolves to :active while the pointer is both over the
+   control and down on it; the L10b reduced-motion floor below neutralises all of it with !important. */
+.nav button:active{transform:translateX(3px) scale(var(--pressed-scale));transition-duration:var(--motion-pressed)}
+.ghost-btn:active,.soft-btn:active{transform:translateY(0) scale(var(--pressed-scale));transition-duration:var(--motion-pressed)}
+.primary-btn:active{transform:translateY(0) scale(var(--pressed-scale));transition-duration:var(--motion-pressed)}
 .danger-btn{
   border:0;color:#fff;font-weight:700;
   background:linear-gradient(135deg,color-mix(in srgb,var(--error) 88%, white 3%),color-mix(in srgb,var(--error) 60%, #000));

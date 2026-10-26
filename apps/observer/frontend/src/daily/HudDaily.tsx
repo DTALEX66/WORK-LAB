@@ -7,6 +7,8 @@ import { useMemo, useState } from 'react'
 import type { SnapshotV3 } from '@/types'
 import { fmtTimestamp } from '@/lib/api'
 import { Settings, Sparkles } from 'lucide-react'
+import { ThemeHonestyNote, THEME_HONESTY_ID_HUD } from '@/daily/DailyChrome'
+import { readTargetSelection } from '@/daily/dailyData'
 
 export type HudState = 'h01' | 'h02' | 'h03' | 'h04'
 
@@ -67,6 +69,13 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
   const [state, setState] = useState<HudState>(readHs)
   const [hoveredTool, setHoveredTool] = useState<string | null>(null)
   const [miniSettings, setMiniSettings] = useState(false)
+  // E2：主窗口用 ?targets= 限定显示子集时，窄窗的两个常驻数字必须说清自己算的是哪一层。
+  // 窄窗不放筛选控件（150px 里再排一排切换就是第二套显示状态），只读地址；地址由
+  // App.tsx 的 URL 写回白名单保留（与 dv/dp/… 同一名单），所以标签不会在快照到达后翻脸。
+  const [addressSelection] = useState<string[] | null>(() => {
+    try { return readTargetSelection(window.location.search) } catch { return null }
+  })
+  const targetFilterActive = addressSelection !== null
   const onState = (s: HudState) => { setState(s); writeHs(s) }
   const toolIds = useMemo(
     () => (snap?.adapterCapabilities ?? []).map((c) => ({ id: c.clientId, name: c.displayName || c.clientId })),
@@ -122,8 +131,17 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
         </li>
       </ul>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 border-t pt-2 text-xs" style={{ borderColor: LINE }}>
-        <span className="min-w-0" style={{ color: '#A6B0BE' }}>项目 {activeProjects} · 待审 {waitingApprovals}</span>
+        <span className="min-w-0" style={{ color: '#A6B0BE' }} data-testid="hud-project-counts">
+          {targetFilterActive ? '全机 ' : ''}项目 {activeProjects} · 待审 {waitingApprovals}
+        </span>
         <button type="button" onClick={() => onState('h03')} className="shrink-0" style={{ color: ACCENT }}>详情</button>
+        {targetFilterActive && (
+          // 主窗口的 ?targets 只限显示子集，窄窗这两个数算的是整个快照：不把范围写在数旁边，
+          // 就会被读成「筛选后只剩这些」。只在筛选态出现，默认窄窗的像素与几何不变。
+          <p className="w-full shrink-0" style={{ color: '#A6B0BE' }} data-testid="hud-count-scope">
+            上面是全机计数，不随主窗口 ?targets 显示筛选变化。
+          </p>
+        )}
       </div>
     </section>
   )
@@ -309,6 +327,9 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
                 修订 {snap?.revision ?? 'UNKNOWN'}。
                 主题与更多设置在主窗口设置页。
               </p>
+              {/* E1：主窗口设置页的那个主题控件就在这个窄窗里也一样不换色，所以这里如实说明，
+                  不把「去主窗口设置」读起来像「换了就会变」。 */}
+              <ThemeHonestyNote id={THEME_HONESTY_ID_HUD} surface="hud" />
               <button type="button" onClick={() => setMiniSettings(false)} className="mt-1" style={{ color: ACCENT }}>
                 收起
               </button>

@@ -12,19 +12,36 @@ import {
 import {
   fetchSolutions, type SolutionSearchView, type SolutionItem,
 } from '@/daily/solutionsClient'
-import { Rail, TopBar, SectionTitle, StatusPill, IconTile, Chip, MetaItem, TimeIcon, DisabledAction, Link2 } from '@/daily/DailyChrome'
+import { Rail, TopBar, SectionTitle, StatusPill, IconTile, Chip, MetaItem, TimeIcon, DisabledAction, Link2, ThemeHonestyNote, THEME_HONESTY_ID_DAILY } from '@/daily/DailyChrome'
 import { ChevronDown, CheckCircle2, CircleAlert, FileText, Filter, Plug, Plus, Sparkles, TriangleAlert } from 'lucide-react'
 import {
   dailyProjectCards, dailyIssueRows, dailyToolRows, buildHandoverMaterial,
+  TARGETS_PARAM, readTargetSelection, encodeTargetSelection, selectTargets, toggleTargetToken,
+  partitionIssuesByTargets, projectCountSentence, targetMissSentence, issueCountSentence,
+  filteredEmptyIssueSentence,
+  TOOLS_PARAM, readToolSelection, encodeToolSelection, selectTools, toggleToolToken,
+  toolCountSentence, toolMissSentence,
   type DailyProjectCard, type DailyIssueRow, type DailyToolRow,
+  type TargetSubset, type IssueScope, type ToolSubset,
 } from '@/daily/dailyData'
 
 export type DailyView = 'home' | 'overview' | 'issues' | 'tools' | 'settings'
 
-const DAILY_PARAMS = ['shell', 'dv', 'dp', 'dq', 'dm', 'dtool', 'di'] as const
+// 日常壳自有的地址参数名单：readParams 认它、writeParams 写它、App.tsx 的 URL 写回白名单
+// 必须带上同样的名字（App.tsx:282），三处同步，否则冷启动与主题切换会静默丢参数。
+const DAILY_PARAMS = ['shell', 'dv', 'dp', 'dq', 'dm', 'dtool', 'di', TARGETS_PARAM, TOOLS_PARAM] as const
 export type IssueSegment = 'all' | 'open' | 'methods'
 
-function readParams(): { dv: DailyView; dp: string | null; dq: string; dm: string | null; dtool: string | null; di: IssueSegment } {
+type DailyParams = {
+  dv: DailyView; dp: string | null; dq: string; dm: string | null; dtool: string | null
+  di: IssueSegment
+  /** E2 的显示筛选：null＝不筛选（地址里没有 ?targets=）。只活在 URL 里。 */
+  targets: string[] | null
+  /** E2 的另一维：?tools= 筛的是被观察的软件／工具，与 targets 同族、互不覆盖。 */
+  tools: string[] | null
+}
+
+function readParams(): DailyParams {
   try {
     const s = new URLSearchParams(window.location.search)
     const dvRaw = s.get('dv')
@@ -32,13 +49,17 @@ function readParams(): { dv: DailyView; dp: string | null; dq: string; dm: strin
       ? dvRaw : 'home'
     const raw = s.get('di')
     const di: IssueSegment = raw === 'open' || raw === 'methods' ? raw : 'all'
-    return { dv, dp: s.get('dp'), dq: s.get('dq') ?? '', dm: s.get('dm'), dtool: s.get('dtool'), di }
+    return {
+      dv, dp: s.get('dp'), dq: s.get('dq') ?? '', dm: s.get('dm'), dtool: s.get('dtool'), di,
+      targets: readTargetSelection(s.toString()),
+      tools: readToolSelection(s.toString()),
+    }
   } catch {
-    return { dv: 'home', dp: null, dq: '', dm: null, dtool: null, di: 'all' }
+    return { dv: 'home', dp: null, dq: '', dm: null, dtool: null, di: 'all', targets: null, tools: null }
   }
 }
 
-function writeParams(state: { dv: DailyView; dp: string | null; dq: string; dm: string | null; dtool: string | null; di: IssueSegment }) {
+function writeParams(state: DailyParams) {
   if (typeof window === 'undefined') return
   const p = new URLSearchParams(window.location.search)
   const setOrDrop = (name: string, value: string | null) => {
@@ -54,6 +75,9 @@ function writeParams(state: { dv: DailyView; dp: string | null; dq: string; dm: 
   setOrDrop('dm', state.dm)
   setOrDrop('dtool', state.dtool)
   setOrDrop('di', state.di === 'all' ? null : state.di)
+  // ?targets= 与 ?tools= 只在真的筛限时写；「全部」的表达方式是删掉参数，不是写空值。
+  setOrDrop(TARGETS_PARAM, encodeTargetSelection(state.targets))
+  setOrDrop(TOOLS_PARAM, encodeToolSelection(state.tools))
   const qs = p.toString()
   window.history.replaceState(null, '', window.location.pathname + (qs ? '?' + qs : ''))
 }
@@ -131,24 +155,35 @@ export function DailyApp(props: {
   const issues = useMemo(() => dailyIssueRows(snap, packsView?.packs ?? []), [snap, packsView])
   const tools = useMemo(() => dailyToolRows(snap), [snap])
 
+  // E2：监控对象显示筛选。子集从同一份快照派生，纯显示，不发任何请求、不写任何状态。
+  // 地址是唯一真源：?targets= 必须留在 App.tsx 的 URL 写回白名单里（与 dv/dp/dq/… 同一名单），
+  // 漏掉它就会在挂载与主题切换时静默丢参数（CL-12 的 surface 就是同一处已实测的先例）；
+  // targetFilter 契约测试的「共享深链」一例钉着这条属性。
+  const targetSubset = useMemo(() => selectTargets(cards, state.targets), [cards, state.targets])
+  const issueScope = useMemo(() => partitionIssuesByTargets(issues, targetSubset), [issues, targetSubset])
+  // E2 的另一维：?tools= 筛工具（适配器能力卡）这一类监控对象，与 ?targets 各自独立。
+  const toolSubset = useMemo(() => selectTools(tools, state.tools), [tools, state.tools])
+
   const filteredProjects = useMemo(() => {
     const q = state.dq.trim().toLowerCase()
-    if (!q) return cards
-    return cards.filter((c) => c.displayName.toLowerCase().includes(q) || c.projectId.toLowerCase().includes(q))
-  }, [cards, state.dq])
+    if (!q) return targetSubset.shown
+    return targetSubset.shown.filter((c) => c.displayName.toLowerCase().includes(q) || c.projectId.toLowerCase().includes(q))
+  }, [targetSubset, state.dq])
 
   const filteredIssues = useMemo(() => {
     const q = state.dq.trim().toLowerCase()
-    if (!q) return issues
-    return issues.filter((i) => i.title.toLowerCase().includes(q) || i.classLabel.toLowerCase().includes(q)
+    const rows = issueScope.shown
+    if (!q) return rows
+    return rows.filter((i) => i.title.toLowerCase().includes(q) || i.classLabel.toLowerCase().includes(q)
       || (i.projectId ?? '').toLowerCase().includes(q))
-  }, [issues, state.dq])
+  }, [issueScope, state.dq])
 
   const filteredTools = useMemo(() => {
     const q = state.dq.trim().toLowerCase()
-    if (!q) return tools
-    return tools.filter((t) => t.displayName.toLowerCase().includes(q) || t.clientId.toLowerCase().includes(q))
-  }, [tools, state.dq])
+    const rows = toolSubset.shown
+    if (!q) return rows
+    return rows.filter((t) => t.displayName.toLowerCase().includes(q) || t.clientId.toLowerCase().includes(q))
+  }, [toolSubset, state.dq])
 
   const selectedProject = useMemo(
     () => (snap?.projects ?? []).find((p) => p.projectId === state.dp) ?? null,
@@ -205,7 +240,10 @@ export function DailyApp(props: {
           <main className="min-h-0 flex-1 overflow-y-auto px-6 py-5" id="daily-content">
             {state.dv === 'home' && (
               <HomeView cards={filteredProjects} totalCount={cards.length} onOpen={openProject}
-                query={state.dq} onQuery={(v) => navigate({ dq: v })} />
+                query={state.dq} onQuery={(v) => navigate({ dq: v })}
+                subset={targetSubset}
+                onToggleTarget={(id) => navigate({ targets: toggleTargetToken(state.targets, id) })}
+                onShowAllTargets={() => navigate({ targets: null })} />
             )}
             {state.dv === 'overview' && (
               <OverviewView
@@ -220,6 +258,8 @@ export function DailyApp(props: {
               <IssuesView
                 rows={filteredIssues}
                 totalCount={issues.length}
+                scope={issueScope}
+                targetFilterActive={targetSubset.active}
                 issuesSummary={snap?.issuesSummary}
                 solutions={solutions}
                 segment={state.di}
@@ -238,7 +278,11 @@ export function DailyApp(props: {
               />
             )}
             {state.dv === 'tools' && (
-              <ToolsView tools={filteredTools} selected={selectedTool} onSelect={(id) => navigate({ dtool: id })} />
+              <ToolsView tools={filteredTools} selected={selectedTool} onSelect={(id) => navigate({ dtool: id })}
+                targetFilterActive={targetSubset.active}
+                subset={toolSubset}
+                onToggleTool={(id) => navigate({ tools: toggleToolToken(state.tools, id) })}
+                onShowAllTools={() => navigate({ tools: null })} />
             )}
             {state.dv === 'settings' && (
               <SettingsView theme={props.theme} onTheme={props.onTheme} snap={snap} />
@@ -273,15 +317,129 @@ export function DailyApp(props: {
   return shell
 }
 
+/**
+ * E2 · 监控对象显示筛选。它只做一件事：把「这一屏显示哪几个监控对象」写进 ?targets=，
+ * 从不请求侧车、从不写任何状态（Observer 严格只读）。默认不筛选＝参数缺席；
+ * 「全部」的表达方式是删参数，不是写空值——空值和缺席一旦都表示全部，
+ * 「一个都没选中」就没有诚实的写法了。
+ */
+function TargetFilter(props: {
+  subset: TargetSubset<DailyProjectCard>
+  onToggleTarget: (projectId: string) => void
+  onShowAll: () => void
+}) {
+  const s = props.subset
+  return (
+    <div role="group" aria-labelledby="daily-target-filter-label" data-testid="target-filter"
+      className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-[#303A46] bg-[#171D25] p-2">
+      <span id="daily-target-filter-label" className="min-w-0 text-xs text-[#A6B0BE]">
+        监控对象显示筛选
+      </span>
+      <button type="button" onClick={props.onShowAll} aria-pressed={!s.active}
+        data-testid="target-filter-all"
+        title="清除 ?targets=，显示全部监控对象（默认状态）"
+        className={`whitespace-nowrap rounded border px-2 py-1 text-xs ${!s.active
+          ? 'border-[#40B6C7] bg-[#1C2430] text-[#40B6C7]' : 'border-[#303A46] text-[#A6B0BE] hover:text-[#E8EDF3]'}`}>
+        全部
+      </button>
+      {s.all.map((card) => {
+        const selected = s.active && s.matchedProjectIds.includes(card.projectId)
+        const reason = !s.active
+          ? `只显示 ${card.displayName}：写入 ?targets=${card.projectId}（纯显示筛选，不改数据）`
+          : selected
+            ? `从筛选中移除 ${card.displayName}；移除最后一项即回到全部`
+            : `加入筛选：${card.displayName}`
+        return (
+          <button key={card.projectId} type="button"
+            onClick={() => props.onToggleTarget(card.projectId)} aria-pressed={selected}
+            data-testid={`target-filter-option-${card.projectId}`} title={reason}
+            className={`max-w-full truncate whitespace-nowrap rounded border px-2 py-1 text-xs ${selected
+              ? 'border-[#40B6C7] bg-[#1C2430] text-[#40B6C7]' : 'border-[#303A46] text-[#A6B0BE] hover:text-[#E8EDF3]'}`}>
+            {card.displayName}
+          </button>
+        )
+      })}
+      {s.unmatchedTokens.length > 0 && (
+        <span data-testid="target-filter-unmatched" className="min-w-0 basis-full text-xs text-amber-300">
+          地址里的 {s.unmatchedTokens.join('、')} 在本机投影中没有对应监控对象：
+          未命中的选择原样保留、不静默回退成全部，也不静默丢弃。
+        </span>
+      )}
+      <span data-testid="target-filter-scope" className="ml-auto min-w-0 text-xs text-[#A6B0BE]">
+        {projectCountSentence(s)}
+      </span>
+    </div>
+  )
+}
+
+/**
+ * E2 · 工具（软件）这一维的显示筛选，与 TargetFilter 同族同语义：只写 ?tools=，
+ * 从不请求侧车、从不写任何状态；「全部」＝删参数。它是同一个对象列表上的同一套控件，
+ * 不是第二套筛选系统：这里筛的是工具，TargetFilter 筛的是项目。
+ */
+function ToolFilter(props: {
+  subset: ToolSubset<DailyToolRow>
+  onToggleTool: (clientId: string) => void
+  onShowAll: () => void
+}) {
+  const s = props.subset
+  return (
+    <div role="group" aria-labelledby="daily-tool-filter-label" data-testid="tool-filter"
+      className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[#303A46] bg-[#171D25] p-2">
+      <span id="daily-tool-filter-label" className="min-w-0 text-xs text-[#A6B0BE]">
+        工具显示筛选
+      </span>
+      <button type="button" onClick={props.onShowAll} aria-pressed={!s.active}
+        data-testid="tool-filter-all"
+        title="清除 ?tools=，显示全部工具（默认状态）"
+        className={`whitespace-nowrap rounded border px-2 py-1 text-xs ${!s.active
+          ? 'border-[#40B6C7] bg-[#1C2430] text-[#40B6C7]' : 'border-[#303A46] text-[#A6B0BE] hover:text-[#E8EDF3]'}`}>
+        全部
+      </button>
+      {s.all.map((tool) => {
+        const selected = s.active && s.matchedClientIds.includes(tool.clientId)
+        const reason = !s.active
+          ? `只显示 ${tool.displayName}：写入 ?tools=${tool.clientId}（纯显示筛选，不改数据）`
+          : selected
+            ? `从筛选中移除 ${tool.displayName}；移除最后一项即回到全部`
+            : `加入筛选：${tool.displayName}`
+        return (
+          <button key={tool.clientId} type="button"
+            onClick={() => props.onToggleTool(tool.clientId)} aria-pressed={selected}
+            data-testid={`tool-filter-option-${tool.clientId}`} title={reason}
+            className={`whitespace-nowrap rounded border px-2 py-1 text-xs ${selected
+              ? 'border-[#40B6C7] bg-[#1C2430] text-[#40B6C7]' : 'border-[#303A46] text-[#A6B0BE] hover:text-[#E8EDF3]'}`}>
+            {tool.displayName}
+          </button>
+        )
+      })}
+      {s.unmatchedTokens.length > 0 && (
+        <span data-testid="tool-filter-unmatched" className="min-w-0 basis-full text-xs text-amber-300">
+          地址里的 {s.unmatchedTokens.join('、')} 在本机投影里没有对应的工具：
+          未命中的选择原样保留、不静默回退成全部，也不静默丢弃。
+        </span>
+      )}
+      <span data-testid="tool-filter-scope" className="ml-auto min-w-0 text-xs text-[#A6B0BE]">
+        {toolCountSentence(s)}
+      </span>
+    </div>
+  )
+}
+
 function HomeView(props: {
   cards: DailyProjectCard[]; totalCount: number; onOpen: (id: string) => void
   query: string; onQuery: (v: string) => void
+  subset: TargetSubset<DailyProjectCard>
+  onToggleTarget: (projectId: string) => void; onShowAllTargets: () => void
 }) {
+  const s = props.subset
+  const missedEverything = s.active && s.shown.length === 0 && s.unmatchedTokens.length > 0
+  const filtered = s.active && s.shown.length > 0
   return (
     <section aria-label="项目首页" data-view="m01">
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <h1 className="text-xl font-semibold">项目</h1>
-        <Chip>{props.totalCount} 个已注册项目</Chip>
+        <Chip>{projectCountSentence(s)}</Chip>
         <div className="ml-auto flex items-center gap-2">
           <span className="relative inline-flex items-center">
             <Filter size={13} aria-hidden="true" className="pointer-events-none absolute left-2.5 text-[#A6B0BE]" />
@@ -299,11 +457,20 @@ function HomeView(props: {
             icon={<Plus size={13} aria-hidden="true" />} />
         </div>
       </div>
-      {props.cards.length === 0 ? (
-        <div className={`${SURFACE} rounded-lg p-6 text-sm text-[#A6B0BE]`}>
-          {props.totalCount === 0
+      <TargetFilter subset={s}
+        onToggleTarget={props.onToggleTarget} onShowAll={props.onShowAllTargets} />
+      {missedEverything ? (
+        <div className={`${SURFACE} mt-4 rounded-lg p-6 text-sm text-[#A6B0BE]`} data-testid="home-empty-miss">
+          {targetMissSentence(s.unmatchedTokens, s.total)}
+        </div>
+      ) : props.cards.length === 0 ? (
+        <div className={`${SURFACE} rounded-lg p-6 text-sm text-[#A6B0BE]`}
+          data-testid={s.active ? 'home-empty-filtered' : 'home-empty'}>
+          {s.total === 0
             ? '快照中没有已注册项目（实测为 0，不是缺字段）。'
-            : '没有匹配当前搜索的项目。清除搜索词可恢复完整列表。'}
+            : s.active && filtered
+              ? `筛选子集里有 ${s.shown.length} 个监控对象，但检索词把它们都排除了；清除搜索或点「全部」可恢复。`
+              : '没有匹配当前搜索的项目。清除搜索词可恢复完整列表。'}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -350,8 +517,12 @@ function HomeView(props: {
           ))}
         </div>
       )}
-      <p className="mt-5 text-xs text-[#A6B0BE]">
+      <p className="mt-5 text-xs text-[#A6B0BE]" data-testid="home-caption">
         本页只投影真实快照；缺的字段保持 UNKNOWN，不用演示数据填满。
+        {s.active
+          ? `当前是 ?targets 筛选子集（显示 ${s.shown.length}／快照 ${props.totalCount} 个监控对象）：`
+            + '未显示的对象与它的问题依然存在，本页的数字不代表全机。'
+          : ''}
       </p>
     </section>
   )
@@ -502,6 +673,9 @@ function OverviewView(props: {
 function IssuesView(props: {
   rows: DailyIssueRow[]
   totalCount: number
+  /** E2：筛选子集与全机计数的分层来源 */
+  scope: IssueScope<DailyIssueRow>
+  targetFilterActive: boolean
   issuesSummary: SnapshotV3['issuesSummary']
   solutions: SolutionSearchView | null
   segment: IssueSegment
@@ -532,9 +706,10 @@ function IssuesView(props: {
         查看正在影响软件项目的问题，以及可供参考的过往解法。相似表现不等于相同根因。
       </p>
       {summary && (
-        <p className="mt-2 text-xs text-[#A6B0BE]">
+        <p className="mt-2 text-xs text-[#A6B0BE]" data-testid="issues-summary-scope">
           来源 {summary.sourcesRead} 个 · 扫描 {summary.rowsScanned} 行 · 产出 {summary.emittedCount} 条
           {summary.truncated ? ' · 已截断' : summary.complete === false ? ' · 覆盖不完整' : ''}
+          {props.targetFilterActive ? '（全机来源统计，不随 ?targets 显示筛选变化）' : ''}
         </p>
       )}
 
@@ -556,18 +731,24 @@ function IssuesView(props: {
             className="h-7 w-[212px] rounded border pl-8 pr-3 text-xs outline-none"
             style={{ borderColor: '#303A46', background: '#10141A', color: '#E8EDF3' }} />
         </span>
-        <span className="text-xs text-[#A6B0BE]">
-          共 {props.segment === 'methods' ? methods.length : visible.length} 条
-          {props.totalCount !== null ? ` · 快照产出 ${props.totalCount} 条问题` : ''}
+        <span className="text-xs text-[#A6B0BE]" data-testid="issues-count-scope">
+          {props.segment === 'methods'
+            ? `共 ${methods.length} 条方法（方案库列表不随监控对象筛限） · `
+              + (props.targetFilterActive ? `全机 ${props.scope.total}` : `快照产出 ${props.totalCount}`) + ' 条问题'
+            : issueCountSentence(props.scope, props.targetFilterActive, visible.length)}
         </span>
       </div>
 
       <ul className="mt-4 space-y-3">
         {visible.length === 0 && props.segment !== 'methods' && (
-          <li className={`${SURFACE} rounded-lg p-6 text-sm text-[#A6B0BE]`}>
-            {props.totalCount === 0
-              ? '当前没有打开的问题（实测，非推断）。'
-              : '没有匹配当前搜索的问题。'}
+          <li className={`${SURFACE} rounded-lg p-6 text-sm text-[#A6B0BE]`} data-testid="issues-empty">
+            {props.targetFilterActive && props.scope.shown.length === 0
+              ? filteredEmptyIssueSentence(props.scope)
+              : props.targetFilterActive
+                ? `筛选子集里有 ${props.scope.shown.length} 条问题，但检索词把它们都排除了；清除检索或改为「全部」可恢复。`
+                : props.totalCount === 0
+                  ? '当前没有打开的问题（实测，非推断）。'
+                  : '没有匹配当前搜索的问题。'}
           </li>
         )}
         {visible.map((issue) => {
@@ -706,12 +887,24 @@ const roleRank = (role: string) => {
   return index === -1 ? ROLE_RANK.length : index
 }
 
-function ToolsView(props: { tools: DailyToolRow[]; selected: DailyToolRow | null; onSelect: (id: string) => void }) {
+function ToolsView(props: {
+  tools: DailyToolRow[]; selected: DailyToolRow | null; onSelect: (id: string) => void
+  /** E2 的范围声明：?targets= 筛的是监控对象（项目）的显示列表，不是软件客户端。 */
+  targetFilterActive: boolean
+  /** E2 的另一维：?tools= 筛工具本身这一类监控对象（纯显示，只进地址）。 */
+  subset: ToolSubset<DailyToolRow>
+  onToggleTool: (clientId: string) => void
+  onShowAllTools: () => void
+}) {
   const quickAccess = [
     { id: 'usage', title: '使用方法', desc: '查看向该工具提供受控上下文与排查指引的建议做法' },
     { id: 'rules', title: '提示词与规则', desc: '查看推荐的交付格式模板与目录约束规则' },
     { id: 'faq', title: '常见问题', desc: '查看连接中断或排查超时时的常见处理问答' },
   ]
+  const s = props.subset
+  // 空列表有三种成因，必须分开说：投影里没有能力卡（来源缺失）、?tools 没命中任何工具、
+  // 检索词排除了子集。把第一种措辞复用给后两种，就等于把「筛掉了」谎报成「没有」。
+  const missAll = s.active && s.shown.length === 0 && s.unmatchedTokens.length > 0
   // Ordered by declared role so a router or a repository host cannot read as a coding agent, and each
   // group gets its own caption at its first row.
   const ordered = [...props.tools].sort(
@@ -725,19 +918,40 @@ function ToolsView(props: { tools: DailyToolRow[]; selected: DailyToolRow | null
             管理外部 AI 与本地开发工具的连接身份与使用辅助。分组按操作者声明的角色（agent 运行时／供应商路由／版本控制托管／设计客户端），
             未声明角色的条目单列为 UNKNOWN，不按名字猜它是哪类软件。
           </p>
+          {props.targetFilterActive && (
+            // 范围的诚实说明：不写这句，「我的工具」在筛选态会被读成「只剩这几个工具」。
+            // 两个维度各有自己的参数，这句把界限说清：?targets 管监控对象（项目），?tools 管工具。
+            <p className="mt-1 text-xs text-[#A6B0BE]" data-testid="tools-target-scope">
+              ?targets 只限监控对象（项目）的显示子集，不改本页的工具列表，
+              也不改下方「关联项目」的全量口径；工具这一维另有 ?tools= 显示筛选。
+            </p>
+          )}
         </div>
         <DisabledAction label="检测环境工具" reason="观察者只读：不发起探测运行" />
         <DisabledAction label="登记新工具" reason="观察者只读：登记由项目侧完成" />
       </div>
+      <ToolFilter subset={props.subset} onToggleTool={props.onToggleTool} onShowAll={props.onShowAllTools} />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
         <div className={`${SURFACE} rounded-lg p-3`}>
-          <div className="mb-2 flex items-center justify-between px-1 text-xs uppercase tracking-wider text-[#A6B0BE]">
-            <span>已登记工具</span><span>FILTER: ALL</span>
+          <div className="mb-2 flex items-center justify-between gap-2 px-1 text-xs uppercase tracking-wider text-[#A6B0BE]">
+            <span>已登记工具</span>
+            {/* 原来这里是一行写死的「FILTER: ALL」占位：它既不是控件也不是事实，筛限时更会读成「没在筛」。
+                换成与 ?tools 一致的实测计数（normal-case 保留参数名的原样拼写）。 */}
+            <span className="normal-case tracking-normal" data-testid="tools-list-scope">
+              {toolCountSentence(props.subset)}
+            </span>
           </div>
           <ul className="space-y-2" aria-label="工具列表">
             {props.tools.length === 0 && (
-              <li className="p-4 text-xs text-[#A6B0BE]">
-                快照未携带适配器能力卡（来源缺失，不是 0 个工具）。
+              <li className="p-4 text-xs text-[#A6B0BE]"
+                data-testid={missAll ? 'tools-empty-miss' : 'tools-empty'}>
+                {s.total === 0
+                  ? '快照未携带适配器能力卡（来源缺失，不是 0 个工具）。'
+                  : missAll
+                    ? toolMissSentence(s.unmatchedTokens, s.total)
+                    : s.active
+                      ? `筛选子集里有 ${s.shown.length} 个工具，但检索词把它们都排除了；清除检索或点「全部」可恢复。`
+                      : '没有匹配当前搜索的工具。清除搜索词可恢复完整列表（快照仍带着这些能力卡）。'}
               </li>
             )}
             {ordered.map((tool, index) => {
@@ -882,13 +1096,20 @@ function SettingsView(props: { theme: string; onTheme: (t: 'dark' | 'light') => 
       <h1 className="text-xl font-semibold">设置</h1>
       <div className={`${SURFACE} mt-4 rounded-lg p-5`}>
         <h2 className="text-sm font-semibold">外观</h2>
-        <div className="mt-3 flex items-center gap-3 text-sm">
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
           <span>主题</span>
           <button type="button" onClick={() => props.onTheme(props.theme === 'dark' ? 'light' : 'dark')}
+            data-testid="daily-theme-toggle" data-theme-param={props.theme}
+            aria-describedby={THEME_HONESTY_ID_DAILY}
+            title="只改地址参数 ?theme=；这一屏暂时不随之换色（专业投影壳才实际生效）"
             className="rounded border border-[#303A46] px-3 py-1 text-[#40B6C7]">
-            {props.theme === 'dark' ? '深色（当前）' : '浅色（当前）'}
+            {props.theme === 'dark' ? '页面主题：深色（当前地址值）' : '页面主题：浅色（当前地址值）'}
           </button>
         </div>
+        {/* E1：控件继续工作（?theme= 确实写进 html.class，专业投影壳跟着换），
+            但本视图的配色写死，所以这里如实说明「这一屏暂时不跟着变」，
+            既不假装换色，也不把整个产品说成只有深色。令牌单源见 WUI-03。 */}
+        <ThemeHonestyNote id={THEME_HONESTY_ID_DAILY} surface="daily" />
       </div>
       <div className={`${SURFACE} mt-4 rounded-lg p-5`}>
         <h2 className="text-sm font-semibold">高级与专业视图</h2>

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import importlib.util
 import json
@@ -222,55 +223,285 @@ def governance_test_files() -> list[str]:
 
 
 def mandatory_discovery_modules() -> list[str]:
-    """Importable module stems for the mandatory discovery set (P0-05).
+    """Member ids for the mandatory set (P0-05), one per discovered file, routed by AST.
 
-    `unittest discover` resolves `nf*` modules by name only; module-style
-    (plain assert, no unittest.TestCase) files are executed as a module and
-    are NOT importable as dotted test names. For those, run the file as a
-    script (it self-executes via `if __name__ == "__main__"`). The runner
-    therefore returns dotted stems for unittest modules and file paths for
-    module-style files; `_run_governance_batch` mixes both.
+    A unittest member is addressed by its importable module stem (that is what `-m unittest` takes); a
+    pytest member and a check script are addressed by their repository-relative path (what `-m pytest` and
+    `python <file>` take). The id shape is only the addressing convention: `_run_governance_batch`
+    re-derives the route from the syntax tree, so an id can never smuggle a module into the wrong runner.
     """
     members: list[str] = []
     for path in governance_test_files():
         full = ROOT / path
-        stem = Path(path).stem
-        module_style = not full.read_text(encoding="utf-8").find("unittest") >= 0
-        if module_style:
-            members.append(path)  # script-style execution
-        else:
-            members.append(stem)
+        members.append(Path(path).stem if governance_member_kind(full) == "unittest" else path)
     return members
 
 
-def _run_governance_batch(members: list[str]) -> tuple[int, str]:
-    """Run the mandatory test modules as one fail-closed batch.
+class MemberOutcome(NamedTuple):
+    """What one discovered member really executed.
 
-    Returns (process exit code, combined stdout+stderr). Members that are
-    dotted module names run through `python -m unittest`; members that are
-    repository-relative file paths (module-style `nf*` files without
-    unittest.TestCase) run as standalone scripts. A failing script fails the
-    whole batch: hollow or not-run outcomes are detectable and fail closed.
+    `collected` is what the framework found, `ran` what it started, `skipped` what it declined, `executed`
+    the cases that reached a verdict. A member with `executed == 0` contributed nothing to coverage, and
+    the batch now treats that as failure rather than as a smaller green number.
     """
+
+    kind: str
+    collected: int
+    ran: int
+    skipped: int
+    executed: int
+    exit_code: int
+
+
+GOVERNANCE_TEST_ROOT = ROOT / "tests" / "workflow-assistance"
+_VENDOR_TEST_BASES = frozenset({"TestCase", "IsolatedAsyncioTestCase"})
+
+# NF31 (2026-10-26): the classifier this replaces asked whether the literal text `unittest` appeared
+# anywhere in the file. That is not a fact about test frameworks, it is a fact about substrings, and both
+# directions of the error were live on the tree:
+#   * `test_snapshot_v3_schema_is_the_single_shape_authority.py` is a pytest module (17 bare `def test_*`)
+#     that mentions `unittest` inside a comment, so it went to `python -m unittest` and printed
+#     `Ran 0 tests / OK / rc=0`;
+#   * nine genuine pytest modules went to `python <file>`, imported cleanly, printed nothing and exited 0.
+# Ten members, 78 cases that had never been executed by anything, and a batch that printed PASS because
+# its only evidence was one shared `Ran N` banner plus a returncode. A returncode says a process did not
+# crash; it says nothing about whether a test ran.
+
+
+def _ast_base_names(expression: ast.expr) -> list[str]:
+    """Class names a base expression can denote, resolved textually (the module is never imported here)."""
+    if isinstance(expression, ast.Attribute):
+        return [expression.attr]
+    if isinstance(expression, ast.Name):
+        return [expression.id]
+    if isinstance(expression, ast.Subscript):  # `TestCase[Some]`-style generic bases
+        return _ast_base_names(expression.value)
+    if isinstance(expression, ast.Call):  # vendor factories such as `parametrize(...)` bases
+        return _ast_base_names(expression.func)
+    return []
+
+
+def governance_member_kind(path: Path) -> str:
+    """`unittest` | `pytest` | `script`, from the syntax tree rather than from a substring.
+
+    pytest iff the file declares module-level `def test_*` functions; unittest iff it owns a
+    `unittest.TestCase` subclass. A file with BOTH goes to pytest: pytest collects TestCase subclasses as
+    well as bare functions, while `python -m unittest` silently drops the functions -- routing the mixed
+    shape to unittest is precisely how cases become invisible. A file with neither is a self-executing
+    check script and must prove it ran by printing (see `_run_governance_batch`).
+    """
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    except (OSError, SyntaxError, UnicodeDecodeError):
+        # Unparseable does NOT mean "carries no tests". Send it to the script route and let the child's
+        # own traceback convict it: a SyntaxError exits non-zero, which fails the batch.
+        return "script"
+    module_tests = [
+        node for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test")
+    ]
+    classes = [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+    case_classes = {
+        node.name for node in classes
+        if any(base in _VENDOR_TEST_BASES for base in _all_bases(node))
+    }
+    # A mixin (`class _Guard(unittest.TestCase)` + `class TestThing(_Guard)`) is still a TestCase subclass;
+    # judging only the literal base name would call nf08-style modules pytest and lose every one of them.
+    changed = True
+    while changed:
+        changed = False
+        for node in classes:
+            if node.name in case_classes:
+                continue
+            if any(base in case_classes for base in _all_bases(node)):
+                case_classes.add(node.name)
+                changed = True
+    if module_tests:
+        return "pytest"
+    return "unittest" if case_classes else "script"
+
+
+def _all_bases(node: ast.ClassDef) -> list[str]:
+    names: list[str] = []
+    for base in node.bases:
+        names.extend(_ast_base_names(base))
+    return names
+
+
+def governance_member_path(member: str) -> Path:
+    """The file behind a member id: stems live in the mandatory test root, paths are repo-relative."""
+    if member.endswith(".py"):
+        return ROOT / Path(member)
+    return GOVERNANCE_TEST_ROOT / f"{member}.py"
+
+
+def governance_member_route(member: str) -> str:
+    """The route for a member id, re-derived from disk (never trusted from the id's shape)."""
+    path = governance_member_path(member)
+    if not path.is_file():
+        # An id with no file behind it keeps the unittest route, where the child fails loudly
+        # (`ModuleNotFoundError`), instead of being reclassified into a script that exits 0 having done
+        # nothing. This is also the shape a mocked batch takes.
+        return "unittest"
+    return governance_member_kind(path)
+
+
+# One started test per match. unittest prints `<method> (<module>.<Class>.<method>) ... ok`, and when the
+# method has a docstring the description spans two lines so the `... <outcome>` tail lands on the FOLLOWING
+# line -- counting case-start lines (never outcome lines) is the only shape that neither loses a test with
+# a docstring nor double-counts the traceback's `FAIL: <method> (<path>)` header.
+GOVERNANCE_CASE_START = re.compile(
+    r"^(?P<case>[^\s]+) \((?P<path>[^()]*)\)(?: \[[^\]]*\])?(?P<tail>.*)$", re.MULTILINE
+)
+GOVERNANCE_CASE_OUTCOME = re.compile(r"\.\.\.\s+(ok|FAIL|ERROR|skipped)")
+GOVERNANCE_RAN_BANNER = re.compile(r"^Ran (\d+) tests? in", re.MULTILINE)
+
+
+def _unittest_member_outcomes(
+    members: list[str], output: str, exit_code: int
+) -> dict[str, MemberOutcome]:
+    """Per-module attribution of ONE batched `python -m unittest -v` run.
+
+    Attribution is by the leading module component of the case id, because that component is exactly the
+    stem the batch passed on the command line. An import that blew up is reported against
+    `unittest.loader._FailedTest.<target>`, whose first component is the loader, not the member -- handled
+    separately so a broken module is attributed instead of vanishing.
+    """
+    known = set(members)
+    counters: dict[str, list[int]] = {member: [0, 0] for member in members}
+    for match in GOVERNANCE_CASE_START.finditer(output):
+        dotted = match.group("path")
+        if "." not in dotted:
+            continue  # the summary line `OK (skipped=3)` is not a case
+        components = dotted.split(".")
+        member = components[0]
+        if member not in known:
+            if not dotted.startswith("unittest.loader._FailedTest."):
+                continue
+            member = next((part for part in components[3:] if part in known), "")
+            if not member:
+                continue
+        counters[member][0] += 1
+        window = match.group("tail") + "\n" + output[match.end():match.end() + 300]
+        outcome = GOVERNANCE_CASE_OUTCOME.search(window)
+        if outcome and outcome.group(1) == "skipped":
+            counters[member][1] += 1
+    outcomes: dict[str, MemberOutcome] = {}
+    for member in members:
+        ran, skipped = counters[member]
+        outcomes[member] = MemberOutcome("unittest", ran, ran, skipped, ran - skipped, exit_code)
+    return outcomes
+
+
+PYTEST_STATE_COUNTS = re.compile(r"(?P<count>\d+) (?P<state>passed|failed|errors?|error|skipped|xfailed|xpassed|deselected)")
+PYTEST_COLLECTED_LINE = re.compile(r"(?P<count>\d+) tests? collected")
+
+
+def _pytest_counts(summary: str) -> dict[str, int]:
+    """`{"passed": 17, "skipped": 1, ...}` from pytest's own summary line."""
+    counts: dict[str, int] = {}
+    for match in PYTEST_STATE_COUNTS.finditer(summary):
+        state = match.group("state").rstrip("s")
+        counts[state] = counts.get(state, 0) + int(match.group("count"))
+    return counts
+
+
+def _pytest_summary_line(output: str) -> str:
+    """The last line that states counts -- pytest's terminal short summary.
+
+    Scanned from the bottom because a failure report repeats the word `passed` inside assertion text, and
+    reading an arbitrary line would invent cases.
+    """
+    for line in reversed(output.splitlines()):
+        stripped = line.strip().strip("=").strip()
+        if not stripped:
+            continue
+        if PYTEST_STATE_COUNTS.search(stripped) or "no tests ran" in stripped or "collected" in stripped:
+            return stripped
+    return ""
+
+
+def _pytest_member_output(output: str, exit_code: int, collected: int) -> MemberOutcome:
+    counts = _pytest_counts(_pytest_summary_line(output))
+    verdicts = sum(counts.get(state, 0) for state in ("passed", "failed", "xfailed", "xpassed"))
+    # pytest states collection/fixture blow-ups as `errors`, and an error is not a case that reached a
+    # verdict: a module that explodes on import reports `1 error` while executing zero tests. Counting it
+    # as execution would let the collection-error shape back into the hole this closes.
+    ran = verdicts + counts.get("skipped", 0) + counts.get("error", 0)
+    skipped = counts.get("skipped", 0)
+    return MemberOutcome("pytest", collected, ran, skipped, verdicts, exit_code)
+
+
+def _script_member_output(stdout_and_stderr: str, exit_code: int) -> MemberOutcome:
+    """Evidence for a member that owns no test framework at all.
+
+    It has no per-case granularity, so its unit of evidence is one self-reported verdict run -- and the only
+    proof it produced a verdict is that it PRINTED. Measured 2026-10-26: nine of the ten silently-green
+    members printed absolutely nothing and exited 0. Silence is zero, and zero is a failure.
+    """
+    spoke = 1 if stdout_and_stderr.strip() else 0
+    return MemberOutcome("script", spoke, spoke, 0, spoke, exit_code)
+
+
+def governance_hollow_members(members: list[str], outcomes: dict[str, MemberOutcome]) -> list[str]:
+    """`ZERO_EXECUTED <member>` for every discovered member that ran nothing.
+
+    A member missing from `outcomes` counts as hollow: the accounting, not the returncode, is the evidence,
+    so an unwritten row can never be read as a pass.
+    """
+    hollow = []
+    for member in members:
+        outcome = outcomes.get(member)
+        if outcome is None or outcome.executed <= 0:
+            hollow.append(f"ZERO_EXECUTED {member}")
+    return hollow
+
+
+def _governance_batch_env() -> dict[str, str]:
     pythonpath = MODULE_PYTHONPATH
     existing = os.environ.get("PYTHONPATH")
     if existing:
         pythonpath += os.pathsep + existing
     env = project_runtime_environment(ROOT)
     env["PYTHONPATH"] = pythonpath
+    return env
+
+
+def _run_governance_batch(
+    members: list[str],
+) -> tuple[int, str, dict[str, MemberOutcome]]:
+    """Run the mandatory members as one fail-closed batch and ACCOUNT FOR EVERY ONE OF THEM.
+
+    Returns (process exit code, combined stdout+stderr, per-member outcomes). Three routes, chosen by
+    `governance_member_kind`: unittest members share one `-m unittest -v` process (unchanged, and their
+    per-member counts are attributed from the verbose case lines); pytest members each get
+    `-m pytest -q --collect-only` then `-m pytest -q -rs`, because a summary line can only be read per
+    module if the module is run alone; check scripts keep `python <file>`.
+
+    Per-member accounting exists because a shared banner is not coverage: one `Ran N` for 250 modules lets
+    ten empty modules hide inside a big number, and a returncode only proves no process crashed.
+    """
+    env = _governance_batch_env()
     # Both ends pinned: mandatory modules print Chinese in failure text, and a `text=True` pipe with no
     # encoding decodes with the host locale. On this machine that is cp936, so a UTF-8 byte sequence
     # killed subprocess's own reader thread, `communicate()` returned None for that stream, and the
     # concatenation below raised TypeError -- which destroyed the whole gate receipt while CI (UTF-8
     # locale) could never show it. See ERR-211.
     env["PYTHONIOENCODING"] = "utf-8"
-    unittest_modules = [member for member in members if not (ROOT / member).is_file()]
-    script_files = [member for member in members if (ROOT / member).is_file()]
+    routes = {member: governance_member_route(member) for member in members}
+    outcomes: dict[str, MemberOutcome] = {}
     combined: list[str] = []
     overall = 0
-    if unittest_modules:
+
+    def absorb(code: int) -> None:
+        nonlocal overall
+        if code != 0 and overall == 0:
+            overall = code
+
+    unittest_members = [member for member in members if routes[member] == "unittest"]
+    if unittest_members:
         result = subprocess.run(
-            [sys.executable, "-m", "unittest", "-v", *unittest_modules],
+            [sys.executable, "-m", "unittest", "-v", *unittest_members],
             cwd=ROOT,
             env=env,
             text=True,
@@ -278,11 +509,16 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
             errors="replace",
             capture_output=True,
         )
-        overall = result.returncode
-        combined.append(result.stdout + result.stderr)
-    for script in script_files:
-        result = subprocess.run(
-            [sys.executable, script],
+        output = result.stdout + result.stderr
+        combined.append(output)
+        absorb(result.returncode)
+        outcomes.update(_unittest_member_outcomes(unittest_members, output, result.returncode))
+
+    for member in members:
+        if routes[member] != "pytest":
+            continue
+        collected_run = subprocess.run(
+            [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--collect-only", member],
             cwd=ROOT,
             env=env,
             text=True,
@@ -290,10 +526,46 @@ def _run_governance_batch(members: list[str]) -> tuple[int, str]:
             errors="replace",
             capture_output=True,
         )
-        if result.returncode != 0 and overall == 0:
-            overall = result.returncode
-        combined.append(result.stdout + result.stderr)
-    return overall, "\n".join(combined)
+        run = subprocess.run(
+            [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rs", member],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+        )
+        collected_match = PYTEST_COLLECTED_LINE.search(collected_run.stdout + collected_run.stderr)
+        collected = int(collected_match.group("count")) if collected_match else 0
+        output = (
+            f"--- pytest --collect-only {member} ---\n"
+            f"{collected_run.stdout}{collected_run.stderr}\n"
+            f"--- pytest {member} (rc={run.returncode}) ---\n"
+            f"{run.stdout}{run.stderr}"
+        )
+        combined.append(output)
+        # A collection error (rc=2) is a real failure even when the run itself reports nothing.
+        absorb(run.returncode or collected_run.returncode)
+        outcomes[member] = _pytest_member_output(run.stdout + run.stderr, run.returncode, collected)
+
+    for member in members:
+        if routes[member] != "script":
+            continue
+        result = subprocess.run(
+            [sys.executable, member],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+        )
+        output = result.stdout + result.stderr
+        combined.append(output)
+        absorb(result.returncode)
+        outcomes[member] = _script_member_output(output, result.returncode)
+
+    return overall, "\n".join(combined), outcomes
 
 
 def _git_head_identity() -> tuple[str, str]:
@@ -325,13 +597,20 @@ def _redact_governance_text(text: str) -> str:
 
 
 def _governance_failure_markers(output: str) -> list[str]:
-    """Which test/command failed — bounded, deduped, so a batch failure is diagnosable."""
+    """Which test/command failed — bounded, deduped, so a batch failure is diagnosable.
+
+    Both runners are covered now that the batch has two: unittest writes `FAIL: <case> (<path>)`, pytest
+    writes `FAILED <file>::<test> - <reason>`. A pytest failure that produces no marker is a red the reader
+    cannot act on, which is the same class of blindness as a silent member.
+    """
     markers: list[str] = []
     for line in output.splitlines():
         s = line.strip()
         if (
             s.startswith("FAIL: ")
             or s.startswith("ERROR: ")
+            or re.match(r"^FAILED \S+::", s)
+            or re.match(r"^ERROR \S+::", s)
             or re.match(r"^FAILED \((?:failures|errors)=", s)
             or "AssertionError" in s
             or "ModuleNotFoundError" in s
@@ -363,13 +642,18 @@ def record_stage_chain(**fields: object) -> None:
     STAGE_CHAIN.setdefault(CURRENT_GATE, {}).update(fields)
 
 
-def _report_governance_failure(members: list[str], exit_code: int, output: str) -> None:
+def _report_governance_failure(
+    members: list[str], exit_code: int, output: str, hollow: list[str] | None = None
+) -> None:
     """A3: make a governance-batch failure diagnosable without leaking secrets.
 
     Surfaces (1) the failing test/command names, (2) a bounded redacted error
     summary, (3) where the full redacted log was written, (4) the actual exit
     code, and (5) the commit/tree under test. The full environment is never
     dumped and credential-like values are redacted.
+
+    NF31 adds (6) the members that executed nothing: a batch can go red both because a case failed and
+    because a module stopped contributing cases, and only the second explains a shrinking `executed=`.
     """
     commit, tree = _git_head_identity()
     log_dir = ROOT / ".project-local" / "runs"
@@ -381,12 +665,15 @@ def _report_governance_failure(members: list[str], exit_code: int, output: str) 
     except Exception:
         log_rel = "(could not write log)"
     markers = _governance_failure_markers(output)
+    hollow = hollow or []
     # W11: the failing members ARE the triage answer; record them instead of leaving them in the log only.
     record_stage_chain(exit=exit_code, member_count=len(members),
-                       failing_members=markers, full_log=log_rel)
+                       failing_members=markers, full_log=log_rel, zero_executed=hollow[:40])
     print(f"QUALITY_GATE_GOVERNANCE_FAIL exit={exit_code}")
     print(f"  failing_members=[{'; '.join(markers) if markers else 'unknown-see-log'}]")
     print(f"  modules_run={len(members)}")
+    if hollow:
+        print(f"  zero_executed={len(hollow)} [{'; '.join(hollow[:20])}]")
     print(f"  head_commit={commit} head_tree={tree}")
     print(f"  full_log={log_rel}")
     for line in _redact_governance_text(output).splitlines()[-25:]:
@@ -394,6 +681,11 @@ def _report_governance_failure(members: list[str], exit_code: int, output: str) 
 
 
 GOVERNANCE_SKIP_LINE = re.compile(r"^(?P<case>.*?) \.\.\. skipped (?P<reason>.+)$", re.MULTILINE)
+# pytest states a skip on its own line (`-rs`), not in the unittest verbose shape, so a batch that now runs
+# pytest modules on their own route would otherwise count skips it could not name.
+GOVERNANCE_PYTEST_SKIP_LINE = re.compile(
+    r"^SKIPPED(?: \[\d+\])? (?P<case>[^\n:]+:\d+): (?P<reason>.+)$", re.MULTILINE
+)
 
 
 def governance_skip_identities(output: str) -> list[tuple[str, str]]:
@@ -407,6 +699,8 @@ def governance_skip_identities(output: str) -> list[tuple[str, str]]:
     for match in GOVERNANCE_SKIP_LINE.finditer(output):
         case = match.group("case").strip().split("\n")[-1].strip()
         found.append((case or "<unnamed-case>", match.group("reason").strip()))
+    for match in GOVERNANCE_PYTEST_SKIP_LINE.finditer(output):
+        found.append((match.group("case").strip(), match.group("reason").strip()))
     return found
 
 
@@ -422,15 +716,21 @@ def _governance_skip_truth(execution: str, identities: list[tuple[str, str]]) ->
 
 
 def _governance_execution_truth(output: str, has_unittest: bool) -> tuple[bool, str]:
-    """C4: required tests ACTUALLY ran, per the tool's real semantics.
+    """C4: describe what the shared unittest banner says. Since NF31 this is NOT the batch verdict.
 
     A ``Ran N tests`` banner with N == 0, or all N skipped, is NOT execution.
     The old single-regex check (``^Ran \\d+ tests?``) matched ``Ran 0 tests``
     and reported a hollow batch as executed; every hollow outcome here fails
     closed with a named state: not-run / zero-tests / all-skipped.
+
+    The `has_unittest == False` branch used to be how an all-script batch PASSED: it answered "yes,
+    executed" from nothing but a returncode, which is exactly how ten silently-green modules stayed green.
+    `gate_governance` no longer consults this function for the verdict -- per-member accounting decides --
+    and the branch only keeps its shape because `test_recovery_materials_gates.py` pins this helper's
+    contract. It is a description, never a pass.
     """
     if not has_unittest:
-        return True, "script-only-batch(all-exit-0)"
+        return True, "script-only-batch(descriptive only: per-member ZERO_EXECUTED accounting decides)"
     m = re.search(r"^Ran (\d+) tests? in", output, flags=re.MULTILINE)
     if not m:
         return False, "not-run (no unittest execution banner found)"
@@ -446,13 +746,18 @@ def _governance_execution_truth(output: str, has_unittest: bool) -> tuple[bool, 
 
 
 def gate_governance() -> int:
-    """P0-05 + C4: run the mandatory tests, fail-closed on any hollow outcome.
+    """P0-05 + C4 + NF31: run the mandatory tests, fail-closed on any hollow outcome.
 
-    missing        != PASS  (empty mandatory set is a red flag, not a clean pass)
-    not-run        != PASS  (clean exit but no execution banner)
-    zero-tests     != PASS  (C4: ``Ran 0 tests`` is a hollow outcome)
-    all-skipped    != PASS  (C4: skips are not executions)
-    cancelled/failed != PASS (non-zero batch exit; subcommand failures presented)
+    missing          != PASS  (empty mandatory set is a red flag, not a clean pass)
+    ZERO_EXECUTED    != PASS  (NF31: a member that executed nothing fails the batch by name)
+    attribution gap  != PASS  (NF31: cases the shared banner ran but no member can account for)
+    not-run          != PASS  (clean exit but no execution banner)
+    zero-tests       != PASS  (C4: ``Ran 0 tests`` is a hollow outcome)
+    all-skipped      != PASS  (C4: skips are not executions)
+    cancelled/failed != PASS  (non-zero batch exit; subcommand failures presented)
+
+    The verdict is the per-member accounting, not `_governance_execution_truth`: one banner over 250
+    modules is a sum, and a sum cannot tell a contributor that ran from a contributor that printed nothing.
     """
     members = mandatory_discovery_modules()
     # W11: the batch's subcommands are its member modules; the test ids come from the failure markers above.
@@ -460,15 +765,36 @@ def gate_governance() -> int:
     if not members:
         print("QUALITY_GATE_GOVERNANCE_FAIL empty-mandatory-set")
         return 1
-    exit_code, output = _run_governance_batch(members)
-    has_unittest = any(not (ROOT / m).is_file() for m in members)
-    executed_ok, execution = _governance_execution_truth(output, has_unittest)
-    if not executed_ok:
-        print(f"QUALITY_GATE_GOVERNANCE_FAIL {execution}")
-        return 1
+    exit_code, output, outcomes = _run_governance_batch(members)
+    hollow = governance_hollow_members(members, outcomes)
+    record_stage_chain(
+        collected=sum(o.collected for o in outcomes.values()),
+        executed=sum(o.executed for o in outcomes.values()),
+        zero_executed=len(hollow),
+        zero_executed_members=hollow[:40],
+    )
     if exit_code != 0:
-        _report_governance_failure(members, exit_code, output)
+        _report_governance_failure(members, exit_code, output, hollow)
         return exit_code
+    if hollow:
+        print(f"QUALITY_GATE_GOVERNANCE_FAIL {'; '.join(hollow[:20])}"
+              f"{'' if len(hollow) <= 20 else ' ...'} (hollow={len(hollow)} of modules={len(members)}: "
+              f"a member that executed zero tests is not coverage)")
+        return 1
+    unittest_ran = sum(o.ran for o in outcomes.values() if o.kind == "unittest")
+    banner = GOVERNANCE_RAN_BANNER.search(output)
+    if banner and int(banner.group(1)) != unittest_ran:
+        print(f"QUALITY_GATE_GOVERNANCE_FAIL ATTRIBUTION_GAP banner_ran={banner.group(1)} "
+              f"attributed={unittest_ran} — the batch ran cases no member can account for, so the "
+              f"per-module numbers below are not trustworthy")
+        return 1
+    ran = sum(o.ran for o in outcomes.values())
+    skipped = sum(o.skipped for o in outcomes.values())
+    executed = sum(o.executed for o in outcomes.values())
+    execution = f"executed={executed} ran={ran} skipped={skipped}"
+    if executed <= 0:
+        print(f"QUALITY_GATE_GOVERNANCE_FAIL zero-tests ({execution}: required tests did not execute)")
+        return 1
     identities = governance_skip_identities(output)
     reported, agrees = _governance_skip_truth(execution, identities)
     if not agrees:
@@ -476,7 +802,17 @@ def gate_governance() -> int:
               f"named={len(identities)} — a skip that cannot be named is indistinguishable from a "
               f"check that stopped being collected")
         return 1
+    # The route tally comes from the accounting rows, not from re-classifying the disk a second time: the
+    # number that matters is how each member was ACTUALLY run, which is what produced these counts.
+    by_route = {
+        kind: sum(1 for outcome in outcomes.values() if outcome.kind == kind)
+        for kind in ("unittest", "pytest", "script")
+    }
     print(f"QUALITY_GATE_GOVERNANCE_PASS modules={len(members)} {execution}")
+    print(f"GOVERNANCE_ROUTES unittest={by_route['unittest']} pytest={by_route['pytest']} "
+          f"script={by_route['script']} "
+          f"pytest_executed={sum(o.executed for o in outcomes.values() if o.kind == 'pytest')}")
+
     if reported:
         by_reason: dict[str, int] = {}
         for _, reason in identities:
@@ -486,6 +822,7 @@ def gate_governance() -> int:
             cases = ", ".join(sorted(c for c, r in identities if r == reason)[:4])
             print(f"  SKIPPED x{count} {reason} :: {cases}")
     return 0
+
 
 
 def gate_compile() -> int:

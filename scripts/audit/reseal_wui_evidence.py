@@ -73,7 +73,11 @@ STEPS = [
     ("sse-revision", ["scripts/audit/sse_revision_via_cdp.py"], 0),
     ("sse-falsification", ["scripts/audit/sse_revision_via_cdp.py", "--revisions", "7,9,10",
                            "--json-out", str(ARTIFACTS / "sse-revision-falsify.json")], 1),
-    ("seal", ["scripts/audit/seal_wui_evidence.py", "--write"], 0),
+    # The seal is told which set to seal instead of inheriting a default: the receipt directory is a
+    # location this script owns, while the seal's identity comes from the bytes and the commit it just
+    # measured (see seal_wui_evidence.py).
+    ("seal", ["scripts/audit/seal_wui_evidence.py", "--write",
+              "--artifacts-dir", str(ARTIFACTS)], 0),
 ]
 
 
