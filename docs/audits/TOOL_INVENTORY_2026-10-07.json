@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-26T13:46:03Z",
+  "generatedAt": "2026-10-26T14:01:19Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -258,9 +258,9 @@
     },
     {
       "path": "scripts/audit/desktop_capability_probe.py",
-      "sha256": "411e192fbb004db8deae1f7492665ecd2529a0a169020a86811930711bddde15",
-      "bytes": 12227,
-      "lines": 250,
+      "sha256": "536381cd8d6b2d4a38601800a3989e7a7d5ced7fef81a88f4bfb694dd4eae616",
+      "bytes": 14911,
+      "lines": 300,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 7,
