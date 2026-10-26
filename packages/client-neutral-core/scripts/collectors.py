@@ -89,10 +89,48 @@ def _is_link(path: Path) -> bool:
     return bool(getattr(info, "st_file_attributes", 0) & reparse)
 
 
+def _walk_confined(search_root: Path, root_resolved: Path) -> tuple[list[Path], list[Path]]:
+    """Files reachable inside the root, plus the directory links that escape it -- at most one entry each.
+
+    `rglob("*")` follows every directory link, so one planted escape was counted once per file behind it
+    and the total came out platform-dependent: the same fixture that produced one refusal here produced a
+    different count on a POSIX runner, which is what turned CI red over a locally green run. The walk is
+    explicit now. A link resolving INSIDE the root is traversed -- its files are still read and still
+    cited by where the bytes really live -- and a link resolving OUTSIDE is reported once, undescended.
+    """
+    files: list[Path] = []
+    escapes: list[Path] = []
+    stack = [search_root]
+    visited = {str(root_resolved)}
+    while stack:
+        current = stack.pop()
+        try:
+            entries = sorted(os.scandir(current), key=lambda e: e.name)
+        except OSError:
+            continue
+        for entry in entries:
+            path = Path(entry.path)
+            if _is_link(path):
+                resolved = _resolved_path(path)
+                if not resolved.is_relative_to(root_resolved):
+                    escapes.append(path)
+                elif resolved.is_dir():
+                    if str(resolved) not in visited:
+                        visited.add(str(resolved))
+                        stack.append(path)
+                elif resolved.is_file():
+                    files.append(path)
+                continue
+            if entry.is_dir(follow_symlinks=False):
+                stack.append(path)
+            elif entry.is_file(follow_symlinks=False):
+                files.append(path)
+    return files, escapes
+
+
 @dataclass(frozen=True)
 class _ConfinedRead:
     """Outcome of one guarded read: either text plus the location it truly came from, or a named refusal."""
-
     text: str | None = None
     resolved: Path | None = None
     reason: str | None = None
@@ -221,16 +259,27 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
     bodies are rejected by the store. Files are found only inside the project
     runtime root, never by scanning user profile paths.
 
-    The root is a *containment* boundary, not just a search prefix: `rglob("*")` on 3.11 walks through a
-    directory link, and `is_file()` follows it, so a junction planted in the root would otherwise hand back
-    bytes that live outside it while the record cited an in-root name.
+    The root is a *containment* boundary, not just a search prefix: a directory link planted in the root
+    would otherwise hand back bytes that live outside it while the record cited an in-root name.
+    `_walk_confined` is what enforces that, and it counts an escape once instead of once per file behind
+    it -- the per-file count was platform-dependent and made the same fixture disagree between runners.
     """
     records: list[dict[str, Any]] = []
     refusals: dict[str, int] = {}
     samples: dict[str, str] = {}
     if search_root.is_dir():
         root_resolved = _resolved_path(search_root)
-        for candidate in sorted(search_root.rglob("*")):
+        found, escaped_links = _walk_confined(search_root, root_resolved)
+        for escaped in sorted(escaped_links):
+            try:
+                escaped_ref = escaped.relative_to(search_root).as_posix()
+            except ValueError:
+                escaped_ref = escaped.name
+            # One escape, one count. The locator is the in-root name: a refusal sample rides into the
+            # sidecar snapshot, and the outside target it points at is never written out.
+            _note_refusal(refusals, samples, "symlink_outside_root",
+                          f"{escaped_ref}: directory link escapes the search root")
+        for candidate in sorted(found):
             if not candidate.is_file():
                 continue
             if not TOKEN_FILE_NAME_RE.match(candidate.name):

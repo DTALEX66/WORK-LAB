@@ -424,6 +424,24 @@ class SearchRootContainmentTests(unittest.TestCase):
         self.assertEqual(1, result.refusals.get("symlink_candidate_refused"),
                          f"refusals: {result.refusals}")
 
+    def test_one_escape_is_counted_once_however_many_files_hang_behind_it(self) -> None:
+        """The refusal counts escapes, not the files reached through them -- so it agrees on every platform.
+
+        This is the shape that made CI disagree with every local run: the enumeration descended into the
+        link, so the total scaled with the number of files behind it and differed between a POSIX symlink
+        and a Windows junction. A count that depends on the walker's platform cannot be evidence about the
+        fixture at all.
+        """
+        for name in ("other_usage.jsonl", "third_usage.jsonl"):
+            (self.outside / name).write_text(self.LINE + "\n", encoding="utf-8")
+        link = self._plant_link_to(self.outside)
+        self.assertEqual(3, len(list(link.glob("*.jsonl"))),
+                         "the linked directory itself must hold three readable files for this to mean anything")
+        result = collect_usage_files(None, "p", self.root)
+        self.assertEqual([], result.records, "bytes behind an escaping link must not be read at all")
+        self.assertEqual(1, result.refusals.get("symlink_outside_root"),
+                         f"one escape must be one refusal, however many files sit behind it: {result.refusals}")
+
     def test_a_link_that_stays_inside_the_root_is_cited_by_where_the_bytes_live(self) -> None:
         """`source_ref` must not launder the origin: an inside link is read, and cited by its real location."""
         real = self.root / "real-store"
