@@ -679,7 +679,8 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
                    u19, shot: Path | None = None, viewport: tuple[int, int] | None = None,
                    scale_factor: float = 1.0, serve_url: str | None = None,
                    mount_selector: str = MOUNT_SELECTOR,
-                   evaluate_timeout_s: float = 60.0) -> dict:
+                   evaluate_timeout_s: float = 60.0,
+                   after_mount=None) -> dict:
     """Serve the built `dist` and evaluate one expression in a headless Chrome.
 
     This is the browser bootstrap, not a topbar-specific step: a second instrument (the legibility
@@ -765,6 +766,12 @@ def serve_and_eval(root: Path, path: str, window_size: str, expr: str, browser: 
                     time.sleep(0.4)   # the reflow has to land before anything is measured
                 waited_ms, mounted = wait_for_mount(cdp, mount_selector,
                                                     MOUNT_BUDGET_S, MOUNT_POLL_S)
+                if after_mount is not None:
+                    # A caller that has to put the page into a state before reading it (forcing a pseudo
+                    # class over the CSS domain, say) needs a command slot, not a second expression: the
+                    # alternative is copying this launch, and two copies of the readiness wait is how two
+                    # instruments start disagreeing about when the browser was ready.
+                    after_mount(cdp)
                 raw = cdp.evaluate(expr)
                 if shot is not None:
                     data = cdp.send("Page.captureScreenshot", {"format": "png"}).get("data", "")
