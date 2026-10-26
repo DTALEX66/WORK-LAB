@@ -59,7 +59,10 @@ READ = """(function(selectors){
   var out = {selectors: [], tokens: {
     pressedScale: (rootStyle.getPropertyValue('--pressed-scale') || '').trim(),
     motionPressed: (rootStyle.getPropertyValue('--motion-pressed') || '').trim()
-  }};
+  },
+  // Read the preference back FROM THE PAGE. The emulation is only known to have landed when the subject
+  // itself says so; otherwise a runner whose default differs decides what the numbers mean.
+  reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches};
   selectors.forEach(function(sel){
     var nodes = document.querySelectorAll(sel);
     var entry = {selector: sel, count: nodes.length, transform: null,
@@ -121,6 +124,20 @@ def token_expectations(tokens: dict) -> tuple[float | None, float | None, list[s
     return scale, duration, problems
 
 
+def emulate_motion(cdp, value: str) -> None:
+    """Pin `prefers-reduced-motion` for the page, and return nothing.
+
+    Measured on the CI runner (2026-10-26, job `observer`): headless Chrome reports `reduce` by default, and
+    the L10b accessibility floor in `apps/observer/frontend/src/skins/b10.css` answers it with
+    `transition:none !important; transform:none !important`. So the pressed transform legitimately comes back
+    `none` there -- a reading of the environment, not of the rule. An instrument that measures a motion
+    therefore has to say which motion preference it measured under, and the reduced side has to be asserted
+    too instead of being tripped over by accident.
+    """
+    cdp.send("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-reduced-motion", "value": value}]})
+    time.sleep(0.2)  # the media change has to recalc before anything is read
+
+
 def force_active(cdp, selectors: list[str], required: str) -> dict:
     """Hold `:active` on the first node of EVERY probed selector, and report the node id chosen per selector.
 
@@ -147,11 +164,15 @@ def force_active(cdp, selectors: list[str], required: str) -> dict:
     return forced
 
 
-def verdict(idle: dict, pressed: dict, required: str) -> dict:
+def verdict(idle: dict, pressed: dict, required: str, reduced: dict | None = None) -> dict:
     checks: list[dict] = []
 
     def add(name: str, ok: bool, detail: str) -> None:
         checks.append({"check": name, "pass": bool(ok), "detail": detail})
+
+    add("motion-preference-emulated",
+        idle.get("reducedMotion") is False and pressed.get("reducedMotion") is False,
+        f"idle reducedMotion={idle.get('reducedMotion')} pressed reducedMotion={pressed.get('reducedMotion')}")
 
     scale, duration, problems = token_expectations(idle.get("tokens") or {})
     add("tokens-declared-and-parseable", not problems,
@@ -185,6 +206,23 @@ def verdict(idle: dict, pressed: dict, required: str) -> dict:
 
     add("at-least-one-control-measured", measured > 0,
         f"measured={measured} of {len(pressed_by)} declared selectors")
+
+    if reduced is not None:
+        # The L10b floor is a promise the shell makes to operators who asked for less motion: under
+        # `reduce` the same forced press must paint NO transform. Asserting it here is what keeps the floor
+        # from being deleted by someone who only ever tested the animated branch.
+        reduced_by = {row["selector"]: row for row in reduced.get("selectors") or []}
+        add("reduced-preference-observed", reduced.get("reducedMotion") is True,
+            f"reducedMotion={reduced.get('reducedMotion')}")
+        guarded = 0
+        for selector, row in reduced_by.items():
+            if not row.get("count"):
+                continue
+            add(f"no-pressed-transform-under-reduce[{selector}]",
+                matrix_scale(row.get("transform")) is None,
+                f"forced :active transform={row.get('transform')!r}")
+            guarded += 1
+        add("reduced-floor-covers-a-measured-control", guarded > 0, f"guarded selectors={guarded}")
     return {
         "passed": all(c["pass"] for c in checks),
         "checks": checks,
@@ -227,17 +265,32 @@ def main() -> int:
     expression = read_expression(selectors)
     harvests: dict[str, dict] = {}
     forced_nodes: dict[str, int] = {}
+
+    def make_hook(motion: str, force: bool):
+        """One hook per launch: pin the media preference, then optionally hold `:active` on every control.
+
+        Built as a function rather than a loop-scoped lambda, because the closure has to freeze the state it
+        belongs to -- a late-bound lambda is how two launches end up measuring the same one.
+        """
+        def hook(cdp) -> None:
+            emulate_motion(cdp, motion)
+            if force:
+                forced_nodes.update(force_active(cdp, selectors, REQUIRED_SELECTOR))
+        return hook
+
+    launches = (("idle", "no-preference", False),
+                ("pressed", "no-preference", True),
+                ("pressedReduced", "reduce", True))
     try:
-        for state in ("idle", "pressed"):
+        for state, motion, force in launches:
             # The forced node ids travel with the receipt: a reader who wants to know whether a control was
             # actually held down, rather than merely absent, has to be able to tell the two apart.
-            after = ((lambda cdp: forced_nodes.update(force_active(cdp, selectors, REQUIRED_SELECTOR)))
-                     if state == "pressed" else None)
+            hook = make_hook(motion, force)
             for attempt in range(2):
                 try:
                     harvests[state] = geometry.serve_and_eval(
                         root, "/index.html", WINDOW, expression, browser, u19, None,
-                        viewport=(1280, 820), serve_url=url, after_mount=after)
+                        viewport=(1280, 820), serve_url=url, after_mount=hook)
                     break
                 except Exception as exc:  # noqa: BLE001 — retried once, then reported by name
                     if attempt == 1:
@@ -247,7 +300,8 @@ def main() -> int:
     finally:
         fixture.stop_server()
 
-    result = verdict(harvests["idle"], harvests["pressed"], REQUIRED_SELECTOR)
+    result = verdict(harvests["idle"], harvests["pressed"], REQUIRED_SELECTOR,
+                     harvests.get("pressedReduced"))
     result["startedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     result["browser"] = browser
     result["url"] = url

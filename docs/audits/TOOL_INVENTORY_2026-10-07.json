@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-26T15:49:22Z",
+  "generatedAt": "2026-10-26T16:14:56Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -680,9 +680,9 @@
     },
     {
       "path": "scripts/audit/pressed_state_motion_via_cdp.py",
-      "sha256": "6faea5a11ebb8de5ebae75af28c807492b03792483549a0b4dade6d1ac09fd5e",
-      "bytes": 12831,
-      "lines": 272,
+      "sha256": "395146c0b2f3342199001d6094b2d78020407b8ea16a85cb3876b6c3f4680a98",
+      "bytes": 15929,
+      "lines": 326,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 4,
