@@ -17,6 +17,47 @@ export const T = {
 
 export type DailyNav = 'home' | 'issues' | 'tools'
 
+// ── E1 · 主题诚实声明 ────────────────────────────────────────────────────
+// 2026-10-25 实测：?theme=light 确实写进了 html.class（App.tsx 的主题效果与 index.html 预渲染
+// 同一套契约），但日常壳与 HUD 窄窗三个文件里 var(--) 出现 0 次、十六进制值写死，
+// 所以窄窗截图在两个主题下逐字节相同（md5 3f53ee67…）。令牌单源是 WUI-03 的后续项，浅色
+// 配色还没接入本视图。owner 本轮的决定是「如实说明，不假装切换」：控件继续工作（专业投影壳
+// 的主题切换是真的生效），但本表面必须把「这一屏暂时不跟着变」写在屏幕上。
+// 措辞同时不许反向说谎：不得写成「本产品只有深色」。
+export const THEME_HONESTY_ID_DAILY = 'daily-theme-honesty-note'
+export const THEME_HONESTY_ID_HUD = 'hud-theme-honesty-note'
+
+export const THEME_HONESTY_TEXT =
+  '这一屏暂时不跟着变：这个按钮改的是页面的主题类与地址里的 ?theme=，而日常壳的配色按固定深色值写死，'
+  + '还没接入主题令牌，所以它在这里只改地址参数 ?theme=，不会把本视图变成浅色。'
+  + '要让它真的跟随主题，需要浅色板来源与令牌单源两样东西都到位（WUI-03），到位前这里不声称能切色。'
+  + '专业投影壳（?view=…）的主题切换是实际生效的；把日常壳与 HUD 窄窗接进主题令牌是 WUI-03 的待办项。'
+
+export const THEME_HONESTY_TEXT_HUD =
+  '这个窄窗按固定的深色值绘制，?theme= 暂时不会改变它的配色；'
+  + '专业投影壳的主题切换是实际生效的。接入主题令牌是 WUI-03 的待办项。'
+
+/**
+ * The honesty statement about the theme control, painted (never hover-only) and keyboard reachable
+ * (tabIndex 0 + role=note) so it is not colour-only or tooltip-only information. The control it
+ * describes points here with aria-describedby, and `title` repeats it for a pointer reader.
+ * Same palette as the surrounding dim text, so both themes clear the floor by construction (the
+ * surface paints identically): #A6B0BE on #10141A = 8.42:1, the #E8EDF3 lead-in on #10141A = 15.69:1,
+ * both at text-xs = 12px — measured with the same WCAG formula `scripts/audit/text_legibility_via_cdp.py`
+ * applies to painted text. No new size, no new colour pair.
+ */
+export function ThemeHonestyNote(props: { id: string; surface: 'daily' | 'hud' }) {
+  const text = props.surface === 'hud' ? THEME_HONESTY_TEXT_HUD : THEME_HONESTY_TEXT
+  return (
+    <p id={props.id} role="note" tabIndex={0} title={text}
+      data-testid="theme-honesty-note" data-theme-honesty="not-applied"
+      data-surface={props.surface}
+      className="mt-2 rounded border border-[#303A46] bg-[#10141A] p-2 text-xs leading-relaxed text-[#A6B0BE]">
+      <span className="font-semibold text-[#E8EDF3]">主题未在本视图生效：</span>{text}
+    </p>
+  )
+}
+
 const NAV_ICONS: Record<DailyNav, typeof FolderOpen> = {
   home: FolderOpen, issues: Lightbulb, tools: Wrench,
 }

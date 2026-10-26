@@ -15,6 +15,7 @@ import sqlite3
 import importlib.util as _ilu
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import quote
 
 
 def _load_provider():
@@ -95,7 +96,12 @@ class HermesSessionProvider:
         if not self.state_db.is_file():
             return refs
         try:
-            conn = sqlite3.connect(f"file:{self.state_db}?mode=ro", uri=True)
+            # Percent-encode the path: a literal `#` truncated the URI to a
+            # writable file (same defect as CanonicalStore readonly), `%XX` was
+            # silently decoded; safe="/" keeps as_posix() separators literal.
+            conn = sqlite3.connect(
+                f"file:{quote(self.state_db.as_posix(), safe='/')}?mode=ro", uri=True
+            )
             try:
                 tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
                 if "sessions" not in tables:

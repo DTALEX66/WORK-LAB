@@ -9,8 +9,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import stat
 import subprocess
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -58,6 +61,90 @@ def _sanitize_path(path: str) -> str:
         if fragment in normalized.lower():
             return "<redacted-home-path>"
     return normalized
+
+
+def _resolved_path(path: Path) -> Path:
+    """The real location behind `path`, links followed. A seam the containment tests convict through."""
+    return Path(os.path.realpath(path))
+
+
+def _is_link(path: Path) -> bool:
+    """True for a symlink AND for the Windows junction/mount point that `is_symlink()` does not see.
+
+    Measured on this host (CPython 3.11, NTFS): a directory junction reports `Path.is_symlink() == False`
+    and `os.path.islink() == False`, while `st_file_attributes` carries the reparse bit -- and `rglob("*")`
+    walks through it, handing back files whose bytes live outside the searched root. So the two predicates
+    here are only a fast rejection of a linked leaf; the containment of the RESOLVED target in
+    `_confined_read` is what actually convicts a link sitting in an ancestor directory.
+    """
+    if path.is_symlink():
+        return True
+    reparse = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    if not reparse:  # POSIX: no reparse attribute exists, is_symlink() already covered the case
+        return False
+    try:
+        info = path.lstat()
+    except OSError:
+        return False
+    return bool(getattr(info, "st_file_attributes", 0) & reparse)
+
+
+@dataclass(frozen=True)
+class _ConfinedRead:
+    """Outcome of one guarded read: either text plus the location it truly came from, or a named refusal."""
+
+    text: str | None = None
+    resolved: Path | None = None
+    reason: str | None = None
+    detail: str = ""
+
+
+def _confined_read(candidate: Path, root_resolved: Path) -> _ConfinedRead:
+    """Read `candidate` only while it provably stays inside `root_resolved`.
+
+    The resolved-path containment is re-checked at READ time, not only where the directory walk produced the
+    name: enumeration and read are separate syscalls, so a link that was inside the root when the name was
+    listed can point outside by the time the bytes are taken (and the other way round). The identity compare
+    on the opened fd is what makes the bytes themselves evidence, because the fd stays bound to the inode it
+    opened -- anything repointed after the open cannot redirect this read.
+
+    How far that actually closes the window is stated per platform, and it is not closed everywhere:
+      * POSIX -- `os.O_NOFOLLOW` makes the open itself refuse a leaf link, and the `fstat`/`stat`
+        `st_dev`/`st_ino` comparison convicts a swap of the leaf or of an ancestor between check and open.
+      * Windows -- no `O_NOFOLLOW` and no stdlib fd-to-final-path call, so the only closing evidence is the
+        re-resolve immediately before reading plus the identity compare (meaningful on NTFS, where `st_ino`
+        is the file id; vacuous where a filesystem reports a constant id). A repoint landing after that
+        re-resolve and before `handle.read()` is NOT detectable with stdlib. Narrowed, not closed.
+    """
+    if _is_link(candidate):
+        return _ConfinedRead(reason="symlink_candidate_refused", detail="leaf is a link")
+    try:
+        checked = os.stat(candidate)
+    except OSError as exc:
+        return _ConfinedRead(reason="file_unreadable", detail=type(exc).__name__)
+    resolved = _resolved_path(candidate)
+    if not resolved.is_relative_to(root_resolved):
+        return _ConfinedRead(reason="symlink_outside_root", detail="resolved target escapes the root")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        fd = os.open(candidate, flags)
+    except OSError as exc:
+        return _ConfinedRead(reason="file_unreadable", detail=type(exc).__name__)
+    try:
+        opened = os.fstat(fd)
+        if (checked.st_dev, checked.st_ino) != (opened.st_dev, opened.st_ino):
+            return _ConfinedRead(reason="file_identity_moved_before_read", detail="fd is not the checked file")
+        recheck = _resolved_path(candidate)
+        if not recheck.is_relative_to(root_resolved):
+            return _ConfinedRead(reason="symlink_outside_root", detail="escape seen at read time")
+        try:
+            with os.fdopen(fd, "r", encoding="utf-8", errors="replace", closefd=False) as handle:
+                text = handle.read()
+        except OSError as exc:
+            return _ConfinedRead(reason="file_unreadable", detail=type(exc).__name__)
+    finally:
+        os.close(fd)
+    return _ConfinedRead(text=text, resolved=recheck)
 
 
 def collect_task_ledger(store: CanonicalStore, project_id: str) -> CollectorResult:
@@ -133,26 +220,42 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
     Only numeric usage fields are accepted; auth tokens and prompt/response
     bodies are rejected by the store. Files are found only inside the project
     runtime root, never by scanning user profile paths.
+
+    The root is a *containment* boundary, not just a search prefix: `rglob("*")` on 3.11 walks through a
+    directory link, and `is_file()` follows it, so a junction planted in the root would otherwise hand back
+    bytes that live outside it while the record cited an in-root name.
     """
     records: list[dict[str, Any]] = []
     refusals: dict[str, int] = {}
     samples: dict[str, str] = {}
     if search_root.is_dir():
+        root_resolved = _resolved_path(search_root)
         for candidate in sorted(search_root.rglob("*")):
             if not candidate.is_file():
                 continue
             if not TOKEN_FILE_NAME_RE.match(candidate.name):
                 continue
             try:
-                source_ref = candidate.relative_to(search_root).as_posix()
+                listed_ref = candidate.relative_to(search_root).as_posix()
             except ValueError:
-                source_ref = candidate.name
-            try:
-                text = candidate.read_text(encoding="utf-8", errors="replace")
-            except OSError as exc:
-                _note_refusal(refusals, samples, "file_unreadable",
-                              f"{source_ref}: {type(exc).__name__}")
+                listed_ref = candidate.name
+            outcome = _confined_read(candidate, root_resolved)
+            if outcome.reason:
+                # Locator is the IN-ROOT name only. The outside target is deliberately never written out:
+                # a refusal sample rides into the sidecar snapshot, and an absolute home path there is the
+                # leak this module's docstring forbids.
+                _note_refusal(refusals, samples, outcome.reason,
+                              f"{listed_ref}: {outcome.detail}" if outcome.detail else listed_ref)
                 continue
+            text = outcome.text or ""
+            resolved = outcome.resolved or candidate
+            try:
+                # `source_ref` cites where the bytes actually live. For a plain file that is the same
+                # in-root path as before; for a file reached through a link that stays inside the root it
+                # names the real location instead of laundering the origin into the link's name.
+                source_ref = resolved.relative_to(root_resolved).as_posix()
+            except ValueError:
+                source_ref = resolved.name
             content_occurrences: dict[str, int] = {}
             for line_number, line in enumerate(text.splitlines(), start=1):
                 if not line.strip():
@@ -216,6 +319,19 @@ def collect_usage_files(store: CanonicalStore, project_id: str, search_root: Pat
                         **tokens,
                     }
                 )
+    # Coverage is derived from what this walk actually refused, the same rule `collect_growth_watcher`
+    # follows -- it is not a word written next to the records. `refusals` is only final once the walk is
+    # done, so the stamp goes on afterwards; a link escape counted here is a real incomplete read, and a
+    # clean read of an empty directory stays FULL.
+    coverage = "PARTIAL" if refusals else "FULL"
+    coverage_why = (
+        f"{sum(refusals.values())} 项被具名拒绝：" + "、".join(sorted(refusals))
+        if refusals else "根目录内候选文件全部在边界内读取")
+    for record in records:
+        # Diagnostic only, like `source_line`: `record_usage_sample` inserts named columns, so neither key
+        # is persisted; the counted refusals reach the surface through `CollectorResult.refusals`.
+        record["coverage"] = coverage
+        record["coverage_why"] = coverage_why
     return CollectorResult(kind="usage", ok=True, records=records, refusals=refusals,
                            refusal_samples=samples)
 

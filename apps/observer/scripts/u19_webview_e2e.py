@@ -17,14 +17,21 @@ WebView readback (not `about:blank`). This harness:
      (not about:blank): the title, `#root` populated, the sidebar/KPI text,
      and the U03-migrated WCAG AA live region (role=status[aria-live=polite])
      present in the shipped build.
-  4. Writes a real E2E evidence artifact under `.project-local/runs/`.
+  4. Writes a real E2E evidence artifact under `.project-local/runs/` and archives it under
+     `.project-local/artifacts/native-evidence/` with the commit and the exe digest in its name,
+     so an uploaded verdict cannot be read as evidence about a different tree.
 
-Exit 0 = PASS (evidence written), or SKIPPED_HEADLESS — the documented R5
-headless-session boundary (probe window built, backend PASS, app ALIVE, but
-no GDI/CDP surface proof) reached INSIDE a GitHub Actions run: the real-
-WebView layer stays owed on a desktop runner and is recorded as such, never
-fabricated as a PASS. Exit 1 = FAIL. No unverified stage is ever reported
-as PASS.
+Exit 0 = PASS (evidence written), or NATIVE_SURFACE_UNAVAILABLE — and only
+when `scripts/audit/desktop_capability_probe.py` reports that this environment
+cannot draw at all (`layers.display.verdict` and `layers.draw.verdict` are not
+both PASS). The probe, not an environment variable, decides: `GITHUB_ACTIONS`
+says which machine this is, and a machine flag is weaker evidence than a pixel
+read back. An unproven surface in an environment that CAN draw is a real
+failure and exits non-zero, because that is exactly the case the old
+`SKIPPED_HEADLESS` rule reported as a green tick (measured on `main` at
+b218ef82: the runner's probe printed `display PASS 1024x768 / draw PASS`, the
+WebView2 surface printed nothing, and the step exited 0). Exit 1 = FAIL. No
+unverified stage is ever reported as PASS.
 """
 from __future__ import annotations
 
@@ -51,8 +58,8 @@ sys.path.insert(0, str(ROOT / "services" / "orchestration"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from write_artifact_receipt import (  # noqa: E402
-    RECEIPT_SCHEMA, RECEIPT_SCHEMA_V1, RECEIPT_SUFFIX, digest, frontend_chain_files,
-    input_files)
+    RECEIPT_SCHEMA, RECEIPT_SCHEMA_V1, RECEIPT_SUFFIX, archive_native_evidence, digest,
+    frontend_chain_files, input_files)
 
 RUNS = ROOT / ".project-local" / "runs"
 RUNS.mkdir(parents=True, exist_ok=True)
@@ -969,6 +976,87 @@ def resolve_app_exe() -> tuple[Path | None, dict]:
     return chosen, report
 
 
+# ---------------------------------------------------------------------------
+# 5. Desktop capability — the ONLY thing that may excuse an unproven surface.
+# ---------------------------------------------------------------------------
+CAPABILITY_PROBE = ROOT / "scripts" / "audit" / "desktop_capability_probe.py"
+# CI already runs the probe and writes this artifact before reaching U19; consuming it keeps one
+# measurement per run instead of two that can disagree.
+CAPABILITY_REPORT = RUNS / "ci" / "desktop_capability.json"
+DRAWABLE_LAYERS = ("display", "draw")
+
+
+def read_capability_report() -> tuple[dict | None, str]:
+    """The layered probe's JSON, plus where it came from (or why there is none).
+
+    Artifact first (`$WORK_LAB_DESKTOP_CAPABILITY_JSON`, then the CI default path), then run the probe
+    itself. A missing or unreadable report returns None and the caller treats that as "no permission to
+    skip": a gate must not skip because its evidence is absent.
+    """
+    override = os.environ.get("WORK_LAB_DESKTOP_CAPABILITY_JSON")
+    for candidate in [Path(override) if override else None, CAPABILITY_REPORT]:
+        if candidate is None or not candidate.is_file():
+            continue
+        try:
+            return json.loads(candidate.read_text(encoding="utf-8")), f"artifact={candidate}"
+        except (OSError, ValueError) as exc:
+            return None, f"unreadable artifact={candidate} reason={type(exc).__name__}: {exc}"
+    if not CAPABILITY_PROBE.is_file():
+        return None, f"no probe at {CAPABILITY_PROBE}"
+    CAPABILITY_REPORT.parent.mkdir(parents=True, exist_ok=True)
+    done = subprocess.run([sys.executable, str(CAPABILITY_PROBE), "--json-out", str(CAPABILITY_REPORT)],
+                          cwd=str(ROOT), capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", check=False)
+    try:
+        report = json.loads(CAPABILITY_REPORT.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return None, (f"probe run exit={done.returncode} wrote no readable report at {CAPABILITY_REPORT} "
+                      f"({type(exc).__name__})")
+    return report, f"run-by-u19 exit={done.returncode} artifact={CAPABILITY_REPORT}"
+
+
+def drawable_display(report: dict | None) -> tuple[bool, str]:
+    """(can this environment draw, the probe field that decided it).
+
+    Keys on the probe's own required capability layers: `display` (a screen with real metrics) and `draw`
+    (one pixel painted and read back). `session` and `webview2` are corroboration by that file's own rule,
+    so a runner with no interactive SESSIONNAME that still paints is a runner where a blank WebView2 is a
+    product failure, not an environment boundary — that is the distinction the probe exists to make.
+    """
+    if report is None:
+        return False, "capability-report-unavailable"
+    layers: dict = {}
+    for layer in report.get("layers", []):
+        if isinstance(layer, dict) and isinstance(layer.get("layer"), str):
+            layers[layer["layer"]] = layer.get("verdict")
+    for name in DRAWABLE_LAYERS:
+        verdict = layers.get(name)
+        if verdict != "PASS":
+            return False, f"layers.{name}.verdict={verdict if verdict else 'MISSING'}"
+    return True, ",".join(f"layers.{name}.verdict=PASS" for name in DRAWABLE_LAYERS)
+
+
+def native_render_verdict(*, backend_ok: bool, surface_proven: bool, liveness: str | None,
+                          probe_built: bool, drawable: bool) -> tuple[str, str]:
+    r"""Decide the U19 verdict from the stage readings — the only rule the gate keys on.
+
+    Pure, so a test can convict it without a desktop, a binary or a browser.
+
+    `drawable` comes from the capability probe, not from an environment variable. An unproven surface in
+    an environment the probe says CAN draw is a product failure (`FAIL`, exit non-zero); only where the
+    probe denies drawing does the stage become `NATIVE_SURFACE_UNAVAILABLE` — recorded as unverified and
+    never as a pass. The combination this replaces was `if not surface_proven and ... and GITHUB_ACTIONS:
+    return 0`, which made a blank WebView2 render on a drawing runner look like a documented skip.
+    """
+    if not backend_ok:
+        return "FAIL", "backend-not-proven"
+    if surface_proven:
+        return "PASS", "cdp-or-gdi"
+    if liveness == "ALIVE" and probe_built and not drawable:
+        return "NATIVE_SURFACE_UNAVAILABLE", "capability-probe-denies-drawing"
+    return "FAIL", "surface-not-proven"
+
+
 def main() -> int:
     result = {
         "gate": "WINDOWS_TAURI_E2E",
@@ -977,6 +1065,27 @@ def main() -> int:
         "verdict": "FAIL",
         "evidencePath": str(RUNS / "u19_webview_readback.json"),
     }
+    result["gitHead"] = _git_raw(ROOT, "rev-parse", "HEAD").strip() or "UNKNOWN"
+    # Read the environment's capability BEFORE judging the product, and record it: this is the only
+    # fact that can excuse an unproven surface later, and an auditor has to see it on the same page.
+    capability, capability_source = read_capability_report()
+    drawable, capability_basis = drawable_display(capability)
+    result["stages"]["capability"] = {
+        "status": "READABLE" if capability else "UNAVAILABLE",
+        "source": capability_source,
+        "verdict": (capability or {}).get("verdict"),
+        "layers": {layer.get("layer"): layer.get("verdict")
+                   for layer in (capability or {}).get("layers", []) if isinstance(layer, dict)},
+        "drawable": drawable,
+        "basis": capability_basis,
+        # Kept as context only. These flags used to BE the skip test, which is the defect this
+        # rewrite closes: on `main` at b218ef82 they turned a blank WebView2 into exit 0.
+        "environmentContext": {"GITHUB_ACTIONS": os.environ.get("GITHUB_ACTIONS"),
+                               "RUNNER_OS": os.environ.get("RUNNER_OS"),
+                               "usedForDecision": False},
+    }
+    print(f"[U19] desktop capability: drawable={drawable} basis={capability_basis} "
+          f"source={capability_source}")
     exe, artifact = resolve_app_exe()
     result["stages"]["artifact"] = artifact
     if exe is None:
@@ -987,6 +1096,8 @@ def main() -> int:
     result["stages"]["build"] = {"status": "PASS",
                                  "exe": artifact["chosen"]["path"],
                                  "sha256": artifact["chosen"]["sha256"]}
+    # On the top level too, because the archived-evidence file name is built from it.
+    result["exeSha256"] = artifact["chosen"]["sha256"]
 
     sidecar = port = th = server = None
     app = None
@@ -1155,41 +1266,57 @@ def main() -> int:
         cdp_ok = result["stages"].get("webview_readback", {}).get("status") == "PASS"
         gdi_ok = result["stages"].get("gdi_render_proof", {}).get("status") == "PASS"
         liveness = result["stages"].get("process_liveness", {}).get("status")
-        # R5 headless-session boundary (0bbbce8 discriminator evidence):
-        #   probe window BUILT (probe=ok), backend PASS, app ALIVE, yet the
-        #   session-0 GitHub-hosted runner gives WebView2 no rendered surface,
-        #   so NEITHER GDI nor CDP can prove a non-blank render. That is an
-        #   environment boundary, not a product defect. Inside a GH Actions
-        #   run only, the step records SKIPPED_HEADLESS (never a PASS — the
-        #   real-WebView layer stays owed to a desktop runner) so the
-        #   structural+runtime chain can keep gating merges, while a genuine
-        #   regression anywhere else still FAILs fail-closed.
-        is_github_runner = bool(
-            os.environ.get("GITHUB_ACTIONS") or os.environ.get("RUNNER_OS")
-        )
+        # The environment boundary, now decided by the capability probe instead of a machine flag:
+        #   probe window BUILT (probe=ok), backend PASS, app ALIVE, yet NEITHER GDI nor CDP proved a
+        #   non-blank render, AND the probe says this environment cannot draw. Only that combination is
+        #   a skip, and it is recorded as NATIVE_SURFACE_UNAVAILABLE — never as a pass.
+        # If the probe says the environment CAN draw (on the GitHub windows-latest runner it does:
+        # display PASS 1024x768, draw PASS), an unproven surface is a real failure and exits non-zero.
         probe_built = probe_status.startswith("probe=ok")
         surface_proven = cdp_ok or gdi_ok
-        if not surface_proven and backend_ok and liveness == "ALIVE" and probe_built \
-                and is_github_runner:
-            result["verdict"] = "SKIPPED_HEADLESS"
-            result["provenBy"] = "none-headless-boundary-r5"
-            result["skippedReason"] = (
-                "headless-session boundary (R5): probe window built, backend "
-                "PASS, app ALIVE, but no GDI/CDP surface proof is possible in "
-                "a desktop-less GitHub Actions session; the real-WebView layer "
-                "remains owed to a desktop/self-hosted runner and is recorded "
-                "as skipped, not as a pass."
-            )
-            print(
-                "[U19] VERDICT: SKIPPED_HEADLESS — R5 boundary recorded "
-                "(backend PASS + probe built + app ALIVE, no surface proof in "
-                "desktop-less runner); real-WebView layer owed to desktop runner"
-            )
+        verdict, verdict_basis = native_render_verdict(
+            backend_ok=backend_ok, surface_proven=surface_proven, liveness=liveness,
+            probe_built=probe_built, drawable=drawable)
+        result["verdictBasis"] = verdict_basis
+        if verdict == "NATIVE_SURFACE_UNAVAILABLE":
+            result["verdict"] = verdict
+            result["provenBy"] = "none-capability-probe-denied-drawing"
+            result["unverifiedBecause"] = capability_basis
+            record = {
+                "gate": "WINDOWS_TAURI_E2E",
+                "verdict": "NATIVE_SURFACE_UNAVAILABLE",
+                "state": "unverified",
+                "reason": capability_basis,
+                "gitHead": result["gitHead"],
+                "recordedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                "exe": artifact["chosen"]["path"],
+                "exeSha256": artifact["chosen"]["sha256"],
+                "notVerified": ["webview2-cdp-dom-readback", "gdi-printwindow-render-proof"],
+                "stages": {
+                    "backend": result["stages"].get("backend", {}).get("status"),
+                    "tauri_launch": result["stages"].get("tauri_launch", {}).get("status"),
+                    "process_liveness": liveness,
+                    "probe_window": probe_status,
+                    "capability": result["stages"]["capability"],
+                },
+                "owedTo": "a session whose capability probe reports layers.display=PASS and layers.draw=PASS",
+            }
+            unverified_path = RUNS / "u19_native_surface_unverified.json"
+            unverified_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+            result["unverifiedRecord"] = str(unverified_path)
+            print(f"NATIVE_SURFACE_UNAVAILABLE reason={capability_basis} "
+                  f"record={unverified_path} — the real-WebView layer is unverified, not passed")
         else:
-            result["verdict"] = "PASS" if (backend_ok and surface_proven) else "FAIL"
+            result["verdict"] = verdict
             result["provenBy"] = ("cdp+gdi" if cdp_ok and gdi_ok else
                                   "cdp" if cdp_ok else
                                   "gdi-printwindow" if gdi_ok else "none")
+            if verdict_basis == "surface-not-proven":
+                # The old SKIPPED_HEADLESS case, now named as what it is: an environment the probe
+                # says can draw produced no proven render surface. That is a product failure.
+                result["previouslySkippedAs"] = (
+                    "SKIPPED_HEADLESS (exit 0) — the run would have been green; the skip is only "
+                    f"permitted when the capability probe denies drawing, and it said: {capability_basis}")
     except Exception as e:
         result["verdict"] = "FAIL"
         result["stages"]["error"] = {"status": "FAIL", "reason": repr(e)}
@@ -1216,16 +1343,25 @@ def main() -> int:
         result["ended_at"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
 
     (RUNS / "u19_webview_readback.json").write_text(json.dumps(result, indent=2))
+    # Archive the native readback into the evidence root, named by the commit and the binary it just
+    # measured. `src-tauri/target/` is a cargo cache and `.project-local/runs/` was never uploaded, so
+    # until now the exe receipt and this file were evidence for as long as the runner's cache lived.
+    try:
+        archived = archive_native_evidence(ROOT, "u19-native-readback", result)
+        result["archivedEvidencePath"] = str(archived)
+    except SystemExit as exc:
+        archived = None
+        result["archivedEvidenceError"] = str(exc)
     print("\n[U19] VERDICT:", result["verdict"])
     print(json.dumps({k: v.get("status", v) for k, v in result["stages"].items()}, indent=2))
     print("evidence:", result["evidencePath"])
-    if result["verdict"] == "SKIPPED_HEADLESS":
-        # Documented R5 boundary: not a PASS (real-WebView layer still owed
-        # to a desktop runner) but not a FAIL either — a genuine product
-        # regression would have tripped backend/process/probe first. The
-        # step exit 0 keeps the structural+runtime chain gating merges; the
-        # verdict + skippedReason in the evidence JSON is the audit trail.
-        print("[U19] exit 0 (SKIPPED_HEADLESS, R5 boundary — real-WebView layer owed to desktop runner)")
+    if archived is not None:
+        print("archived evidence:", str(archived))
+    if result["verdict"] == "NATIVE_SURFACE_UNAVAILABLE":
+        # Not a PASS: the real-WebView layer stayed unverified, and the record says which capability
+        # layer denied drawing. Exit 0 because the product was not shown to be broken and the
+        # environment was proven unable to show it.
+        print(f"[U19] exit 0 (NATIVE_SURFACE_UNAVAILABLE reason={result['unverifiedBecause']})")
         return 0
     return 0 if result["verdict"] == "PASS" else 1
 
