@@ -23,8 +23,8 @@ WebView readback (not `about:blank`). This harness:
 
 Exit 0 = PASS (evidence written), or NATIVE_SURFACE_UNAVAILABLE — and only
 when `scripts/audit/desktop_capability_probe.py` reports that this environment
-cannot draw at all (`layers.display.verdict` and `layers.draw.verdict` are not
-both PASS). The probe, not an environment variable, decides: `GITHUB_ACTIONS`
+cannot draw at all (any of `layers.display.verdict`, `layers.draw.verdict`,
+`layers.visible_desktop.verdict` is not PASS). The probe, not an environment variable, decides: `GITHUB_ACTIONS`
 says which machine this is, and a machine flag is weaker evidence than a pixel
 read back. An unproven surface in an environment that CAN draw is a real
 failure and exits non-zero, because that is exactly the case the old
@@ -983,7 +983,10 @@ CAPABILITY_PROBE = ROOT / "scripts" / "audit" / "desktop_capability_probe.py"
 # CI already runs the probe and writes this artifact before reaching U19; consuming it keeps one
 # measurement per run instead of two that can disagree.
 CAPABILITY_REPORT = RUNS / "ci" / "desktop_capability.json"
-DRAWABLE_LAYERS = ("display", "draw")
+# `visible_desktop` is the layer that separates "can paint a window" from "a window can be seen here":
+# measured 2026-10-26 on the GitHub windows-latest runner, `display` and `draw` both PASSed while every
+# window the real app owned read back `visible=false` and no CDP page target ever appeared.
+DRAWABLE_LAYERS = ("display", "draw", "visible_desktop")
 
 
 def read_capability_report() -> tuple[dict | None, str]:
@@ -1018,17 +1021,19 @@ def read_capability_report() -> tuple[dict | None, str]:
 def drawable_display(report: dict | None) -> tuple[bool, str]:
     """(can this environment draw, the probe field that decided it).
 
-    Keys on the probe's own required capability layers: `display` (a screen with real metrics) and `draw`
-    (one pixel painted and read back). `session` and `webview2` are corroboration by that file's own rule,
-    so a runner with no interactive SESSIONNAME that still paints is a runner where a blank WebView2 is a
-    product failure, not an environment boundary — that is the distinction the probe exists to make.
+    Keys on the probe's own required capability layers: `display` (a screen with real metrics), `draw`
+    (one pixel painted and read back) and `visible_desktop` (a desktop that shows top-level windows).
+    `session` and `webview2` are corroboration by that file's own rule, so a runner with no interactive
+    SESSIONNAME that still paints and still shows windows is a runner where a blank WebView2 is a product
+    failure, not an environment boundary — that is the distinction the probe exists to make.
+
+    A layer that is simply absent (an older report, or a probe that could not run it) answers "unresolved",
+    which is NOT drawable and also NOT a denial: `capability_denies_drawing` below is what has to be true
+    before an unproven surface may be recorded as an unavailable native surface.
     """
     if report is None:
         return False, "capability-report-unavailable"
-    layers: dict = {}
-    for layer in report.get("layers", []):
-        if isinstance(layer, dict) and isinstance(layer.get("layer"), str):
-            layers[layer["layer"]] = layer.get("verdict")
+    layers = _capability_layers(report)
     for name in DRAWABLE_LAYERS:
         verdict = layers.get(name)
         if verdict != "PASS":
@@ -1036,8 +1041,24 @@ def drawable_display(report: dict | None) -> tuple[bool, str]:
     return True, ",".join(f"layers.{name}.verdict=PASS" for name in DRAWABLE_LAYERS)
 
 
+def capability_denies_drawing(report: dict | None) -> bool:
+    """Did the probe actually DENY a required layer? Absence is not denial; only a reading is."""
+    if report is None:
+        return False
+    layers = _capability_layers(report)
+    return any(layers.get(name) in ("FAIL", "NOT_AVAILABLE") for name in DRAWABLE_LAYERS)
+
+
+def _capability_layers(report: dict) -> dict[str, object]:
+    layers: dict[str, object] = {}
+    for layer in report.get("layers", []):
+        if isinstance(layer, dict) and isinstance(layer.get("layer"), str):
+            layers[layer["layer"]] = layer.get("verdict")
+    return layers
+
+
 def native_render_verdict(*, backend_ok: bool, surface_proven: bool, liveness: str | None,
-                          probe_built: bool, drawable: bool) -> tuple[str, str]:
+                          probe_built: bool, drawable: bool, denied: bool = False) -> tuple[str, str]:
     r"""Decide the U19 verdict from the stage readings — the only rule the gate keys on.
 
     Pure, so a test can convict it without a desktop, a binary or a browser.
@@ -1052,7 +1073,7 @@ def native_render_verdict(*, backend_ok: bool, surface_proven: bool, liveness: s
         return "FAIL", "backend-not-proven"
     if surface_proven:
         return "PASS", "cdp-or-gdi"
-    if liveness == "ALIVE" and probe_built and not drawable:
+    if liveness == "ALIVE" and probe_built and not drawable and denied:
         return "NATIVE_SURFACE_UNAVAILABLE", "capability-probe-denies-drawing"
     return "FAIL", "surface-not-proven"
 
@@ -1070,13 +1091,14 @@ def main() -> int:
     # fact that can excuse an unproven surface later, and an auditor has to see it on the same page.
     capability, capability_source = read_capability_report()
     drawable, capability_basis = drawable_display(capability)
+    capability_denied = capability_denies_drawing(capability)
     result["stages"]["capability"] = {
         "status": "READABLE" if capability else "UNAVAILABLE",
         "source": capability_source,
         "verdict": (capability or {}).get("verdict"),
         "layers": {layer.get("layer"): layer.get("verdict")
                    for layer in (capability or {}).get("layers", []) if isinstance(layer, dict)},
-        "drawable": drawable,
+        "drawable": drawable, "capabilityDenied": capability_denied,
         "basis": capability_basis,
         # Kept as context only. These flags used to BE the skip test, which is the defect this
         # rewrite closes: on `main` at b218ef82 they turned a blank WebView2 into exit 0.
@@ -1276,7 +1298,7 @@ def main() -> int:
         surface_proven = cdp_ok or gdi_ok
         verdict, verdict_basis = native_render_verdict(
             backend_ok=backend_ok, surface_proven=surface_proven, liveness=liveness,
-            probe_built=probe_built, drawable=drawable)
+            probe_built=probe_built, drawable=drawable, denied=capability_denied)
         result["verdictBasis"] = verdict_basis
         if verdict == "NATIVE_SURFACE_UNAVAILABLE":
             result["verdict"] = verdict

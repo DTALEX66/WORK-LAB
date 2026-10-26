@@ -406,12 +406,17 @@ jobs:
         run: python scripts/audit/desktop_capability_probe.py --json-out .project-local/runs/ci/desktop_capability.json
         continue-on-error: true
       - name: U19 real-WebView E2E readback (WINDOWS_TAURI_E2E)
-        # Fail-closed against the capability probe, not against `GITHUB_ACTIONS`: an unproven surface in
-        # an environment the probe says can draw exits non-zero. On windows-latest the probe reports
-        # display PASS 1024x768 / draw PASS, so a blank WebView2 here is red by design -- that is the
-        # finding, not a regression in the checker.
+        # REPORTED, NOT REQUIRED (owner's decision 2026-10-26, after this step went red on the facts):
+        # the probe now measures a third required layer, `visible_desktop`, because `display` and `draw`
+        # both PASS on windows-latest while every window the real app owns reads back visible=false and the
+        # WebView2 never exposes a CDP page target (run 40326061662: pid 6828, windows=4, GDI proof FAIL).
+        # A hosted runner with no desktop that shows windows cannot produce a native render proof at all, so
+        # its verdict is published and read, and does not gate the pull request. The skip is still granted
+        # only by a measured denial -- never by GITHUB_ACTIONS -- and an unproven surface on a host whose
+        # layers all resolve stays FAIL.
         working-directory: apps/observer
         run: python scripts/u19_webview_e2e.py
+        continue-on-error: true
       # The native window readback (WINDOW_STATE_READBACK) is the only instrument that measures the REAL
       # Tauri window against `tauri.conf.json`; until 2026-10-26 no job executed it, so the geometry claim
       # CI reports came from a Chrome `--window-size` emulation. It needs the exe the job just built, so it
@@ -420,9 +425,14 @@ jobs:
       # two native readbacks must each report their own verdict even when the other went red -- the U19 red
       # is precisely the fact this step measures, and a run that lost both numbers tells the reader less.
       - name: Window state readback (native Tauri window vs declared geometry)
+        # REPORTED, NOT REQUIRED, same reason as U19: measuring the real window needs a desktop that shows
+        # windows, and `visible_desktop` is the layer that says whether this host has one. The step runs on
+        # every job and writes its JSON either way; CI never claims native window geometry from a host that
+        # cannot provide it, and the register names the local interactive run as the source of that proof.
         if: always()
         working-directory: .
         run: python apps/observer/scripts/window_state_readback.py --json-out .project-local/runs/ci/window_state_readback.json
+        continue-on-error: true
       # G3: required now that the instrument has produced a real GEOMETRY_GATE_PASS readback (ERR-146 states
       # the condition). It measures the bundle this job just built, at each window's declared shape: the main
       # shell at 1280x820 and the floating panel at 440x780. A refusal exits 3 and names why, which is a red

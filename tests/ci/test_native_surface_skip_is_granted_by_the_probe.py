@@ -56,6 +56,23 @@ NO_DISPLAY_REPORT = {**RUNNER_REPORT, "layers": [
     {"layer": "draw", "verdict": "FAIL", "evidence": {"error": "GetDC(0) returned null"}},
 ]}
 
+# Synthetic reports for the layer added on 2026-10-26 (plants, not measurements): the shape the runner
+# showed -- an environment that paints but owns no desktop that displays a window -- has to be decided by
+# a reading, and the opposite shape has to keep producing a product failure.
+NO_VISIBLE_DESKTOP_REPORT = {"verdict": "FAIL", "layers": [
+    {"layer": "session", "verdict": "FAIL", "evidence": {"SESSIONNAME": None}},
+    {"layer": "display", "verdict": "PASS", "evidence": {"width": 1024, "height": 768}},
+    {"layer": "draw", "verdict": "PASS", "evidence": {"painted_pixel": "0xff00", "expected": "0xff00"}},
+    {"layer": "visible_desktop", "verdict": "FAIL",
+     "evidence": {"visibleTopLevel": 0, "titledVisible": 0, "shellWindowPresent": False}},
+]}
+
+VISIBLE_DESKTOP_REPORT = {**NO_VISIBLE_DESKTOP_REPORT, "layers": [
+    *NO_VISIBLE_DESKTOP_REPORT["layers"][:3],
+    {"layer": "visible_desktop", "verdict": "PASS",
+     "evidence": {"visibleTopLevel": 31, "titledVisible": 20, "shellWindowPresent": True}},
+]}
+
 
 def verdict(**overrides) -> tuple[str, str]:
     args = {"backend_ok": True, "surface_proven": False, "liveness": "ALIVE",
@@ -74,10 +91,14 @@ class DecisionTableTests(unittest.TestCase):
         """Planted falsification: the old rule read GITHUB_ACTIONS/RUNNER_OS and returned exit 0."""
         with mock.patch.dict(os.environ, {"GITHUB_ACTIONS": "true", "RUNNER_OS": "Windows"}):
             self.assertEqual("FAIL", verdict(drawable=True)[0])
-            self.assertEqual("NATIVE_SURFACE_UNAVAILABLE", verdict(drawable=False)[0])
+            self.assertEqual("FAIL", verdict(drawable=False)[0],
+                             "an unresolved capability is not a denial; only a reading grants the skip")
+            self.assertEqual("NATIVE_SURFACE_UNAVAILABLE", verdict(drawable=False, denied=True)[0])
 
     def test_only_a_probe_that_denies_drawing_opens_the_skip(self) -> None:
-        self.assertEqual("NATIVE_SURFACE_UNAVAILABLE", verdict(drawable=False)[0])
+        self.assertEqual("FAIL", verdict(drawable=False)[0],
+                         "not-drawable without a denial means the environment never said anything")
+        self.assertEqual("NATIVE_SURFACE_UNAVAILABLE", verdict(drawable=False, denied=True)[0])
         self.assertEqual("PASS", verdict(surface_proven=True, drawable=True)[0])
         self.assertEqual("PASS", verdict(surface_proven=True, drawable=False)[0],
                          "a proven render is a pass whatever the environment claims")
@@ -99,8 +120,38 @@ class CapabilityReadingTests(unittest.TestCase):
             self.fail(f"fixture root was not released: {self.tmp}")
 
     def test_the_runner_report_is_read_as_a_drawable_display(self) -> None:
-        self.assertEqual((True, "layers.display.verdict=PASS,layers.draw.verdict=PASS"),
+        """The 2026-10-25 report predates the `visible_desktop` layer, and an absent layer proves nothing.
+
+        It is therefore NOT drawable (the required set is not satisfied) and NOT a denial either, which is
+        what keeps an unproven surface reading as a failure instead of a documented skip.
+        """
+        self.assertEqual((False, "layers.visible_desktop.verdict=MISSING"),
                          u19.drawable_display(RUNNER_REPORT))
+        self.assertFalse(u19.capability_denies_drawing(RUNNER_REPORT),
+                         "a missing layer must not be read as the probe denying the capability")
+
+    def test_a_desktop_that_cannot_show_a_window_denies_the_native_surface(self) -> None:
+        """The layer added for the 2026-10-26 runner reading: display PASS, draw PASS, no visible window.
+
+        That combination is neither "the product failed to render" nor a machine flag: it is a measured
+        denial of the surface, so the stage records NATIVE_SURFACE_UNAVAILABLE and never a pass.
+        """
+        self.assertEqual((False, "layers.visible_desktop.verdict=FAIL"),
+                         u19.drawable_display(NO_VISIBLE_DESKTOP_REPORT))
+        self.assertTrue(u19.capability_denies_drawing(NO_VISIBLE_DESKTOP_REPORT))
+        self.assertEqual(("NATIVE_SURFACE_UNAVAILABLE", "capability-probe-denies-drawing"),
+                         verdict(drawable=u19.drawable_display(NO_VISIBLE_DESKTOP_REPORT)[0],
+                                 denied=u19.capability_denies_drawing(NO_VISIBLE_DESKTOP_REPORT)))
+
+    def test_a_window_showing_desktop_restores_the_product_failure(self) -> None:
+        """Same unproven surface, capability fully resolved as PASS: now it IS a product failure."""
+        self.assertEqual((True, "layers.display.verdict=PASS,layers.draw.verdict=PASS,"
+                                "layers.visible_desktop.verdict=PASS"),
+                         u19.drawable_display(VISIBLE_DESKTOP_REPORT))
+        self.assertFalse(u19.capability_denies_drawing(VISIBLE_DESKTOP_REPORT))
+        self.assertEqual(("FAIL", "surface-not-proven"),
+                         verdict(drawable=u19.drawable_display(VISIBLE_DESKTOP_REPORT)[0],
+                                 denied=u19.capability_denies_drawing(VISIBLE_DESKTOP_REPORT)))
 
     def test_a_session_flag_alone_never_makes_an_environment_drawable(self) -> None:
         """`session` is corroboration by the probe's own rule; `display` and `draw` are the gate."""
