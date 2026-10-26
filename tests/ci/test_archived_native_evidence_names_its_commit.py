@@ -185,6 +185,14 @@ class WorkflowWiringTests(unittest.TestCase):
         self.assertIn("--verify-against", block)
         self.assertIn("${{ github.sha }}", block)
 
+    def test_the_pressed_state_gate_is_executed_and_required(self) -> None:
+        """CL-16 step 1 has no check unless a job runs it, and a forgiven one would guard nothing."""
+        block = self.step_block("Pressed-state motion gate")
+        self.assertIn("scripts/audit/pressed_state_motion_via_cdp.py", block)
+        self.assertIn("--json-out .project-local/runs/ci/pressed_motion_gate.json", block)
+        self.assertNotIn("continue-on-error", block,
+                         "a pressed gate that is forgiven is a claim that the tokens are wired, not a check")
+
     def test_the_native_evidence_is_in_the_upload_list(self) -> None:
         upload = self.text.split("name: ci-summary-observer", 1)[1].split("if-no-files-found", 1)[0]
         for path in (".project-local/artifacts/native-evidence/",

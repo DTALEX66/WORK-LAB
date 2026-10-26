@@ -520,6 +520,15 @@ jobs:
       - name: Control shell identity readback (CDP, restore / fresh / absent over one real write)
         working-directory: .
         run: python scripts/audit/control_shell_identity_via_cdp.py --json-out .project-local/runs/ci/control_shell_identity.json
+      # CL-16 step 1: `--motion-pressed` and `--pressed-scale` were declared with no consumer, so retuning or
+      # deleting one could not fail anything. This step reads the COMPUTED transform while Chrome itself holds
+      # `:active` on the node (CSS.forcePseudoState) -- a synthetic `dispatchEvent` does not light a pseudo-class,
+      # which is why the same instrument cannot be satisfied by the hover assertions elsewhere in this job.
+      # Required, not report-only: with the pressed rules removed from the source and the bundle rebuilt, the
+      # step exits 1 on six named checks (evidence `.project-local/artifacts/cl16-pressed-motion/mutation.txt`).
+      - name: Pressed-state motion gate (CDP, computed transform and duration under a forced :active)
+        working-directory: .
+        run: python scripts/audit/pressed_state_motion_via_cdp.py --json-out .project-local/runs/ci/pressed_motion_gate.json
       # Defect 3 (2026-10-26): an archived verdict that cannot name its commit can be read as current at
       # any head. This step is the refusal: every file under
       # `.project-local/artifacts/native-evidence/` must follow `kind.g<commit12>.x<exe16>.inputs.json`,

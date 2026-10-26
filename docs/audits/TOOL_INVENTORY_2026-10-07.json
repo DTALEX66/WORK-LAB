@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-26T14:01:19Z",
+  "generatedAt": "2026-10-26T14:44:11Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 80,
+    "trackedTools": 81,
     "withLedgerPromise": 21,
-    "referencedSomewhere": 80,
+    "referencedSomewhere": 81,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -676,6 +676,20 @@
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
         "taskpacks/current/error-ledger.json",
         "taskpacks/history/UI-PRIORITY-CUTOVER-20261009/original-tree/taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/pressed_state_motion_via_cdp.py",
+      "sha256": "6faea5a11ebb8de5ebae75af28c807492b03792483549a0b4dade6d1ac09fd5e",
+      "bytes": 12831,
+      "lines": 272,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/ci/test_archived_native_evidence_names_its_commit.py"
       ]
     },
     {
