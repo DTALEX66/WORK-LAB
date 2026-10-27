@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Any
 
 from canonical_store import CanonicalStore
+from open_task_register_projection import (load_register_task_records, merge_task_rows, register_path,
+                                           unreadable_marker)
 from product_project import ProductProject, ProjectRootBinding
 from project_identity_resolver import ApprovedProjectIndex
 from snapshot_api import build_snapshot
@@ -218,6 +220,62 @@ def clear_artifact_handles_cache() -> None:
     _artifact_handles_cache.clear()
 
 
+# ---------------------------------------------------------------------------
+# taskRecords from the live open-task register (owner readback 2026-10-27)
+#
+# `open_task_register_projection` reads and parses `taskpacks/current/OPEN-TASK-REGISTER.md`. The file is
+# 345,684 B and one read+parse costs ~3 ms measured on this machine, but `build_v3_snapshot` runs twice per
+# snapshot (the live-gate skeleton and the snapshot itself) and the sidecar re-serves it on every poll, so
+# the parse is cached.
+#
+# Cached on the file's own (mtime, size), NOT on the 60 s TTL the other projections here use, and the
+# difference is deliberate: this file is the artifact the owner edits by hand and expects to see. A timer
+# would show them their own registration late and call that "the current register", which is exactly the
+# class of stale-but-green answer this round exists to remove. A stat() costs microseconds; the read only
+# happens when the file actually changed.
+# ---------------------------------------------------------------------------
+_register_cache: dict[str, Any] = {}
+
+
+def _build_register_task_rows(*, root: Path | None = None) -> list[dict[str, Any]]:
+    """taskRecords derived from a repository's live register, re-parsed only when the file changed."""
+    search_root = Path(root) if root is not None else _ROOT
+    key = search_root.as_posix()
+    path = register_path(search_root)
+    try:
+        stat = path.stat()
+        signature: tuple[int, int] | None = (int(stat.st_mtime_ns), int(stat.st_size))
+    except OSError:
+        signature = None  # absent or unstatable: fall through to the read, which reports it
+    entry = _register_cache.get(key)
+    if entry is not None and signature is not None and entry.get("signature") == signature:
+        return entry["rows"]
+    try:
+        rows, state, reason = load_register_task_records(search_root)
+    except Exception as error:  # noqa: BLE001 - a register read fault is a reported gap, never a dead read
+        reason = f"projection-unavailable:{type(error).__name__}"
+        rows, state = [unreadable_marker(reason, evidence_ref=path.as_posix())], "UNREADABLE"
+    _register_cache[key] = {"signature": signature, "rows": rows, "state": state, "reason": reason,
+                            "path": path.as_posix()}
+    return rows
+
+
+def register_status(*, root: Path | None = None) -> dict[str, Any]:
+    """How the register reached the last snapshot — read from the same cache the build used."""
+    search_root = Path(root) if root is not None else _ROOT
+    entry = _register_cache.get(search_root.as_posix()) or {}
+    return {"projectedCount": len(entry.get("rows") or []),
+            "state": entry.get("state"),
+            "reason": entry.get("reason"),
+            "path": entry.get("path"),
+            "watchedSignature": entry.get("signature")}
+
+
+def clear_register_projection_cache() -> None:
+    """Public reset for tests / callers that need a fresh parse."""
+    _register_cache.clear()
+
+
 def artifact_handles_status() -> dict[str, Any]:
     """Why artifactHandles is or is not in the last snapshot — read from the same cache the build used.
 
@@ -329,6 +387,7 @@ def load_approved_index(store: CanonicalStore) -> ApprovedProjectIndex:
 def _project_rows(store: CanonicalStore, index: ApprovedProjectIndex) -> list[dict[str, Any]]:
     """projects 表行 → v3 project projection（identityState 由 index 判定）。"""
     projections: list[dict[str, Any]] = []
+    strong_evidence = _strong_evidence_map(store)
     for row in store.list_projects():
         project_id = str(row.get("project_id") or "")
         if not project_id or project_id not in index.projects:
@@ -341,9 +400,66 @@ def _project_rows(store: CanonicalStore, index: ApprovedProjectIndex) -> list[di
                 "displayName": str(row.get("display_name") or project_id),
                 "activityState": str(row.get("status") or "UNKNOWN"),
                 "identityState": "RESOLVED" if project is not None else "UNRESOLVED",
+                # The card's 最近变化 / 更新 was 待确认 / UNKNOWN forever because this key was never
+                # produced here, while `snapshot_api._project_projection` read it and the front fell back
+                # to 待确认. Null is still the answer when the project owns no strong observation.
+                "lastStrongEvidenceAt": strong_evidence.get(project_id),
             }
         )
     return projections
+
+
+# ---------------------------------------------------------------------------
+# projects[].lastStrongEvidenceAt (owner readback 2026-10-27)
+#
+# `snapshot_api._project_projection` has always copied this key out of the project row, and
+# `apps/observer/frontend/src/daily/dailyData.ts::projectCardOf` has always read it — with
+# 「最近变化 待确认 / 更新：UNKNOWN」 as the fallback when it is null. Nothing upstream ever produced it, so
+# the card could not have been anything but 待确认.
+#
+# The one per-project, per-timestamp observation the canonical store actually carries is the
+# `source_quality` table: `collectors.py` writes `quality = "EXACT_SOURCE" if head else "UNKNOWN"` (and
+# the same label for a source it read exactly), and every row states `observed_at` plus `project_id`.
+# Measured against the live store on 2026-10-27: 2 rows, both `work-lab`, both `EXACT_SOURCE`
+# (scopes `git` and `source`), newest `observed_at` = 2026-10-27T14:53:24.153046Z.
+#
+# `artifactHandles` is NOT used here even though its rows carry `modifiedAt`: a handle is enumerated from
+# this repository's declared evidence surfaces (`artifact_handle_projection.enumerate_surfaces(root)`) and
+# has no project attribution on the row. Printing WORK-LAB's newest file mtime under another project's
+# name is WL-L01 with a different field, so handles stay out of this decision until a handle states which
+# project it belongs to.
+#
+# Hard rule: no strong row → no value (null). Never 0, never "刚刚", never the snapshot's own
+# `generatedAt` — a timestamp the projection manufactured would tell the owner "this is when the source
+# last said something" when it means "this is when we woke up".
+# ---------------------------------------------------------------------------
+STRONG_SOURCE_QUALITIES: frozenset[str] = frozenset({"EXACT_SOURCE"})
+
+
+def _strong_evidence_map(store: CanonicalStore) -> dict[str, str]:
+    """project_id -> newest `observed_at` among that project's strong `source_quality` rows.
+
+    A project with no strong row is simply absent from the map, so the caller answers null. `observed_at`
+    is passed through verbatim; the ordering comparison is string ordering over the collector's own
+    ISO-8601 `Z` stamps, which is what `_git_states` above already uses for the same column.
+    """
+    newest: dict[str, str] = {}
+    try:
+        rows = store.list_source_quality()
+    except Exception:  # noqa: BLE001 - an unreadable evidence table is "no evidence", never a guessed time
+        return {}
+    for row in rows:
+        project_id = str(row.get("project_id") or "")
+        observed_at = row.get("observed_at")
+        if not project_id or not observed_at:
+            continue
+        if str(row.get("quality") or "") not in STRONG_SOURCE_QUALITIES:
+            continue
+        candidate = str(observed_at)
+        current = newest.get(project_id)
+        if current is None or candidate >= current:
+            newest[project_id] = candidate
+    return newest
 
 
 def _execution_rows(store: CanonicalStore) -> list[dict[str, Any]]:
@@ -602,6 +718,7 @@ def build_v3_snapshot(
     freshness_state: str = "UNKNOWN",
     generated_at: str | None = None,
     workspace_evidence: dict[str, Any] | None = None,
+    register_root: Path | None = None,
 ) -> dict[str, Any]:
     """组装 v3 snapshot（transport 由 live-gate verdict 决定，绝不伪造 LIVE）。"""
     coverage = _collector_coverage(store)
@@ -648,7 +765,7 @@ def build_v3_snapshot(
         platform_map=platform_map,
         agent_map=_agent_platform_map(),
         software=software_rows,
-        task_records=_task_rows(store),
+        task_records=_task_rows(store, root=register_root),
         adapter_capabilities=_adapter_capability_rows(software_rows),
         artifact_handles=artifact_handle_rows,
         artifact_handles_summary=artifact_handles_summary,
@@ -713,13 +830,22 @@ def _adapter_capability_rows(software_rows: list[dict[str, Any]]) -> list[dict[s
         return project_adapter_capabilities(**layers_only)
 
 
-def _task_rows(store: CanonicalStore) -> list[dict[str, Any]]:
+def _task_rows(store: CanonicalStore, *, root: Path | None = None) -> list[dict[str, Any]]:
     """Task detail records for the Work lane, projected by the unique Snapshot API.
 
     ``list_tasks()`` is the canonical store's own read; the projection lives in
     ``snapshot_api.project_task_record`` so there is exactly one place that decides what a task looks
     like on the read side. The checkpoint VALUES stay in the store — a read-only projection carries the
     key names and a digest, never the workflow text.
+
+    The live open-task register is appended after the store rows and each of its records carries its own
+    provenance (``register.source == "OPEN_TASK_REGISTER"``), because the two answer different questions:
+    the tasks table is machine-written execution state (measured 0 rows on this machine, 2026-10-27), the
+    register is what the owner wrote down by hand (measured 42 rows). The merge, the id-conflict marker and
+    the unreadable marker all live in ``open_task_register_projection`` so this file holds no second
+    opinion about the register's shape.
     """
     from snapshot_api import project_task_record
-    return [project_task_record(row) for row in store.list_tasks()]
+
+    rows = [project_task_record(row) for row in store.list_tasks()]
+    return merge_task_rows(rows, _build_register_task_rows(root=root))
