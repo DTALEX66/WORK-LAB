@@ -193,6 +193,19 @@ class WorkflowWiringTests(unittest.TestCase):
         self.assertNotIn("continue-on-error", block,
                          "a pressed gate that is forgiven is a claim that the tokens are wired, not a check")
 
+    def test_the_built_native_binary_is_reachable_off_the_runner(self) -> None:
+        """A binary that never leaves CI cannot be looked at, so 'the desktop entry' is only ever a claim.
+
+        The local chain cannot produce one at all (no MSVC linker, and `windres` is handed this repository's
+        space-containing path unquoted), which is why the job builds it. Uploading it is what makes the
+        native shell inspectable without anybody installing a toolchain; a missing file must be a red step.
+        """
+        block = self.step_block("Upload the native release binary")
+        self.assertIn("actions/upload-artifact@v4", block)
+        self.assertIn("apps/observer/src-tauri/target/release/app.exe", block)
+        self.assertIn("if-no-files-found: error", block,
+                      "an upload that tolerates a missing exe reports success for a build that produced nothing")
+
     def test_the_native_evidence_is_in_the_upload_list(self) -> None:
         upload = self.text.split("name: ci-summary-observer", 1)[1].split("if-no-files-found", 1)[0]
         for path in (".project-local/artifacts/native-evidence/",

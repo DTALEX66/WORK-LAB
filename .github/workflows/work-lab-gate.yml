@@ -378,6 +378,21 @@ jobs:
       - name: Build the real Tauri desktop binary (MSVC, for U19 E2E)
         working-directory: apps/observer/src-tauri
         run: cargo build --release --locked
+      # The desktop binary this job proves out never left the runner, so the only native entry anyone could
+      # look at on a dev machine was a superseded build: a local GNU `cargo tauri build` fails in
+      # `tauri-winres` because `windres` receives this repository's path unquoted ("D:\All projects\…" splits
+      # into `projects\WORK-LAB…`), and the local chain has no MSVC linker either -- which is what the
+      # comment above already records as the reason CI builds it at all. Uploading the same bytes the U19
+      # gate drove makes "run the native shell and look at it" possible without asking anyone to install a
+      # toolchain, and `if-no-files-found: error` means a build that silently produced nothing is a red job
+      # rather than a missing download.
+      - name: Upload the native release binary (the exe U19 drove, for local inspection)
+        uses: actions/upload-artifact@v4
+        with:
+          name: observer-native-app-exe
+          path: apps/observer/src-tauri/target/release/app.exe
+          if-no-files-found: error
+          retention-days: 14
       - name: Record the artifact input receipt
         # ERR-105: the receipt must be written by the build side, immediately
         # after the compiler, so it attests to a build that was observed. The
