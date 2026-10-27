@@ -114,6 +114,11 @@ SURFACES: list[dict] = [
      "readyProbe": RING_ROW_PROBE, "readyWhy": "an adapter ring row is painted"},
     {"name": "daily-home", "query": "surface=daily&shell=tauri", "size": DAILY, "kind": "daily",
      "state": None, "readyProbe": None, "readyWhy": None},
+    # D2's screen needs its own entry: `scripts/audit/text_legibility_via_cdp.py` enumerates the surfaces it
+    # sweeps from this list, so a screen absent here gets no contrast or line-break measurement in either
+    # theme. The rail label is five CJK glyphs and the five carried cards bring their own wrapping.
+    {"name": "daily-governance", "query": "surface=daily&shell=tauri&dv=governance", "size": DAILY,
+     "kind": "daily", "state": None, "readyProbe": None, "readyWhy": None},
 ]
 
 _SURFACE_KINDS = {str(s["name"]): str(s["kind"]) for s in SURFACES}

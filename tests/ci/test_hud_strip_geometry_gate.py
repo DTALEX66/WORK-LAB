@@ -191,11 +191,20 @@ def strip_settings() -> dict:
     return surface
 
 
+def daily_governance() -> dict:
+    """D2's screen: the daily shell with the five carried cards mounted."""
+    surface = daily_home()
+    surface["bodyText"] = ("治理与诊断\n数据可信度\n传输真值与状态矩阵\n采集器交付与拒绝\n"
+                           "只读与隐私边界\n审计追踪\n项目\n问题与经验\n我的工具\n设置\nLIVE")
+    return surface
+
+
 def good_measurement() -> dict:
     """Every surface the gate declares, at the shape the shipped bundle renders."""
     return {"strip-h01": strip_h01(), "strip-h02": strip_h02(), "strip-h03": strip_h03(),
             "strip-h04": strip_h04(), "strip-settings": strip_settings(),
-            "panel-h01": panel_h01(), "daily-home": daily_home()}
+            "panel-h01": panel_h01(), "daily-home": daily_home(),
+            "daily-governance": daily_governance()}
 
 
 def expected_check_names() -> set:
