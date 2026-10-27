@@ -83,9 +83,11 @@ const mockSnap = {
   ],
 } as never
 
+const liveSnapshot: { current: unknown } = { current: mockSnap }
+
 vi.mock('@/lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>()
-  return { ...actual, useLiveSnapshot: () => ({ snap: mockSnap, source: 'live', live: true, error: null, dataUpdatedAt: 0 }) }
+  return { ...actual, useLiveSnapshot: () => ({ snap: liveSnapshot.current as never, source: 'live', live: true, error: null, dataUpdatedAt: 0 }) }
 })
 
 vi.mock('@/lib/repairPack', async (importOriginal) => {
@@ -191,6 +193,34 @@ describe('日常壳（?shell=daily）', () => {
     // shell passes none, so a control appearing here would be a button that looks live and does nothing.
     expect(card.querySelectorAll('[data-setting]').length).toBe(0)
     expect(card.textContent).toContain('深色')
+  })
+
+  it('无快照时治理屏不补 0：三个槽位回落 UNKNOWN，而它们在有快照时确实会被回答', () => {
+    // The five mounted views each carry the no-fabrication rule in the professional shell. What is proven
+    // here is that the daily mount does not paper over it: `snap` reaches them as null and no wrapper
+    // invents a zero or a rate. The data render is the positive control -- without it, a string the panel
+    // always prints would pass the null assertion and guard nothing.
+    const painted = () =>
+      (screen.getByRole('heading', { name: '治理与诊断' }).closest('section') as HTMLElement).textContent ?? ''
+    window.history.replaceState(null, '', '/index.html?shell=daily&dv=governance')
+
+    render(<App />)
+    const withData = painted()
+    cleanup()
+
+    liveSnapshot.current = null
+    let noData = ''
+    try {
+      render(<App />)
+      noData = painted()
+    } finally {
+      liveSnapshot.current = mockSnap
+    }
+    for (const slot of ['传输状态', '新鲜度', '覆盖度']) {
+      expect(withData).not.toContain(`${slot}UNKNOWN`)
+      expect(noData).toContain(`${slot}UNKNOWN`)
+    }
+    expect(noData).not.toMatch(/全部干净|\d+%/)
   })
 
   it('被日常壳承接的视图不再出现在设置页的专业链接里（一件事一个入口）', () => {
