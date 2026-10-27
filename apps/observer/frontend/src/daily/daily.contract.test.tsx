@@ -356,6 +356,24 @@ describe('HUD 四态（?hud=daily）', () => {
     expect(screen.queryByText(/79%|12%/)).toBeNull()
   })
 
+  it('页脚齿轮换下状态卡，而不是接在下面把自己顶出视口', () => {
+    window.history.replaceState(null, '', '/index.html?layout=compact&hud=daily&hs=h01')
+    render(<HudDaily snap={mockSnap as never} nativeStrip />)
+    const frame = document.querySelector('[data-hud-frame]') as HTMLElement
+    expect(frame.querySelector('[data-landmark="h01"]')).not.toBeNull()
+    expect(frame.querySelector('[data-landmark="hud-settings"]')).toBeNull()
+    fireEvent.click(screen.getByLabelText('HUD 设置'))
+    expect(frame.querySelector('[data-landmark="hud-settings"]')).not.toBeNull()
+    // The swap is the claim: appended, this block painted at y=508 of a 480px window (measured by
+    // scripts/audit/hud_strip_geometry_via_cdp.py), i.e. opened and invisible.
+    expect(frame.querySelector('[data-landmark="h01"]')).toBeNull()
+    expect(screen.getByLabelText('HUD 设置').getAttribute('aria-expanded')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: '收起' }))
+    expect(frame.querySelector('[data-landmark="h01"]')).not.toBeNull()
+    expect(frame.querySelector('[data-landmark="hud-settings"]')).toBeNull()
+    expect(screen.getByLabelText('HUD 设置').getAttribute('aria-expanded')).toBe('false')
+  })
+
   it('H03 工具详情不画虚构柱状图；H04 提醒不冒充系统确认', () => {
     window.history.replaceState(null, '', '/index.html?layout=compact&hud=daily&hs=h03')
     const { unmount } = render(<App />)
