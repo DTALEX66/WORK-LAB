@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-27T16:55:26Z",
+  "generatedAt": "2026-10-27T18:20:05Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -450,19 +450,19 @@
     },
     {
       "path": "scripts/audit/hud_strip_geometry_via_cdp.py",
-      "sha256": "ae719daddb8fe53a86c6ca53a83886f674f3335424eb76e14cf911ae281e1365",
-      "bytes": 60946,
-      "lines": 1045,
+      "sha256": "577c67a75033101ecfe6302c9802ff045661d84804ba52a2f91376445f748bf0",
+      "bytes": 66007,
+      "lines": 1123,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 6,
+      "citedByRecords": 8,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
+        "apps/observer/frontend/src/daily/HudDaily.tsx",
+        "apps/observer/frontend/src/daily/daily.contract.test.tsx",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/audits/TOOL_INVENTORY_2026-10-07.json",
-        "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "tests/ci/test_hud_strip_geometry_gate.py",
-        "tests/ci/test_text_legibility_gate.py"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {

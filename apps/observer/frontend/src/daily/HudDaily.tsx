@@ -353,6 +353,40 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
     </div>
   ) : null
 
+  /**
+   * The footer gear's block. It REPLACES the state card in the strip rather than appending under it:
+   * the H01 column already reaches y=500 in a 480px window with six monitored agents, so an appended
+   * block painted at y=508 — measured 2026-10-28 by `scripts/audit/hud_strip_geometry_via_cdp.py`, which
+   * is the only thing that ever presses this button. A control whose result is off-screen is a control
+   * the user cannot use, whatever the DOM says.
+   */
+  const settingsBlock = (
+    <div data-landmark="hud-settings"
+      className="w-full shrink-0 rounded-xl border bg-[color:var(--daily-shell)] p-2 text-xs"
+      style={{ borderColor: LINE }}>
+      <p style={{ color: DIM }}>
+        数据源：{transport?.transportState ?? 'UNKNOWN'}；
+        修订 {snap?.revision ?? 'UNKNOWN'}。
+        更多设置在主窗口设置页。
+      </p>
+      {/* E1：这一屏现在确实跟着主题令牌换色，所以说明写的是它接的是哪一套值。窄窗里放短句——
+          完整那段在 126px 的列里要排十几行，会把这个块整个顶出视口。 */}
+      <ThemeHonestyNote id={THEME_HONESTY_ID_HUD} surface="hud" />
+      <button type="button" onClick={() => setMiniSettings(false)} className="mt-1" style={{ color: ACCENT }}>
+        收起
+      </button>
+    </div>
+  )
+
+  const stateSection = (
+    <>
+      {state === 'h01' && h01Card}
+      {state === 'h02' && h02Section}
+      {state === 'h03' && h03Section}
+      {state === 'h04' && h04Section}
+    </>
+  )
+
   return (
     // The native strip is a fixed 150x480 always-on-top window: the footer must stay inside the
     // viewport, so the frame itself never scrolls — the content region does, and the footer is
@@ -373,26 +407,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
       {native ? (
         <>
           <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto">
-          {state === 'h01' && h01Card}
-          {state === 'h02' && h02Section}
-          {state === 'h03' && h03Section}
-          {state === 'h04' && h04Section}
-          {miniSettings && (
-            <div data-landmark="hud-settings"
-              className="w-full rounded-xl border bg-[color:var(--daily-shell)] p-2 text-xs" style={{ borderColor: LINE }}>
-              <p style={{ color: DIM }}>
-                数据源：{transport?.transportState ?? 'UNKNOWN'}；
-                修订 {snap?.revision ?? 'UNKNOWN'}。
-                主题与更多设置在主窗口设置页。
-              </p>
-              {/* E1：主窗口设置页的那个主题控件就在这个窄窗里也一样不换色，所以这里如实说明，
-                  不把「去主窗口设置」读起来像「换了就会变」。 */}
-              <ThemeHonestyNote id={THEME_HONESTY_ID_HUD} surface="hud" />
-              <button type="button" onClick={() => setMiniSettings(false)} className="mt-1" style={{ color: ACCENT }}>
-                收起
-              </button>
-            </div>
-          )}
+          {miniSettings ? settingsBlock : stateSection}
           </div>
           {footer}
         </>

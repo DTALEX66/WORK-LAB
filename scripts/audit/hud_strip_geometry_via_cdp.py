@@ -43,6 +43,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "audit"))
 import bundle_provenance  # noqa: E402  # every receipt names the bytes the browser loaded
+# The 12px floor belongs to the legibility gate; this gate owns it only for the mini settings block, which
+# no other surface ever renders (the block is React state behind the footer gear).
+from text_legibility_via_cdp import FLOOR_PX as TYPE_FLOOR_PX  # noqa: E402
 
 GEOMETRY_SCRIPT = ROOT / "scripts" / "audit" / "topbar_geometry_via_cdp.py"
 DIST = ROOT / "apps" / "observer" / "frontend" / "dist"
@@ -57,6 +60,12 @@ DAILY = (1280, 820)
 
 H01_SECTION = 'section[aria-label="工具额度窄面板"]'
 SUMMARY = '[aria-label="悬停摘要"]'
+# The gear in the strip footer opens the mini settings block, and the block is React state -- it is in no
+# URL, so the only way a browser gate can see it is to press the button. Until 2026-10-28 no gate did,
+# which meant the panel's geometry, its footer collision and its wrapping were judged by nobody: the strip
+# fixtures counted the gear as a control and never opened what it controls.
+SETTINGS_BUTTON = 'button[aria-label="HUD 设置"]'
+SETTINGS_PANEL = '[data-landmark="hud-settings"]'
 # The lit ring used to be identified by the literal amber attribute the strip painted (`AMBER =
 # "#FBBF24"`). Since 2026-10-27 the strip takes its colours from the --daily-* theme tokens, so that
 # string can never appear in the source again — and a gate that compared an attribute against a hex
@@ -97,6 +106,9 @@ SURFACES: list[dict] = [
      "readyProbe": MARKER_PROBE, "readyWhy": f"the fixture tool {FIXTURE_MARKER!r} is named in the header"},
     {"name": "strip-h04", "query": "surface=hud&hs=h04", "size": STRIP, "kind": "strip", "state": "h04",
      "readyProbe": MARKER_PROBE, "readyWhy": f"the fixture tool {FIXTURE_MARKER!r} is named in the header"},
+    {"name": "strip-settings", "query": "surface=hud", "size": STRIP, "kind": "strip", "state": "h01",
+     "openSettings": True, "readyProbe": RING_ROW_PROBE,
+     "readyWhy": "an adapter ring row is painted (the gear lives in the footer of the same strip)"},
     {"name": "panel-h01", "query": "view=compact&layout=compact&shell=tauri&hud=daily",
      "size": PANEL, "kind": "panel", "state": "h01",
      "readyProbe": RING_ROW_PROBE, "readyWhy": "an adapter ring row is painted"},
@@ -133,6 +145,9 @@ MEASURE_JS = r"""
   const POLL_MS = __POLL_MS__;
   const H01 = __H01__;
   const SUMMARY = __SUMMARY__;
+  const OPEN_SETTINGS = __OPEN_SETTINGS__;
+  const SETTINGS_BUTTON = __SETTINGS_BUTTON__;
+  const SETTINGS_PANEL = __SETTINGS_PANEL__;
   const r1 = (n) => Math.round(n * 10) / 10;
   const painted = () => (document.body && document.body.innerText) || '';
   // Wait for the snapshot to reach the surface BEFORE anything is measured, and before the hover is
@@ -170,8 +185,37 @@ MEASURE_JS = r"""
     }
   }
 
+  let settingsDispatch = 'not-requested';
+  if (OPEN_SETTINGS) {
+    const gear = document.querySelector(SETTINGS_BUTTON);
+    if (!gear) settingsDispatch = 'no-gear-button';
+    else {
+      // React binds onClick, so a synthetic click on the element is the same path a pointer takes;
+      // `aria-expanded` is then the button's own statement of whether the block it controls opened.
+      gear.click();
+      settingsDispatch = 'clicked';
+      await new Promise((res) => requestAnimationFrame(() => setTimeout(res, 120)));
+    }
+  }
+
   const out = {
     hoverDispatch,
+    settingsDispatch,
+    settings: (() => {
+      const el = document.querySelector(SETTINGS_PANEL);
+      if (!el) return null;
+      const gear = document.querySelector(SETTINGS_BUTTON);
+      const close = [...el.querySelectorAll('button')][0];
+      const texts = [...el.querySelectorAll('p,button,span')].filter((n) => (n.innerText || '').trim());
+      return {...box(el),
+              text: (el.innerText || '').slice(0, 300),
+              expanded: gear ? gear.getAttribute('aria-expanded') : null,
+              insideFrame: !!el.closest('[data-hud-frame]'),
+              closeText: close ? (close.innerText || '').trim() : null,
+              closeRect: close ? box(close) : null,
+              fontSizes: texts.map((n) => parseFloat(getComputedStyle(n).fontSize) || 0),
+              controlCount: el.querySelectorAll('button').length};
+    })(),
     ready, readyWaitMs,
     readyProbe: __READY_WHY__,
     readyBudgetMs: BUDGET_MS,
@@ -341,7 +385,10 @@ def expression_for(surface: dict) -> str:
             .replace("__BUDGET_MS__", str(READY_BUDGET_MS))
             .replace("__POLL_MS__", str(READY_POLL_MS))
             .replace("__H01__", json.dumps(H01_SECTION, ensure_ascii=False))
-            .replace("__SUMMARY__", json.dumps(SUMMARY, ensure_ascii=False)))
+            .replace("__SUMMARY__", json.dumps(SUMMARY, ensure_ascii=False))
+            .replace("__OPEN_SETTINGS__", "true" if surface.get("openSettings") else "false")
+            .replace("__SETTINGS_BUTTON__", json.dumps(SETTINGS_BUTTON, ensure_ascii=False))
+            .replace("__SETTINGS_PANEL__", json.dumps(SETTINGS_PANEL, ensure_ascii=False)))
 
 
 # --------------------------------------------------------------------------- the declared data shape
@@ -832,6 +879,37 @@ def verdict(measured: dict) -> dict:
                f"colourDiffersFromIdle={painted_apart} expectedRoles={(ACTIVE_RING, IDLE_RING)!r}")
         _check(checks, "hover_keeps_h01_mounted", bool((hover.get("h01") or {}).get("rect")),
                f"h01={json.dumps(hover.get('h01') and hover['h01']['rect'])}")
+
+    # --- the mini settings block: reached only by pressing the footer gear ------------------------
+    for name in [str(s["name"]) for s in SURFACES if s.get("openSettings")]:
+        slug = _slug(name)
+        surface = harvests.get(name)
+        if not surface:
+            _check(checks, f"{slug}_gear_opens_the_settings_block", False, "not measured")
+            _check(checks, f"{slug}_settings_block_is_readable_and_dismissible", False, "not measured")
+            continue
+        settings = surface.get("settings")
+        client_h = (surface.get("viewport") or {}).get("clientH") or 0
+        painted = isinstance(settings, dict) and (settings.get("height") or 0) > 0
+        _check(checks, f"{slug}_gear_opens_the_settings_block",
+               surface.get("settingsDispatch") == "clicked" and painted
+               and settings.get("expanded") == "true" and settings.get("insideFrame") is True,
+               f"dispatch={surface.get('settingsDispatch')!r} painted={painted} "
+               f"ariaExpanded={settings and settings.get('expanded')!r} "
+               f"insideFrame={settings and settings.get('insideFrame')} "
+               "(the block is React state and travels in no URL: if the gear does not open it here, "
+               "nothing in this project ever renders it in a browser)")
+        sizes = [v for v in ((settings or {}).get("fontSizes") or []) if v]
+        close_rect = (settings or {}).get("closeRect") or {}
+        _check(checks, f"{slug}_settings_block_is_readable_and_dismissible",
+               painted and bool(sizes) and min(sizes) >= TYPE_FLOOR_PX
+               and (settings or {}).get("bottom", 1e9) <= client_h + VIEWPORT_TOLERANCE_PX
+               and bool((settings or {}).get("closeText"))
+               and close_rect.get("width", 0) > 0 and close_rect.get("height", 0) > 0,
+               f"rect={settings and [settings.get('top'), settings.get('bottom'), settings.get('height')]} "
+               f"viewportHeight={client_h} minFontSize={min(sizes) if sizes else None} "
+               f"floor={TYPE_FLOOR_PX} closeText={(settings or {}).get('closeText')!r} "
+               f"closeRect={json.dumps(close_rect)} controls={(settings or {}).get('controlCount')}")
 
     # --- H03: the reference's three quota rows, painted as slots and valued as UNKNOWN -------------
     h03 = harvests.get("strip-h03")
