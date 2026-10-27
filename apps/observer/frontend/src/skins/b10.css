@@ -193,6 +193,12 @@ a{text-decoration:none;color:inherit}
 .nav button:active{transform:translateX(3px) scale(var(--pressed-scale));transition-duration:var(--motion-pressed)}
 .ghost-btn:active,.soft-btn:active{transform:translateY(0) scale(var(--pressed-scale));transition-duration:var(--motion-pressed)}
 .primary-btn:active{transform:translateY(0) scale(var(--pressed-scale));transition-duration:var(--motion-pressed)}
+/* The desktop window shows the DAILY shell, whose navigation is styled with Tailwind utilities and therefore
+   never inherits the four rules above -- without this the pressed tokens stay unconsumed on the one surface
+   an operator actually points at. It is placed beside them so the reduced-motion floor below cannot drift out
+   of covering it. */
+nav[data-landmark="rail"] button{transition:transform var(--motion-base) ease}
+nav[data-landmark="rail"] button:active{transform:scale(var(--pressed-scale));transition-duration:var(--motion-pressed)}
 .danger-btn{
   border:0;color:#fff;font-weight:700;
   background:linear-gradient(135deg,color-mix(in srgb,var(--error) 88%, white 3%),color-mix(in srgb,var(--error) 60%, #000));
@@ -536,5 +542,6 @@ a{text-decoration:none;color:inherit}
 @media (prefers-reduced-motion: reduce){
   .ambient,.ambient::before,.ambient::after,
   .flow-svg path,.graph-stage .core,.scan-line::after{animation:none !important}
-  .nav button,.list-item,.panel,.ghost-btn,.primary-btn{transition:none !important;transform:none !important}
+  .nav button,.list-item,.panel,.ghost-btn,.primary-btn,
+  nav[data-landmark="rail"] button{transition:none !important;transform:none !important}
 }
