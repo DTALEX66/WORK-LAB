@@ -431,10 +431,18 @@ describe('CL-12 原生窄窗的 H02 可达性', () => {
     const summary = screen.getByLabelText('悬停摘要')
     expect(summary.textContent).toContain('UNKNOWN')
     expect(li.contains(summary)).toBe(true)
-    // 参考的 H02 还会把被悬停那一行本身点亮（琥珀环），只出现摘要不算还原
-    expect(li.querySelector('circle')?.getAttribute('stroke')).toBe('#FBBF24')
+    // 参考的 H02 还会把被悬停那一行本身点亮（琥珀环），只出现摘要不算还原。
+    // 2026-10-27 起环色是主题令牌而不是字面量（写死时窄窗在两个主题下逐字节相同），所以这里钉两件事：
+    // 环说得出自己演的是哪个角色（data-ring-role，窄窗几何门读同一个属性），且点亮行与未点亮行
+    // 引用的是**不同**的令牌——两个角色若共用一个令牌，琥珀就再也点不亮任何东西。
+    const ring = li.querySelector('circle')!
+    expect(ring.getAttribute('data-ring-role')).toBe('active')
+    expect(ring.style.stroke).toBe('var(--daily-warn-mark)')
     const other = screen.getByLabelText('工具额度窄面板').querySelectorAll('li')[1]
-    expect(other.querySelector('circle')?.getAttribute('stroke')).not.toBe('#FBBF24')
+    const otherRing = other.querySelector('circle')!
+    expect(otherRing.getAttribute('data-ring-role')).toBe('idle')
+    expect(otherRing.style.stroke).toBe('var(--daily-line)')
+    expect(otherRing.style.stroke).not.toBe(ring.style.stroke)
     expect(screen.getAllByLabelText('悬停摘要')).toHaveLength(1)
     expect(screen.getByLabelText('工具额度窄面板')).toBeTruthy()
   })

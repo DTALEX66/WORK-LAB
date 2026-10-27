@@ -9,51 +9,78 @@ import {
   Plug, Search, Settings, SquareArrowOutUpRight, Wrench, X,
 } from 'lucide-react'
 import { WindowControls } from '@/components/layout/WindowControls'
+import { dailyVar, type DailyRole } from '@/theme/tokens'
 
-export const T = {
-  bg: '#10141A', shell: '#171D25', surface: '#1C2430', text: '#E8EDF3',
-  dim: '#A6B0BE', line: '#303A46', accent: '#40B6C7',
+/**
+ * The palette this shell paints with, 2026-10-27. Every value is a `var(--daily-<role>)` reference and
+ * nothing else: the numbers live in src/index.css (`:root` + `html.light`, recorded machine-readably by
+ * DAILY_TOKENS in src/theme/tokens.ts), so this shell repaints when the theme class changes instead of
+ * carrying 144 hex literals that made `?theme=light` a no-op on the one screen the owner actually looks
+ * at. The role names describe what they paint (layers, ink weights, status roles), never a hue.
+ * `src/daily/dailyThemeTokens.contract.test.ts` fails if a hex or a Tailwind named colour comes back.
+ */
+export const T: Record<DailyRole, string> = {
+  bg: dailyVar('bg'), shell: dailyVar('shell'), surface: dailyVar('surface'),
+  line: dailyVar('line'), text: dailyVar('text'), dim: dailyVar('dim'),
+  disabledText: dailyVar('disabledText'), accent: dailyVar('accent'),
+  onAccent: dailyVar('onAccent'), warnText: dailyVar('warnText'),
+  warnMark: dailyVar('warnMark'), warnLine: dailyVar('warnLine'),
+  decisionMark: dailyVar('decisionMark'), ok: dailyVar('ok'),
+  accentTint: dailyVar('accentTint'), accentTintLine: dailyVar('accentTintLine'),
+  warnTint: dailyVar('warnTint'), warnTintLine: dailyVar('warnTintLine'),
+  scrim: dailyVar('scrim'),
 }
 
 export type DailyNav = 'home' | 'issues' | 'tools'
 
-// ── E1 · 主题诚实声明 ────────────────────────────────────────────────────
-// 2026-10-25 实测：?theme=light 确实写进了 html.class（App.tsx 的主题效果与 index.html 预渲染
-// 同一套契约），但日常壳与 HUD 窄窗三个文件里 var(--) 出现 0 次、十六进制值写死，
-// 所以窄窗截图在两个主题下逐字节相同（md5 3f53ee67…）。令牌单源是 WUI-03 的后续项，浅色
-// 配色还没接入本视图。owner 本轮的决定是「如实说明，不假装切换」：控件继续工作（专业投影壳
-// 的主题切换是真的生效），但本表面必须把「这一屏暂时不跟着变」写在屏幕上。
-// 措辞同时不许反向说谎：不得写成「本产品只有深色」。
+// ── E1 · 主题生效声明 ──────────────────────────────────────────────────────
+// 这段文字有历史，改它要如实。2026-10-25 实测的是相反的事实：?theme=light 确实写进 html.class
+// （App.tsx 的主题效果与 index.html 预渲染同一套契约），但日常壳与 HUD 窄窗里 `var(--)` 出现 0 次、
+// 十六进制值写死，所以窄窗截图在两个主题下逐字节相同（md5 3f53ee67…），当时唯一的诚实做法是把
+// 「这一屏暂时不跟着变」写在屏幕上。
+// 2026-10-27 接线完成：两张面的每一层颜色都改从 --daily-* 主题令牌取值，浅色那套值在 index.css 的
+// html.light 与 tokens.ts 的 DAILY_TOKENS.light 里成对声明，于是那句免责声明会变成反向说谎——它否认
+// 一件现在真的发生了的事。措辞因此改成如实描述生效机制与其证据；同一约束仍然成立：不许反向说谎，
+// 不得写成「本产品只有深色」，也不得把专业投影壳说成不换色。
 export const THEME_HONESTY_ID_DAILY = 'daily-theme-honesty-note'
 export const THEME_HONESTY_ID_HUD = 'hud-theme-honesty-note'
 
 export const THEME_HONESTY_TEXT =
-  '这一屏暂时不跟着变：这个按钮改的是页面的主题类与地址里的 ?theme=，而日常壳的配色按固定深色值写死，'
-  + '还没接入主题令牌，所以它在这里只改地址参数 ?theme=，不会把本视图变成浅色。'
-  + '要让它真的跟随主题，需要浅色板来源与令牌单源两样东西都到位（WUI-03），到位前这里不声称能切色。'
-  + '专业投影壳（?view=…）的主题切换是实际生效的；把日常壳与 HUD 窄窗接进主题令牌是 WUI-03 的待办项。'
+  '这个按钮改 html 上的主题类，也把 ?theme= 写进地址；日常壳的每一层颜色都从 --daily-* 主题令牌取值——'
+  + '深色值写在 src/index.css 的 :root、浅色值写在同一文件的 html.light，src/theme/tokens.ts 的 DAILY_TOKENS'
+  + ' 是同一份记录的机器可读副本——所以切到浅色时这一屏确实换成浅色那一套值，HUD 窄窗（?surface=hud）接的是同一套令牌。'
+  + '这句不是自我声明：src/daily/dailyThemeTokens.contract.test.ts 逐个令牌比对样式表与记录、要求浅色的每个值都'
+  + '不等于它的深色伙伴，并按 WCAG 实测两个主题里每一对「文字与它自己的底」（正文 4.5:1；被禁用的标签这里不豁免，'
+  + '固定皮肤把它画在 55% 不透明度上，仍要求 3.0:1）；'
+  + 'scripts/audit/text_legibility_via_cdp.py --shell-surfaces 再在真实浏览器里把深浅两个主题各扫一遍。'
+  + '母版配色（?palette=master，WUI-03）是与深浅正交的可选主题：它不覆盖这套默认值，选了它这两张面也跟着换成母版值。'
+  + '专业投影壳（?view=…）的主题切换同样生效，用的是 --color-* 那一套令牌。'
 
 export const THEME_HONESTY_TEXT_HUD =
-  '这个窄窗按固定的深色值绘制，?theme= 暂时不会改变它的配色；'
-  + '专业投影壳的主题切换是实际生效的。接入主题令牌是 WUI-03 的待办项。'
+  '这个窄窗接在同一套 --daily-* 主题令牌上：?theme=light 写进 html 的主题类后，它的每一层颜色都换成 '
+  + 'src/index.css 里 html.light 记录的浅色值；它过去按写死的深色值绘制，那种写法已由 '
+  + 'src/daily/dailyThemeTokens.contract.test.ts 禁止（组件里不允许再出现色值字面量）。'
 
 /**
- * The honesty statement about the theme control, painted (never hover-only) and keyboard reachable
- * (tabIndex 0 + role=note) so it is not colour-only or tooltip-only information. The control it
- * describes points here with aria-describedby, and `title` repeats it for a pointer reader.
- * Same palette as the surrounding dim text, so both themes clear the floor by construction (the
- * surface paints identically): #A6B0BE on #10141A = 8.42:1, the #E8EDF3 lead-in on #10141A = 15.69:1,
- * both at text-xs = 12px — measured with the same WCAG formula `scripts/audit/text_legibility_via_cdp.py`
- * applies to painted text. No new size, no new colour pair.
+ * The statement about how the theme control behaves on this surface, painted (never hover-only) and
+ * keyboard reachable (tabIndex 0 + role=note) so it is not colour-only or tooltip-only information. The
+ * control it describes points here with aria-describedby, and `title` repeats it for a pointer reader.
+ *
+ * It paints with the same two tokens as the rest of the shell (dim on bg, the lead-in in text on bg),
+ * so it inherits whatever theme is in effect instead of being a fixed-dark island — and it clears the
+ * floor by construction: dim on the daily ground measured 8.53:1 dark / 5.83:1 light, the lead-in ink
+ * 16.23:1 / 15.19:1, both at text-xs = 12px, recomputed from the token record itself by
+ * src/daily/dailyThemeTokens.contract.test.ts and re-measured in the browser by the legibility gate.
+ * No new size, no new colour pair.
  */
 export function ThemeHonestyNote(props: { id: string; surface: 'daily' | 'hud' }) {
   const text = props.surface === 'hud' ? THEME_HONESTY_TEXT_HUD : THEME_HONESTY_TEXT
   return (
     <p id={props.id} role="note" tabIndex={0} title={text}
-      data-testid="theme-honesty-note" data-theme-honesty="not-applied"
+      data-testid="theme-honesty-note" data-theme-honesty="applied"
       data-surface={props.surface}
-      className="mt-2 rounded border border-[#303A46] bg-[#10141A] p-2 text-xs leading-relaxed text-[#A6B0BE]">
-      <span className="font-semibold text-[#E8EDF3]">主题未在本视图生效：</span>{text}
+      className="mt-2 rounded border border-[color:var(--daily-line)] bg-[color:var(--daily-bg)] p-2 text-xs leading-relaxed text-[color:var(--daily-dim)]">
+      <span className="font-semibold text-[color:var(--daily-text)]">主题在本视图生效：</span>{text}
     </p>
   )
 }
@@ -75,15 +102,17 @@ export function IconTile({ label, size = 36, tone = 'shell' }: { label: string; 
   const initials = label.trim().slice(0, 2).toUpperCase()
   return (
     <span aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-lg border ${tone === 'shell' ? 'bg-[#1C2430]' : 'bg-[#171D25]'} font-semibold`}
+      className={`flex shrink-0 items-center justify-center rounded-lg border ${tone === 'shell' ? 'bg-[color:var(--daily-surface)]' : 'bg-[color:var(--daily-shell)]'} font-semibold`}
       style={{ width: size, height: size, borderColor: T.line, color: T.accent, fontSize: Math.max(12, size * 0.34) }}>
       {initials}
     </span>
   )
 }
 
+// The reference's status vocabulary, one token per status rather than one hex per status: the dot keeps
+// its meaning when the theme changes (需要关注 stays an amber-family mark, 已完成 a green-family one).
 const PILL_TONE: Record<string, string> = {
-  正在推进: '#40B6C7', 需要关注: '#FBBF24', 等待你决定: '#FDE68A', 已完成: '#34D399', 暂停: '#A6B0BE',
+  正在推进: T.accent, 需要关注: T.warnMark, 等待你决定: T.decisionMark, 已完成: T.ok, 暂停: T.dim,
 }
 
 /** The reference's "● 状态" capsule: dot + label inside a bordered pill. */
@@ -100,9 +129,9 @@ export function StatusPill({ status }: { status: string }) {
 
 export function Chip({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'accent' | 'warn' }) {
   const style = tone === 'accent'
-    ? { borderColor: '#1F5F6B', background: 'rgba(64,182,199,0.12)', color: T.accent }
+    ? { borderColor: T.accentTintLine, background: T.accentTint, color: T.accent }
     : tone === 'warn'
-      ? { borderColor: '#6B5320', background: 'rgba(251,191,36,0.10)', color: '#FCD34D' }
+      ? { borderColor: T.warnTintLine, background: T.warnTint, color: T.warnText }
       : { borderColor: T.line, background: T.surface, color: T.dim }
   return (
     <span className="inline-flex items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 text-xs" style={style}>
@@ -154,11 +183,13 @@ export function DisabledAction({ label, reason, primary = false, icon }: {
       <button type="button" disabled aria-disabled="true" title={reason}
         className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm opacity-60"
         style={primary
-          ? { borderColor: T.line, background: T.surface, color: T.dim }
-          : { borderColor: T.line, background: T.shell, color: T.dim }}>
+          ? { borderColor: T.line, background: T.surface, color: T.disabledText }
+          : { borderColor: T.line, background: T.shell, color: T.disabledText }}>
         {icon ?? null}{label}
         {icon ? null : <SquareArrowOutUpRight size={13} aria-hidden="true" />}
       </button>
+      {/* the explanation is painted at full opacity, so it owes the body-text ratio, not the 3:1
+          floor of the dimmed control above it */}
       <span className="text-xs" style={{ color: T.dim }}>{reason}</span>
     </span>
   )
@@ -232,7 +263,7 @@ export function Rail({ view, onNavigate, transportLabel, transportTone }: {
   view: DailyNav | 'settings'; onNavigate: (v: DailyNav | 'settings') => void
   transportLabel: string; transportTone: 'live' | 'unknown' | 'offline'
 }) {
-  const dot = transportTone === 'live' ? '#34D399' : transportTone === 'offline' ? '#FBBF24' : T.dim
+  const dot = transportTone === 'live' ? T.ok : transportTone === 'offline' ? T.warnMark : T.dim
   return (
     <nav aria-label="主导航" data-landmark="rail"
       className="flex w-[176px] shrink-0 flex-col border-r px-3 py-4"

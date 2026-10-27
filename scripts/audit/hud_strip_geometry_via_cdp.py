@@ -57,7 +57,15 @@ DAILY = (1280, 820)
 
 H01_SECTION = 'section[aria-label="工具额度窄面板"]'
 SUMMARY = '[aria-label="悬停摘要"]'
-AMBER = "#FBBF24"
+# The lit ring used to be identified by the literal amber attribute the strip painted (`AMBER =
+# "#FBBF24"`). Since 2026-10-27 the strip takes its colours from the --daily-* theme tokens, so that
+# string can never appear in the source again — and a gate that compared an attribute against a hex
+# would convict a correct render. The judgement is unchanged ("the hovered row is the only one lit in
+# the warning colour"), but it is now read two ways: the element states which ring ROLE it plays, and
+# the RESOLVED stroke is compared against the idle rows' resolved stroke. Colour identity is therefore
+# still measured in the browser, per theme, instead of being assumed from a literal.
+ACTIVE_RING = "active"
+IDLE_RING = "idle"
 
 # The condition the page must satisfy before a harvest counts as measuring the populated surface. The
 # frame mounts on the very first render, which happens while the snapshot is still in flight, so a probe
@@ -249,9 +257,14 @@ MEASURE_JS = r"""
       return el ? {rect: box(el), text: (el.innerText || '').slice(0, 600)} : null;
     })(),
     // Strip rows as painted: which carry a ring, which ring colour, which one holds the summary.
+    // `stroke` is the RESOLVED paint (an attribute holding var(--daily-…) is not a colour, and the
+    // whole point of the token pass is that the colour a user sees depends on the live theme), and
+    // `ringRole` is the element's own statement of which role that ring plays.
     rows: [...document.querySelectorAll(H01 + ' li')].map((li) => {
       const c = li.querySelector('circle');
-      return {hasRing: !!c, stroke: c ? c.getAttribute('stroke') : null,
+      return {hasRing: !!c,
+              stroke: c ? (getComputedStyle(c).stroke || c.getAttribute('stroke')) : null,
+              ringRole: c ? c.getAttribute('data-ring-role') : null,
               strokeWidth: c ? c.getAttribute('stroke-width') : null,
               hasSummary: !!li.querySelector(SUMMARY)};
     }),
@@ -725,12 +738,27 @@ def verdict(measured: dict) -> dict:
                f"{summary and summary.get('scrollerOverflow')} "
                "(below the fold inside a scroll box would be reported here as pxBelowFold)")
         rows = hover.get("rows")
-        lit = [i for i, r in enumerate(rows or []) if r.get("hasRing") and r.get("stroke") == AMBER]
+        ringed = [r for r in (rows or []) if r.get("hasRing")]
+        lit = [i for i, r in enumerate(rows or [])
+               if r.get("hasRing") and r.get("ringRole") == ACTIVE_RING]
+        idle = [i for i, r in enumerate(rows or [])
+                if r.get("hasRing") and r.get("ringRole") == IDLE_RING]
+        unlabelled = [i for i, r in enumerate(rows or [])
+                      if r.get("hasRing") and r.get("ringRole") not in (ACTIVE_RING, IDLE_RING)]
         with_summary = [i for i, r in enumerate(rows or []) if r.get("hasSummary")]
+        # The lit row must also be a DIFFERENT PAINTED COLOUR from the idle rows in the theme that is
+        # live. Role alone would stay green if --daily-warn-mark and --daily-line were ever set to one
+        # value, which is exactly the "wired but colourless" regression this gate exists to catch.
+        lit_strokes = {rows[i].get("stroke") for i in lit} if rows else set()
+        idle_strokes = {rows[i].get("stroke") for i in idle} if rows else set()
+        painted_apart = bool(lit_strokes) and not (lit_strokes & idle_strokes)
         _check(checks, "hover_row_is_the_one_highlighted_amberly",
-               bool(rows) and len(with_summary) == 1 and len(lit) == 1 and lit == with_summary,
-               f"rows={json.dumps(rows, ensure_ascii=False)[:300]} amberRows={lit} "
-               f"summaryRows={with_summary} expectedRing={AMBER}")
+               bool(ringed) and not unlabelled and len(with_summary) == 1
+               and len(lit) == 1 and lit == with_summary and painted_apart,
+               f"rows={json.dumps(rows, ensure_ascii=False)[:300]} litRows={lit} "
+               f"summaryRows={with_summary} unlabelled={unlabelled} "
+               f"litStroke={sorted(lit_strokes)} idleStroke={sorted(idle_strokes)} "
+               f"colourDiffersFromIdle={painted_apart} expectedRoles={(ACTIVE_RING, IDLE_RING)!r}")
         _check(checks, "hover_keeps_h01_mounted", bool((hover.get("h01") or {}).get("rect")),
                f"h01={json.dumps(hover.get('h01') and hover['h01']['rect'])}")
 

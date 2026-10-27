@@ -78,6 +78,41 @@ Default (:root) = the Dark design language. html.light inverts all of it
   --z-modal: 90;
   --z-palette: 95;
   --z-toast: 110;
+
+  /*
+  DAILY_SHELL_TOKENS (2026-10-27) · the two surfaces the desktop window actually shows — 日常壳
+  (?surface=daily) and the HUD 窄窗 (?surface=hud) — paint from THIS block and nothing else.
+  Before this block existed those files carried 144+ hard-coded hex literals, which is why
+  `?theme=light` moved `html.class` and changed nothing on screen: the surfaces never asked the
+  stylesheet for a colour. Every role is named for what it paints (a layer, a text weight, a status),
+  so the pairing rule is mechanical: one name, one value per theme, declared in `:root` AND
+  `html.light`, mirrored by `src/theme/tokens.ts` DAILY_TOKENS and enforced by
+  src/daily/dailyThemeTokens.contract.test.ts (mirror + light must differ from dark + measured AA
+  for every text-on-its-own-backdrop pair) and by scripts/audit/text_legibility_via_cdp.py
+  --shell-surfaces, which sweeps both themes.
+  The values are deliberately NOT the professional shell's `--color-*` ramp: this shell is a
+  calmer neutral-blue surface with its own elevation step (bg < shell < surface), and reusing the
+  console ramp would restyle the professional projection, which is out of scope for a colour pass.
+  */
+  --daily-bg: #0D1219;            /* page ground, and the wells inset into a card */
+  --daily-shell: #141B24;         /* top bar, rail, cards drawn one step above the ground */
+  --daily-surface: #1B242F;       /* raised card / selected row */
+  --daily-line: #2A3441;          /* hairline borders and tracks; carries no text */
+  --daily-text: #E9EFF6;          /* primary ink */
+  --daily-dim: #A3B0C0;           /* secondary ink: captions, meta rows, placeholders */
+  --daily-disabled-text: #AFBAC8; /* label of a refusal the shell still has to explain; painted at 55% opacity by skins/l10b-shell.css */
+  --daily-accent: #45BFCF;        /* brand cyan: links, selected states, filled controls */
+  --daily-on-accent: #0A1016;     /* ink painted ON an accent fill */
+  --daily-warn-text: #FCD34D;     /* 需要关注 / 未核验 copy */
+  --daily-warn-mark: #FBBF24;     /* status dot, hover ring, warning glyph */
+  --daily-warn-line: #FBBF24;     /* the 2px/4px emphasis edge on an attention card */
+  --daily-decision-mark: #FDE68A; /* 等待你决定 dot */
+  --daily-ok: #34D399;            /* 已完成 / 写入成功 */
+  --daily-accent-tint: rgba(69, 191, 207, 0.14);   /* wash behind an accent chip */
+  --daily-accent-tint-line: #1F5F6B;
+  --daily-warn-tint: rgba(251, 191, 36, 0.10);     /* wash behind a warning chip / 失效条件 box */
+  --daily-warn-tint-line: #6B5320;
+  --daily-scrim: rgba(6, 9, 13, 0.62);             /* behind the handover drawer */
 }
 
 html.light {
@@ -108,6 +143,39 @@ html.light {
   --warning-rgb: 154 74 5;
   --error-rgb: 185 28 28;
   --info-rgb: 29 78 216;
+
+  /* DAILY_SHELL_TOKENS · the light half. Same names, same roles, and every one of them differs from
+     its :root partner — that difference is the whole point of this pass (a light value equal to the
+     dark value is what src/daily/dailyThemeTokens.contract.test.ts and the legibility gate convict).
+     The three layers stay separable in light by going light-up (ground grey-blue → chrome → white
+     cards) instead of dark-up, and the accent changes JOB, not just hue: in dark the cyan is bright
+     enough to read as text (7.9:1 on the chrome) and to carry a near-black label as a fill (8.7:1);
+     in light the same role pair needs a deep teal (#086375) — 5.8:1 as text on the chrome, 6.9:1
+     under a white label. The amber family moves the same way: legible text, not decorative candy.
+     Measured with the same WCAG maths scripts/audit/text_legibility_via_cdp.py applies: the worst
+     text-on-its-own-backdrop pair in this theme is 4.78:1 (dim on the warning wash over the chrome
+     layer), and the disabled label — which skins/l10b-shell.css paints at 55% opacity, a `:disabled`
+     rule that outranks the utility class — is 3.47:1 against its floor of 3.0:1. Both clear the bar in
+     every layer, and the gate re-measures them in a real browser for each theme. */
+  --daily-bg: #F3F6FA;
+  --daily-shell: #E7EDF4;
+  --daily-surface: #FFFFFF;
+  --daily-line: #D2DBE6;
+  --daily-text: #14202E;
+  --daily-dim: #4F617A;
+  --daily-disabled-text: #16243A;
+  --daily-accent: #086375;
+  --daily-on-accent: #FFFFFF;
+  --daily-warn-text: #8A4A04;
+  --daily-warn-mark: #B45309;
+  --daily-warn-line: #D9A05B;
+  --daily-decision-mark: #CA8A04;
+  --daily-ok: #12693A;
+  --daily-accent-tint: rgba(8, 99, 117, 0.07);
+  --daily-accent-tint-line: #BAD8DE;
+  --daily-warn-tint: rgba(138, 74, 4, 0.08);
+  --daily-warn-tint-line: #E7C9A6;
+  --daily-scrim: rgba(15, 23, 34, 0.42);
 }
 
 /*
@@ -145,6 +213,32 @@ html[data-palette="master"] {
      and the selected-edge highlight would glow a colour nobody chose for it */
   --glow-primary: color-mix(in srgb, rgb(var(--primary-rgb)) 40%, transparent);
   --glow-secondary: color-mix(in srgb, rgb(var(--secondary-rgb)) 40%, transparent);
+
+  /* DAILY_SHELL_TOKENS · the palette dimension reaches the two desktop surfaces too, DERIVED rather
+     than re-authored: every value below is one of the pack's own named channels (or a mix of a
+     channel with the pack's surface), so opting into `?palette=master` recolours the daily shell with
+     the pack and invents no colour the pack does not name. The pack names no cyan, so the daily
+     accent follows `primary` — the pack's brand accent — and says so here instead of quietly keeping
+     the shipped teal. Nothing in this block is a hex literal; DAILY_TOKENS in theme/tokens.ts records
+     only the shipped default pair, which is what a bare address renders. */
+  --daily-bg: var(--color-bg);
+  --daily-shell: var(--color-sidebar);
+  --daily-surface: var(--color-panel);
+  --daily-line: var(--color-border);
+  --daily-text: var(--color-ink);
+  --daily-dim: var(--color-muted);
+  --daily-disabled-text: color-mix(in srgb, var(--color-muted) 62%, var(--color-ink));
+  --daily-accent: rgb(var(--primary-rgb));
+  --daily-on-accent: var(--color-panel);
+  --daily-warn-text: rgb(var(--warning-rgb));
+  --daily-warn-mark: rgb(var(--warning-rgb));
+  --daily-warn-line: rgb(var(--warning-rgb));
+  --daily-decision-mark: rgb(var(--warning-rgb));
+  --daily-ok: rgb(var(--success-rgb));
+  --daily-accent-tint: color-mix(in srgb, rgb(var(--primary-rgb)) 14%, transparent);
+  --daily-accent-tint-line: color-mix(in srgb, rgb(var(--primary-rgb)) 45%, var(--color-panel));
+  --daily-warn-tint: color-mix(in srgb, rgb(var(--warning-rgb)) 12%, transparent);
+  --daily-warn-tint-line: color-mix(in srgb, rgb(var(--warning-rgb)) 45%, var(--color-panel));
 }
 
 html[data-palette="master"].light {
@@ -159,6 +253,9 @@ html[data-palette="master"].light {
   --success-rgb: 20 107 83;
   --warning-rgb: 135 83 9;
   --error-rgb: 172 48 76;
+  /* the daily roles above are expressions over these channels, so this half needs no second copy:
+     the same `var(--color-bg)` resolves against whichever mode's channels are in effect, which is
+     exactly how --glow-primary already works. Re-declaring them here would be a second source. */
 }
 
 @layer base {

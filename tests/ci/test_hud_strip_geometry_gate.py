@@ -50,8 +50,15 @@ def control(name="详情", left=21.0, top=395.0, width=24.0, height=16.0,
             **box(left, top, width, height)}
 
 
-def ring(stroke="#303A46", width="3", has_summary=False):
-    return {"hasRing": True, "stroke": stroke, "strokeWidth": width, "hasSummary": has_summary}
+def ring(role="idle", stroke="rgb(48, 58, 70)", width="3", has_summary=False):
+    """One H01 row as the browser reports it.
+
+    `stroke` is the RESOLVED paint (the strip takes it from a --daily-* token now, so an attribute-level
+    hex is no longer something a page can show); `role` is the element's own statement of which ring role
+    it plays, which is how the hover check finds the lit row.
+    """
+    return {"hasRing": True, "ringRole": role, "stroke": stroke, "strokeWidth": width,
+            "hasSummary": has_summary}
 
 
 H01_TEXT = ("CO\n额度 UNKNOWN\nHE\n额度 UNKNOWN\nDE\n额度 UNKNOWN\nQO\n额度 UNKNOWN\n"
@@ -88,8 +95,8 @@ def strip_h01() -> dict:
         "viewport": viewport(), "hudFrame": "native-strip", "hudState": "h01", "shell": None,
         "h01": {"rect": box(8, 22, 134, 402), "text": H01_TEXT},
         "rows": [ring() for _ in range(5)] + [
-            {"hasRing": False, "stroke": None, "strokeWidth": None, "hasSummary": False},
-            {"hasRing": False, "stroke": None, "strokeWidth": None, "hasSummary": False}],
+            {"hasRing": False, "ringRole": None, "stroke": None, "strokeWidth": None, "hasSummary": False},
+            {"hasRing": False, "ringRole": None, "stroke": None, "strokeWidth": None, "hasSummary": False}],
         "summary": None, "switcherButtons": 0, "switcherRect": None, "dragRegions": 1,
         "footer": box(8, 447, 134, 25), "quotaRows": None, "nav": [], "labelLines": [],
         "hoverDispatch": "not-requested", "bodyText": BODY_H01, "readyWait": READY_WAIT,
@@ -105,7 +112,7 @@ def strip_h02() -> dict:
                       "text": H01_TEXT.replace("HE\n额度 UNKNOWN",
                                                "Codex：窗口 待确认 · 数值 UNKNOWN · 重置时间 待确认\nHE\n额度 UNKNOWN")}
     surface["bodyText"] = BODY_H02
-    surface["rows"] = [ring("#FBBF24", "3.5", True)] + [ring() for _ in range(4)] + surface["rows"][5:]
+    surface["rows"] = [ring("active", "rgb(251, 191, 36)", "3.5", True)] + [ring() for _ in range(4)] + surface["rows"][5:]
     surface["summary"] = {**box(21, 75, 93, 90), "insideLi": True, "insideH01Row": True,
                           "scrollerOverflow": 94}
     surface["hoverDispatch"] = "dispatched"
@@ -402,13 +409,29 @@ class VerdictTests(unittest.TestCase):
         self.assertIn("bottom=620", bad["detail"])
 
     def test_the_hovered_row_must_be_the_only_one_lit_amber(self) -> None:
+        # three separate faults, each convicted: a second row lit, the hovered row not lit, and — the
+        # new one since the strip took its colour from tokens — a lit row whose RESOLVED stroke is the
+        # same paint as the idle rows. The last one is what proves the colour is still measured and not
+        # merely declared: warn-mark and line collapsing to one value keeps the roles intact and makes
+        # the ring invisible to a user.
         measured = good_measurement()
-        measured["strip-h02"]["rows"][2]["stroke"] = gate.AMBER
+        measured["strip-h02"]["rows"][2]["ringRole"] = gate.ACTIVE_RING
         bad = self.check("hover_row_is_the_one_highlighted_amberly", measured)
         self.assertFalse(bad["pass"], bad)
 
         measured = good_measurement()
-        measured["strip-h02"]["rows"][0]["stroke"] = "#303A46"
+        measured["strip-h02"]["rows"][0]["ringRole"] = gate.IDLE_RING
+        self.assertFalse(self.check("hover_row_is_the_one_highlighted_amberly", measured)["pass"])
+
+        measured = good_measurement()
+        measured["strip-h02"]["rows"][0]["stroke"] = measured["strip-h02"]["rows"][1]["stroke"]
+        faded = self.check("hover_row_is_the_one_highlighted_amberly", measured)
+        self.assertFalse(faded["pass"], faded)
+        self.assertIn("colourDiffersFromIdle=False", faded["detail"])
+
+        # and the detector is not blind the other way: a ring that states no role at all is a fault too
+        measured = good_measurement()
+        measured["strip-h02"]["rows"][1]["ringRole"] = None
         self.assertFalse(self.check("hover_row_is_the_one_highlighted_amberly", measured)["pass"])
 
     def test_a_hover_that_revealed_nothing_fails_rather_than_reporting_no_problems(self) -> None:

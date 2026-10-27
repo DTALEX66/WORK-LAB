@@ -225,3 +225,112 @@ export const PALETTE_LABELS: Record<PaletteId, string> = {
 export function isPaletteId(value: string | null): value is PaletteId {
   return value === "worklab" || value === "master";
 }
+
+/* --------------------------------------------------------------------------
+ * DAILY_SHELL_TOKENS (20261027) · the colour source of the two surfaces the desktop window shows.
+ *
+ * 日常壳 (?surface=daily) and the HUD 窄窗 (?surface=hud) used to paint 144+ hex literals of their own,
+ * so `?theme=light` changed `html.class` and changed nothing the owner could see. They now paint from
+ * the `--daily-*` variables in src/index.css, one name per role, declared in BOTH `:root` and
+ * `html.light`; this record is the machine-readable copy of the same pair.
+ *
+ * Why this is a separate ramp and not `THEMES[…].colors`: the professional projection shell owns the
+ * `--color-*` / `--bg` / `--surface` vocabulary, its values are pinned by DESIGN.md, skins/b10.css and
+ * tokensMirror.contract.test.ts, and repainting the daily shell with them would be a second product
+ * change smuggled into a colour pass. The roles below are the daily shell's own elevation ramp.
+ *
+ * src/daily/dailyThemeTokens.contract.test.ts asserts three things about this record: it equals the
+ * sheet (per name, per theme), every light value differs from its dark partner (otherwise "follows the
+ * theme" is a lie), and every text/role pair measures the WCAG ratio the legibility gate demands —
+ * 4.5:1 for text, 3.0:1 for the 60%-opacity disabled label — in both themes.
+ * ------------------------------------------------------------------------ */
+
+export type DailyRole =
+  | "bg" | "shell" | "surface" | "line" | "text" | "dim" | "disabledText"
+  | "accent" | "onAccent" | "warnText" | "warnMark" | "warnLine"
+  | "decisionMark" | "ok" | "accentTint" | "accentTintLine"
+  | "warnTint" | "warnTintLine" | "scrim";
+
+/** role -> the CSS custom property that carries it. Components reference `var(--daily-…)` only. */
+export const DAILY_TOKEN_VARS: Record<DailyRole, string> = {
+  bg: "--daily-bg",
+  shell: "--daily-shell",
+  surface: "--daily-surface",
+  line: "--daily-line",
+  text: "--daily-text",
+  dim: "--daily-dim",
+  disabledText: "--daily-disabled-text",
+  accent: "--daily-accent",
+  onAccent: "--daily-on-accent",
+  warnText: "--daily-warn-text",
+  warnMark: "--daily-warn-mark",
+  warnLine: "--daily-warn-line",
+  decisionMark: "--daily-decision-mark",
+  ok: "--daily-ok",
+  accentTint: "--daily-accent-tint",
+  accentTintLine: "--daily-accent-tint-line",
+  warnTint: "--daily-warn-tint",
+  warnTintLine: "--daily-warn-tint-line",
+  scrim: "--daily-scrim",
+};
+
+export type DailyRoles = Record<DailyRole, string>;
+
+export const DAILY_TOKENS: Record<"dark" | "light", DailyRoles> = {
+  dark: {
+    bg: "#0D1219",
+    shell: "#141B24",
+    surface: "#1B242F",
+    line: "#2A3441",
+    text: "#E9EFF6",
+    dim: "#A3B0C0",
+    disabledText: "#AFBAC8",
+    accent: "#45BFCF",
+    onAccent: "#0A1016",
+    warnText: "#FCD34D",
+    warnMark: "#FBBF24",
+    warnLine: "#FBBF24",
+    decisionMark: "#FDE68A",
+    ok: "#34D399",
+    accentTint: "rgba(69, 191, 207, 0.14)",
+    accentTintLine: "#1F5F6B",
+    warnTint: "rgba(251, 191, 36, 0.10)",
+    warnTintLine: "#6B5320",
+    scrim: "rgba(6, 9, 13, 0.62)",
+  },
+  light: {
+    // Every role changes. `accent` changes JOB as well as hue: the dark cyan is bright enough to read
+    // as text (7.9:1 on the chrome) and to carry a near-black label as a fill (8.7:1), while the light
+    // teal is deep enough to read on a white card (6.9:1) and to hold a white label (6.9:1).
+    // `disabledText` is NOT the same colour as `dim` in this theme, and that is a measured decision:
+    // skins/l10b-shell.css declares `button:disabled, button[aria-disabled="true"] { opacity: .55 }`,
+    // which outranks the utility class, so the refusal label is painted at 55% — and this product holds
+    // disabled copy to 3.0:1 instead of exempting it (WCAG does; a refusal the shell deliberately
+    // displays must still be read). `dim` at 55% measured 2.86:1 and the legibility gate failed the light
+    // daily-home surface with it, which is why the role exists at all.
+    bg: "#F3F6FA",
+    shell: "#E7EDF4",
+    surface: "#FFFFFF",
+    line: "#D2DBE6",
+    text: "#14202E",
+    dim: "#4F617A",
+    disabledText: "#16243A",
+    accent: "#086375",
+    onAccent: "#FFFFFF",
+    warnText: "#8A4A04",
+    warnMark: "#B45309",
+    warnLine: "#D9A05B",
+    decisionMark: "#CA8A04",
+    ok: "#12693A",
+    accentTint: "rgba(8, 99, 117, 0.07)",
+    accentTintLine: "#BAD8DE",
+    warnTint: "rgba(138, 74, 4, 0.08)",
+    warnTintLine: "#E7C9A6",
+    scrim: "rgba(15, 23, 34, 0.42)",
+  },
+};
+
+/** `var(--daily-<role>)` — the only form a component may paint with. */
+export function dailyVar(role: DailyRole): string {
+  return `var(${DAILY_TOKEN_VARS[role]})`;
+}
