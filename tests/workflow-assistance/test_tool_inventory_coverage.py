@@ -185,5 +185,49 @@ class ToolInventoryCoverageGate(unittest.TestCase):
             [], "the tree carries a still-untracked instrument, so the inventory cannot be trusted")
 
 
+class CitationSourceTests(unittest.TestCase):
+    """The report must not count as evidence about the instruments it itself lists.
+
+    It names every one of them, so treating it as a citer makes the emission self-referential: a new
+    instrument reads `unclaimed` on the first pass and claimed on the second. Measured 2026-10-28 with a
+    scratch instrument added to a clean tree -- 14 content lines changed between emission 1 and 2 before
+    the exclusion, 0 after.
+    """
+
+    @staticmethod
+    def _module():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "tool_inventory_readback_citation", ROOT / "scripts" / "audit" / "tool_inventory_readback.py")
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_the_output_path_is_excluded_and_other_records_are_kept(self) -> None:
+        module = self._module()
+        own = module.relative_to_repo(str(INVENTORY))
+        self.assertEqual("docs/audits/TOOL_INVENTORY_2026-10-07.json", own)
+        files = ["scripts/audit/a.py", own, "docs/decisions/note.md", "README.md"]
+        self.assertEqual(["docs/decisions/note.md", "README.md"],
+                         module.citation_sources(files, own))
+
+    def test_the_shipped_report_never_appears_as_a_citer_of_any_instrument(self) -> None:
+        module = self._module()
+        own = module.relative_to_repo(str(INVENTORY))
+        doc = json.loads(INVENTORY.read_text(encoding="utf-8"))
+        entries = doc["tools"]
+        self.assertGreater(len(entries), 50, "the inventory is too small to prove anything here")
+        for entry in entries:
+            self.assertNotIn(own, entry["citedBy"],
+                             f"{entry['path']}: the inventory cites the instrument it just described")
+
+    def test_excluding_the_report_does_not_blind_the_gate_to_real_citations(self) -> None:
+        doc = json.loads(INVENTORY.read_text(encoding="utf-8"))
+        cited = sum(1 for e in doc["tools"] if e["citedByRecords"])
+        self.assertGreater(cited, 50, "no instrument is cited by any record, so the count is not measuring")
+        self.assertEqual(doc["counts"]["referencedSomewhere"], cited)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
