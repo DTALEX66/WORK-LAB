@@ -201,7 +201,14 @@ class WorkflowWiringTests(unittest.TestCase):
         native shell inspectable without anybody installing a toolchain; a missing file must be a red step.
         """
         block = self.step_block("Upload the native release binary")
-        self.assertIn("actions/upload-artifact@v4", block)
+        # Pinned, and asserted as pinned. The first version of this check looked for
+        # `actions/upload-artifact@v4` and passed -- on the exact bytes that `verify_supply_chain.py` and
+        # actionlint both convict (`SUPPLY_CHAIN_FAIL …:390: action must use a full commit SHA`). A wiring
+        # test that repeats a mutable tag cannot fail for the reason the repository cares about.
+        self.assertIn("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.4.3", block,
+                      "the upload step must name the commit it runs, with its version comment")
+        self.assertNotIn("actions/upload-artifact@v4", block,
+                         "a tag reference is a moving target; this repository pins actions by SHA")
         self.assertIn("apps/observer/src-tauri/target/release/app.exe", block)
         self.assertIn("if-no-files-found: error", block,
                       "an upload that tolerates a missing exe reports success for a build that produced nothing")
