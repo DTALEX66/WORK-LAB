@@ -246,6 +246,39 @@ def validate_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
                     errors.append(
                         f"taskRecords[{index}].checkpointDigest is present but is not a 64-hex digest"
                     )
+                register = record.get("register")
+                if register is not None:
+                    # The register half of this list is prose the owner wrote, capped so a 18k-character
+                    # cell can ride every snapshot. A cap the reader cannot see is the same defect as a
+                    # filter they cannot see, so the disclosed length has to actually describe the text:
+                    # JSON Schema bounds `work` (maxLength) but cannot state that `workTruncated` agrees
+                    # with it, and cannot say that a marker row owes the reader a reason.
+                    if not isinstance(register, dict):
+                        errors.append(f"taskRecords[{index}].register must be an object, got {register!r}")
+                    else:
+                        work = register.get("work")
+                        chars = register.get("workChars")
+                        truncated = register.get("workTruncated")
+                        if isinstance(work, str) and isinstance(chars, int) and not isinstance(chars, bool):
+                            if chars < len(work):
+                                errors.append(
+                                    f"taskRecords[{index}].register.workChars={chars} is smaller than the "
+                                    f"{len(work)} characters actually projected")
+                            if truncated is not (chars > len(work)):
+                                errors.append(
+                                    f"taskRecords[{index}].register.workTruncated={truncated!r} disagrees "
+                                    f"with workChars={chars} against len(work)={len(work)}")
+                        else:
+                            errors.append(
+                                f"taskRecords[{index}].register.work/workChars must be str/int")
+                        if register.get("state") not in ("READ", "UNREADABLE", "ID_CONFLICT"):
+                            errors.append(
+                                f"taskRecords[{index}].register.state must be READ|UNREADABLE|ID_CONFLICT, "
+                                f"got {register.get('state')!r}")
+                        if register.get("state") != "READ" and not register.get("reason"):
+                            errors.append(
+                                f"taskRecords[{index}].register is a {register.get('state')!r} marker that "
+                                "names no reason — a gap a reader cannot investigate")
 
     adapter_cards = snapshot.get("adapterCapabilities")
     if adapter_cards is not None:
