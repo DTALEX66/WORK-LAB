@@ -114,6 +114,9 @@ SHELL_SURFACE_KINDS = {
     "strip-h01": MIN_SHELL_NODES,
     "panel-h01": MIN_SHELL_NODES,
     "daily-home": MIN_DAILY_NODES,
+    # D2's screen. This dict is an allow-list, so declaring the surface in the strip gate is not enough to
+    # have it measured here -- a coverage gate only ever proves the population it actually lists.
+    "daily-governance": MIN_DAILY_NODES,
 }
 
 

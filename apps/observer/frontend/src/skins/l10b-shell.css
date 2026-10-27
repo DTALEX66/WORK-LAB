@@ -713,3 +713,9 @@ button[aria-disabled="true"].danger-btn {
   -webkit-mask: url("../assets/brand/work-lab-mark.png") center / contain no-repeat;
   mask: url("../assets/brand/work-lab-mark.png") center / contain no-repeat;
 }
+
+/* D2 承接屏的标题层级。被挂载视图的 page-head 是按「整页只有它一个标题」画的（实测 32px），
+   放进承接卡就同时比本页页标题（20px）大、又与卡自己的标签重复；卡标签是签字包 §3 命名的那一个，
+   所以降级子视图自带的标题、保留它的说明段。选择器锁在 daily-governance 面内，专业壳同一批视图不动。 */
+[data-landmark="daily-governance"] [data-carried] > h2 { font-size: 16px; }
+[data-landmark="daily-governance"] [data-carried] .page-head h2 { display: none; }

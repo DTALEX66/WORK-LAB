@@ -3,8 +3,9 @@
 // 数据只来自真实快照、/api/v1/repair-packs 与 /api/v1/solutions；缺数据如实 UNKNOWN。
 // 本壳经 ?shell=daily 进入，不替换专业投影壳；高级入口从这里链接过去。
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import type { ReactElement } from 'react'
 import type { SnapshotV3 } from '@/types'
-import { fmtTimestamp, repairPacksEndpoint } from '@/lib/api'
+import { fmtTimestamp, repairPacksEndpoint, type ThemeMode } from '@/lib/api'
 import {
   makeHttpRepairPackReader,
   writeClipboardText, type ManualRepairPack, type RepairPacksView,
@@ -13,6 +14,11 @@ import {
   fetchSolutions, type SolutionSearchView, type SolutionItem,
 } from '@/daily/solutionsClient'
 import { Rail, TopBar, SectionTitle, StatusPill, IconTile, Chip, MetaItem, TimeIcon, DisabledAction, Link2, ThemeHonestyNote, THEME_HONESTY_ID_DAILY, T } from '@/daily/DailyChrome'
+import { DAILY_NAV, type DailyNav } from '@/daily/DailyChrome'
+import { MonitoringView, TrustView } from '@/views/Views'
+import { CollectorDeliverySummary } from '@/components/ui/collector-delivery'
+import { SettingsPrivacyView } from '@/views/SettingsPrivacyView'
+import { AuditTrailView } from '@/views/AuditTrailView'
 import { ChevronDown, CheckCircle2, CircleAlert, FileText, Filter, Plug, Plus, Sparkles, TriangleAlert } from 'lucide-react'
 import {
   dailyProjectCards, dailyIssueRows, dailyToolRows, buildHandoverMaterial,
@@ -26,7 +32,28 @@ import {
 } from '@/daily/dailyData'
 import { AgentTile } from '@/daily/agentMarks'
 
-export type DailyView = 'home' | 'overview' | 'issues' | 'tools' | 'settings'
+export type DailyView = DailyNav | 'overview' | 'settings'
+
+/**
+ * What the one new daily entry, 治理与诊断, carries -- the five cards of the D2 sign-off pack
+ * (`.project-local/runs/d2/D2-SIGNOFF-PACK.md` §2), in its declared order.
+ *
+ * These cards do not re-render governance content in the daily shell's own markup: each mounts the
+ * professional view component over the same v3 snapshot, so a fact has one renderer. STITCH is the shell
+ * and a daily screen is a density state of it, not a second implementation -- a copy would be the second
+ * ledger in another form. Net change stays what the pack promised: nav entries +1, new components 0,
+ * new URL params 0, new write paths 0.
+ *
+ * The ids listed here leave the settings page's "高级与专业视图" link list (`advanced` below): one thing,
+ * one entry point. That exclusion is derived from this table and asserted, not maintained by hand.
+ */
+export const DAILY_CARRIED_VIEWS: ReadonlyArray<{ id: string, label: string }> = [
+  { id: 'trust', label: '数据可信度' },
+  { id: 'monitoring', label: '传输真值与状态矩阵' },
+  { id: 'collectors', label: '采集器交付与拒绝' },
+  { id: 'privacy', label: '只读与隐私边界' },
+  { id: 'audit', label: '审计追踪' },
+]
 
 // 日常壳自有的地址参数名单：readParams 认它、writeParams 写它、App.tsx 的 URL 写回白名单
 // 必须带上同样的名字（App.tsx:282），三处同步，否则冷启动与主题切换会静默丢参数。
@@ -46,8 +73,8 @@ function readParams(): DailyParams {
   try {
     const s = new URLSearchParams(window.location.search)
     const dvRaw = s.get('dv')
-    const dv: DailyView = dvRaw === 'overview' || dvRaw === 'issues' || dvRaw === 'tools' || dvRaw === 'settings'
-      ? dvRaw : 'home'
+    const known: readonly string[] = [...DAILY_NAV.map((n) => n.id), 'overview', 'settings']
+    const dv: DailyView = dvRaw && known.includes(dvRaw) ? dvRaw as DailyView : 'home'
     const raw = s.get('di')
     const di: IssueSegment = raw === 'open' || raw === 'methods' ? raw : 'all'
     return {
@@ -284,6 +311,9 @@ export function DailyApp(props: {
                 subset={toolSubset}
                 onToggleTool={(id) => navigate({ tools: toggleToolToken(state.tools, id) })}
                 onShowAllTools={() => navigate({ tools: null })} />
+            )}
+            {state.dv === 'governance' && (
+              <GovernanceView snap={snap} theme={props.theme} />
             )}
             {state.dv === 'settings' && (
               <SettingsView theme={props.theme} onTheme={props.onTheme} snap={snap} />
@@ -1083,7 +1113,51 @@ function ToolsView(props: {
 }
 
 
+/** How each declared card is mounted. Cards whose component needs more than the snapshot (the collector
+ *  section reads one key; the privacy view takes the shell's appearance values) are wired here rather than
+ *  being re-implemented in the daily shell. A declared id with no entry renders an explicit refusal on
+ *  screen, and `daily.contract.test.tsx` convicts it. */
+const CARRIED_RENDERERS: Record<string, (p: { snap: SnapshotV3 | null; theme: string }) => ReactElement> = {
+  trust: ({ snap }) => <TrustView snap={snap} />,
+  monitoring: ({ snap }) => <MonitoringView snap={snap} />,
+  collectors: ({ snap }) => <CollectorDeliverySummary collectors={snap?.collectors} />,
+  // No onTheme/onLayout/onPalette: the pack's card 4 rule is that the appearance section degrades to
+  // badges here, so the daily shell never grows controls that look live and do nothing.
+  privacy: ({ snap, theme }) => <SettingsPrivacyView snap={snap} theme={theme as ThemeMode} />,
+  audit: ({ snap }) => <AuditTrailView snap={snap} />,
+}
+
+function GovernanceView(props: { snap: SnapshotV3 | null; theme: string }) {
+  return (
+    <section aria-label="治理与诊断" data-landmark="daily-governance" className="space-y-4">
+      <div>
+        <h1 className="text-xl font-semibold">治理与诊断</h1>
+        <p className="mt-1 text-xs text-[color:var(--daily-dim)]">
+          这一屏挂载的是专业壳同一套治理与诊断视图，读同一份 v3 快照；判据不在这里重述，也不在这里另画一份。
+        </p>
+      </div>
+      {DAILY_CARRIED_VIEWS.map((card) => {
+        const render = CARRIED_RENDERERS[card.id]
+        return (
+          <div key={card.id} data-carried={card.id}
+            className="rounded-lg border border-[color:var(--daily-line)] p-4">
+            <h2 className="text-sm font-semibold">{card.label}</h2>
+            {render ? render({ snap: props.snap, theme: props.theme }) : (
+              <p className="mt-1 text-xs text-[color:var(--daily-warn-text)]">
+                这一项还没有可复用的视图组件，因此未渲染任何内容。
+              </p>
+            )}
+          </div>
+        )
+      })}
+    </section>
+  )
+}
+
 function SettingsView(props: { theme: string; onTheme: (t: 'dark' | 'light') => void; snap: SnapshotV3 | null }) {
+  // One thing, one entry point: whatever the daily rail now renders in place leaves this list. The
+  // exclusion is derived from DAILY_CARRIED_VIEWS, so the two populations cannot drift into overlap.
+  const carried = new Set(DAILY_CARRIED_VIEWS.map((v) => v.id))
   const advanced = [
     { id: 'work', label: '工作' }, { id: 'projects', label: '项目（完整投影）' },
     { id: 'software', label: '软件' }, { id: 'capabilities', label: '能力资产' },
@@ -1091,7 +1165,7 @@ function SettingsView(props: { theme: string; onTheme: (t: 'dark' | 'light') => 
     { id: 'rules-policy', label: '规则策略' }, { id: 'audit', label: '审计追踪' },
     { id: 'approvals', label: '审批中心' }, { id: 'integrations', label: '集成/MCP' },
     { id: 'evidence', label: '证据区间' }, { id: 'settings', label: '专业设置' },
-  ]
+  ].filter((a) => !carried.has(a.id))
   return (
     <section aria-label="设置">
       <h1 className="text-xl font-semibold">设置</h1>
