@@ -6,7 +6,7 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import {
   ChevronDown, Clock, Command, FolderOpen, Lightbulb, Link2, Maximize2, Minimize2,
-  Plug, ScrollText, Search, Settings, SquareArrowOutUpRight, Stethoscope, Wrench, X,
+  Plug, Search, Settings, ShieldCheck, SquareArrowOutUpRight, Wrench, X,
 } from 'lucide-react'
 import { WindowControls } from '@/components/layout/WindowControls'
 import { dailyVar, type DailyRole } from '@/theme/tokens'
@@ -31,7 +31,7 @@ export const T: Record<DailyRole, string> = {
   scrim: dailyVar('scrim'),
 }
 
-export type DailyNav = 'home' | 'issues' | 'tools' | 'governance' | 'diagnostics'
+export type DailyNav = 'home' | 'issues' | 'tools' | 'governance'
 
 /**
  * The daily shell's first-level population, in one declaration.
@@ -42,13 +42,15 @@ export type DailyNav = 'home' | 'issues' | 'tools' | 'governance' | 'diagnostics
  * fourth list of links to the professional views — which is how a surface ends up with two entries for
  * one thing. `Rail`, `readParams` and the settings link list all read this table now, and a test asserts
  * the real-browser gate's expected labels match it.
+ *
+ * `governance` is the one entry D2 adds, and its label is the wording the sign-off pack
+ * (`.project-local/runs/d2/D2-SIGNOFF-PACK.md` §1/§3) settled on.
  */
 export const DAILY_NAV: ReadonlyArray<{ id: DailyNav; label: string }> = [
   { id: 'home', label: '项目' },
   { id: 'issues', label: '问题与经验' },
   { id: 'tools', label: '我的工具' },
-  { id: 'governance', label: '治理' },
-  { id: 'diagnostics', label: '诊断' },
+  { id: 'governance', label: '治理与诊断' },
 ]
 
 // ── E1 · 主题生效声明 ──────────────────────────────────────────────────────
@@ -103,8 +105,7 @@ export function ThemeHonestyNote(props: { id: string; surface: 'daily' | 'hud' }
 }
 
 const NAV_ICONS: Record<DailyNav, typeof FolderOpen> = {
-  home: FolderOpen, issues: Lightbulb, tools: Wrench,
-  governance: ScrollText, diagnostics: Stethoscope,
+  home: FolderOpen, issues: Lightbulb, tools: Wrench, governance: ShieldCheck,
 }
 
 export function isNativeShell(): boolean {

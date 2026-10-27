@@ -172,7 +172,7 @@ def daily_home() -> dict:
         "ready": True, "readyWaitMs": 0, "readyProbe": None, "readyBudgetMs": None,
         "nav": [{"label": label, "rect": box(12, top, 151, 36)}
                 for label, top in zip(gate.DAILY_ENTRY_LABELS,
-                                      (96, 136, 176, 216, 256, 726))],
+                                      (96, 136, 176, 216, 726))],
         "controls": [control("全局搜索", 230.6, 9.5, 560, 32), control("关闭窗口", 1231, 21, 32, 32)],
     }
 
@@ -240,7 +240,7 @@ class DailyNavTableTests(unittest.TestCase):
         self.assertIsNotNone(block, "DAILY_NAV is not declared where this gate reads it -- move the gate, "
                                     "do not delete the assertion")
         labels = re.findall(r"\{\s*id:\s*'[^']+',\s*label:\s*'([^']+)'", block.group(1) if block else "")
-        self.assertGreaterEqual(len(labels), 5, f"the rail table reads as {labels}")
+        self.assertGreaterEqual(len(labels), 4, f"the rail table reads as {labels}")
         self.assertEqual(tuple(labels) + ("设置",), gate.DAILY_ENTRY_LABELS)
 
     def test_a_label_the_rail_stopped_rendering_is_convicted(self) -> None:

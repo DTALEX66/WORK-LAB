@@ -524,7 +524,7 @@ EXCLUDED_FIXTURE_NAMES = tuple(
 # `tests/ci/test_daily_nav_population_is_the_declared_table.py` pins this tuple against DAILY_NAV in
 # `apps/observer/frontend/src/daily/DailyChrome.tsx`, so the gate cannot keep asserting an old nav after
 # the table grows.
-DAILY_ENTRY_LABELS = ("项目", "问题与经验", "我的工具", "治理", "诊断", "设置")
+DAILY_ENTRY_LABELS = ("项目", "问题与经验", "我的工具", "治理与诊断", "设置")
 
 
 # --------------------------------------------------------------------------- the browser, reused

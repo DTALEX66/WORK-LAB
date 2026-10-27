@@ -165,25 +165,32 @@ describe('日常壳（?shell=daily）', () => {
     // The expectation is read from the declaration the rail renders from, so the claim left standing is
     // "the rail is the table, and 设置 is last" rather than a hand-copied list that can drift.
     expect(buttons).toEqual([...DAILY_NAV.map((n) => n.label), '设置'])
-    expect(DAILY_NAV.length).toBeGreaterThanOrEqual(5)
+    // The sign-off pack's promised delta is +1 nav entry over the three it started from.
+    expect(DAILY_NAV.length).toBe(4)
   })
 
-  it('治理与诊断把专业视图接进日常壳，且每一项都有可复用的组件', () => {
-    for (const [dv, landmark, ids] of [
-      ['governance', 'daily-governance', ['rules-policy', 'approvals']],
-      ['diagnostics', 'daily-diagnostics', ['audit', 'integrations', 'usage']],
-    ] as const) {
-      window.history.replaceState(null, '', `/index.html?shell=daily&dv=${dv}`)
-      render(<App />)
-      const section = document.querySelector(`[data-landmark="${landmark}"]`) as HTMLElement
-      expect(section).not.toBeNull()
-      expect(Array.from(section.querySelectorAll('[data-carried]')).map((n) => n.getAttribute('data-carried')))
-        .toEqual([...ids])
-      // A declared id with no component would print the refusal instead of a view; that is a gap, not a
-      // rendering, and it must not pass as one.
-      expect(section.textContent).not.toContain('这一项还没有可复用的视图组件')
-      cleanup()
-    }
+  it('治理与诊断把五张承接卡接进日常壳，且每一项都有可复用的组件', () => {
+    window.history.replaceState(null, '', '/index.html?shell=daily&dv=governance')
+    render(<App />)
+    const section = document.querySelector('[data-landmark="daily-governance"]') as HTMLElement
+    expect(section).not.toBeNull()
+    // The order is the sign-off pack's card order, so a reordering is a decision, not a slip.
+    expect(Array.from(section.querySelectorAll('[data-carried]')).map((n) => n.getAttribute('data-carried')))
+      .toEqual(['trust', 'monitoring', 'collectors', 'privacy', 'audit'])
+    // A declared id with no component would print the refusal instead of a view; that is a gap, not a
+    // rendering, and it must not pass as one.
+    expect(section.textContent).not.toContain('这一项还没有可复用的视图组件')
+  })
+
+  it('第 4 卡在日常壳不长出会点的外观控件（降级为徽章是签字包定的）', () => {
+    window.history.replaceState(null, '', '/index.html?shell=daily&dv=governance')
+    render(<App />)
+    const card = document.querySelector('[data-carried="privacy"]') as HTMLElement
+    expect(card).not.toBeNull()
+    // The professional view renders these only when the shell passes onTheme/onLayout/onPalette. The daily
+    // shell passes none, so a control appearing here would be a button that looks live and does nothing.
+    expect(card.querySelectorAll('[data-setting]').length).toBe(0)
+    expect(card.textContent).toContain('深色')
   })
 
   it('被日常壳承接的视图不再出现在设置页的专业链接里（一件事一个入口）', () => {

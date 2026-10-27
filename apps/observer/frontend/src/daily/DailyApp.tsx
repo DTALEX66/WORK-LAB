@@ -3,9 +3,9 @@
 // 数据只来自真实快照、/api/v1/repair-packs 与 /api/v1/solutions；缺数据如实 UNKNOWN。
 // 本壳经 ?shell=daily 进入，不替换专业投影壳；高级入口从这里链接过去。
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import type { ComponentType } from 'react'
+import type { ReactElement } from 'react'
 import type { SnapshotV3 } from '@/types'
-import { fmtTimestamp, repairPacksEndpoint } from '@/lib/api'
+import { fmtTimestamp, repairPacksEndpoint, type ThemeMode } from '@/lib/api'
 import {
   makeHttpRepairPackReader,
   writeClipboardText, type ManualRepairPack, type RepairPacksView,
@@ -15,11 +15,10 @@ import {
 } from '@/daily/solutionsClient'
 import { Rail, TopBar, SectionTitle, StatusPill, IconTile, Chip, MetaItem, TimeIcon, DisabledAction, Link2, ThemeHonestyNote, THEME_HONESTY_ID_DAILY, T } from '@/daily/DailyChrome'
 import { DAILY_NAV, type DailyNav } from '@/daily/DailyChrome'
-import { RulesPolicyView } from '@/views/RulesPolicyView'
-import { ApprovalsView } from '@/views/ApprovalsView'
+import { MonitoringView, TrustView } from '@/views/Views'
+import { CollectorDeliverySummary } from '@/components/ui/collector-delivery'
+import { SettingsPrivacyView } from '@/views/SettingsPrivacyView'
 import { AuditTrailView } from '@/views/AuditTrailView'
-import { IntegrationsView } from '@/views/IntegrationsView'
-import { UsageCacheView } from '@/views/UsageCacheView'
 import { ChevronDown, CheckCircle2, CircleAlert, FileText, Filter, Plug, Plus, Sparkles, TriangleAlert } from 'lucide-react'
 import {
   dailyProjectCards, dailyIssueRows, dailyToolRows, buildHandoverMaterial,
@@ -36,22 +35,24 @@ import { AgentTile } from '@/daily/agentMarks'
 export type DailyView = DailyNav | 'overview' | 'settings'
 
 /**
- * What the 治理 and 诊断 entries carry, and nothing else.
+ * What the one new daily entry, 治理与诊断, carries -- the five cards of the D2 sign-off pack
+ * (`.project-local/runs/d2/D2-SIGNOFF-PACK.md` §2), in its declared order.
  *
- * These screens do not re-render governance content in the daily shell's own markup: they mount the
- * professional view components over the same v3 snapshot, so a fact has one renderer. STITCH is the shell
+ * These cards do not re-render governance content in the daily shell's own markup: each mounts the
+ * professional view component over the same v3 snapshot, so a fact has one renderer. STITCH is the shell
  * and a daily screen is a density state of it, not a second implementation -- a copy would be the second
- * ledger in another form.
+ * ledger in another form. Net change stays what the pack promised: nav entries +1, new components 0,
+ * new URL params 0, new write paths 0.
  *
- * The ids listed here leave the settings page's "高级与专业视图" link list (`advancedLinks` below): one
- * thing, one entry point. That exclusion is asserted, not maintained by hand.
+ * The ids listed here leave the settings page's "高级与专业视图" link list (`advanced` below): one thing,
+ * one entry point. That exclusion is derived from this table and asserted, not maintained by hand.
  */
-export const DAILY_CARRIED_VIEWS: ReadonlyArray<{ group: 'governance' | 'diagnostics', id: string, label: string }> = [
-  { group: 'governance', id: 'rules-policy', label: '规则策略' },
-  { group: 'governance', id: 'approvals', label: '审批中心' },
-  { group: 'diagnostics', id: 'audit', label: '审计追踪' },
-  { group: 'diagnostics', id: 'integrations', label: '集成/MCP' },
-  { group: 'diagnostics', id: 'usage', label: '用量缓存' },
+export const DAILY_CARRIED_VIEWS: ReadonlyArray<{ id: string, label: string }> = [
+  { id: 'trust', label: '数据可信度' },
+  { id: 'monitoring', label: '传输真值与状态矩阵' },
+  { id: 'collectors', label: '采集器交付与拒绝' },
+  { id: 'privacy', label: '只读与隐私边界' },
+  { id: 'audit', label: '审计追踪' },
 ]
 
 // 日常壳自有的地址参数名单：readParams 认它、writeParams 写它、App.tsx 的 URL 写回白名单
@@ -312,10 +313,7 @@ export function DailyApp(props: {
                 onShowAllTools={() => navigate({ tools: null })} />
             )}
             {state.dv === 'governance' && (
-              <GovernanceView snap={snap} />
-            )}
-            {state.dv === 'diagnostics' && (
-              <DiagnosticsView snap={snap} />
+              <GovernanceView snap={snap} theme={props.theme} />
             )}
             {state.dv === 'settings' && (
               <SettingsView theme={props.theme} onTheme={props.onTheme} snap={snap} />
@@ -1115,54 +1113,44 @@ function ToolsView(props: {
 }
 
 
-/** The professional component behind each carried id. A declared id with no entry here renders an explicit
- *  refusal on screen rather than a blank card, and `dailyCarriedViews.contract.test.ts` convicts it. */
-const CARRIED_COMPONENTS: Record<string, ComponentType<{ snap: SnapshotV3 | null }>> = {
-  'rules-policy': RulesPolicyView,
-  'approvals': ApprovalsView,
-  'audit': AuditTrailView,
-  'integrations': IntegrationsView,
-  'usage': UsageCacheView,
+/** How each declared card is mounted. Cards whose component needs more than the snapshot (the collector
+ *  section reads one key; the privacy view takes the shell's appearance values) are wired here rather than
+ *  being re-implemented in the daily shell. A declared id with no entry renders an explicit refusal on
+ *  screen, and `daily.contract.test.tsx` convicts it. */
+const CARRIED_RENDERERS: Record<string, (p: { snap: SnapshotV3 | null; theme: string }) => ReactElement> = {
+  trust: ({ snap }) => <TrustView snap={snap} />,
+  monitoring: ({ snap }) => <MonitoringView snap={snap} />,
+  collectors: ({ snap }) => <CollectorDeliverySummary collectors={snap?.collectors} />,
+  // No onTheme/onLayout/onPalette: the pack's card 4 rule is that the appearance section degrades to
+  // badges here, so the daily shell never grows controls that look live and do nothing.
+  privacy: ({ snap, theme }) => <SettingsPrivacyView snap={snap} theme={theme as ThemeMode} />,
+  audit: ({ snap }) => <AuditTrailView snap={snap} />,
 }
 
-function CarriedScreen(props: { group: 'governance' | 'diagnostics'; title: string; note: string;
-  snap: SnapshotV3 | null }) {
-  const items = DAILY_CARRIED_VIEWS.filter((v) => v.group === props.group)
+function GovernanceView(props: { snap: SnapshotV3 | null; theme: string }) {
   return (
-    <section aria-label={props.title} data-landmark={`daily-${props.group}`} className="space-y-4">
+    <section aria-label="治理与诊断" data-landmark="daily-governance" className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold">{props.title}</h1>
-        <p className="mt-1 text-xs text-[color:var(--daily-dim)]">{props.note}</p>
+        <h1 className="text-xl font-semibold">治理与诊断</h1>
+        <p className="mt-1 text-xs text-[color:var(--daily-dim)]">
+          这一屏挂载的是专业壳同一套治理与诊断视图，读同一份 v3 快照；判据不在这里重述，也不在这里另画一份。
+        </p>
       </div>
-      {items.map((v) => {
-        const View = CARRIED_COMPONENTS[v.id]
+      {DAILY_CARRIED_VIEWS.map((card) => {
+        const render = CARRIED_RENDERERS[card.id]
         return (
-          <div key={v.id} data-carried={v.id}
+          <div key={card.id} data-carried={card.id}
             className="rounded-lg border border-[color:var(--daily-line)] p-4">
-            <h2 className="text-sm font-semibold">{v.label}</h2>
-            {View
-              ? <View snap={props.snap} />
-              : <p className="mt-1 text-xs text-[color:var(--daily-warn-text)]">
-                  这一项还没有可复用的视图组件，因此未渲染任何内容。
-                </p>}
+            <h2 className="text-sm font-semibold">{card.label}</h2>
+            {render ? render({ snap: props.snap, theme: props.theme }) : (
+              <p className="mt-1 text-xs text-[color:var(--daily-warn-text)]">
+                这一项还没有可复用的视图组件，因此未渲染任何内容。
+              </p>
+            )}
           </div>
         )
       })}
     </section>
-  )
-}
-
-function GovernanceView({ snap }: { snap: SnapshotV3 | null }) {
-  return (
-    <CarriedScreen group="governance" title="治理" snap={snap}
-      note="渲染的是专业壳同一套治理视图，读同一份 v3 快照；判据不在这里重述，也不在这里另画一份。" />
-  )
-}
-
-function DiagnosticsView({ snap }: { snap: SnapshotV3 | null }) {
-  return (
-    <CarriedScreen group="diagnostics" title="诊断" snap={snap}
-      note="只读诊断投影：审计、集成与用量精度都取快照已有字段，缺的就是 UNKNOWN，不补 0。" />
   )
 }
 
