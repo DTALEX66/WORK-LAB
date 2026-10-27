@@ -24,6 +24,7 @@ import {
   type DailyProjectCard, type DailyIssueRow, type DailyToolRow,
   type TargetSubset, type IssueScope, type ToolSubset,
 } from '@/daily/dailyData'
+import { AgentTile } from '@/daily/agentMarks'
 
 export type DailyView = 'home' | 'overview' | 'issues' | 'tools' | 'settings'
 
@@ -972,7 +973,7 @@ function ToolsView(props: {
                       <span aria-hidden="true" className="absolute left-0 top-3 bottom-3 w-[2px] rounded-full bg-[color:var(--daily-accent)]" />
                     )}
                     <div className="flex items-start gap-2">
-                      <IconTile label={tool.displayName} size={28} tone="surface" />
+                      <AgentTile softwareId={tool.clientId} size={28} tone="surface" />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span className="truncate text-sm font-medium">{tool.displayName}</span>
@@ -1006,7 +1007,7 @@ function ToolsView(props: {
               <p className="text-sm text-[color:var(--daily-dim)]">左侧选择一个工具查看详情。</p>
             ) : (
               <div className="flex flex-wrap items-start gap-3">
-                <IconTile label={props.selected.displayName} size={40} />
+                <AgentTile softwareId={props.selected.clientId} size={40} />
                 <div className="min-w-0 flex-1">
                   <h2 className="flex flex-wrap items-center gap-2 text-lg font-semibold">
                     {props.selected.displayName}

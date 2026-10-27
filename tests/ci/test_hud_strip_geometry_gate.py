@@ -90,6 +90,13 @@ QUOTA_ROWS = [
 ]
 
 
+# The rows the fixture's declared roles put in the strip, in card order. Six of the nine fixture
+# adapters declare `agent_runtime`; the strip shows five and says the sixth is capped, so the panel
+# (which is not capped) reports all six.
+STRIP_AGENT_ROWS = ["codex", "hermes", "deepseek-harness", "qoder", "fixture-agent-a"]
+PANEL_AGENT_ROWS = STRIP_AGENT_ROWS + ["fixture-agent-b"]
+
+
 def strip_h01() -> dict:
     return {
         "viewport": viewport(), "hudFrame": "native-strip", "hudState": "h01", "shell": None,
@@ -97,6 +104,7 @@ def strip_h01() -> dict:
         "rows": [ring() for _ in range(5)] + [
             {"hasRing": False, "ringRole": None, "stroke": None, "strokeWidth": None, "hasSummary": False},
             {"hasRing": False, "ringRole": None, "stroke": None, "strokeWidth": None, "hasSummary": False}],
+        "agentMarks": STRIP_AGENT_ROWS,
         "summary": None, "switcherButtons": 0, "switcherRect": None, "dragRegions": 1,
         "footer": box(8, 447, 134, 25), "quotaRows": None, "nav": [], "labelLines": [],
         "hoverDispatch": "not-requested", "bodyText": BODY_H01, "readyWait": READY_WAIT,
@@ -144,7 +152,8 @@ def panel_h01() -> dict:
     return {
         "viewport": viewport(440, 680), "hudFrame": "panel", "hudState": "h01", "shell": None,
         "h01": {"rect": box(137.5, 217, 150, 368), "text": H01_TEXT},
-        "rows": [ring() for _ in range(6)], "summary": None, "switcherButtons": 4,
+        "rows": [ring() for _ in range(6)], "agentMarks": PANEL_AGENT_ROWS,
+        "summary": None, "switcherButtons": 4,
         "switcherRect": box(131.6, 597, 161.9, 24), "dragRegions": 1, "footer": None,
         "quotaRows": None, "nav": [], "labelLines": [], "hoverDispatch": "not-requested",
         "readyWait": READY_WAIT, "ready": True, "readyWaitMs": 1,
@@ -188,6 +197,7 @@ def expected_check_names() -> set:
     return names | {
         "strip_frame_is_the_native_strip_not_the_panel", "strip_has_a_drag_surface",
         "h01_card_stays_inside_the_declared_strip_width",
+        "hud_monitors_only_declared_agent_runtimes",
         "hover_reveals_the_summary_inside_the_row", "hover_summary_is_readable_without_scrolling",
         "hover_row_is_the_one_highlighted_amberly", "hover_keeps_h01_mounted",
         "h03_quota_rows_are_three_slots_and_honest", "strip_never_fabricates_a_percentage",
@@ -368,6 +378,33 @@ class VerdictTests(unittest.TestCase):
         measured = good_measurement()
         measured["strip-h01"]["dragRegions"] = 0
         self.assertFalse(self.check("strip_has_a_drag_surface", measured)["pass"])
+
+    # --- who the monitor is allowed to draw -----------------------------------------------------
+
+    def test_the_clean_hud_draws_only_clients_that_declare_an_agent_role(self) -> None:
+        # Non-vacuity: the check is not satisfied by an empty row list, and the fixture's own excluded
+        # names really are absent from the recorded text.
+        self.assertTrue(self.check("hud_monitors_only_declared_agent_runtimes")["pass"])
+        self.assertTrue(gate.AGENT_FIXTURE_IDS)
+        self.assertIn("github", {str(c["clientId"]).lower() for c in gate.FIXTURE_SNAPSHOT["adapterCapabilities"]
+                                 if c.get("role") != gate.AGENT_ROLE})
+
+    def test_a_strip_row_for_a_client_that_declares_no_agent_role_fails(self) -> None:
+        measured = good_measurement()
+        measured["strip-h01"]["agentMarks"] = ["codex", "github", "hermes", "qoder", "fixture-agent-a"]
+        self.assertFalse(self.check("hud_monitors_only_declared_agent_runtimes", measured)["pass"])
+
+    def test_an_excluded_client_painted_in_the_panel_fails_even_with_no_stray_row(self) -> None:
+        measured = good_measurement()
+        measured["panel-h01"]["agentMarks"] = PANEL_AGENT_ROWS
+        measured["panel-h01"]["bodyText"] = H01_TEXT + "\nGitHub\n"
+        self.assertFalse(self.check("hud_monitors_only_declared_agent_runtimes", measured)["pass"])
+
+    def test_a_hud_surface_that_reported_no_rows_is_not_a_pass_by_omission(self) -> None:
+        measured = good_measurement()
+        for name in ("strip-h01", "strip-h02", "strip-h03", "strip-h04", "panel-h01"):
+            measured[name]["agentMarks"] = []
+        self.assertFalse(self.check("hud_monitors_only_declared_agent_runtimes", measured)["pass"])
 
     # --- the pinned footer, the defect class that started this gate ----------------------------
 

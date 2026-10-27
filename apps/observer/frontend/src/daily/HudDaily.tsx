@@ -3,11 +3,13 @@
 // 页脚状态点 + 齿轮。快照没有额度/余额/重置时间/用量序列：槽位保留，值一律 UNKNOWN，
 // 环画成无进度，不画百分比、不画柱状图（DESIGN.md 与项目真值规则同时要求）。
 // 原生窄窗宽 150px：展开态（H02/H03/H04）在窄窗里纵向堆叠在条体下方；440px 面板里按参考左右并排。
+// 面板里的行是 agent 运行时，不是客户端总表：按 capability matrix 声明的 role 分人口，被分出去的数量要说明。
 import { useMemo, useState } from 'react'
 import type { SnapshotV3 } from '@/types'
 import { fmtTimestamp } from '@/lib/api'
 import { Settings, Sparkles } from 'lucide-react'
 import { ThemeHonestyNote, THEME_HONESTY_ID_HUD, T } from '@/daily/DailyChrome'
+import { AgentMark, isMonitoredAgentRole } from '@/daily/agentMarks'
 import { readTargetSelection } from '@/daily/dailyData'
 
 export type HudState = 'h01' | 'h02' | 'h03' | 'h04'
@@ -19,14 +21,37 @@ const LINE = T.line
 const ACCENT = T.accent
 const DIM = T.dim
 
-function ToolIcon({ label }: { label: string }) {
-  return (
-    <span aria-hidden="true"
-      className="flex h-9 w-9 items-center justify-center rounded-full border text-xs"
-      style={{ borderColor: LINE, background: T.surface, color: ACCENT }}>
-      {label.slice(0, 2).toUpperCase()}
-    </span>
-  )
+/** One row of the strip: the adapter card's own identity, plus the counts the exclusion line needs. */
+type HudAgent = { id: string; name: string }
+
+/**
+ * Which adapter cards the HUD monitors, and what it had to leave out.
+ *
+ * The strip used to map over every card in the snapshot, which is how a repository host ended up in an
+ * "agent monitor". `role` is the capability matrix's own declaration, so the partition is made from a
+ * statement the operator has to argue with in that file. A card with no declared role is counted separately:
+ * dropping it silently would turn a source gap into "this client is not an agent", which is a different claim
+ * than the data supports.
+ */
+function hudAgents(snap: SnapshotV3 | null): {
+  agents: HudAgent[]
+  excludedNonAgent: number
+  excludedNoRole: number
+} {
+  const cards = snap?.adapterCapabilities ?? []
+  const agents: HudAgent[] = []
+  let excludedNonAgent = 0
+  let excludedNoRole = 0
+  for (const card of cards) {
+    if (card.role === undefined || card.role === 'UNKNOWN') {
+      excludedNoRole += 1
+    } else if (!isMonitoredAgentRole(card.role)) {
+      excludedNonAgent += 1
+    } else {
+      agents.push({ id: card.clientId, name: card.displayName || card.clientId })
+    }
+  }
+  return { agents, excludedNonAgent, excludedNoRole }
 }
 
 /**
@@ -39,7 +64,7 @@ function ToolIcon({ label }: { label: string }) {
  * prove the lit ring is a different painted colour from the idle ones in whichever theme is live
  * (an attribute holding a literal amber could no longer be compared against a token value).
  */
-function RingSlot({ label, active = false }: { label: string; active?: boolean }) {
+function RingSlot({ tool, active = false }: { tool: HudAgent; active?: boolean }) {
   return (
     <span className="flex items-center justify-between gap-2">
       <span className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center">
@@ -48,7 +73,13 @@ function RingSlot({ label, active = false }: { label: string; active?: boolean }
           <circle cx="18" cy="18" r="15" fill="none" data-ring-role={active ? 'active' : 'idle'}
             style={{ stroke: active ? T.warnMark : LINE }} strokeWidth={active ? 3.5 : 3} />
         </svg>
-        <span className="absolute text-xs" style={{ color: active ? T.warnText : ACCENT }}>{label}</span>
+        {/* The reference put a per-tool figure here. It used to be the first two letters of the display
+            name, which made every row in the strip look like the same grey pill; the figure is now the
+            agent's own mark, keyed by the software id the registry knows. */}
+        <span className="absolute inset-[9px]" data-hud-agent={tool.id}
+          style={{ color: active ? T.warnText : ACCENT }}>
+          <AgentMark softwareId={tool.id} />
+        </span>
       </span>
       <span className="text-xs" style={{ color: DIM }}>额度 UNKNOWN</span>
     </span>
@@ -86,10 +117,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
   })
   const targetFilterActive = addressSelection !== null
   const onState = (s: HudState) => { setState(s); writeHs(s) }
-  const toolIds = useMemo(
-    () => (snap?.adapterCapabilities ?? []).map((c) => ({ id: c.clientId, name: c.displayName || c.clientId })),
-    [snap],
-  )
+  const { agents, excludedNonAgent, excludedNoRole } = useMemo(() => hudAgents(snap), [snap])
   const waitingApprovals = (snap?.executions ?? [])
     .filter((e) => e.state === 'WAITING_APPROVAL' || e.state === 'WAITING_USER').length
   const activeProjects = (snap?.projects ?? []).filter((p) => p.activityState === 'ACTIVE').length
@@ -97,15 +125,15 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
   // The strip is a summary surface: the reference keeps the footer pinned, so the row list is
   // capped and the remainder is stated instead of scrolling the footer out of the window.
   const MAX_STRIP_ROWS = 5
-  const visibleTools = native ? toolIds.slice(0, MAX_STRIP_ROWS) : toolIds
-  const hiddenToolCount = toolIds.length - visibleTools.length
+  const visibleTools = native ? agents.slice(0, MAX_STRIP_ROWS) : agents
+  const hiddenToolCount = agents.length - visibleTools.length
 
   const h01Card = (
     <section aria-label="工具额度窄面板" data-landmark="h01"
       className="w-full max-w-[150px] rounded-2xl border bg-[color:var(--daily-shell)] p-3"
       style={{ borderColor: LINE }}>
       <ul className="space-y-2.5">
-        {toolIds.length === 0 && (
+        {agents.length === 0 && (
           <li className="py-2 text-center text-xs" style={{ color: DIM }}>未连接工具</li>
         )}
         {visibleTools.map((tool) => (
@@ -114,7 +142,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
             onMouseLeave={native ? () => setHoveredTool((cur) => (cur === tool.id ? null : cur)) : undefined}
             onFocus={native ? () => setHoveredTool(tool.id) : undefined}
             onBlur={native ? () => setHoveredTool((cur) => (cur === tool.id ? null : cur)) : undefined}>
-            <RingSlot label={tool.name.slice(0, 2).toUpperCase()} active={hoveredTool === tool.id} />
+            <RingSlot tool={tool} active={hoveredTool === tool.id} />
             {/* 参考的 H02 是悬停行旁的内联小胶囊，不是另起一张卡。放在行内：指针天然留在
                 展开区内，不会像追加卡那样要滚动才能看到自己唤出的内容。 */}
             {native && hoveredTool === tool.id && (
@@ -129,6 +157,17 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
           // 条体高度有限：参考图也是"少数几行 + 常驻页脚"。溢出如实说明，不把页脚顶出视口。
           <li className="pt-1 text-center text-xs" style={{ color: DIM }}>
             另有 {hiddenToolCount} 个工具未在此列出（完整列表在主窗口）
+          </li>
+        )}
+        {(excludedNonAgent > 0 || excludedNoRole > 0) && (
+          // 这块面板是 agent 监视器，不是客户端总表。被按角色分出去的客户端要说出去：
+          // 只写"少了"会被读成没连接，写清是"不作为 agent 监控"才知道是筛选的结果。
+          // 没有声明角色的单独一档——那是来源缺口，不能算成"它不是 agent"。
+          // 措辞要短：窄窗宽 150px，页脚必须留在视口里，这一行每多一行都算在条体高度里。
+          <li className="pt-1 text-center text-xs" style={{ color: DIM }} data-testid="hud-agent-scope">
+            {excludedNonAgent > 0 && `已排除非 agent ${excludedNonAgent}`}
+            {excludedNonAgent > 0 && excludedNoRole > 0 && ' · '}
+            {excludedNoRole > 0 && `未声明角色 ${excludedNoRole}`}
           </li>
         )}
         {/* 余额行：快照没有余额字段，槽位在、值未知 */}
@@ -159,9 +198,9 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
     <section aria-label="悬停摘要" data-landmark="h02"
       className="w-full max-w-[300px] rounded-2xl border bg-[color:var(--daily-shell)] p-3" style={{ borderColor: LINE }}>
       <h2 className="text-xs font-semibold">当前工具对应窗口</h2>
-      {toolIds.length === 0
+      {agents.length === 0
         ? <p className="mt-2 text-xs" style={{ color: DIM }}>未连接工具</p>
-        : toolIds.slice(0, 3).map((tool) => (
+        : agents.slice(0, 3).map((tool) => (
           <div key={tool.id} className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs">
             <span>{tool.name}</span>
             <span style={{ color: DIM }}>窗口 待确认 · 数值 UNKNOWN · 重置时间 待确认</span>
@@ -183,9 +222,16 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
     <section aria-label="工具详情" data-landmark="h03"
       className="w-full max-w-[400px] rounded-2xl border bg-[color:var(--daily-shell)] p-4" style={{ borderColor: LINE }}>
       <div className="flex items-center gap-3">
-        <ToolIcon label={toolIds[0]?.name ?? '?'} />
+        {/* The detail card is about one agent, so it shows that agent's own figure. When the strip has no
+            monitored agent the dashed UNMARKED figure is the honest picture -- an empty avatar with a
+            letter in it would claim a tool the snapshot does not report. */}
+        <span aria-hidden="true"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border"
+          style={{ borderColor: LINE, background: T.surface, color: ACCENT }}>
+          <AgentMark softwareId={agents[0]?.id ?? 'UNKNOWN'} />
+        </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold">{toolIds[0]?.name ?? '未连接工具'}</h2>
+          <h2 className="text-sm font-semibold">{agents[0]?.name ?? '未连接工具'}</h2>
           <p className="text-xs" style={{ color: DIM }}>账户 UNKNOWN · 额度窗口 待确认</p>
         </div>
       </div>
@@ -194,7 +240,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
           画成"额度为零"。 */}
       <div className="mt-4 space-y-2" data-landmark="h03-quota-rows">
         {([['当前会话', T.ok], ['周额度', T.warnMark],
-          [`周上限 · ${toolIds[0]?.name ?? '未连接工具'}`, T.ok]] as [string, string][]).map(([label, dot]) => (
+          [`周上限 · ${agents[0]?.name ?? '未连接工具'}`, T.ok]] as [string, string][]).map(([label, dot]) => (
           <div key={label} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
             <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: dot }} />
             <span className="shrink-0">{label}</span>
@@ -249,7 +295,7 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
             <span className="min-w-0">外部回复提醒</span>
           </h2>
           <p className="mt-0.5 text-xs" style={{ color: DIM }}>
-            工具：{toolIds[0]?.name ?? '未连接'} · 关联项目：{(snap?.projects ?? [])[0]?.displayName ?? '未记录'}
+            工具：{agents[0]?.name ?? '未连接'} · 关联项目：{(snap?.projects ?? [])[0]?.displayName ?? '未记录'}
           </p>
         </div>
         <span className="flex shrink-0 items-center gap-2">
