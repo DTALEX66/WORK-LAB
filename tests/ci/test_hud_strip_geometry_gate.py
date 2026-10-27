@@ -17,6 +17,7 @@ import copy
 import importlib.util
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -170,7 +171,8 @@ def daily_home() -> dict:
         "hoverDispatch": "not-requested", "readyWait": READY_WAIT,
         "ready": True, "readyWaitMs": 0, "readyProbe": None, "readyBudgetMs": None,
         "nav": [{"label": label, "rect": box(12, top, 151, 36)}
-                for label, top in (("项目", 96), ("问题与经验", 136), ("我的工具", 176), ("设置", 726))],
+                for label, top in zip(gate.DAILY_ENTRY_LABELS,
+                                      (96, 136, 176, 216, 256, 726))],
         "controls": [control("全局搜索", 230.6, 9.5, 560, 32), control("关闭窗口", 1231, 21, 32, 32)],
     }
 
@@ -202,7 +204,36 @@ def expected_check_names() -> set:
         "hover_row_is_the_one_highlighted_amberly", "hover_keeps_h01_mounted",
         "h03_quota_rows_are_three_slots_and_honest", "strip_never_fabricates_a_percentage",
         "strip_keeps_quota_unknown_instead_of_zero", "panel_keeps_the_four_state_switcher",
-        "daily_renders_the_four_entries", "daily_settings_sits_below_the_four_entries"}
+        "daily_renders_the_declared_entries", "daily_settings_sits_below_the_declared_entries"}
+
+
+class DailyNavTableTests(unittest.TestCase):
+    def test_the_declared_nav_labels_are_the_ones_the_rail_renders(self) -> None:
+        """The gate's expectation and the product's declaration cannot drift apart.
+
+        `DAILY_ENTRY_LABELS` used to be a hand-written four-tuple that stayed green while the rail grew:
+        the 2026-10-28 D2 change added 治理 and 诊断, and nothing in the gate noticed. This reads the
+        labels out of `DAILY_NAV` in the source and requires the tuple to be that table plus the
+        bottom-pinned 设置.
+        """
+        source = (ROOT / "apps" / "observer" / "frontend" / "src" / "daily" / "DailyChrome.tsx") \
+            .read_text(encoding="utf-8")
+        block = re.search(r"export const DAILY_NAV[^=]*=\s*\[(.*?)\n\]", source, re.S)
+        self.assertIsNotNone(block, "DAILY_NAV is not declared where this gate reads it -- move the gate, "
+                                    "do not delete the assertion")
+        labels = re.findall(r"\{\s*id:\s*'[^']+',\s*label:\s*'([^']+)'", block.group(1) if block else "")
+        self.assertGreaterEqual(len(labels), 5, f"the rail table reads as {labels}")
+        self.assertEqual(tuple(labels) + ("设置",), gate.DAILY_ENTRY_LABELS)
+
+    def test_a_label_the_rail_stopped_rendering_is_convicted(self) -> None:
+        """The assertion above must be able to fail for the reason it exists."""
+        original = gate.DAILY_ENTRY_LABELS
+        try:
+            gate.DAILY_ENTRY_LABELS = original[:4]
+            with self.assertRaises(AssertionError):
+                self.test_the_declared_nav_labels_are_the_ones_the_rail_renders()
+        finally:
+            gate.DAILY_ENTRY_LABELS = original
 
 
 class VerdictTests(unittest.TestCase):

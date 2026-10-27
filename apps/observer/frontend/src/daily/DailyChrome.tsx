@@ -6,7 +6,7 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import {
   ChevronDown, Clock, Command, FolderOpen, Lightbulb, Link2, Maximize2, Minimize2,
-  Plug, Search, Settings, SquareArrowOutUpRight, Wrench, X,
+  Plug, ScrollText, Search, Settings, SquareArrowOutUpRight, Stethoscope, Wrench, X,
 } from 'lucide-react'
 import { WindowControls } from '@/components/layout/WindowControls'
 import { dailyVar, type DailyRole } from '@/theme/tokens'
@@ -31,7 +31,25 @@ export const T: Record<DailyRole, string> = {
   scrim: dailyVar('scrim'),
 }
 
-export type DailyNav = 'home' | 'issues' | 'tools'
+export type DailyNav = 'home' | 'issues' | 'tools' | 'governance' | 'diagnostics'
+
+/**
+ * The daily shell's first-level population, in one declaration.
+ *
+ * It used to be a literal `['home','issues','tools']` inside the rail, with the labels spelled out in a
+ * ternary and the URL parser carrying its own hand-written chain of `dvRaw === …` comparisons. Adding a
+ * screen therefore meant editing three places that never check each other, and the settings page kept a
+ * fourth list of links to the professional views — which is how a surface ends up with two entries for
+ * one thing. `Rail`, `readParams` and the settings link list all read this table now, and a test asserts
+ * the real-browser gate's expected labels match it.
+ */
+export const DAILY_NAV: ReadonlyArray<{ id: DailyNav; label: string }> = [
+  { id: 'home', label: '项目' },
+  { id: 'issues', label: '问题与经验' },
+  { id: 'tools', label: '我的工具' },
+  { id: 'governance', label: '治理' },
+  { id: 'diagnostics', label: '诊断' },
+]
 
 // ── E1 · 主题生效声明 ──────────────────────────────────────────────────────
 // 这段文字有历史，改它要如实。2026-10-25 实测的是相反的事实：?theme=light 确实写进 html.class
@@ -87,6 +105,7 @@ export function ThemeHonestyNote(props: { id: string; surface: 'daily' | 'hud' }
 
 const NAV_ICONS: Record<DailyNav, typeof FolderOpen> = {
   home: FolderOpen, issues: Lightbulb, tools: Wrench,
+  governance: ScrollText, diagnostics: Stethoscope,
 }
 
 export function isNativeShell(): boolean {
@@ -271,9 +290,8 @@ export function Rail({ view, onNavigate, transportLabel, transportTone }: {
       <span aria-hidden="true" className="daily-rail-brand" data-brand-mark="work-lab" />
       <div className="mb-3 px-2 text-xs uppercase tracking-wider" style={{ color: T.dim }}>工作区</div>
       <ul className="space-y-1">
-        {(['home', 'issues', 'tools'] as DailyNav[]).map((id) => {
+        {DAILY_NAV.map(({ id, label }) => {
           const Icon = NAV_ICONS[id]
-          const label = id === 'home' ? '项目' : id === 'issues' ? '问题与经验' : '我的工具'
           const active = view === id
           return (
             <li key={id}>

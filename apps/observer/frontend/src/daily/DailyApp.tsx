@@ -3,6 +3,7 @@
 // 数据只来自真实快照、/api/v1/repair-packs 与 /api/v1/solutions；缺数据如实 UNKNOWN。
 // 本壳经 ?shell=daily 进入，不替换专业投影壳；高级入口从这里链接过去。
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import type { ComponentType } from 'react'
 import type { SnapshotV3 } from '@/types'
 import { fmtTimestamp, repairPacksEndpoint } from '@/lib/api'
 import {
@@ -13,6 +14,12 @@ import {
   fetchSolutions, type SolutionSearchView, type SolutionItem,
 } from '@/daily/solutionsClient'
 import { Rail, TopBar, SectionTitle, StatusPill, IconTile, Chip, MetaItem, TimeIcon, DisabledAction, Link2, ThemeHonestyNote, THEME_HONESTY_ID_DAILY, T } from '@/daily/DailyChrome'
+import { DAILY_NAV, type DailyNav } from '@/daily/DailyChrome'
+import { RulesPolicyView } from '@/views/RulesPolicyView'
+import { ApprovalsView } from '@/views/ApprovalsView'
+import { AuditTrailView } from '@/views/AuditTrailView'
+import { IntegrationsView } from '@/views/IntegrationsView'
+import { UsageCacheView } from '@/views/UsageCacheView'
 import { ChevronDown, CheckCircle2, CircleAlert, FileText, Filter, Plug, Plus, Sparkles, TriangleAlert } from 'lucide-react'
 import {
   dailyProjectCards, dailyIssueRows, dailyToolRows, buildHandoverMaterial,
@@ -26,7 +33,26 @@ import {
 } from '@/daily/dailyData'
 import { AgentTile } from '@/daily/agentMarks'
 
-export type DailyView = 'home' | 'overview' | 'issues' | 'tools' | 'settings'
+export type DailyView = DailyNav | 'overview' | 'settings'
+
+/**
+ * What the 治理 and 诊断 entries carry, and nothing else.
+ *
+ * These screens do not re-render governance content in the daily shell's own markup: they mount the
+ * professional view components over the same v3 snapshot, so a fact has one renderer. STITCH is the shell
+ * and a daily screen is a density state of it, not a second implementation -- a copy would be the second
+ * ledger in another form.
+ *
+ * The ids listed here leave the settings page's "高级与专业视图" link list (`advancedLinks` below): one
+ * thing, one entry point. That exclusion is asserted, not maintained by hand.
+ */
+export const DAILY_CARRIED_VIEWS: ReadonlyArray<{ group: 'governance' | 'diagnostics', id: string, label: string }> = [
+  { group: 'governance', id: 'rules-policy', label: '规则策略' },
+  { group: 'governance', id: 'approvals', label: '审批中心' },
+  { group: 'diagnostics', id: 'audit', label: '审计追踪' },
+  { group: 'diagnostics', id: 'integrations', label: '集成/MCP' },
+  { group: 'diagnostics', id: 'usage', label: '用量缓存' },
+]
 
 // 日常壳自有的地址参数名单：readParams 认它、writeParams 写它、App.tsx 的 URL 写回白名单
 // 必须带上同样的名字（App.tsx:282），三处同步，否则冷启动与主题切换会静默丢参数。
@@ -46,8 +72,8 @@ function readParams(): DailyParams {
   try {
     const s = new URLSearchParams(window.location.search)
     const dvRaw = s.get('dv')
-    const dv: DailyView = dvRaw === 'overview' || dvRaw === 'issues' || dvRaw === 'tools' || dvRaw === 'settings'
-      ? dvRaw : 'home'
+    const known: readonly string[] = [...DAILY_NAV.map((n) => n.id), 'overview', 'settings']
+    const dv: DailyView = dvRaw && known.includes(dvRaw) ? dvRaw as DailyView : 'home'
     const raw = s.get('di')
     const di: IssueSegment = raw === 'open' || raw === 'methods' ? raw : 'all'
     return {
@@ -284,6 +310,12 @@ export function DailyApp(props: {
                 subset={toolSubset}
                 onToggleTool={(id) => navigate({ tools: toggleToolToken(state.tools, id) })}
                 onShowAllTools={() => navigate({ tools: null })} />
+            )}
+            {state.dv === 'governance' && (
+              <GovernanceView snap={snap} />
+            )}
+            {state.dv === 'diagnostics' && (
+              <DiagnosticsView snap={snap} />
             )}
             {state.dv === 'settings' && (
               <SettingsView theme={props.theme} onTheme={props.onTheme} snap={snap} />
@@ -1083,7 +1115,61 @@ function ToolsView(props: {
 }
 
 
+/** The professional component behind each carried id. A declared id with no entry here renders an explicit
+ *  refusal on screen rather than a blank card, and `dailyCarriedViews.contract.test.ts` convicts it. */
+const CARRIED_COMPONENTS: Record<string, ComponentType<{ snap: SnapshotV3 | null }>> = {
+  'rules-policy': RulesPolicyView,
+  'approvals': ApprovalsView,
+  'audit': AuditTrailView,
+  'integrations': IntegrationsView,
+  'usage': UsageCacheView,
+}
+
+function CarriedScreen(props: { group: 'governance' | 'diagnostics'; title: string; note: string;
+  snap: SnapshotV3 | null }) {
+  const items = DAILY_CARRIED_VIEWS.filter((v) => v.group === props.group)
+  return (
+    <section aria-label={props.title} data-landmark={`daily-${props.group}`} className="space-y-4">
+      <div>
+        <h1 className="text-xl font-semibold">{props.title}</h1>
+        <p className="mt-1 text-xs text-[color:var(--daily-dim)]">{props.note}</p>
+      </div>
+      {items.map((v) => {
+        const View = CARRIED_COMPONENTS[v.id]
+        return (
+          <div key={v.id} data-carried={v.id}
+            className="rounded-lg border border-[color:var(--daily-line)] p-4">
+            <h2 className="text-sm font-semibold">{v.label}</h2>
+            {View
+              ? <View snap={props.snap} />
+              : <p className="mt-1 text-xs text-[color:var(--daily-warn-text)]">
+                  这一项还没有可复用的视图组件，因此未渲染任何内容。
+                </p>}
+          </div>
+        )
+      })}
+    </section>
+  )
+}
+
+function GovernanceView({ snap }: { snap: SnapshotV3 | null }) {
+  return (
+    <CarriedScreen group="governance" title="治理" snap={snap}
+      note="渲染的是专业壳同一套治理视图，读同一份 v3 快照；判据不在这里重述，也不在这里另画一份。" />
+  )
+}
+
+function DiagnosticsView({ snap }: { snap: SnapshotV3 | null }) {
+  return (
+    <CarriedScreen group="diagnostics" title="诊断" snap={snap}
+      note="只读诊断投影：审计、集成与用量精度都取快照已有字段，缺的就是 UNKNOWN，不补 0。" />
+  )
+}
+
 function SettingsView(props: { theme: string; onTheme: (t: 'dark' | 'light') => void; snap: SnapshotV3 | null }) {
+  // One thing, one entry point: whatever the daily rail now renders in place leaves this list. The
+  // exclusion is derived from DAILY_CARRIED_VIEWS, so the two populations cannot drift into overlap.
+  const carried = new Set(DAILY_CARRIED_VIEWS.map((v) => v.id))
   const advanced = [
     { id: 'work', label: '工作' }, { id: 'projects', label: '项目（完整投影）' },
     { id: 'software', label: '软件' }, { id: 'capabilities', label: '能力资产' },
@@ -1091,7 +1177,7 @@ function SettingsView(props: { theme: string; onTheme: (t: 'dark' | 'light') => 
     { id: 'rules-policy', label: '规则策略' }, { id: 'audit', label: '审计追踪' },
     { id: 'approvals', label: '审批中心' }, { id: 'integrations', label: '集成/MCP' },
     { id: 'evidence', label: '证据区间' }, { id: 'settings', label: '专业设置' },
-  ]
+  ].filter((a) => !carried.has(a.id))
   return (
     <section aria-label="设置">
       <h1 className="text-xl font-semibold">设置</h1>

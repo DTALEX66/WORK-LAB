@@ -473,7 +473,11 @@ EXCLUDED_FIXTURE_NAMES = tuple(
     str(c["displayName"]) for c in FIXTURE_SNAPSHOT["adapterCapabilities"]
     if str(c["clientId"]) not in AGENT_FIXTURE_IDS)
 
-DAILY_ENTRY_LABELS = ("项目", "问题与经验", "我的工具", "设置")
+# The rail's declared population plus the bottom-pinned 设置. The CI test
+# `tests/ci/test_daily_nav_population_is_the_declared_table.py` pins this tuple against DAILY_NAV in
+# `apps/observer/frontend/src/daily/DailyChrome.tsx`, so the gate cannot keep asserting an old nav after
+# the table grows.
+DAILY_ENTRY_LABELS = ("项目", "问题与经验", "我的工具", "治理", "诊断", "设置")
 
 
 # --------------------------------------------------------------------------- the browser, reused
@@ -902,14 +906,14 @@ def verdict(measured: dict) -> dict:
     daily = harvests.get("daily-home")
     labels = {b.get("label"): (b.get("rect") or {}).get("top") for b in (daily or {}).get("nav") or []}
     entry_tops = {label: labels.get(label) for label in DAILY_ENTRY_LABELS}
-    _check(checks, "daily_renders_the_four_entries",
+    _check(checks, "daily_renders_the_declared_entries",
            daily is not None and daily.get("shell") == "daily"
            and all(t is not None for t in entry_tops.values()),
            f"shell={daily and daily.get('shell')!r} entries="
            f"{json.dumps(entry_tops, ensure_ascii=False)}")
     settings_top = entry_tops.get("设置")
     others = [t for label, t in entry_tops.items() if label != "设置" and t is not None]
-    _check(checks, "daily_settings_sits_below_the_four_entries",
+    _check(checks, "daily_settings_sits_below_the_declared_entries",
            bool(others) and settings_top is not None and settings_top > max(others),
            f"设置top={settings_top} others={json.dumps(others)} (底置 is a geometry claim: a nav that "
            "lists 设置 in reading order but paints it first fails here, not in prose)")

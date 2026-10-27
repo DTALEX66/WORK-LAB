@@ -146,6 +146,8 @@ vi.mock('@/daily/solutionsClient', async (importOriginal) => {
 import App from '@/App'
 import { HudDaily } from '@/daily/HudDaily'
 import { buildHandoverMaterial, dailyToolRows } from '@/daily/dailyData'
+import { DAILY_NAV } from '@/daily/DailyChrome'
+import { DAILY_CARRIED_VIEWS } from '@/daily/DailyApp'
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/index.html?shell=daily')
@@ -156,11 +158,45 @@ afterEach(() => {
 })
 
 describe('日常壳（?shell=daily）', () => {
-  it('一级导航只有 项目/问题与经验/我的工具，设置底置（导航末位）', () => {
+  it('一级导航就是 DAILY_NAV 那张表，设置仍然底置（导航末位）', () => {
     render(<App />)
     const nav = screen.getByRole('navigation', { name: '主导航' })
     const buttons = Array.from(nav.querySelectorAll('button')).map((b) => b.textContent)
-    expect(buttons).toEqual(['项目', '问题与经验', '我的工具', '设置'])
+    // The expectation is read from the declaration the rail renders from, so the claim left standing is
+    // "the rail is the table, and 设置 is last" rather than a hand-copied list that can drift.
+    expect(buttons).toEqual([...DAILY_NAV.map((n) => n.label), '设置'])
+    expect(DAILY_NAV.length).toBeGreaterThanOrEqual(5)
+  })
+
+  it('治理与诊断把专业视图接进日常壳，且每一项都有可复用的组件', () => {
+    for (const [dv, landmark, ids] of [
+      ['governance', 'daily-governance', ['rules-policy', 'approvals']],
+      ['diagnostics', 'daily-diagnostics', ['audit', 'integrations', 'usage']],
+    ] as const) {
+      window.history.replaceState(null, '', `/index.html?shell=daily&dv=${dv}`)
+      render(<App />)
+      const section = document.querySelector(`[data-landmark="${landmark}"]`) as HTMLElement
+      expect(section).not.toBeNull()
+      expect(Array.from(section.querySelectorAll('[data-carried]')).map((n) => n.getAttribute('data-carried')))
+        .toEqual([...ids])
+      // A declared id with no component would print the refusal instead of a view; that is a gap, not a
+      // rendering, and it must not pass as one.
+      expect(section.textContent).not.toContain('这一项还没有可复用的视图组件')
+      cleanup()
+    }
+  })
+
+  it('被日常壳承接的视图不再出现在设置页的专业链接里（一件事一个入口）', () => {
+    window.history.replaceState(null, '', '/index.html?shell=daily&dv=settings')
+    render(<App />)
+    const links = Array.from(document.querySelectorAll('a[href^="/index.html?view="]'))
+      .map((a) => a.getAttribute('href'))
+    for (const id of DAILY_CARRIED_VIEWS.map((v) => v.id)) {
+      expect(links.filter((h) => h === `/index.html?view=${id}`)).toEqual([])
+    }
+    // Non-vacuity: the list still carries the views the daily shell does not surface.
+    expect(links.length).toBeGreaterThanOrEqual(7)
+    expect(links).toContain('/index.html?view=work')
   })
 
   it('无数据不补 0：概览页显示待确认/UNKNOWN 而不是编造的百分比', () => {
