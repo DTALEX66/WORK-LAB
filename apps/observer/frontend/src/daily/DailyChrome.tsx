@@ -57,9 +57,8 @@ export const THEME_HONESTY_TEXT =
   + '专业投影壳（?view=…）的主题切换同样生效，用的是 --color-* 那一套令牌。'
 
 export const THEME_HONESTY_TEXT_HUD =
-  '这个窄窗接在同一套 --daily-* 主题令牌上：?theme=light 写进 html 的主题类后，它的每一层颜色都换成 '
-  + 'src/index.css 里 html.light 记录的浅色值；它过去按写死的深色值绘制，那种写法已由 '
-  + 'src/daily/dailyThemeTokens.contract.test.ts 禁止（组件里不允许再出现色值字面量）。'
+  '这个窄窗接在同一套 --daily-* 主题令牌上：?theme= 写进 html 的主题类后，这一屏每一层颜色都换成 '
+  + 'src/index.css 里 html.light 记录的浅色值。完整说明在主窗口设置页。'
 
 /**
  * The statement about how the theme control behaves on this surface, painted (never hover-only) and

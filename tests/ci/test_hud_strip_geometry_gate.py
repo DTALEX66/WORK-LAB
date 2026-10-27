@@ -175,10 +175,25 @@ def daily_home() -> dict:
     }
 
 
+def strip_settings() -> dict:
+    """H01 with the footer gear pressed: the same strip, plus the block the click opens."""
+    surface = strip_h01()
+    surface["settingsDispatch"] = "clicked"
+    surface["settings"] = {
+        **box(8, 380, 134, 62),
+        "text": "数据源：LIVE；修订 1。主题与更多设置在主窗口设置页。\n收起",
+        "expanded": "true", "insideFrame": True, "closeText": "收起",
+        "closeRect": box(21, 420, 28, 16), "fontSizes": [12.0, 12.0, 12.0], "controlCount": 1,
+    }
+    surface["controls"] = surface["controls"] + [control("收起", 21, 420, 28, 16)]
+    return surface
+
+
 def good_measurement() -> dict:
     """Every surface the gate declares, at the shape the shipped bundle renders."""
     return {"strip-h01": strip_h01(), "strip-h02": strip_h02(), "strip-h03": strip_h03(),
-            "strip-h04": strip_h04(), "panel-h01": panel_h01(), "daily-home": daily_home()}
+            "strip-h04": strip_h04(), "strip-settings": strip_settings(),
+            "panel-h01": panel_h01(), "daily-home": daily_home()}
 
 
 def expected_check_names() -> set:
@@ -194,6 +209,9 @@ def expected_check_names() -> set:
         if spec_row["kind"] == "strip":
             names |= {f"{slug}_footer_pinned_in_viewport", f"{slug}_state_renders_as_declared",
                       f"{slug}_state_switcher_is_not_painted"}
+        if spec_row.get("openSettings"):
+            names |= {f"{slug}_gear_opens_the_settings_block",
+                      f"{slug}_settings_block_is_readable_and_dismissible"}
     return names | {
         "strip_frame_is_the_native_strip_not_the_panel", "strip_has_a_drag_surface",
         "h01_card_stays_inside_the_declared_strip_width",
@@ -405,6 +423,38 @@ class VerdictTests(unittest.TestCase):
         for name in ("strip-h01", "strip-h02", "strip-h03", "strip-h04", "panel-h01"):
             measured[name]["agentMarks"] = []
         self.assertFalse(self.check("hud_monitors_only_declared_agent_runtimes", measured)["pass"])
+
+    # --- the mini settings block, which only the gear can open ------------------------------------
+
+    def test_a_gear_that_opens_nothing_is_convicted(self) -> None:
+        measured = good_measurement()
+        measured["strip-settings"]["settings"] = None
+        self.assertFalse(self.check("strip_settings_gear_opens_the_settings_block", measured)["pass"])
+        self.assertFalse(
+            self.check("strip_settings_settings_block_is_readable_and_dismissible", measured)["pass"])
+
+    def test_a_block_the_gear_does_not_report_as_open_is_convicted(self) -> None:
+        measured = good_measurement()
+        measured["strip-settings"]["settings"]["expanded"] = "false"
+        self.assertFalse(self.check("strip_settings_gear_opens_the_settings_block", measured)["pass"])
+
+    def test_a_settings_block_pushed_below_the_window_fails(self) -> None:
+        measured = good_measurement()
+        measured["strip-settings"]["settings"].update({"top": 470.0, "bottom": 532.0, "height": 62.0})
+        self.assertFalse(
+            self.check("strip_settings_settings_block_is_readable_and_dismissible", measured)["pass"])
+
+    def test_a_settings_block_with_no_way_to_close_fails(self) -> None:
+        measured = good_measurement()
+        measured["strip-settings"]["settings"]["closeText"] = ""
+        self.assertFalse(
+            self.check("strip_settings_settings_block_is_readable_and_dismissible", measured)["pass"])
+
+    def test_the_settings_block_is_not_measured_on_surfaces_that_never_open_it(self) -> None:
+        names = {c["check"] for c in self.v["checks"]}
+        self.assertIn("strip_settings_gear_opens_the_settings_block", names)
+        self.assertFalse([n for n in names if n.endswith("_gear_opens_the_settings_block")
+                          and not n.startswith("strip_settings_")], sorted(names))
 
     # --- the pinned footer, the defect class that started this gate ----------------------------
 
