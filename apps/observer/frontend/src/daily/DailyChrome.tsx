@@ -5,7 +5,7 @@
 // 需要执行动作的槽位保留视觉但禁用并写明被挡的效果（Observer 严格只读）。
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import {
-  Boxes, ChevronDown, Clock, Command, FolderOpen, Lightbulb, Link2, Maximize2, Minimize2,
+  ChevronDown, Clock, Command, FolderOpen, Lightbulb, Link2, Maximize2, Minimize2,
   Plug, Search, Settings, SquareArrowOutUpRight, Wrench, X,
 } from 'lucide-react'
 import { WindowControls } from '@/components/layout/WindowControls'
@@ -199,10 +199,7 @@ export function TopBar({ query, onQuery, hudHint }: {
       className="flex h-[52px] shrink-0 items-center gap-4 border-b px-4"
       style={{ borderColor: T.line, background: T.shell }}>
       <div className="flex items-center gap-2.5">
-        <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-md border"
-          style={{ borderColor: T.line, background: T.surface, color: T.accent }}>
-          <Boxes size={15} />
-        </span>
+        <span aria-hidden="true" className="daily-brand-mark" data-brand-mark="work-lab" />
         <span className="text-sm font-semibold tracking-wide" style={{ color: T.text }}>WORK-LAB</span>
       </div>
       <div className="relative mx-auto flex w-full max-w-[560px] items-center">
@@ -240,6 +237,7 @@ export function Rail({ view, onNavigate, transportLabel, transportTone }: {
     <nav aria-label="主导航" data-landmark="rail"
       className="flex w-[176px] shrink-0 flex-col border-r px-3 py-4"
       style={{ borderColor: T.line, background: T.shell }}>
+      <span aria-hidden="true" className="daily-rail-brand" data-brand-mark="work-lab" />
       <div className="mb-3 px-2 text-xs uppercase tracking-wider" style={{ color: T.dim }}>工作区</div>
       <ul className="space-y-1">
         {(['home', 'issues', 'tools'] as DailyNav[]).map((id) => {
