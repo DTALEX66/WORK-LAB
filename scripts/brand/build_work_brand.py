@@ -62,6 +62,10 @@ RASTER_TARGETS: list[tuple[str, str, int, int]] = [
     ("apps/observer/frontend/src/assets/brand/work-lab-wordmark.png", "wordmark", 1112, 300),
     ("apps/observer/frontend/src/assets/brand/work-lab-lockup.png", "lockup", 1397, 299),
     ("apps/observer/frontend/src/assets/brand/app-icon-512.png", "tile", 512, 512),
+    # The browser tab. index.html links ./favicon.png, and Vite copies `public/` to the bundle root -- with no
+    # entry here the file the page asks for was never produced by the "one command reproduces every asset"
+    # build, so the tab fell back to a generic glyph while the claim said otherwise.
+    ("apps/observer/frontend/public/favicon.png", "tile", 64, 64),
     ("apps/observer/src-tauri/icons/32x32.png", "tile", 32, 32),
     ("apps/observer/src-tauri/icons/64x64.png", "tile", 64, 64),
     ("apps/observer/src-tauri/icons/128x128.png", "tile", 128, 128),
