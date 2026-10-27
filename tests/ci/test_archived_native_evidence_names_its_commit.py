@@ -193,6 +193,26 @@ class WorkflowWiringTests(unittest.TestCase):
         self.assertNotIn("continue-on-error", block,
                          "a pressed gate that is forgiven is a claim that the tokens are wired, not a check")
 
+    def test_the_built_native_binary_is_reachable_off_the_runner(self) -> None:
+        """A binary that never leaves CI cannot be looked at, so 'the desktop entry' is only ever a claim.
+
+        The local chain cannot produce one at all (no MSVC linker, and `windres` is handed this repository's
+        space-containing path unquoted), which is why the job builds it. Uploading it is what makes the
+        native shell inspectable without anybody installing a toolchain; a missing file must be a red step.
+        """
+        block = self.step_block("Upload the native release binary")
+        # Pinned, and asserted as pinned. The first version of this check looked for
+        # `actions/upload-artifact@v4` and passed -- on the exact bytes that `verify_supply_chain.py` and
+        # actionlint both convict (`SUPPLY_CHAIN_FAIL …:390: action must use a full commit SHA`). A wiring
+        # test that repeats a mutable tag cannot fail for the reason the repository cares about.
+        self.assertIn("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.4.3", block,
+                      "the upload step must name the commit it runs, with its version comment")
+        self.assertNotIn("actions/upload-artifact@v4", block,
+                         "a tag reference is a moving target; this repository pins actions by SHA")
+        self.assertIn("apps/observer/src-tauri/target/release/app.exe", block)
+        self.assertIn("if-no-files-found: error", block,
+                      "an upload that tolerates a missing exe reports success for a build that produced nothing")
+
     def test_the_native_evidence_is_in_the_upload_list(self) -> None:
         upload = self.text.split("name: ci-summary-observer", 1)[1].split("if-no-files-found", 1)[0]
         for path in (".project-local/artifacts/native-evidence/",
