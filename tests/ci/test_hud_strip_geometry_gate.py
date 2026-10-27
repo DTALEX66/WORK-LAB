@@ -196,6 +196,16 @@ def daily_governance() -> dict:
     surface = daily_home()
     surface["bodyText"] = ("治理与诊断\n数据可信度\n传输真值与状态矩阵\n采集器交付与拒绝\n"
                            "只读与隐私边界\n审计追踪\n项目\n问题与经验\n我的工具\n设置\nLIVE")
+    # Sizes as the shipped bundle paints them after the D2 heading rule: page title 20, card label 16,
+    # a mounted view's own section headings 15. Built from the gate's own table so a sixth carried card
+    # cannot join the screen without this fixture noticing.
+    surface["carriedHeadings"] = {
+        "page": {"text": "治理与诊断", "size": 20.0},
+        "cards": [{"id": cid, "headings": [{"tag": "h2", "size": 16.0, "text": label}]
+                                   + ([{"tag": "h3", "size": 15.0, "text": f"{label}小节"}]
+                                      if cid in ("privacy", "audit") else [])}
+                  for cid, label in gate.CARRIED_CARDS],
+    }
     return surface
 
 
@@ -231,7 +241,8 @@ def expected_check_names() -> set:
         "hover_row_is_the_one_highlighted_amberly", "hover_keeps_h01_mounted",
         "h03_quota_rows_are_three_slots_and_honest", "strip_never_fabricates_a_percentage",
         "strip_keeps_quota_unknown_instead_of_zero", "panel_keeps_the_four_state_switcher",
-        "daily_renders_the_declared_entries", "daily_settings_sits_below_the_declared_entries"}
+        "daily_renders_the_declared_entries", "daily_settings_sits_below_the_declared_entries",
+        "carried_card_labels_outrank_the_mounted_view_titles"}
 
 
 class DailyNavTableTests(unittest.TestCase):
@@ -261,6 +272,51 @@ class DailyNavTableTests(unittest.TestCase):
                 self.test_the_declared_nav_labels_are_the_ones_the_rail_renders()
         finally:
             gate.DAILY_ENTRY_LABELS = original
+
+
+class DailyCarriedCardLabelTests(unittest.TestCase):
+    """The gate's carried-card table has to be the product's, read back from source."""
+
+    def test_the_declared_carried_cards_are_the_ones_the_gate_names(self) -> None:
+        source = (ROOT / "apps" / "observer" / "frontend" / "src" / "daily" / "DailyApp.tsx") \
+            .read_text(encoding="utf-8")
+        block = re.search(r"export const DAILY_CARRIED_VIEWS[^=]*=\s*\[(.*?)\n\]", source, re.S)
+        self.assertIsNotNone(block, "DAILY_CARRIED_VIEWS is not declared where this gate reads it -- "
+                                    "move the gate, do not delete the assertion")
+        pairs = re.findall(r"\{\s*id:\s*'([^']+)',\s*label:\s*'([^']+)'", block.group(1) if block else "")
+        self.assertGreaterEqual(len(pairs), 5, f"the carried table reads as {pairs}")
+        self.assertEqual(tuple(pairs), gate.CARRIED_CARDS)
+
+    def test_a_card_the_gate_stopped_naming_is_convicted(self) -> None:
+        original = gate.CARRIED_CARDS
+        try:
+            gate.CARRIED_CARDS = original[:4]
+            with self.assertRaises(AssertionError):
+                self.test_the_declared_carried_cards_are_the_ones_the_gate_names()
+        finally:
+            gate.CARRIED_CARDS = original
+
+    def test_a_mounted_view_that_out_titles_its_card_is_convicted(self) -> None:
+        """The heading rule must be able to fail for the reason it exists.
+
+        Before the fix the audit card painted the mounted view's own page header at 32px beside a 16px
+        card label, and every other gate stayed green about it. That shape is replayed here.
+        """
+        measurement = good_measurement()
+        cards = measurement["daily-governance"]["carriedHeadings"]["cards"]
+        next(c for c in cards if c["id"] == "audit")["headings"].append(
+            {"tag": "h2", "size": 32.0, "text": "Audit Trail / 审计追踪"})
+        verdict = gate.verdict(measurement)
+        self.assertIn("carried_card_labels_outrank_the_mounted_view_titles",
+                      [c["check"] for c in verdict["checks"] if not c["pass"]])
+
+    def test_a_card_that_lost_its_declared_label_is_convicted(self) -> None:
+        measurement = good_measurement()
+        cards = measurement["daily-governance"]["carriedHeadings"]["cards"]
+        next(c for c in cards if c["id"] == "trust")["headings"] = []
+        verdict = gate.verdict(measurement)
+        self.assertIn("carried_card_labels_outrank_the_mounted_view_titles",
+                      [c["check"] for c in verdict["checks"] if not c["pass"]])
 
 
 class VerdictTests(unittest.TestCase):

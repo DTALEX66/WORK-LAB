@@ -368,6 +368,29 @@ MEASURE_JS = r"""
       label: (b.innerText || '').trim(), rect: box(b),
     })),
     bodyText: (document.body.innerText || '').slice(0, 1500),
+    // D2: the daily screen mounts professional views, and a professional view brings its own page-level
+    // header. Which title is on top is a painted-size question, not a markup question -- jsdom reports no
+    // cascade for a bundled stylesheet -- so it is measured here, off the rendered boxes.
+    carriedHeadings: (() => {
+      const root = document.querySelector('[data-landmark="daily-governance"]');
+      if (!root) return null;
+      const size = (el) => parseFloat(getComputedStyle(el).fontSize) || 0;
+      const shown = (el) => {
+        const r = el.getBoundingClientRect();
+        return r.height > 0 && r.width > 0 && getComputedStyle(el).display !== 'none';
+      };
+      const page = root.querySelector('h1');
+      return {
+        page: page ? {text: (page.innerText || '').trim(), size: size(page)} : null,
+        cards: [...root.querySelectorAll('[data-carried]')].map((card) => ({
+          id: card.getAttribute('data-carried'),
+          headings: [...card.querySelectorAll('h1,h2,h3,h4')].filter(shown).map((h) => ({
+            tag: h.tagName.toLowerCase(), size: size(h),
+            text: (h.innerText || '').trim().slice(0, 24),
+          })),
+        })),
+      };
+    })(),
   };
   return JSON.stringify(out);
 })()
@@ -530,6 +553,14 @@ EXCLUDED_FIXTURE_NAMES = tuple(
 # `apps/observer/frontend/src/daily/DailyChrome.tsx`, so the gate cannot keep asserting an old nav after
 # the table grows.
 DAILY_ENTRY_LABELS = ("项目", "问题与经验", "我的工具", "治理与诊断", "设置")
+# The five cards the governance screen mounts, in the sign-off pack's order, as (card id, declared label).
+# Hand-copied like the nav tuple above it, and pinned the same way: DailyCarriedCardLabelTests reads the
+# source table back, so a sixth carried view cannot join the screen without joining this list.
+CARRIED_CARDS = (("trust", "数据可信度"),
+                 ("monitoring", "传输真值与状态矩阵"),
+                 ("collectors", "采集器交付与拒绝"),
+                 ("privacy", "只读与隐私边界"),
+                 ("audit", "审计追踪"))
 
 
 # --------------------------------------------------------------------------- the browser, reused
@@ -1000,6 +1031,38 @@ def verdict(measured: dict) -> dict:
            bool(others) and settings_top is not None and settings_top > max(others),
            f"设置top={settings_top} others={json.dumps(others)} (底置 is a geometry claim: a nav that "
            "lists 设置 in reading order but paints it first fails here, not in prose)")
+
+    # --- D2: a mounted view must not out-title the card, or the screen, that mounts it -------------
+    carried_data = (harvests.get("daily-governance") or {}).get("carriedHeadings")
+    if not isinstance(carried_data, dict):
+        _check(checks, "carried_card_labels_outrank_the_mounted_view_titles", False,
+               f"carriedHeadings came back as {type(carried_data).__name__}: the governance screen was "
+               "never measured, so no claim about its heading order can be made")
+    else:
+        page_size = (carried_data.get("page") or {}).get("size") or 0
+        painted = {c.get("id"): c.get("headings") or [] for c in carried_data.get("cards") or []}
+        problems = []
+        for cid, label in CARRIED_CARDS:
+            heads = painted.get(cid)
+            if heads is None:
+                problems.append(f"{cid}: card absent")
+                continue
+            titled = [h for h in heads if h.get("text") == label]
+            if not titled:
+                problems.append(f"{cid}: label {label!r} not painted "
+                                f"(headings={json.dumps([h.get('text') for h in heads], ensure_ascii=False)})")
+                continue
+            label_size = titled[0].get("size") or 0
+            loudest = max((h.get("size") or 0) for h in heads)
+            if label_size != loudest:
+                problems.append(f"{cid}: a mounted view title ({loudest}px) is larger than the card "
+                                f"label ({label_size}px)")
+            if page_size and loudest >= page_size:
+                problems.append(f"{cid}: {loudest}px reaches the page title ({page_size}px)")
+        _check(checks, "carried_card_labels_outrank_the_mounted_view_titles", not problems,
+               f"page={page_size}px cards={json.dumps({k: [h.get('size') for h in v] for k, v in painted.items()})} "
+               + ("; ".join(problems) if problems else
+                  "each card's declared label is its own loudest title, and none reaches the screen title"))
 
     return {"passed": all(c["pass"] for c in checks), "checks": checks,
             "surfaces": sorted(measured), "fixture": {"revision": FIXTURE_SNAPSHOT["revision"],
