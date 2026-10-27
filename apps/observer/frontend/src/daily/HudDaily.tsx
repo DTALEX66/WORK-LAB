@@ -306,6 +306,9 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
     <div className={`flex h-screen flex-col items-center gap-2 bg-[#10141A] p-2 text-[#E8EDF3] ${
       native ? 'justify-start' : 'justify-center gap-3 overflow-y-auto'}`}
       data-hud-state={state} data-hud-frame={native ? 'native-strip' : 'panel'}>
+      {/* Identity on the surface that has no rail and no title bar. The strip is 150x480 with a pinned
+          footer, so this takes 22px of a capped column -- the HUD geometry gate is what says whether it fits. */}
+      <span aria-hidden="true" className="daily-brand-mark shrink-0" data-brand-mark="work-lab" />
       {native && (
         // 参考图顶部的 notch 把手：borderless 窄窗的拖动面（与 TopStatusBar 的 .drag-region 同一属性约定）。
         <div data-tauri-drag-region aria-hidden="true"

@@ -81,6 +81,18 @@ class DesktopOnlyShellGate(unittest.TestCase):
         has(shell, r"@media \(max-width: 840px\) \{\s*\.sidebar\.sidebar-slot \{ display: flex",
             "the shell does not re-show the rail inside the pinned query")
 
+    def test_the_daily_surfaces_mask_the_real_mark(self) -> None:
+        """CL-15's brand gate mounted only the professional shell, so the desktop window's own surfaces could
+        draw a generic glyph and the suite stayed green. This anchors each daily class to the mask that paints
+        the shipped mark inside the same rule body -- a bare class name with no rule would satisfy a substring
+        search and guard nothing.
+        """
+        css = SHELL.read_text(encoding="utf-8")
+        for cls in ("daily-brand-mark", "daily-rail-brand"):
+            has(css, rf"^\.{cls} \{{", f".{cls} is declared at column zero")
+            has(css, rf"\.{cls}::before[,\s][^}}]*mask: url\(\"\.\./assets/brand/work-lab-mark\.png\"\)",
+                f".{cls} paints the shipped mark rather than a placeholder")
+
     def test_the_main_window_has_a_desktop_floor_and_the_hud_stays_declared(self) -> None:
         conf = json.loads(TAURI.read_text(encoding="utf-8"))
         windows = {w["label"]: w for w in conf["app"]["windows"]}
