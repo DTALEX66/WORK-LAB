@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-27T17:42:00Z",
+  "generatedAt": "2026-10-27T17:56:35Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -432,9 +432,9 @@
     },
     {
       "path": "scripts/audit/hud_strip_geometry_via_cdp.py",
-      "sha256": "7bbbc032bd10b74adc69bd1c6b9db41e42cedc92f1ce9973f80e3b7a712a03b2",
-      "bytes": 53356,
-      "lines": 946,
+      "sha256": "ae719daddb8fe53a86c6ca53a83886f674f3335424eb76e14cf911ae281e1365",
+      "bytes": 60946,
+      "lines": 1045,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 5,
@@ -896,21 +896,21 @@
       "lines": 1100,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 18,
+      "citedByRecords": 21,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "apps/observer/frontend/DESIGN.md",
         "apps/observer/frontend/SCREEN_SPEC.md",
         "apps/observer/frontend/src/daily/DailyChrome.tsx",
-        "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
-        "docs/current/DOCUMENT-CENSUS.md"
+        "apps/observer/frontend/src/daily/dailyThemeTokens.contract.test.ts",
+        "apps/observer/frontend/src/daily/themeHonesty.contract.test.tsx"
       ]
     },
     {
       "path": "scripts/audit/tool_inventory_readback.py",
-      "sha256": "2e30a4c698504fdf4cf81e18f99f6f94b25f93fb64e29bb981c66d6b8162c1bf",
-      "bytes": 9795,
-      "lines": 197,
+      "sha256": "c8bbcc712c018914d09458c88766cf51b7c93b58bd55adbc6c644ce78eab80c8",
+      "bytes": 10586,
+      "lines": 211,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 15,

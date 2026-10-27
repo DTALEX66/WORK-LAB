@@ -36,7 +36,7 @@ DIRS = ("scripts/audit/", "scripts/maintenance/")
 DEFAULT_OUT = "docs/audits/TOOL_INVENTORY_2026-10-07.json"
 
 
-def citation_sources(all_files: list[str], out_rel: str) -> list[str]:
+def citation_sources(all_files: list[str], excluded: set[str]) -> list[str]:
     """The documents allowed to count as a citation of an instrument.
 
     The report names every instrument it carries, so letting it cite them makes the emission
@@ -44,8 +44,12 @@ def citation_sources(all_files: list[str], out_rel: str) -> list[str]:
     second, which both prints a false warning and forces a second run before the file describes itself.
     Measured 2026-10-28 with a scratch instrument: the pre-fix generator changed 14 content lines between
     emission 1 and emission 2, the fixed one changes 0.
+
+    Exclusion is by identity, not by output path: `tests/ci/test_shipped_projections_are_current.py`
+    re-generates into a temporary file and compares that against the shipped report, so a rule keyed only
+    on `--out` would have the fresh run count the shipped report as a citer and the two would never agree.
     """
-    return [f for f in all_files if not f.startswith(DIRS) and f != out_rel]
+    return [f for f in all_files if not f.startswith(DIRS) and f not in excluded]
 
 
 def relative_to_repo(target: str) -> str:
@@ -154,7 +158,7 @@ def main() -> int:
     if out_rel.startswith(DIRS):
         print(f"INVENTORY_OUT_INSIDE_INSTRUMENT_ROOT refusing to exclude its own subject: {out_rel}")
         return 4
-    others = citation_sources(all_files, out_rel)
+    others = citation_sources(all_files, {DEFAULT_OUT, out_rel})
     entries = []
     for tool in sorted(tools):
         sha, size, lines, basis = digest(tool)

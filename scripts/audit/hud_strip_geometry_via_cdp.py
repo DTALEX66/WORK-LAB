@@ -57,7 +57,15 @@ DAILY = (1280, 820)
 
 H01_SECTION = 'section[aria-label="工具额度窄面板"]'
 SUMMARY = '[aria-label="悬停摘要"]'
-AMBER = "#FBBF24"
+# The lit ring used to be identified by the literal amber attribute the strip painted (`AMBER =
+# "#FBBF24"`). Since 2026-10-27 the strip takes its colours from the --daily-* theme tokens, so that
+# string can never appear in the source again — and a gate that compared an attribute against a hex
+# would convict a correct render. The judgement is unchanged ("the hovered row is the only one lit in
+# the warning colour"), but it is now read two ways: the element states which ring ROLE it plays, and
+# the RESOLVED stroke is compared against the idle rows' resolved stroke. Colour identity is therefore
+# still measured in the browser, per theme, instead of being assumed from a literal.
+ACTIVE_RING = "active"
+IDLE_RING = "idle"
 
 # The condition the page must satisfy before a harvest counts as measuring the populated surface. The
 # frame mounts on the very first render, which happens while the snapshot is still in flight, so a probe
@@ -95,6 +103,8 @@ SURFACES: list[dict] = [
     {"name": "daily-home", "query": "surface=daily&shell=tauri", "size": DAILY, "kind": "daily",
      "state": None, "readyProbe": None, "readyWhy": None},
 ]
+
+_SURFACE_KINDS = {str(s["name"]): str(s["kind"]) for s in SURFACES}
 
 MOUNT_SELECTOR = {
     "strip": "[data-hud-frame]",
@@ -248,10 +258,20 @@ MEASURE_JS = r"""
       const el = document.querySelector(H01);
       return el ? {rect: box(el), text: (el.innerText || '').slice(0, 600)} : null;
     })(),
+    // Which clients the panel actually drew, read off the rows themselves, plus the whole painted string.
+    // The fixture puts a `vcs_host` card second in the list, so if the strip ever maps over every card
+    // again that name appears here rather than being hidden behind the row cap.
+    agentMarks: [...document.querySelectorAll('[data-hud-agent]')]
+      .map((n) => n.getAttribute('data-hud-agent')),
     // Strip rows as painted: which carry a ring, which ring colour, which one holds the summary.
+    // `stroke` is the RESOLVED paint (an attribute holding var(--daily-…) is not a colour, and the
+    // whole point of the token pass is that the colour a user sees depends on the live theme), and
+    // `ringRole` is the element's own statement of which role that ring plays.
     rows: [...document.querySelectorAll(H01 + ' li')].map((li) => {
       const c = li.querySelector('circle');
-      return {hasRing: !!c, stroke: c ? c.getAttribute('stroke') : null,
+      return {hasRing: !!c,
+              stroke: c ? (getComputedStyle(c).stroke || c.getAttribute('stroke')) : null,
+              ringRole: c ? c.getAttribute('data-ring-role') : null,
               strokeWidth: c ? c.getAttribute('stroke-width') : null,
               hasSummary: !!li.querySelector(SUMMARY)};
     }),
@@ -325,8 +345,9 @@ def expression_for(surface: dict) -> str:
 
 
 # --------------------------------------------------------------------------- the declared data shape
-# A fixture, declared as one. Six adapters so the strip's row cap and its honest "另有 N 个工具未在此
-# 列出" remainder line are both exercised; one project pair so 关联项目 carries real names instead of a
+# A fixture, declared as one. Eight of the nine adapters declare a role, six of them
+# `agent_runtime`, so the strip's row cap and its honest "另有 N 个工具未在此列出" remainder line are
+# both exercised; one project pair so 关联项目 carries real names instead of a
 # null; one waiting execution so 待审 is a counted fact rather than a padded zero. No field here is a
 # quota, a balance, or a reset time, because the snapshot contract carries none — which is exactly the
 # state the strip must render as UNKNOWN.
@@ -371,6 +392,15 @@ FIXTURE_SNAPSHOT: dict = {
          "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": "0.22.2",
          "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
          "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED",
+         "role": "agent_runtime"},
+        {"clientId": "github", "displayName": "GitHub", "supportLevel": "MANAGE",
+         "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
+         "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
+         "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": None,
+         "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
+         "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "role": "vcs_host",
          "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
         {"clientId": "hermes", "displayName": "Hermes", "supportLevel": "MANAGE",
          "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
@@ -378,28 +408,32 @@ FIXTURE_SNAPSHOT: dict = {
          "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": "0.22.2",
          "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
          "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
-         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED",
+         "role": "agent_runtime"},
         {"clientId": "deepseek-harness", "displayName": "DeepSeek Harness", "supportLevel": "OBSERVE",
          "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
          "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
          "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": "0.2.1-rc.2",
          "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
          "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
-         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED",
+         "role": "agent_runtime"},
         {"clientId": "qoder", "displayName": "Qoder", "supportLevel": "OBSERVE",
          "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
          "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
          "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": "0.4.11",
          "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
          "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
-         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED",
+         "role": "agent_runtime"},
         {"clientId": "open-design", "displayName": "Open Design", "supportLevel": "MANAGE",
          "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
          "registryStatus": "DECLARED", "writePolicy": "none", "risk": "MEDIUM",
          "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": None,
          "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
          "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
-         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_IMPLEMENTED"},
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_IMPLEMENTED",
+         "role": "design_client"},
         {"clientId": "openhuman", "displayName": "OpenHuman", "supportLevel": "OBSERVE",
          "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
          "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
@@ -407,8 +441,37 @@ FIXTURE_SNAPSHOT: dict = {
          "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
          "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
          "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+        {"clientId": "fixture-agent-a", "displayName": "Fixture Agent A", "supportLevel": "MANAGE",
+         "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
+         "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
+         "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": None,
+         "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
+         "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "role": "agent_runtime",
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
+        {"clientId": "fixture-agent-b", "displayName": "Fixture Agent B", "supportLevel": "MANAGE",
+         "declaredOperations": [], "matrixOperations": [], "operationsDrift": False,
+         "registryStatus": "DECLARED", "writePolicy": "none", "risk": "LOW",
+         "runtimeAdapter": None, "configOwnershipDefault": None, "declaredVersion": None,
+         "versionReadbackMethod": None, "versionObservedAt": None, "versionSource": None,
+         "detectionMode": None, "detectionEvidenceState": "UNKNOWN", "protocolConformance": {},
+         "role": "agent_runtime",
+         "observedAt": "2026-10-25T09:00:00+08:00", "layers": [], "nativeStatus": "NOT_PROBED"},
     ],
 }
+
+# Two cards are in the fixture only to be kept out. `GitHub` is the delivery platform (its real client
+# declares `vcs_host` in config/capability-matrix.json) and is deliberately the SECOND adapter: if the
+# strip ever maps over every card again, its name lands inside the five visible rows and the gate can see
+# it. `OpenHuman` declares no role at all, which is the source-gap case and must be counted separately.
+AGENT_ROLE = "agent_runtime"
+# Read off the fixture rather than restated, so adding an adapter cannot make the expectation disagree with
+# the input it is supposed to describe.
+AGENT_FIXTURE_IDS = frozenset(
+    str(c["clientId"]) for c in FIXTURE_SNAPSHOT["adapterCapabilities"] if c.get("role") == AGENT_ROLE)
+EXCLUDED_FIXTURE_NAMES = tuple(
+    str(c["displayName"]) for c in FIXTURE_SNAPSHOT["adapterCapabilities"]
+    if str(c["clientId"]) not in AGENT_FIXTURE_IDS)
 
 DAILY_ENTRY_LABELS = ("项目", "问题与经验", "我的工具", "设置")
 
@@ -688,6 +751,27 @@ def verdict(measured: dict) -> dict:
            f"dragRegions={json.dumps({n: s.get('dragRegions') for n, s in strips.items()})} "
            "min=1 (a decorations:false window is moved only by its drag handle)")
 
+    # --- who the monitor is allowed to draw ---------------------------------------------------------
+    # H03 and H04 replace the row list with a detail card and a reminder, so "no rows" is the right shape
+    # there. The requirement is made against the surfaces that paint the H01 card, which the harvest already
+    # reports as absent rather than empty -- the same absent-is-not-zero distinction the product draws.
+    hud_surfaces = {n: s for n, s in harvests.items()
+                    if _SURFACE_KINDS.get(n) in ("strip", "panel")}
+    rowed = {n: s for n, s in hud_surfaces.items() if (s.get("h01") or {}).get("rect")}
+    strays = {n: sorted(set(s.get("agentMarks") or []) - AGENT_FIXTURE_IDS) for n, s in hud_surfaces.items()}
+    painted_excluded = {n: [name for name in EXCLUDED_FIXTURE_NAMES if name in (s.get("bodyText") or "")]
+                        for n, s in hud_surfaces.items()}
+    _check(checks, "hud_monitors_only_declared_agent_runtimes",
+           bool(rowed) and all(s.get("agentMarks") for s in rowed.values())
+           and not any(strays.values()) and not any(painted_excluded.values()),
+           f"surfaces={json.dumps(sorted(hud_surfaces))} surfacesWithRowList={json.dumps(sorted(rowed))} "
+           f"rows={json.dumps({n: s.get('agentMarks') for n, s in hud_surfaces.items()})} "
+           f"rowsOutsideTheDeclaration={json.dumps(strays, ensure_ascii=False)} "
+           f"excludedNamesStillPainted={json.dumps(painted_excluded, ensure_ascii=False)} "
+           f"declaredAgentIds={sorted(AGENT_FIXTURE_IDS)} "
+           "(the strip is an agent monitor; a card whose declared role is not an agent runtime, or none at "
+           "all, belongs to the count in the exclusion note and not to a row)")
+
     h01_surfaces = {n: s for n, s in strips.items() if (s.get("h01") or {}).get("rect")}
     _check(checks, "h01_card_stays_inside_the_declared_strip_width",
            bool(h01_surfaces) and all(
@@ -725,12 +809,27 @@ def verdict(measured: dict) -> dict:
                f"{summary and summary.get('scrollerOverflow')} "
                "(below the fold inside a scroll box would be reported here as pxBelowFold)")
         rows = hover.get("rows")
-        lit = [i for i, r in enumerate(rows or []) if r.get("hasRing") and r.get("stroke") == AMBER]
+        ringed = [r for r in (rows or []) if r.get("hasRing")]
+        lit = [i for i, r in enumerate(rows or [])
+               if r.get("hasRing") and r.get("ringRole") == ACTIVE_RING]
+        idle = [i for i, r in enumerate(rows or [])
+                if r.get("hasRing") and r.get("ringRole") == IDLE_RING]
+        unlabelled = [i for i, r in enumerate(rows or [])
+                      if r.get("hasRing") and r.get("ringRole") not in (ACTIVE_RING, IDLE_RING)]
         with_summary = [i for i, r in enumerate(rows or []) if r.get("hasSummary")]
+        # The lit row must also be a DIFFERENT PAINTED COLOUR from the idle rows in the theme that is
+        # live. Role alone would stay green if --daily-warn-mark and --daily-line were ever set to one
+        # value, which is exactly the "wired but colourless" regression this gate exists to catch.
+        lit_strokes = {rows[i].get("stroke") for i in lit} if rows else set()
+        idle_strokes = {rows[i].get("stroke") for i in idle} if rows else set()
+        painted_apart = bool(lit_strokes) and not (lit_strokes & idle_strokes)
         _check(checks, "hover_row_is_the_one_highlighted_amberly",
-               bool(rows) and len(with_summary) == 1 and len(lit) == 1 and lit == with_summary,
-               f"rows={json.dumps(rows, ensure_ascii=False)[:300]} amberRows={lit} "
-               f"summaryRows={with_summary} expectedRing={AMBER}")
+               bool(ringed) and not unlabelled and len(with_summary) == 1
+               and len(lit) == 1 and lit == with_summary and painted_apart,
+               f"rows={json.dumps(rows, ensure_ascii=False)[:300]} litRows={lit} "
+               f"summaryRows={with_summary} unlabelled={unlabelled} "
+               f"litStroke={sorted(lit_strokes)} idleStroke={sorted(idle_strokes)} "
+               f"colourDiffersFromIdle={painted_apart} expectedRoles={(ACTIVE_RING, IDLE_RING)!r}")
         _check(checks, "hover_keeps_h01_mounted", bool((hover.get("h01") or {}).get("rect")),
                f"h01={json.dumps(hover.get('h01') and hover['h01']['rect'])}")
 

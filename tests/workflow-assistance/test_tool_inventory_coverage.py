@@ -210,7 +210,19 @@ class CitationSourceTests(unittest.TestCase):
         self.assertEqual("docs/audits/TOOL_INVENTORY_2026-10-07.json", own)
         files = ["scripts/audit/a.py", own, "docs/decisions/note.md", "README.md"]
         self.assertEqual(["docs/decisions/note.md", "README.md"],
-                         module.citation_sources(files, own))
+                         module.citation_sources(files, {own}))
+
+    def test_generating_into_a_temp_file_still_excludes_the_shipped_report(self) -> None:
+        """The currency check re-generates to a scratch path and compares against the shipped file.
+
+        Keying the exclusion off `--out` alone made the fresh run count the shipped report as a citer of
+        every instrument while the shipped run did not, so the two disagreed on all 81 entries.
+        """
+        module = self._module()
+        own = module.relative_to_repo(str(INVENTORY))
+        files = [own, "docs/decisions/note.md"]
+        self.assertEqual(["docs/decisions/note.md"],
+                         module.citation_sources(files, {own, "runs/fresh-inventory.json"}))
 
     def test_the_shipped_report_never_appears_as_a_citer_of_any_instrument(self) -> None:
         module = self._module()

@@ -67,6 +67,9 @@ const mockSnap = {
       configOwnershipDefault: null, declaredVersion: '1.2.0', versionReadbackMethod: null, versionObservedAt: null,
       versionSource: null, detectionMode: null, detectionEvidenceState: 'REAL', protocolConformance: {},
       observedAt: '2026-10-24T00:00:00Z', layers: [], nativeStatus: 'NOT_PROBED',
+      // Declared, not guessed: the HUD strip monitors agent runtimes by this field, so a fixture that left it
+      // out would be a source-gap snapshot, and the HUD tests would then be asserting geometry on an empty panel.
+      role: 'agent_runtime',
       entryProbe: { status: 'PASS', entryPoint: 'qoder', argv: [], exitCode: 0, probedAt: '2026-10-24T00:00:00Z' },
     },
     {
@@ -75,6 +78,7 @@ const mockSnap = {
       configOwnershipDefault: null, declaredVersion: null, versionReadbackMethod: null, versionObservedAt: null,
       versionSource: null, detectionMode: null, detectionEvidenceState: 'NO_EVIDENCE', protocolConformance: {},
       observedAt: null, layers: [], nativeStatus: 'NOT_PROBED', entryProbe: null,
+      role: 'agent_runtime',
     },
   ],
 } as never
@@ -246,7 +250,11 @@ describe('日常壳（?shell=daily）', () => {
     const agentLike = { ...cards[0], clientId: 'hermes', displayName: 'Hermes',
       declaredOperations: ['apply', 'invoke', 'observe'], writePolicy: 'approval_required',
       registryStatus: 'active', role: 'agent_runtime' }
-    cards.push(routerLike, agentLike)
+    // The undeclared group needs its own member now that the two fixture cards declare a role: the claim
+    // being tested is that a row with no declaration is not pulled into either named group.
+    const undeclaredLike = { ...cards[0], clientId: 'mystery', displayName: 'Mystery Tool',
+      registryStatus: 'active', writePolicy: 'approval_required', role: undefined }
+    cards.push(routerLike, agentLike, undeclaredLike)
     try {
       render(<App />)
       await act(async () => { screen.getByRole('button', { name: '我的工具' }).click() })
@@ -256,11 +264,11 @@ describe('日常壳（?shell=daily）', () => {
         ['agent_runtime', 'provider_router', 'UNKNOWN'])
       const hermes = within(toolList()).getAllByText('Hermes')[0]
       const router = within(toolList()).getAllByText('CC Switch')[0]
-      const qoder = within(toolList()).getAllByText('Qoder')[0]
+      const mystery = within(toolList()).getAllByText('Mystery Tool')[0]
       // DOM order is the claim: a router must not sit among the agents, and an undeclared row must not
       // be silently promoted into either group.
       expect(hermes.compareDocumentPosition(router) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-      expect(router.compareDocumentPosition(qoder) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(router.compareDocumentPosition(mystery) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
       expect(screen.getByText(/LEGACY_OBSERVE/)).toBeTruthy()
     } finally {
       cards.length = 2
@@ -300,8 +308,14 @@ describe('HUD 四态（?hud=daily）', () => {
   it('H01 窄面板：两个工具各自成行，额度一律 UNKNOWN，不出现虚构百分比', () => {
     window.history.replaceState(null, '', '/index.html?layout=compact&hud=daily&hs=h01')
     render(<App />)
-    expect(screen.getByText('QO')).toBeTruthy()
-    expect(screen.getByText('CO')).toBeTruthy()
+    // Each row is bound to the client it monitors, and draws a figure rather than the first two letters of
+    // the display name -- two identical "QO"/"CO" pills were the thing that made the rows indistinguishable.
+    const bound = Array.from(document.querySelectorAll('[data-hud-agent]'))
+      .map((node) => node.getAttribute('data-hud-agent'))
+    expect(bound).toEqual(['qoder', 'codex'])
+    expect(document.querySelectorAll('[data-hud-agent] svg').length).toBe(2)
+    expect(screen.queryByText('QO')).toBeNull()
+    expect(screen.queryByText('CO')).toBeNull()
     expect(screen.getAllByText('额度 UNKNOWN').length).toBe(2)
     expect(screen.queryByText(/79%|12%/)).toBeNull()
   })
@@ -431,10 +445,18 @@ describe('CL-12 原生窄窗的 H02 可达性', () => {
     const summary = screen.getByLabelText('悬停摘要')
     expect(summary.textContent).toContain('UNKNOWN')
     expect(li.contains(summary)).toBe(true)
-    // 参考的 H02 还会把被悬停那一行本身点亮（琥珀环），只出现摘要不算还原
-    expect(li.querySelector('circle')?.getAttribute('stroke')).toBe('#FBBF24')
+    // 参考的 H02 还会把被悬停那一行本身点亮（琥珀环），只出现摘要不算还原。
+    // 2026-10-27 起环色是主题令牌而不是字面量（写死时窄窗在两个主题下逐字节相同），所以这里钉两件事：
+    // 环说得出自己演的是哪个角色（data-ring-role，窄窗几何门读同一个属性），且点亮行与未点亮行
+    // 引用的是**不同**的令牌——两个角色若共用一个令牌，琥珀就再也点不亮任何东西。
+    const ring = li.querySelector('circle')!
+    expect(ring.getAttribute('data-ring-role')).toBe('active')
+    expect(ring.style.stroke).toBe('var(--daily-warn-mark)')
     const other = screen.getByLabelText('工具额度窄面板').querySelectorAll('li')[1]
-    expect(other.querySelector('circle')?.getAttribute('stroke')).not.toBe('#FBBF24')
+    const otherRing = other.querySelector('circle')!
+    expect(otherRing.getAttribute('data-ring-role')).toBe('idle')
+    expect(otherRing.style.stroke).toBe('var(--daily-line)')
+    expect(otherRing.style.stroke).not.toBe(ring.style.stroke)
     expect(screen.getAllByLabelText('悬停摘要')).toHaveLength(1)
     expect(screen.getByLabelText('工具额度窄面板')).toBeTruthy()
   })

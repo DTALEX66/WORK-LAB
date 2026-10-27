@@ -50,8 +50,15 @@ def control(name="详情", left=21.0, top=395.0, width=24.0, height=16.0,
             **box(left, top, width, height)}
 
 
-def ring(stroke="#303A46", width="3", has_summary=False):
-    return {"hasRing": True, "stroke": stroke, "strokeWidth": width, "hasSummary": has_summary}
+def ring(role="idle", stroke="rgb(48, 58, 70)", width="3", has_summary=False):
+    """One H01 row as the browser reports it.
+
+    `stroke` is the RESOLVED paint (the strip takes it from a --daily-* token now, so an attribute-level
+    hex is no longer something a page can show); `role` is the element's own statement of which ring role
+    it plays, which is how the hover check finds the lit row.
+    """
+    return {"hasRing": True, "ringRole": role, "stroke": stroke, "strokeWidth": width,
+            "hasSummary": has_summary}
 
 
 H01_TEXT = ("CO\n额度 UNKNOWN\nHE\n额度 UNKNOWN\nDE\n额度 UNKNOWN\nQO\n额度 UNKNOWN\n"
@@ -83,13 +90,21 @@ QUOTA_ROWS = [
 ]
 
 
+# The rows the fixture's declared roles put in the strip, in card order. Six of the nine fixture
+# adapters declare `agent_runtime`; the strip shows five and says the sixth is capped, so the panel
+# (which is not capped) reports all six.
+STRIP_AGENT_ROWS = ["codex", "hermes", "deepseek-harness", "qoder", "fixture-agent-a"]
+PANEL_AGENT_ROWS = STRIP_AGENT_ROWS + ["fixture-agent-b"]
+
+
 def strip_h01() -> dict:
     return {
         "viewport": viewport(), "hudFrame": "native-strip", "hudState": "h01", "shell": None,
         "h01": {"rect": box(8, 22, 134, 402), "text": H01_TEXT},
         "rows": [ring() for _ in range(5)] + [
-            {"hasRing": False, "stroke": None, "strokeWidth": None, "hasSummary": False},
-            {"hasRing": False, "stroke": None, "strokeWidth": None, "hasSummary": False}],
+            {"hasRing": False, "ringRole": None, "stroke": None, "strokeWidth": None, "hasSummary": False},
+            {"hasRing": False, "ringRole": None, "stroke": None, "strokeWidth": None, "hasSummary": False}],
+        "agentMarks": STRIP_AGENT_ROWS,
         "summary": None, "switcherButtons": 0, "switcherRect": None, "dragRegions": 1,
         "footer": box(8, 447, 134, 25), "quotaRows": None, "nav": [], "labelLines": [],
         "hoverDispatch": "not-requested", "bodyText": BODY_H01, "readyWait": READY_WAIT,
@@ -105,7 +120,7 @@ def strip_h02() -> dict:
                       "text": H01_TEXT.replace("HE\n额度 UNKNOWN",
                                                "Codex：窗口 待确认 · 数值 UNKNOWN · 重置时间 待确认\nHE\n额度 UNKNOWN")}
     surface["bodyText"] = BODY_H02
-    surface["rows"] = [ring("#FBBF24", "3.5", True)] + [ring() for _ in range(4)] + surface["rows"][5:]
+    surface["rows"] = [ring("active", "rgb(251, 191, 36)", "3.5", True)] + [ring() for _ in range(4)] + surface["rows"][5:]
     surface["summary"] = {**box(21, 75, 93, 90), "insideLi": True, "insideH01Row": True,
                           "scrollerOverflow": 94}
     surface["hoverDispatch"] = "dispatched"
@@ -137,7 +152,8 @@ def panel_h01() -> dict:
     return {
         "viewport": viewport(440, 680), "hudFrame": "panel", "hudState": "h01", "shell": None,
         "h01": {"rect": box(137.5, 217, 150, 368), "text": H01_TEXT},
-        "rows": [ring() for _ in range(6)], "summary": None, "switcherButtons": 4,
+        "rows": [ring() for _ in range(6)], "agentMarks": PANEL_AGENT_ROWS,
+        "summary": None, "switcherButtons": 4,
         "switcherRect": box(131.6, 597, 161.9, 24), "dragRegions": 1, "footer": None,
         "quotaRows": None, "nav": [], "labelLines": [], "hoverDispatch": "not-requested",
         "readyWait": READY_WAIT, "ready": True, "readyWaitMs": 1,
@@ -181,6 +197,7 @@ def expected_check_names() -> set:
     return names | {
         "strip_frame_is_the_native_strip_not_the_panel", "strip_has_a_drag_surface",
         "h01_card_stays_inside_the_declared_strip_width",
+        "hud_monitors_only_declared_agent_runtimes",
         "hover_reveals_the_summary_inside_the_row", "hover_summary_is_readable_without_scrolling",
         "hover_row_is_the_one_highlighted_amberly", "hover_keeps_h01_mounted",
         "h03_quota_rows_are_three_slots_and_honest", "strip_never_fabricates_a_percentage",
@@ -362,6 +379,33 @@ class VerdictTests(unittest.TestCase):
         measured["strip-h01"]["dragRegions"] = 0
         self.assertFalse(self.check("strip_has_a_drag_surface", measured)["pass"])
 
+    # --- who the monitor is allowed to draw -----------------------------------------------------
+
+    def test_the_clean_hud_draws_only_clients_that_declare_an_agent_role(self) -> None:
+        # Non-vacuity: the check is not satisfied by an empty row list, and the fixture's own excluded
+        # names really are absent from the recorded text.
+        self.assertTrue(self.check("hud_monitors_only_declared_agent_runtimes")["pass"])
+        self.assertTrue(gate.AGENT_FIXTURE_IDS)
+        self.assertIn("github", {str(c["clientId"]).lower() for c in gate.FIXTURE_SNAPSHOT["adapterCapabilities"]
+                                 if c.get("role") != gate.AGENT_ROLE})
+
+    def test_a_strip_row_for_a_client_that_declares_no_agent_role_fails(self) -> None:
+        measured = good_measurement()
+        measured["strip-h01"]["agentMarks"] = ["codex", "github", "hermes", "qoder", "fixture-agent-a"]
+        self.assertFalse(self.check("hud_monitors_only_declared_agent_runtimes", measured)["pass"])
+
+    def test_an_excluded_client_painted_in_the_panel_fails_even_with_no_stray_row(self) -> None:
+        measured = good_measurement()
+        measured["panel-h01"]["agentMarks"] = PANEL_AGENT_ROWS
+        measured["panel-h01"]["bodyText"] = H01_TEXT + "\nGitHub\n"
+        self.assertFalse(self.check("hud_monitors_only_declared_agent_runtimes", measured)["pass"])
+
+    def test_a_hud_surface_that_reported_no_rows_is_not_a_pass_by_omission(self) -> None:
+        measured = good_measurement()
+        for name in ("strip-h01", "strip-h02", "strip-h03", "strip-h04", "panel-h01"):
+            measured[name]["agentMarks"] = []
+        self.assertFalse(self.check("hud_monitors_only_declared_agent_runtimes", measured)["pass"])
+
     # --- the pinned footer, the defect class that started this gate ----------------------------
 
     def test_a_footer_pushed_below_the_window_fails_by_its_measured_bottom(self) -> None:
@@ -402,13 +446,29 @@ class VerdictTests(unittest.TestCase):
         self.assertIn("bottom=620", bad["detail"])
 
     def test_the_hovered_row_must_be_the_only_one_lit_amber(self) -> None:
+        # three separate faults, each convicted: a second row lit, the hovered row not lit, and — the
+        # new one since the strip took its colour from tokens — a lit row whose RESOLVED stroke is the
+        # same paint as the idle rows. The last one is what proves the colour is still measured and not
+        # merely declared: warn-mark and line collapsing to one value keeps the roles intact and makes
+        # the ring invisible to a user.
         measured = good_measurement()
-        measured["strip-h02"]["rows"][2]["stroke"] = gate.AMBER
+        measured["strip-h02"]["rows"][2]["ringRole"] = gate.ACTIVE_RING
         bad = self.check("hover_row_is_the_one_highlighted_amberly", measured)
         self.assertFalse(bad["pass"], bad)
 
         measured = good_measurement()
-        measured["strip-h02"]["rows"][0]["stroke"] = "#303A46"
+        measured["strip-h02"]["rows"][0]["ringRole"] = gate.IDLE_RING
+        self.assertFalse(self.check("hover_row_is_the_one_highlighted_amberly", measured)["pass"])
+
+        measured = good_measurement()
+        measured["strip-h02"]["rows"][0]["stroke"] = measured["strip-h02"]["rows"][1]["stroke"]
+        faded = self.check("hover_row_is_the_one_highlighted_amberly", measured)
+        self.assertFalse(faded["pass"], faded)
+        self.assertIn("colourDiffersFromIdle=False", faded["detail"])
+
+        # and the detector is not blind the other way: a ring that states no role at all is a fault too
+        measured = good_measurement()
+        measured["strip-h02"]["rows"][1]["ringRole"] = None
         self.assertFalse(self.check("hover_row_is_the_one_highlighted_amberly", measured)["pass"])
 
     def test_a_hover_that_revealed_nothing_fails_rather_than_reporting_no_problems(self) -> None:
