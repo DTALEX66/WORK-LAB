@@ -1390,7 +1390,22 @@ export type WorkflowSnapshotV3 = {
     fencingToken?: number | null,
     checkpointPresent: boolean,
     checkpointKeys: string[],
-    checkpointDigest?: string | null
+    checkpointDigest?: string | null,
+    createdAt?: string | null,
+    updatedAt?: string | null,
+    leaseHolder?: string | null,
+    leaseExpiresAt?: string | null,
+    register?: {
+    source: "OPEN_TASK_REGISTER",
+    state: "READ" | "UNREADABLE" | "ID_CONFLICT",
+    priority: string | null,
+    work: string,
+    workChars: number,
+    workTruncated: boolean,
+    cellsRealigned: boolean,
+    evidenceRef: string,
+    reason: string | null
+  } | null
   })[],
     adapterCapabilities?: ({
     clientId: string,
