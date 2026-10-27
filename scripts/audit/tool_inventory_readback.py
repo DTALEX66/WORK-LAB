@@ -36,6 +36,33 @@ DIRS = ("scripts/audit/", "scripts/maintenance/")
 DEFAULT_OUT = "docs/audits/TOOL_INVENTORY_2026-10-07.json"
 
 
+def citation_sources(all_files: list[str], excluded: set[str]) -> list[str]:
+    """The documents allowed to count as a citation of an instrument.
+
+    The report names every instrument it carries, so letting it cite them makes the emission
+    self-referential: a newly added tool reads as `unclaimed` on the first pass and as claimed on the
+    second, which both prints a false warning and forces a second run before the file describes itself.
+    Measured 2026-10-28 with a scratch instrument: the pre-fix generator changed 14 content lines between
+    emission 1 and emission 2, the fixed one changes 0.
+
+    Exclusion is by identity, not by output path: `tests/ci/test_shipped_projections_are_current.py`
+    re-generates into a temporary file and compares that against the shipped report, so a rule keyed only
+    on `--out` would have the fresh run count the shipped report as a citer and the two would never agree.
+    """
+    return [f for f in all_files if not f.startswith(DIRS) and f not in excluded]
+
+
+def relative_to_repo(target: str) -> str:
+    """`target` as a repo-relative posix path, whether the caller passed it relative or absolute."""
+    path = Path(target)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    try:
+        return path.resolve().relative_to(REPO).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
 def tracked_files() -> list[str]:
     raw = subprocess.run(["git", "-c", "core.quotePath=false", "ls-files", "-z"],
                          cwd=REPO, capture_output=True).stdout.split(b"\0")
@@ -125,7 +152,13 @@ def main() -> int:
     except (OSError, ValueError, KeyError) as exc:
         print(f"LEDGER_UNREAD {type(exc).__name__}: {exc}")
 
-    others = [f for f in all_files if not f.startswith(DIRS)]
+    # The report is the thing being written, so it cannot also be evidence about itself; `citation_sources`
+    # says why. Writing it under an instrument root would hide a real subject behind that exclusion.
+    out_rel = relative_to_repo(args.out)
+    if out_rel.startswith(DIRS):
+        print(f"INVENTORY_OUT_INSIDE_INSTRUMENT_ROOT refusing to exclude its own subject: {out_rel}")
+        return 4
+    others = citation_sources(all_files, {DEFAULT_OUT, out_rel})
     entries = []
     for tool in sorted(tools):
         sha, size, lines, basis = digest(tool)
