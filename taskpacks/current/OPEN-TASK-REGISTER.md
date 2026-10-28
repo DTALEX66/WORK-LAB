@@ -1553,6 +1553,14 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   差值恰为删掉的 1 文件 1 例——先量了差再删）；`npx tsc --noEmit` 无输出；`python tests/ci/test_reduced_motion_floor_gate.py`
   脚本模式 `Ran 17 tests OK`；`scripts/audit/tool_inventory_readback.py` 在 `git add` 之后重发一遍，
   新工具进清单且 `tests/workflow-assistance/test_tool_inventory_coverage.py` 全绿。
+- **这一轮 CI 第一次红，红在我自己的测试里，不是门**：run 40759112353 的 `workflow-assistance` 在
+  `governance` 批判红，两个失败成员都来自 `tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py`，
+  读数点名 `tests/ci/test_reduced_motion_floor_gate.py` 的 230/240 行——我那两条「按名拒绝」用例用了裸的
+  `tempfile.mkdtemp()`，把夹具造在项目边界之外（AGENTS.md 要求本仓产生的一切构建/缓存/临时件锁在 Git 根内）。
+  该判据还额外要求「剩余裸位只能是一份具名、可缩小的债」，所以它不是可以宽恕的风格问题。
+  修法是把夹具放进 `.project-local/runs/tmp` 并在 `tearDown` 里删掉（`prefix="reduced-motion-refusal-"`），
+  本地复跑该模块 17 例 OK、边界判据 6 例 OK。**这条与 2026-10-25 那次「CI 抓到的是我自己的测试，不是门」是同一类**：
+  本地绿只证明这一棵树，`tests/ci` 的机器无关性与边界无关性要按 runner 的形状量。
 - **按名留档**：①CL-16 第 2 步的三句（按下态真指针＋键盘等效、覆盖层进出场两侧采样、reduced-motion 逐面计算样式）
   至此全部落地且都被 CI 执行，第 3 步（`motion@14.6.0` 的 `LazyMotion`＋`m`，只用于进出场与状态过渡）
   现在才有可依赖的机制与门；②窄条的 CSS 动效语言缺席是第 3 步接入点，也是上面那条逐面判据能否升严的前提；

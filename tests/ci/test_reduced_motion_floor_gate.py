@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -226,9 +227,28 @@ class SurfaceDeclarationTests(unittest.TestCase):
 
 
 class RefusalTests(unittest.TestCase):
+    """`scripts/ci/verify_ci_check_reachability.py` needs a local route for every CDP instrument: what is
+    tested here is the refusal, because a gate that cannot say NOT_RUN is a gate that will lie."""
+
+    def setUp(self) -> None:
+        # `tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py` convicts a bare
+        # `mkdtemp()`: an invented root outside the project boundary leaks unless someone remembers to
+        # delete it, so the fixture goes under `.project-local/runs/tmp` and is removed here.
+        self.tmp_root = ROOT / ".project-local" / "runs" / "tmp"
+        self.tmp_root.mkdir(parents=True, exist_ok=True)
+        self.roots: list[str] = []
+
+    def tearDown(self) -> None:
+        for path in self.roots:
+            shutil.rmtree(path, ignore_errors=True)
+
+    def empty_root(self) -> Path:
+        created = tempfile.mkdtemp(prefix="reduced-motion-refusal-", dir=str(self.tmp_root))
+        self.roots.append(created)
+        return Path(created)
+
     def test_a_bad_surface_name_refuses_before_the_dist_is_even_looked_up(self) -> None:
-        empty = Path(tempfile.mkdtemp())
-        proc = subprocess.run([sys.executable, str(GATE), "--root", str(empty),
+        proc = subprocess.run([sys.executable, str(GATE), "--root", str(self.empty_root()),
                                "--surface", "strip-h9"],
                               capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
@@ -237,8 +257,7 @@ class RefusalTests(unittest.TestCase):
                          "a typo is a typo regardless of what this machine built; rc 2 must not be rc 3")
 
     def test_a_missing_bundle_refuses_by_name_as_not_run(self) -> None:
-        empty = Path(tempfile.mkdtemp())
-        proc = subprocess.run([sys.executable, str(GATE), "--root", str(empty)],
+        proc = subprocess.run([sys.executable, str(GATE), "--root", str(self.empty_root())],
                               capture_output=True, text=True, encoding="utf-8", errors="replace")
         self.assertEqual(proc.returncode, 3, proc.stdout + proc.stderr)
         self.assertIn("DIST_ABSENT", proc.stdout)
