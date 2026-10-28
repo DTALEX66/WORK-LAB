@@ -1,6 +1,7 @@
 import * as React from 'react'
+import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL } from '@/lib/viewRegistry'
+import { VIEW_REGISTRY, OVERVIEW_ID, OVERVIEW_LABEL, OVERVIEW_ICON } from '@/lib/viewRegistry'
 // WUI-01/WUI-02: the grouping is data now, and it lives in `lib/navigation` next to the statement of
 // which lanes are daily destinations and which left the default nav. The rail renders that model; it no
 // longer owns it, because a grouping that only a component can read cannot be asserted, searched or
@@ -16,7 +17,7 @@ import { NAV_GROUPS, DAILY_DESTINATION_IDS, isOnDefaultNav } from '@/lib/navigat
  *       <div><h1>WORK-LAB</h1><small>AI WORKFLOW CONTROL PLANE</small></div>
  *     </div>
  *     <div class="nav">
- *       <button><span class="nav-dot"></span><span>总览</span></button>
+ *       <button><svg class="lucide-activity"></svg><span>总览</span></button>
  *       …
  *     </div>
  *     <div class="sidebar-footer">
@@ -29,7 +30,10 @@ import { NAV_GROUPS, DAILY_DESTINATION_IDS, isOnDefaultNav } from '@/lib/navigat
  * tile, overridden in src/skins/l10b-shell.css to the 91x48 cut-out logo mark — the
  * pinned skin itself stays verbatim per decision D-11) / `.nav button` (+ `.active` gradient + `::before` cyan→blue edge bar) /
  * `.nav-dot` / `.sidebar-footer` / `.avatar` are all B10-verbatim in
- * src/skins/b10.css. This component only supplies the data (the lanes) — the
+ * src/skins/b10.css. Since 2026-10-29 the rail mounts each lane's own registry glyph in place of the
+ * decorative `.nav-dot`; the rule stays in the pinned sheet untouched, and no lane's name was hidden to
+ * make room — that trade is exactly what `apps/observer/frontend/DESIGN.md` gap 10 records as the failed
+ * first attempt. This component only supplies the data (the lanes) — the
  * groups from `lib/navigation` render as the B10 buttons, each group with its
  * own labelled disclosure block so every lane on the default nav stays one click away.
  *
@@ -39,6 +43,9 @@ import { NAV_GROUPS, DAILY_DESTINATION_IDS, isOnDefaultNav } from '@/lib/navigat
 interface LaneDef {
   id: string
   label: string
+  // WUI-03 gap 10: the glyph comes from the registry row, not from a table kept here. A picture the rail
+  // invents is a second source, and the two sources drift exactly the way the three 总览 literals did (N-1).
+  icon: LucideIcon
 }
 
 // The rail renders every lane in NAV_GROUPS that is still on the default nav. `workflow-editor` is the
@@ -49,9 +56,10 @@ interface LaneDef {
 
 
 function buildLanes(): Map<string, LaneDef> {
-  const map = new Map<string, LaneDef>([[OVERVIEW_ID, { id: OVERVIEW_ID, label: OVERVIEW_LABEL }]])
+  const map = new Map<string, LaneDef>([[OVERVIEW_ID,
+    { id: OVERVIEW_ID, label: OVERVIEW_LABEL, icon: OVERVIEW_ICON }]])
   for (const e of VIEW_REGISTRY) {
-    if (e.component) map.set(e.id, { id: e.id, label: e.label })
+    if (e.component) map.set(e.id, { id: e.id, label: e.label, icon: e.icon })
   }
   return map
 }
@@ -157,7 +165,11 @@ function Nav({
                       aria-current={active ? 'page' : undefined}
                       className={cn(active && 'active')}
                     >
-                      <span className="nav-dot" aria-hidden="true" />
+                      {/* WUI-03 gap 10: the lane's own glyph, declared in the registry and until 2026-10-29
+                          carried no consumer — the rail painted 31 identical `.nav-dot` circles. It replaces
+                          the dot instead of joining it, because a second 15px box pushes more labels into
+                          `.truncate`, and a truncated label is the information the gap said not to remove. */}
+                      <l.icon size={15} strokeWidth={2} aria-hidden="true" data-lane-icon={l.id} />
                       <span className="truncate">{l.label}</span>
                     </button>
                   )
