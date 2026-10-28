@@ -1439,9 +1439,17 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   `npm run build` 成功；`scripts/audit/overlay_motion_via_cdp.py` 在本分支构建的 bundle 上 PASS，
   收据 `.project-local/runs/overlay-gate/overlays-after.json`；清单在 `git add` 之后重发；
   台账四门绿（路径门 36 例、`normalise_doc_citations --check` rewritten=0、表形状 rows=42、live 路径 missing=0）。
-- **一处如实写明的边界**：`overlay_enter_transitions` 断言的是**默认（无 reduce）媒体偏好**下的行为——
-  本门自己启动的 Chrome 不 emulate `prefers-reduced-motion`。若将来给门加 reduce 分支，
-  该判据在 reduce 下必须换成"直接到达终态且无中间帧"，不能沿用"必须有中间帧"。
+- **动效门必须钉住媒体偏好，并断言 reduce 那一侧**（记忆里已经付过学费的形状，本轮在覆盖层门上补齐）：
+  headless Chrome 自己会回答 `prefers-reduced-motion`，不钉就是"在测环境的偏好"。
+  `emulate_motion` 先 `Emulation.setEmulatedMedia`，再从页面里把 `matchMedia` 读回来核对，
+  读不回期望值就记 `mode='preference-not-pinned'` 拒测；两面各测两个分支，新增两条判据
+  `overlay_motion_preference_pinned[面]` 与 `overlay_reduced_motion_arrives_without_frames[面]`。
+  这里有一处**判据写错被实测纠正**：第一版把"无中间帧"写成"只能有一个值"，
+  而正确的 reduce 行为是先画关闭帧再到终点，实测 `right` 恰好两值 `-540px → 0px` 且中间无帧，
+  旧写法会冤枉产品的无障碍地板；判据改成"最多两值且终点与正常分支逐字相同"，
+  并补 `test_two_values_under_reduce_is_the_correct_instant_shape` 把正确形状钉住。
+  正常分支实测仍是 17 个中间值，`OVERLAY_MOTION_GATE_PASS`。
+- **按名留档**：CL-16 第 3 步（`motion@` 的 `LazyMotion`＋`m`）现在有了可断言的地面；
 - **按名留档**：CL-16 第 3 步（`motion@` 的 `LazyMotion`＋`m`）现在有了可断言的地面；
   吐司的**退场**仍走"从列表移除"，`TOAST_EXIT_MS` 已声明但尚未被使用它的路径消费——
   把它接成真正的退场需要 `useToaster` 保留 leaving 项，属下一批。

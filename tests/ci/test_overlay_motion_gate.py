@@ -40,6 +40,15 @@ def reading(**overrides) -> dict:
         "exitSamples": 154, "exitFramesPresent": 0, "unmountedAtSample": 0,
         "unmountedDuringExit": True, "closePath": "escape",
         "exitValues": {"right": [], "transform": [], "opacity": []},
+        "reducedMotion": False,
+        # The same overlay under `prefers-reduced-motion: reduce`: pinned, opened, and arriving at the same
+        # destination with no intermediate frames. Without this half the gate would only ever prove that
+        # motion exists, which is how an accessibility floor gets pressured into being deleted.
+        "reduce": {
+            "reducedMotion": True, "mode": "real-pointer", "opened": True,
+            "enterValues": {"right": ["0px"], "transform": ["none"], "opacity": ["1"]},
+            "exitValues": {"right": ["0px"], "transform": ["none"], "opacity": ["1"]},
+        },
     }
     base.update(overrides)
     return base
@@ -98,10 +107,52 @@ class VerdictTests(unittest.TestCase):
         self.assertFalse(clause["pass"])
         self.assertIn("unmountedAtSample=None", clause["detail"])
 
+    def test_an_unpinned_preference_refuses_both_readings(self) -> None:
+        # Headless Chrome answers `prefers-reduced-motion` by itself; a gate that does not pin and read it
+        # back is measuring the environment. Both branches must report the preference they were told to use.
+        planted = reading(reducedMotion=True, reduce=dict(reading()["reduce"], reducedMotion=False))
+        result = gate.verdict({"drawer": planted})
+        clause = checks_of(result)["overlay_motion_preference_pinned[drawer]"]
+        self.assertFalse(clause["pass"])
+        self.assertIn("normal reducedMotion=True", clause["detail"])
+        self.assertIn("reduce reducedMotion=False", clause["detail"])
+
+    def test_the_reduced_branch_must_arrive_without_frames(self) -> None:
+        planted = reading(reduce=dict(reading()["reduce"],
+                                      enterValues={"right": ["-540px", "-268px", "0px"],
+                                                   "transform": ["none"], "opacity": ["1"]}))
+        result = gate.verdict({"drawer": planted})
+        self.assertTrue(checks_of(result)["overlay_motion_preference_pinned[drawer]"]["pass"])
+        self.assertFalse(
+            checks_of(result)["overlay_reduced_motion_arrives_without_frames[drawer]"]["pass"],
+            "frames under reduce mean the accessibility floor stopped answering")
+
+    def test_two_values_under_reduce_is_the_correct_instant_shape(self) -> None:
+        # Measured 2026-10-29: the reduced drawer holds `-540px` then `0px` — the closed frame and the end
+        # frame, with nothing between. A criterion of "one value" would convict the correct behaviour, so
+        # the clause counts intermediate frames, not distinct values.
+        planted = reading(reduce=dict(reading()["reduce"],
+                                      enterValues={"right": ["-540px", "0px"], "transform": ["none"],
+                                                   "opacity": ["1"]}))
+        result = gate.verdict({"drawer": planted})
+        self.assertTrue(checks_of(result)["overlay_reduced_motion_arrives_without_frames[drawer]"]["pass"])
+        self.assertTrue(result["passed"], json.dumps([c for c in result["checks"] if not c["pass"]]))
+
+    def test_the_reduced_branch_must_reach_the_same_destination(self) -> None:
+        planted = reading(reduce=dict(reading()["reduce"],
+                                      enterValues={"right": ["-540px"], "transform": ["none"],
+                                                   "opacity": ["1"]}))
+        result = gate.verdict({"drawer": planted})
+        clause = checks_of(result)["overlay_reduced_motion_arrives_without_frames[drawer]"]
+        self.assertFalse(clause["pass"])
+        self.assertIn("normal end=", clause["detail"],
+                      "the detail shows both ends so a reader can see where the reduced branch stopped")
+
     def test_an_overlay_that_moves_is_reported_as_animated_on_both_sides(self) -> None:
         # The control that proves the report is not hard-wired to "NOT_ANIMATED": a step-3 overlay that
         # slides in and out must be distinguishable from today's, without the instrument changing.
-        planted = reading(enterValues={"right": ["-540px", "-270px", "0px"], "transform": ["none"]},
+        planted = reading(enterValues={"right": ["-540px", "-270px", "0px"], "transform": ["none"],
+                                                 "opacity": ["1"]},
                           exitValues={"right": ["0px", "-540px"]})
         result = gate.verdict({"drawer": planted})
         self.assertTrue(result["passed"])

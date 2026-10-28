@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-28T18:40:27Z",
+  "generatedAt": "2026-10-28T18:58:20Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -629,9 +629,9 @@
     },
     {
       "path": "scripts/audit/overlay_motion_via_cdp.py",
-      "sha256": "7a92f1b3176b71afc91f8a882b56ba711f0ed99941e120a4d6e84cb6d0841c95",
-      "bytes": 14514,
-      "lines": 285,
+      "sha256": "688381622059fd48f292bf639c8873be0767d710b9af69b32808b1fe26bba4dd",
+      "bytes": 18314,
+      "lines": 336,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 2,
