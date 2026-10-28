@@ -32,12 +32,23 @@ def reading(**overrides) -> dict:
     base = {
         "name": "drawer", "selector": "aside.drawer", "mode": "real-pointer",
         "trigger": {"found": True, "label": "工作区", "tag": "BUTTON", "x": 353, "y": 119},
-        "opened": True, "enterSamples": 35, "presentFrames": 35, "mountedClass": "drawer open",
-        "enterValues": {"right": ["0px"], "transform": ["none"], "opacity": ["1"]},
+        "opened": True, "enterSamples": 35, "presentFrames": 35, "mountedClass": "drawer",
+        # The first painted frame carries no `.open` any more, and `right` runs through intermediate values:
+        # that is what the skin's declared transition looks like when it actually runs.
+        "enterValues": {"right": ["-540px", "-268.4px", "0px"], "transform": ["none"], "opacity": ["1"]},
         "settledWhileOpen": True,
         "exitSamples": 154, "exitFramesPresent": 0, "unmountedAtSample": 0,
         "unmountedDuringExit": True, "closePath": "escape",
         "exitValues": {"right": [], "transform": [], "opacity": []},
+        "reducedMotion": False,
+        # The same overlay under `prefers-reduced-motion: reduce`: pinned, opened, and arriving at the same
+        # destination with no intermediate frames. Without this half the gate would only ever prove that
+        # motion exists, which is how an accessibility floor gets pressured into being deleted.
+        "reduce": {
+            "reducedMotion": True, "mode": "real-pointer", "opened": True,
+            "enterValues": {"right": ["0px"], "transform": ["none"], "opacity": ["1"]},
+            "exitValues": {"right": ["0px"], "transform": ["none"], "opacity": ["1"]},
+        },
     }
     base.update(overrides)
     return base
@@ -48,11 +59,27 @@ def checks_of(result: dict) -> dict:
 
 
 class VerdictTests(unittest.TestCase):
-    def test_a_measured_overlay_passes_and_is_reported_as_not_animated(self) -> None:
+    def test_a_measured_overlay_passes_and_is_reported_as_animated(self) -> None:
         result = gate.verdict({"drawer": reading()})
         self.assertTrue(result["passed"], json.dumps(result["checks"], ensure_ascii=False))
-        self.assertIn("NOT_ANIMATED", result["motion"]["drawer"],
-                      "measured 2026-10-29: the drawer mounts with .open already applied")
+        self.assertIn("animated:", result["motion"]["drawer"])
+        self.assertTrue(self.checks(result)["overlay_enter_transitions[drawer]"]["pass"])
+        self.assertEqual("drawer", reading()["mountedClass"],
+                         "the closed first frame is what gives the browser something to transition from")
+
+    def checks(self, result: dict) -> dict:
+        return {c["check"]: c for c in result["checks"]}
+
+    def test_an_overlay_that_appears_at_its_end_state_fails_the_enter_clause(self) -> None:
+        # The shape measured on 2026-10-29 before the components were fixed: mounted with the open class
+        # already applied, so every sampled property held one value and the declared slide never ran.
+        planted = reading(mountedClass="drawer open",
+                          enterValues={"right": ["0px"], "transform": ["none"], "opacity": ["1"]})
+        result = gate.verdict({"drawer": planted})
+        clause = self.checks(result)["overlay_enter_transitions[drawer]"]
+        self.assertFalse(clause["pass"])
+        self.assertIn("NOT_ANIMATED", clause["detail"])
+        self.assertFalse(result["passed"])
 
     def test_a_real_click_that_opens_nothing_fails_instead_of_reporting_a_pass(self) -> None:
         planted = reading(opened=False, presentFrames=0, mode="click-did-not-open",
@@ -80,10 +107,52 @@ class VerdictTests(unittest.TestCase):
         self.assertFalse(clause["pass"])
         self.assertIn("unmountedAtSample=None", clause["detail"])
 
+    def test_an_unpinned_preference_refuses_both_readings(self) -> None:
+        # Headless Chrome answers `prefers-reduced-motion` by itself; a gate that does not pin and read it
+        # back is measuring the environment. Both branches must report the preference they were told to use.
+        planted = reading(reducedMotion=True, reduce=dict(reading()["reduce"], reducedMotion=False))
+        result = gate.verdict({"drawer": planted})
+        clause = checks_of(result)["overlay_motion_preference_pinned[drawer]"]
+        self.assertFalse(clause["pass"])
+        self.assertIn("normal reducedMotion=True", clause["detail"])
+        self.assertIn("reduce reducedMotion=False", clause["detail"])
+
+    def test_the_reduced_branch_must_arrive_without_frames(self) -> None:
+        planted = reading(reduce=dict(reading()["reduce"],
+                                      enterValues={"right": ["-540px", "-268px", "0px"],
+                                                   "transform": ["none"], "opacity": ["1"]}))
+        result = gate.verdict({"drawer": planted})
+        self.assertTrue(checks_of(result)["overlay_motion_preference_pinned[drawer]"]["pass"])
+        self.assertFalse(
+            checks_of(result)["overlay_reduced_motion_arrives_without_frames[drawer]"]["pass"],
+            "frames under reduce mean the accessibility floor stopped answering")
+
+    def test_two_values_under_reduce_is_the_correct_instant_shape(self) -> None:
+        # Measured 2026-10-29: the reduced drawer holds `-540px` then `0px` — the closed frame and the end
+        # frame, with nothing between. A criterion of "one value" would convict the correct behaviour, so
+        # the clause counts intermediate frames, not distinct values.
+        planted = reading(reduce=dict(reading()["reduce"],
+                                      enterValues={"right": ["-540px", "0px"], "transform": ["none"],
+                                                   "opacity": ["1"]}))
+        result = gate.verdict({"drawer": planted})
+        self.assertTrue(checks_of(result)["overlay_reduced_motion_arrives_without_frames[drawer]"]["pass"])
+        self.assertTrue(result["passed"], json.dumps([c for c in result["checks"] if not c["pass"]]))
+
+    def test_the_reduced_branch_must_reach_the_same_destination(self) -> None:
+        planted = reading(reduce=dict(reading()["reduce"],
+                                      enterValues={"right": ["-540px"], "transform": ["none"],
+                                                   "opacity": ["1"]}))
+        result = gate.verdict({"drawer": planted})
+        clause = checks_of(result)["overlay_reduced_motion_arrives_without_frames[drawer]"]
+        self.assertFalse(clause["pass"])
+        self.assertIn("normal end=", clause["detail"],
+                      "the detail shows both ends so a reader can see where the reduced branch stopped")
+
     def test_an_overlay_that_moves_is_reported_as_animated_on_both_sides(self) -> None:
         # The control that proves the report is not hard-wired to "NOT_ANIMATED": a step-3 overlay that
         # slides in and out must be distinguishable from today's, without the instrument changing.
-        planted = reading(enterValues={"right": ["-540px", "-270px", "0px"], "transform": ["none"]},
+        planted = reading(enterValues={"right": ["-540px", "-270px", "0px"], "transform": ["none"],
+                                                 "opacity": ["1"]},
                           exitValues={"right": ["0px", "-540px"]})
         result = gate.verdict({"drawer": planted})
         self.assertTrue(result["passed"])

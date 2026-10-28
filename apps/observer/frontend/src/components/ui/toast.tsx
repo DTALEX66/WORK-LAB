@@ -1,5 +1,11 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { useEnterTransition } from '@/lib/useEnterTransition'
+
+/** The skin's own `.toast{transition:.22s ease}` plus a frame of margin. A toast currently leaves by being
+ *  removed from the list, so this is the budget an exit animation would have; it is declared next to the
+ *  enter flip rather than duplicated in a timer somewhere else. */
+export const TOAST_EXIT_MS = 240
 
 /**
  * UI_COMPONENTS (20260921) · L10b (2026-09-27): Toast — B10 `.toast` contract.
@@ -45,29 +51,40 @@ export function Toaster({ toasts, onDismiss }: ToasterProps) {
   return (
     <div className="toast-stack">
       {toasts.map((t) => (
-        <div
-          key={t.id}
-          className="toast show"
-          // M-4: an error is not a status update. `role="status` is a polite
-          // live region that assistive tech may not announce urgently, and a
-          // failure that disappears on its own leaves the user with no record
-          // of what went wrong. Errors announce assertively and stay until
-          // dismissed.
-          role={t.variant === 'error' ? 'alert' : 'status'}
-          aria-live={t.variant === 'error' ? 'assertive' : 'polite'}
-          onClick={() => onDismiss(t.id)}
-        >
-          <div className="flex items-start gap-3">
-            <span className={cn(VARIANT_TAG[t.variant ?? 'info'], 'shrink-0')}>
-              {t.variant === 'success' ? 'OK' : t.variant === 'error' ? 'ERR' : 'INFO'}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="m-0 text-sm font-medium text-ink">{t.title}</p>
-              {t.description ? <p className="m-0 mt-1 text-xs text-muted">{t.description}</p> : null}
-            </div>
-          </div>
-        </div>
+        <ToastRow key={t.id} toast={t} onDismiss={onDismiss} />
       ))}
+    </div>
+  )
+}
+
+/**
+ * One toast, painted closed first so the skin's `.toast{opacity:0;transform:translateY(12px) …}` to
+ * `.toast.show` transition actually runs. The row owns the flip because the stack is a list: a single
+ * component-level flag would show every toast the moment the first one arrived.
+ */
+function ToastRow({ toast: t, onDismiss }: { toast: ToastItem; onDismiss: (id: number) => void }) {
+  const { shown } = useEnterTransition(true, TOAST_EXIT_MS)
+  return (
+    <div
+      className={cn('toast', shown && 'show')}
+      // M-4: an error is not a status update. `role="status` is a polite
+      // live region that assistive tech may not announce urgently, and a
+      // failure that disappears on its own leaves the user with no record
+      // of what went wrong. Errors announce assertively and stay until
+      // dismissed.
+      role={t.variant === 'error' ? 'alert' : 'status'}
+      aria-live={t.variant === 'error' ? 'assertive' : 'polite'}
+      onClick={() => onDismiss(t.id)}
+    >
+      <div className="flex items-start gap-3">
+        <span className={cn(VARIANT_TAG[t.variant ?? 'info'], 'shrink-0')}>
+          {t.variant === 'success' ? 'OK' : t.variant === 'error' ? 'ERR' : 'INFO'}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="m-0 text-sm font-medium text-ink">{t.title}</p>
+          {t.description ? <p className="m-0 mt-1 text-xs text-muted">{t.description}</p> : null}
+        </div>
+      </div>
     </div>
   )
 }

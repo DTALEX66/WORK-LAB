@@ -9,12 +9,13 @@ what it can and cannot assert today:
       - the overlay opens from a dispatched mouse click on the control the user reads, not only from React
         state set by a test;
       - the overlay closes from Escape / the click-catcher / its own timer, again through the input path;
+      - the entrance actually transitions: at least one sampled property changes value across the enter
+        window. The skins declare `.drawer{transition:right .28s cubic-bezier(.2,0,0,1)}` and
+        `.toast{transition:.22s ease}`, and until 2026-10-29 both components mounted with the open class
+        already applied, so the browser was told one state and had nothing to animate.
       - every read happened after the paint stopped moving (the settled rule), or the run refuses.
-  * what it REPORTS (a gap, not a pass and not a failure): whether anything animated at all. Measured
-    2026-10-29: `apps/observer/frontend/src/components/ui/drawer.tsx` returns null while closed and mounts
-    with `class="drawer open"` already applied, and `toast.tsx` mounts with `class="toast show"` — an
-    element that appears at its end state has no transition to sample. Step 3 (motion@ LazyMotion) is what
-    gives this instrument something to judge, so the absence is printed by name instead of being scored.
+  * what it REPORTS alongside: which properties moved and how many distinct values each held, so a reader
+    can see what the assertion saw rather than trusting a bare PASS.
 
 Exit: 0 OVERLAY_MOTION_GATE_PASS, 1 OVERLAY_MOTION_GATE_FAIL, 3 OVERLAY_MOTION_GATE_NOT_RUN.
 """
@@ -119,9 +120,32 @@ def distinct_values(samples: list[dict], prop: str) -> list[str]:
     return seen
 
 
-def measure_overlay(cdp, spec: dict, *, enter_window_s: float, exit_window_s: float) -> dict:
+def emulate_motion(cdp, value: str) -> bool:
+    """Pin `prefers-reduced-motion` over CDP and read `matchMedia` back, so the pin is proven not assumed.
+
+    Headless Chrome answers this question by default — measured on 2026-10-26, when the pressed-state gate
+    read `transform='none'`/`transitionDuration='0s'` on a CI runner and `matrix(0.99…)`/`0.08s` locally.
+    That was the instrument measuring the environment's motion preference while claiming to measure the rule.
+    A gate that asserts "there were intermediate frames" without pinning this is asserting the OS setting.
+    """
+    cdp.send("Emulation.setEmulatedMedia",
+             {"features": [{"name": "prefers-reduced-motion", "value": value}]})
+    time.sleep(0.2)  # the recalc has to land before anything is read
+    read = json.loads(cdp.evaluate(
+        "JSON.stringify({reduce: window.matchMedia('(prefers-reduced-motion: reduce)').matches})"))
+    return bool(read.get("reduce"))
+
+
+def measure_overlay(cdp, spec: dict, *, enter_window_s: float, exit_window_s: float,
+                    reduced_motion: bool = False) -> dict:
     """Open it with a click, sample the enter, close it through its own input path, sample the exit."""
     out: dict = {"name": spec["name"], "selector": spec["selector"]}
+    out["reducedMotion"] = emulate_motion(cdp, "reduce" if reduced_motion else "no-preference")
+    if out["reducedMotion"] != reduced_motion:
+        # The page still reports the other preference: whatever this reading says about frames is a
+        # statement about the environment, so it is refused rather than scored.
+        out["mode"] = "preference-not-pinned"
+        return out
     trigger = json.loads(cdp.evaluate(TRIGGER_JS % spec["trigger"]))
     out["trigger"] = trigger
     if not trigger.get("found"):
@@ -196,6 +220,34 @@ def verdict(measurements: dict[str, dict]) -> dict:
         moved.update({f"exit:{p}": len(v) for p, v in (m.get("exitValues") or {}).items() if len(v) > 1})
         motion[name] = ("animated:" + json.dumps(moved)) if moved else \
             "NOT_ANIMATED: every sampled property held one value across the whole enter and exit window"
+        # The assertion the report was waiting for: the skin declares `.drawer{transition:right .28s}` and
+        # `.toast{transition:.22s}`, so an entrance that samples one value from the first painted frame
+        # onwards is a broken promise, not a style preference. Measured 2026-10-29 before the fix, both
+        # overlays appeared already at their end state; the components now paint closed, then flip.
+        add(f"overlay_enter_transitions[{name}]", bool(m.get("opened")) and bool(moved),
+            f"enterValues={json.dumps(m.get('enterValues'), ensure_ascii=False)[:180]} "
+            f"mountedClass={m.get('mountedClass')!r} → {motion[name]}")
+        # The other half of the same rule: the accessibility floor answers `reduce` with the transition
+        # turned off, so the reduced branch must arrive at the SAME destination without intermediate frames.
+        # Asserting only the animated side is how a gate pressures someone into deleting that floor.
+        reduce = m.get("reduce") or {}
+        add(f"overlay_motion_preference_pinned[{name}]",
+            m.get("reducedMotion") is False and reduce.get("reducedMotion") is True,
+            f"normal reducedMotion={m.get('reducedMotion')!r} reduce reducedMotion={reduce.get('reducedMotion')!r} "
+            f"modes={m.get('mode')!r}/{reduce.get('mode')!r} "
+            "(headless Chrome answers this preference by itself; unpinned, this gate would measure the environment)")
+        normal_end = {p: (v[-1] if v else None) for p, v in (m.get("enterValues") or {}).items()}
+        reduce_end = {p: (v[-1] if v else None) for p, v in (reduce.get("enterValues") or {}).items()}
+        # "No intermediate frames", not "one value": the component still paints closed for a frame and then
+        # the end state, so a correct reduced run holds TWO values (measured 2026-10-29: `right` went
+        # `-540px → 0px` with nothing between). What must never appear under reduce is the sequence the
+        # animated side shows — 17 values for the same drawer.
+        add(f"overlay_reduced_motion_arrives_without_frames[{name}]",
+            bool(reduce.get("opened"))
+            and all(len(v) <= 2 for v in (reduce.get("enterValues") or {}).values())
+            and reduce_end == normal_end,
+            f"reduce enterValues={json.dumps(reduce.get('enterValues'), ensure_ascii=False)[:170]} "
+            f"normal end={json.dumps(normal_end, ensure_ascii=False)[:170]} opened={reduce.get('opened')}")
     return {"passed": all(c["pass"] for c in checks), "checks": checks, "motion": motion,
             "surfaces": sorted(measurements)}
 
@@ -237,16 +289,23 @@ def main() -> int:
         for spec in specs:
             # The professional shell is where the top bar's controls live; the HUD strip has neither.
             url = fixture.url_for("view=full")
-            sink: dict = {}
+            normal: dict = {}
+            reduced: dict = {}
 
-            def hook(cdp, _spec=spec, _sink=sink) -> None:
-                _sink.update(measure_overlay(cdp, _spec, enter_window_s=0.6, exit_window_s=2.6))
+            def hook(cdp, _spec=spec, _normal=normal, _reduced=reduced) -> None:
+                _normal.update(measure_overlay(cdp, _spec, enter_window_s=0.6, exit_window_s=2.6))
+                _reduced.update(measure_overlay(cdp, _spec, enter_window_s=0.6, exit_window_s=2.6,
+                                                reduced_motion=True))
 
             geometry.serve_and_eval(root, "/index.html", WINDOW,
                                     "JSON.stringify({ok: true})", browser, u19, None,
                                     viewport=(1280, 820), serve_url=url, after_mount=hook,
                                     mount_selector=".app")
-            measurements[spec["name"]] = sink
+            # Both preferences are measured in the same document, pinned in sequence: each branch re-pins
+            # `prefers-reduced-motion` over CDP and reads `matchMedia` back before it samples anything, so a
+            # re-pin that did not land is refused as `preference-not-pinned` rather than scored.
+            normal["reduce"] = reduced
+            measurements[spec["name"]] = normal
     finally:
         fixture.stop_server()
 
