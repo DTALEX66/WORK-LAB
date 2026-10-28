@@ -636,16 +636,30 @@ class ShellSurfaceTests(unittest.TestCase):
         self.surfaces = {s["label"]: s for s in legibility.shell_surfaces(self.strip)}
 
     def test_the_density_floor_is_per_surface_and_not_a_blanket_loosening(self) -> None:
+        strip_floor = self.surfaces["strip-h01"]["minNodes"]
         asked_without_a_floor = legibility.verdict("dark", clean_harvest(16), surface="strip-h01")
         self.assertFalse(checks_of(asked_without_a_floor)["harvest_is_dense_enough"]["pass"],
                          "the shell floor must still apply when the caller forgets to narrow it")
-        with_strip_floor = legibility.verdict("dark", clean_harvest(16),
-                                              legibility.MIN_SHELL_NODES, "strip-h01")
-        dense = checks_of(with_strip_floor)["harvest_is_dense_enough"]
-        self.assertTrue(dense["pass"], dense)
-        self.assertIn("floor=12 surface=strip-h01", dense["detail"])
-        empty = legibility.verdict("dark", clean_harvest(9), legibility.MIN_SHELL_NODES, "strip-h01")
-        self.assertFalse(checks_of(empty)["harvest_is_dense_enough"]["pass"])
+        sparse = checks_of(legibility.verdict("dark", clean_harvest(9),
+                                              strip_floor, "strip-h01"))["harvest_is_dense_enough"]
+        self.assertTrue(sparse["pass"], sparse)
+        self.assertIn(f"floor={strip_floor} surface=strip-h01", sparse["detail"])
+        empty = checks_of(legibility.verdict("dark", clean_harvest(strip_floor - 1),
+                                             strip_floor, "strip-h01"))["harvest_is_dense_enough"]
+        self.assertFalse(empty["pass"], "a floor that refuses nothing is a comment, not a guard")
+
+    def test_the_strip_floor_is_chrome_not_a_populations_node_total(self) -> None:
+        """2026-10-28, the same shipped bundle read from both sides: the declared fixture paints 12
+        text nodes on `strip-h01` (5 agent rows) and the live ledger paints 9 (3 rows). The old floor of
+        12 was the fixture's total, so it convicted a healthy strip for holding fewer agents than the
+        fixture declares. The 6 is what the strip paints whatever the ledger holds; 0 is what an empty
+        page measures.
+        """
+        self.assertEqual(legibility.MIN_STRIP_NODES, 6)
+        self.assertEqual(self.surfaces["strip-h01"]["minNodes"], legibility.MIN_STRIP_NODES)
+        self.assertLess(legibility.MIN_STRIP_NODES, 9, "the sparse real render must clear its own floor")
+        self.assertLess(legibility.MIN_STRIP_NODES, 12, "the fixture total is not the floor")
+        self.assertLessEqual(legibility.MIN_SHELL_NODES, 13, "panel-h01 chrome measures 13")
 
     def test_a_low_contrast_label_on_the_strip_fails_the_same_rule_as_the_shell(self) -> None:
         # The planted footer grey this round measured at 2.44:1 on the strip's own #10141A card. The
@@ -655,7 +669,7 @@ class ShellSurfaceTests(unittest.TestCase):
         for n in harvest["nodes"]:
             n["bg"] = ["rgba(0, 0, 0, 0)", "rgb(16, 20, 26)"]
             n["color"] = "rgb(75, 85, 99)"
-        bad = checks_of(legibility.verdict("dark", harvest, legibility.MIN_SHELL_NODES,
+        bad = checks_of(legibility.verdict("dark", harvest, self.surfaces["strip-h01"]["minNodes"],
                                           "strip-h01"))["every_text_node_meets_AA"]
         self.assertFalse(bad["pass"], bad)
         self.assertIn("2.44:1", bad["detail"])
