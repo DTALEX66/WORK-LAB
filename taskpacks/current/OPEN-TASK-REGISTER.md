@@ -1299,3 +1299,42 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   该方向（第五向）由 CL-14 于 2026-10-25 建好，`tests/ci/test_gate_ci_job_mapping.py` 里有植入反证：
   删掉一个 stage 的调用与声明就必须报 `undeclared`。本行此前保留的 27 是那次接入**之前**的读数，
   已按实测改写为闭合；教训是"继承来的剩余工作断言"本身也是一条需要重新测量的断言。
+
+
+**2026-10-29 · PR #225 合并回执 + CL-16 第 2 步最后一项：覆盖层进出场两侧采样的门**
+
+- **PR #225 闭环**：head `6df075c5` 上 12 项检查全部 pass（含 `aggregate`），merge commit
+  `2b5ba127a9cf6ac238b3255262bbc8a7cc694c57`；本地 main、`origin/main`、`git ls-remote origin refs/heads/main`
+  三方一致于该 SHA；分支按逐 blob 证据退役（三点点差为空、`git cherry` 无输出），标签
+  `wl-retire-20261029/fix_hud-strip-project-count-wording-20261029` 先推远端再删检出与分支。
+- **CL-16 第 2 步（补门）到此四项齐**：按下态探针、真指针悬停、键盘 `:focus-visible` 等效、覆盖层进出场两侧采样。
+  新增 `scripts/audit/overlay_motion_via_cdp.py`：在真实浏览器里用派发的鼠标点击顶栏控件打开抽屉与吐司，
+  以 16ms 轮询把**进场窗口 0.6s 与出场窗口 2.6s 的每一帧都留在收据里**，再用 Escape（抽屉自身的契约）
+  或它自己的计时器（`useToaster(1800)`）走同一条输入路径关闭。
+- **本轮实测（不是推断）**：顶栏控件按文字定位——`工作区` 按钮中心 `(353,119)`、`通知` 按钮 `(273,119)`；
+  真点击后抽屉 35 帧全部在场、挂载即 `mountedClass='drawer open'`，吐司 35 帧全部在场、`'toast show'`；
+  出场侧抽屉 `exitSamples=154 framesStillPainted=0 unmountedAtSample=0`（Escape 立即卸载，没有任何退场帧），
+  吐司 `exitSamples=154 framesStillPainted=56 unmountedAtSample=56`（在场约 0.9s 后按 1800ms 计时器消失）。
+  两面在进与出的整个窗口里**每个被采属性只有一个值** → `OVERLAY_MOTION_REPORTED … NOT_ANIMATED`。
+  这条读数是 2026-10-25 那句盘点（`apps/observer/frontend/src/components/ui/drawer.tsx`/`apps/observer/frontend/src/components/ui/toast.tsx` 挂载即 `open`/`show`，过渡永不发生）的当轮复证。
+- **"没有动效"为什么写成报告而不是判据**：把产品今天满足不了的断言写进门，只会让人把门拆掉——这与上一轮
+  悬停那条（壳面没有 CSS 悬停语言时不写死判据）是同一条纪律。因此本门只断言三件今天为真、且退化就会伤到用户的事：
+  `overlay_trigger_rendered[面]`（用户读得到的控件在页面上，按文字而非位置索引定位）、
+  `overlay_opens_from_a_real_click[面]`（派发的 mousePressed+mouseReleased 真能打开它，而不是只有测试里 setState 能打开）、
+  `overlay_closes_through_its_input_path[面]`（按 Escape／计时器真的离开 DOM）。
+  外加一条反空总体的 `gate_measured_an_overlay`：`verdict({})` 在 `all([])` 下会**偶然通过**，
+  本门把它写成失败——空总体从没证明过任何事。第 3 步引入 `motion@` 后，把 `enter/right` 的 distinct 数从报告升格为断言即可，
+  仪器不需要再改（`test_an_overlay_that_moves_is_reported_as_animated_on_both_sides` 已钉住它能区分）。
+- **本地门（只跑被改面）**：`tests/ci/test_overlay_motion_gate.py` 新建 **11 例 OK**——四种植入反证各自判红
+  （点了没开、控件不在页面上、按 Escape 不离开、以及"根本没有测量"），加上 `FakeCdp` 驱动 `measure_overlay`
+  本身钉住"必须先派发 mousePressed+mouseReleased 再采样"和"离场后仍继续采样整个窗口"；
+  门本体在已发布 bundle 上 `OVERLAY_MOTION_GATE_PASS overlays=["drawer","toast"]` exit=0，
+  收据 `.project-local/runs/overlay-gate/overlays.json`（含 `servedBundle` 字节身份与逐帧读数）。
+- **本门不接进 CI 的 12 项，理由写明**：它今天唯一的实质输出是"无动效"这一产品缺口，把它登记成必需门等于
+  把第 3 步的待办变成今天的红；`scripts/ci/verify_gate_ci_job_mapping.py` 的第五向只管 `VERIFY_ORDER` 的 stage，
+  本门不在其中，因此不产生 `undeclared`。它随 `tests/ci/` 的 glob 进入 `root-governance-suite`，
+  所以判据逻辑本身在 CI 里被跑、被证伪，只是不代替产品断言。
+- **按名留档的下一步（CL-16 第 3 步）**：给覆盖层真正的进出场（挂载先画关闭态、下一帧切开启态；
+  退场等过渡结束或超时再卸载），并把 `right/transform/opacity` 的 distinct 数升格为断言；
+  卸载延迟会改变"关闭即不渲染"这条既有合同（`apps/observer/frontend/src/components/ui/overlays.test.tsx` 钉住），
+  两处必须同一批改，不能只改一边。
