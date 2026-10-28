@@ -37,6 +37,8 @@ import re
 import sys
 import traceback
 import time
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -738,15 +740,28 @@ def harvest_settled(root: Path, browser: str, u19, u19_geometry, theme: str,
     return settled
 
 
+def live_api_url(api: str, query: str, theme: str) -> str:
+    """The URL shape the fixture origin builds, pointed at a backend that already serves the bundle.
+
+    A sidecar started with `--frontend-root` serves the production `dist` and the real v3 snapshot from
+    ONE loopback origin, which is the release line's own read-only browser entry — so a sweep taken
+    through it measures the shipped bytes over real data instead of over the declared fixture.
+    """
+    encoded = urllib.parse.quote(f"{api.rstrip('/')}/api/v1/snapshot", safe="")
+    return f"{api.rstrip('/')}/index.html?{query}&mode=UNKNOWN&theme={theme}&api={encoded}"
+
+
 def harvest_shell_surface(strip, geometry, root: Path, browser: str, u19, fixture,
-                          theme: str, surface: dict) -> dict:
-    """One shell surface, populated by the declared fixture snapshot, at the shape it declares.
+                          theme: str, surface: dict, api_base: str | None = None,
+                          backend: str = "declared-fixture") -> dict:
+    """One shell surface, populated either by the declared fixture or by a live backend, at its own shape.
 
     Same-origin is not a convenience: the front refuses a non-loopback `?api=`, and a second port would
     be a second origin the browser then blocks with CORS. Two launches per surface keep the settled-pair
     rule intact for these surfaces too — the strip's chips and rows animate on mount like the shell does.
     """
-    url = fixture.url_for(surface["query"], theme)
+    url = (live_api_url(api_base, surface["query"], theme) if api_base
+           else fixture.url_for(surface["query"], theme))
     width, height = surface["size"]
     first = geometry.serve_and_eval(root, "/index.html", WINDOW_SIZE, HARVEST, browser, u19, None,
                                     viewport=(width, height), serve_url=url,
@@ -755,7 +770,7 @@ def harvest_shell_surface(strip, geometry, root: Path, browser: str, u19, fixtur
                                      viewport=(width, height), serve_url=url,
                                      mount_selector=surface["mount"])
     settled = require_settled(first, second, f"{surface['label']}/{theme}", surface["minNodes"])
-    settled["backend"] = "declared-fixture"
+    settled["backend"] = backend
     return settled
 
 
@@ -952,6 +967,31 @@ def run_views_session(geometry, root, browser, u19, path, window, size, expr, th
     raise last if last is not None else RuntimeError("no sweep attempt was made")
 
 
+def probe_live_api(api: str) -> dict:
+    """Read the backend the operator pointed at and return the population it actually serves.
+
+    Refuses (raises) on anything that is not loopback http answering a `workflow/snapshot/v3` payload: a
+    sweep against a dead URL would render the offline card, and an offline card has perfectly readable
+    text — so every floor would pass while measuring nothing. Counts are reported, never bodies.
+    """
+    parsed = urllib.parse.urlparse(api)
+    if parsed.scheme != "http" or parsed.hostname not in ("127.0.0.1", "localhost", "::1"):
+        raise ValueError(f"LIVE_API_NOT_LOOPBACK {api!r}")
+    url = f"{api.rstrip('/')}/api/v1/snapshot"
+    with urllib.request.urlopen(url, timeout=10) as response:
+        served = json.loads(response.read().decode("utf-8"))
+    if served.get("schemaVersion") != "workflow/snapshot/v3":
+        raise ValueError(f"LIVE_API_NOT_V3 schemaVersion={served.get('schemaVersion')!r} at {url} "
+                         "(the surfaces swept here are the v3 contract's; an older payload renders a "
+                         "different page and its legibility would not be this product's)")
+    return {"api": api,
+            "schemaVersion": served.get("schemaVersion"),
+            "revision": served.get("revision"),
+            "adapters": len(served.get("adapterCapabilities") or []),
+            "projects": len(served.get("projects") or []),
+            "executions": len(served.get("executions") or [])}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=str(ROOT))
@@ -973,6 +1013,12 @@ def main() -> int:
                          "gate's declared fixture snapshot. Without this flag the sweep reads only the "
                          "professional shell at `view=full`/`view=overview`, which is how the 12px floor "
                          "and AA standard went unmeasured on the two surfaces owners actually look at.")
+    ap.add_argument("--api", default=None,
+                    help="measure against this ALREADY RUNNING loopback v3 backend (a sidecar started "
+                         "with --frontend-root, so it serves the shipped bundle and the real snapshot "
+                         "from one origin) instead of the declared fixture. The URL is probed before any "
+                         "browser starts: an unreachable or non-v3 backend is bad input, because a page "
+                         "that silently fell back to the offline card would still have readable text.")
     args = ap.parse_args()
     try:
         sizes = [int(token) for token in args.sizes.split(",") if token.strip()]
@@ -982,6 +1028,14 @@ def main() -> int:
     if not sizes or any(size < 320 or size > 2560 for size in sizes):
         print(f"LEGIBILITY_GATE_NOT_RUN BAD_SIZES {args.sizes!r} (each must be 320..2560)")
         return 2
+
+    live_population = None
+    if args.api:
+        try:
+            live_population = probe_live_api(args.api)
+        except Exception as exc:  # noqa: BLE001 — a backend the operator named is bad input, not a skip
+            print(f"LEGIBILITY_GATE_NOT_RUN LIVE_API {type(exc).__name__} {exc}")
+            return 2
 
     root = Path(args.root).resolve()
     if not (root / "apps/observer/frontend/dist/index.html").is_file():
@@ -1006,7 +1060,12 @@ def main() -> int:
         reports = []
         api = None
         server = None
-        if args.live_backend:
+        if args.api:
+            api = live_population["api"]
+            print(f"LEGIBILITY_BACKEND {api} "
+                  f"adapters={live_population['adapters']} projects={live_population['projects']} "
+                  f"executions={live_population['executions']} revision={live_population['revision']}")
+        elif args.live_backend:
             # The release line's own sidecar starter, on a dynamic loopback port, serving the real v3
             # snapshot. Read-only: this is the projection the Observer is allowed to read.
             _sidecar, port, _thread, server = u19.start_sidecar()
@@ -1034,8 +1093,9 @@ def main() -> int:
                             return 3
                         reports.append({"theme": f"{theme}-views-{size}px",
                                         "verdict": views_verdict(theme, collected, size,
-                                                                 "live" if args.live_backend else "static"),
-                                        "backend": "live" if args.live_backend else "static",
+                                                                 "live" if (args.live_backend or args.api)
+                                                                 else "static"),
+                                        "backend": "live" if (args.live_backend or args.api) else "static",
                                         "collected": collected, "browser": browser})
                     continue
                 try:
@@ -1049,14 +1109,23 @@ def main() -> int:
             if args.shell_surfaces:
                 strip = load_strip_gate()
                 surfaces = shell_surfaces(strip)
-                fixture = strip.SnapshotFixture(root / "apps/observer/frontend/dist")
-                fixture.start()
+                # A supplied live entry already serves the shipped bundle and the real snapshot from one
+                # loopback origin, so the fixture origin is not started at all. Without `--api` the sweep
+                # reads the declared fixture, exactly as CI does.
+                fixture = (None if args.api else
+                           strip.SnapshotFixture(root / "apps/observer/frontend/dist"))
+                if fixture is not None:
+                    fixture.start()
+                shell_backend = "live-api" if args.api else "declared-fixture"
+                shell_data = f"live backend {args.api}" if args.api else "declared fixture snapshot"
                 try:
                     for theme in THEMES:
                         for surface in surfaces:
                             try:
                                 harvest = harvest_shell_surface(strip, geometry, root, browser, u19,
-                                                                fixture, theme, surface)
+                                                                fixture, theme, surface,
+                                                                api_base=args.api,
+                                                                backend=shell_backend)
                             except Exception as exc:  # noqa: BLE001 — NOT_RUN, never a quiet skip
                                 print(f"LEGIBILITY_GATE_NOT_RUN shell/{surface['label']}/{theme} "
                                       f"{exc!r}")
@@ -1069,9 +1138,10 @@ def main() -> int:
                                 "harvest": harvest, "browser": browser,
                                 "surface": {"declaredSize": list(surface["size"]),
                                             "minNodes": surface["minNodes"],
-                                            "data": "declared fixture snapshot"}})
+                                            "data": shell_data}})
                 finally:
-                    fixture.stop_server()
+                    if fixture is not None:
+                        fixture.stop_server()
         finally:
             if server is not None:
                 server.shutdown()

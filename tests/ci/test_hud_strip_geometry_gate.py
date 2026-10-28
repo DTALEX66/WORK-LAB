@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import urllib.request
 from pathlib import Path
 from unittest import mock
 
@@ -742,7 +743,7 @@ class InstrumentTests(unittest.TestCase):
         self.assertEqual(first, gate.verdict(good_measurement()))
         self.assertTrue(gate.verdict(good_measurement())["passed"])
         text = SCRIPT.read_text(encoding="utf-8")
-        start = text.index("def verdict(measured: dict)")
+        start = text.index("def verdict(measured: dict,")
         end = text.index("def measure_all(")
         body = text[start:end]
         for call in ("open(", "Path(", "subprocess", "serve_and_eval"):
@@ -858,6 +859,118 @@ class InstrumentTests(unittest.TestCase):
         plain = gate.expression_for({"name": "daily-home"})
         self.assertIn("const READY = () => (true);", plain)
         self.assertIn("const ready = READY();", plain)
+
+
+class LivePayloadTests(unittest.TestCase):
+    """`--snapshot-file` runs the declared judgements over the bytes the machine actually produced.
+
+    Found by measuring, not by design. On 2026-10-28 the live ledger serves ten adapter cards whose first
+    is Hermes, while the fixture declares nine whose first is Codex. The readiness marker was the
+    fixture's literal, so the live run waited out the full 24s budget for a name the header never paints
+    and failed two surfaces whose geometry and quota slots had in fact rendered correctly. A marker that
+    is only correct for one payload is the same defect class as a threshold that is only correct for one
+    machine, so the marker is now read off whatever is served — and the receipt has to say which bytes it
+    measured, because a receipt that labels real ledger bytes "fixture" describes a run it did not do.
+    """
+
+    def _payload_with_first_card(self, display_name: str) -> dict:
+        payload = copy.deepcopy(gate.FIXTURE_SNAPSHOT)
+        payload["adapterCapabilities"][0]["displayName"] = display_name
+        return payload
+
+    def test_the_readiness_marker_comes_from_the_served_payload(self) -> None:
+        by_name = {s["name"]: s for s in
+                   gate.resolve_surfaces(self._payload_with_first_card("Zed Monitor"))}
+        for name in ("strip-h03", "strip-h04"):
+            self.assertIn("Zed Monitor", by_name[name]["readyProbe"], name)
+            self.assertNotIn("Codex", by_name[name]["readyProbe"],
+                             f"{name} would still wait for the fixture's tool, which is the bug this "
+                             "surface had on real data")
+            self.assertIn("Zed Monitor", by_name[name]["readyWhy"], name)
+        # a name change must not reach the surfaces that wait for a painted ring row, or for nothing.
+        self.assertEqual(by_name["strip-h01"]["readyProbe"], gate.RING_ROW_PROBE)
+        self.assertIsNone(by_name["daily-home"]["readyProbe"])
+
+    def test_the_fixture_default_resolution_is_byte_for_byte_the_old_behaviour(self) -> None:
+        # The positive control: every CI run takes this path, so a derivation that changed it would show
+        # up here rather than as a green gate measuring something else.
+        by_name = {s["name"]: s for s in gate.resolve_surfaces(gate.FIXTURE_SNAPSHOT)}
+        self.assertEqual(by_name["strip-h03"]["readyProbe"], gate.MARKER_PROBE)
+        self.assertEqual(by_name["strip-h04"]["readyProbe"], gate.MARKER_PROBE)
+
+    def test_the_served_snapshot_is_the_payload_the_server_was_given(self) -> None:
+        dist = Path(tempfile.mkdtemp(prefix="hud-strip-live-serve-",
+                                     dir=ROOT / ".project-local" / "runs"))
+        try:
+            (dist / "index.html").write_text("<html></html>", encoding="utf-8")
+            payload = {"schemaVersion": "workflow/snapshot/v3",
+                       "adapterCapabilities": [{"clientId": "real-one", "displayName": "Real One"}]}
+            server = gate.SnapshotFixture(dist, payload)
+            server.start()
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{server.port}/api/v1/snapshot",
+                                            timeout=10) as response:
+                    served = json.loads(response.read().decode("utf-8"))
+            finally:
+                server.stop_server()
+            self.assertEqual(served, payload,
+                             "the origin served the fixture instead of what it was handed")
+
+            default = gate.SnapshotFixture(dist)
+            default.start()
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{default.port}/api/v1/snapshot",
+                                            timeout=10) as response:
+                    served_default = json.loads(response.read().decode("utf-8"))
+            finally:
+                default.stop_server()
+            self.assertEqual(served_default["revision"], gate.FIXTURE_SNAPSHOT["revision"],
+                             "the no-payload constructor is the CI path and must still serve the fixture")
+        finally:
+            shutil.rmtree(dist, ignore_errors=False)
+
+    def test_the_receipt_reports_the_payload_it_measured(self) -> None:
+        default = gate.verdict(good_measurement())
+        self.assertEqual(default["data"]["source"], "fixture")
+        self.assertEqual(default["data"]["adapters"],
+                         len(gate.FIXTURE_SNAPSHOT["adapterCapabilities"]))
+
+        payload = copy.deepcopy(gate.FIXTURE_SNAPSHOT)
+        payload["adapterCapabilities"] = payload["adapterCapabilities"][:3]
+        payload["projects"] = payload["projects"][:1]
+        payload["executions"] = []
+        payload["revision"] = 4433
+        result = gate.verdict(good_measurement(), gate.resolve_surfaces(payload), payload,
+                              {"source": "captured-snapshot", "sha256": "a" * 64})
+        self.assertEqual(result["data"], {"source": "captured-snapshot", "sha256": "a" * 64,
+                                          "revision": 4433, "adapters": 3, "projects": 1,
+                                          "executions": 0},
+                         "the receipt would otherwise report the fixture's shape for a live run")
+
+    def test_a_payload_that_cannot_be_measured_is_refused_before_any_browser_starts(self) -> None:
+        scratch = Path(tempfile.mkdtemp(prefix="hud-strip-live-refusal-",
+                                        dir=ROOT / ".project-local" / "runs"))
+        try:
+            empty = scratch / "no-adapters.json"
+            empty.write_text(json.dumps({"schemaVersion": "workflow/snapshot/v3"}), encoding="utf-8")
+            proc = subprocess.run([sys.executable, str(SCRIPT), "--snapshot-file", str(empty)],
+                                  capture_output=True, text=True, encoding="utf-8", errors="replace")
+            self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+            self.assertIn("HUD_STRIP_GATE_NOT_RUN SNAPSHOT_NO_ADAPTERS", proc.stdout)
+
+            proc = subprocess.run([sys.executable, str(SCRIPT),
+                                   "--snapshot-file", str(scratch / "absent.json")],
+                                  capture_output=True, text=True, encoding="utf-8", errors="replace")
+            self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+            self.assertIn("HUD_STRIP_GATE_NOT_RUN SNAPSHOT_UNREADABLE", proc.stdout)
+        finally:
+            shutil.rmtree(scratch, ignore_errors=False)
+
+    def test_the_summary_line_no_longer_asserts_the_fixture(self) -> None:
+        # The label a reader sees in a CI log used to be a literal; pin that it now follows the receipt.
+        text = SCRIPT.read_text(encoding="utf-8")
+        self.assertNotIn('f"data=fixture(', text)
+        self.assertIn("f\"data={served['source']}(", text)
 
 
 if __name__ == "__main__":

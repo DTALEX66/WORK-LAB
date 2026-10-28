@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-27T20:11:10Z",
+  "generatedAt": "2026-10-28T13:04:18Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -72,14 +72,14 @@
       "lines": 314,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 1,
-      "citedByRecords": 9,
+      "citedByRecords": 10,
       "citedBy": [
         "docs/audits/AG19_RECORD_ROOT_PIN_TEST_2026-10-07.json",
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/history/archive/root-ui-records-20261019/UI_IMPLEMENTATION_REPORT.md",
         "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.csv",
         "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
-        "taskpacks/current/error-ledger.json"
+        "taskpacks/current/OPEN-TASK-REGISTER.md"
       ]
     },
     {
@@ -432,9 +432,9 @@
     },
     {
       "path": "scripts/audit/hud_strip_geometry_via_cdp.py",
-      "sha256": "c349eedb56561e261a69762fd96544da5bc3d8ad56bbfed86de7a207f15c4dbf",
-      "bytes": 70642,
-      "lines": 1195,
+      "sha256": "d97d58f6190aad62c3c253bba814ca674895d3660f39aa1ceba30d0a543eba25",
+      "bytes": 75414,
+      "lines": 1278,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 7,
@@ -687,7 +687,7 @@
       "lines": 369,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 4,
-      "citedByRecords": 12,
+      "citedByRecords": 13,
       "citedBy": [
         "docs/audits/LEDGER_FIX_COMMIT_BINDING_2026-10-07.json",
         "docs/audits/LEDGER_REGRESSION_COMMAND_TARGETS_2026-10-07.json",
@@ -892,9 +892,9 @@
     },
     {
       "path": "scripts/audit/text_legibility_via_cdp.py",
-      "sha256": "d06630c146b3f2f4d45c367d31328e13a761c4207cbab24cc5f9a89a75d5adfc",
-      "bytes": 61759,
-      "lines": 1103,
+      "sha256": "19b761849bf3330d2471abf9921f25fc816de9a67a7e5ab01f36bad3791a2bf9",
+      "bytes": 66154,
+      "lines": 1173,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 21,
