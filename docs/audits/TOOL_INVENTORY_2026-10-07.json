@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-28T17:43:47Z",
+  "generatedAt": "2026-10-28T18:10:02Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -432,9 +432,9 @@
     },
     {
       "path": "scripts/audit/hud_strip_geometry_via_cdp.py",
-      "sha256": "601bb89b81829a85cedcb65fb8e858dea6fbeb33033919d6e394f7b11e91b4b4",
-      "bytes": 84009,
-      "lines": 1420,
+      "sha256": "5b575970669a3c0a717a07f4d804210c8adcbf6134a267b695aa10ea65fe4d2a",
+      "bytes": 89470,
+      "lines": 1504,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
       "citedByRecords": 7,

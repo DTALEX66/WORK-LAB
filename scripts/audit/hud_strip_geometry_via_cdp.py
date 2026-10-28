@@ -237,14 +237,16 @@ MEASURE_JS = r"""
   }
 
   let settingsDispatch = 'not-requested';
+  const PRESS = window.__HUD_SETTINGS_PRESS__ || null;
   if (OPEN_SETTINGS) {
     const gear = document.querySelector(SETTINGS_BUTTON);
     if (!gear) settingsDispatch = 'no-gear-button';
-    else {
-      // React binds onClick, so a synthetic click on the element is the same path a pointer takes;
-      // `aria-expanded` is then the button's own statement of whether the block it controls opened.
-      gear.click();
-      settingsDispatch = 'clicked';
+    else if (!PRESS || PRESS.mode !== 'mousePressed') {
+      // The probe could not press it (covered, or outside the window). Say which, rather than falling back
+      // to a synthetic click that would succeed for the wrong reason.
+      settingsDispatch = (PRESS && PRESS.mode) || 'no-real-press';
+    } else {
+      settingsDispatch = 'cdp-mousePressed';
       await new Promise((res) => requestAnimationFrame(() => setTimeout(res, 120)));
     }
   }
@@ -253,6 +255,7 @@ MEASURE_JS = r"""
     hoverDispatch,
     pointer: POINTER,
     settingsDispatch,
+    settingsPress: PRESS,
     settings: (() => {
       const el = document.querySelector(SETTINGS_PANEL);
       if (!el) return null;
@@ -566,6 +569,63 @@ def place_real_pointer(cdp, arm_js: str, surface: dict,
     return facts
 
 
+GEAR_ARM_JS = """(() => {
+  const SETTINGS_BUTTON = __SETTINGS_BUTTON__;
+  const el = document.querySelector(SETTINGS_BUTTON);
+  if (!el) return JSON.stringify({found: false, sel: SETTINGS_BUTTON});
+  const r = el.getBoundingClientRect();
+  const x = Math.round(r.left + r.width / 2), y = Math.round(r.top + r.height / 2);
+  const top = document.elementFromPoint(x, y);
+  return JSON.stringify({found: true, sel: SETTINGS_BUTTON, x, y,
+                         width: Math.round(r.width), height: Math.round(r.height),
+                         inViewport: r.top >= 0 && r.bottom <= window.innerHeight
+                           && r.left >= 0 && r.right <= window.innerWidth,
+                         hitIsGearOrInside: !!top && (top === el || el.contains(top) || top.contains(el)),
+                         hitTag: top ? top.tagName : null,
+                         hitLabel: top ? (top.getAttribute('aria-label') || '') : null});
+})()
+"""
+
+
+def gear_arm_expression_for(surface: dict) -> str:
+    return GEAR_ARM_JS.replace("__SETTINGS_BUTTON__", json.dumps(SETTINGS_BUTTON, ensure_ascii=False))
+
+
+def press_settings_gear(cdp, ready_arm_js: str, gear_arm_js: str,
+                        facts: dict | None = None) -> dict:
+    """Press the footer gear with a dispatched mouse event, at the point a cursor would land on it.
+
+    Why not `gear.click()` inside the page, which is what this check used to do: a synthetic click fires the
+    React handler whatever the geometry says. It succeeds on a button an overlay is covering, on one pushed
+    outside the 150x480 window, and on one whose hit area belongs to a different element — and this strip has
+    already shipped a settings block that opened outside the viewport, which only a screenshot caught.
+    `elementFromPoint` at the gear's own centre is the hit test the user's cursor performs, so reachability
+    and the state change are now both measured rather than assumed.
+
+    The readiness wait runs first and on purpose: opening the block replaces the row list, so a press issued
+    before the snapshot lands would leave the surface's own readiness claim waiting on rows that the press
+    itself removed. The armed expression only measures — no pointer is moved — so nothing hovers here.
+    """
+    facts = {} if facts is None else facts
+    ready = json.loads(cdp.evaluate(ready_arm_js))
+    facts["readyBeforePress"] = {"ready": ready.get("ready"), "waitedMs": ready.get("waitedMs"),
+                                 "mode": ready.get("mode")}
+    armed = json.loads(cdp.evaluate(gear_arm_js))
+    facts.update(armed)
+    if not armed.get("found"):
+        facts["mode"] = "no-gear-button"
+    elif not armed.get("inViewport") or not armed.get("hitIsGearOrInside"):
+        facts["mode"] = "gear-unreachable"
+    else:
+        for kind, buttons in (("mousePressed", 1), ("mouseReleased", 0)):
+            cdp.send("Input.dispatchMouseEvent", {
+                "type": kind, "x": armed["x"], "y": armed["y"], "button": "left",
+                "clickCount": 1, "buttons": buttons, "pointerType": "mouse"})
+        facts["mode"] = "mousePressed"
+    cdp.evaluate(f"window.__HUD_SETTINGS_PRESS__ = {json.dumps(facts, ensure_ascii=False)}; 'stashed';")
+    return facts
+
+
 # --------------------------------------------------------------------------- the declared data shape
 # A fixture, declared as one. Eight of the nine adapters declare a role, six of them
 # `agent_runtime`, so the strip's row cap and its honest "另有 N 个工具未在此列出" remainder line are
@@ -864,10 +924,17 @@ def _surface_checks(checks: list[dict], name: str, spec: dict, surface: dict | N
         return surface
 
     if spec.get("readyProbe"):
+        # The settings surface is pressed before the harvest reads it, and opening the block replaces the row
+        # list, so a post-press harvest can never see the rows again. Its readiness is therefore proven by the
+        # probe's own wait, which ran while nothing was open — and the detail says which of the two measured.
+        before = (surface.get("settingsPress") or {}).get("readyBeforePress") or {}
+        ready = before.get("ready") if before else surface.get("ready")
+        waited = before.get("waitedMs") if before else surface.get("readyWaitMs")
         _check(checks, f"{slug}_fixture_snapshot_reached_the_surface",
-               surface.get("ready") is True,
-               f"condition={spec['readyWhy']!r} ready={surface.get('ready')} "
-               f"waitedMs={surface.get('readyWaitMs')} budgetMs={surface.get('readyBudgetMs')} "
+               ready is True,
+               f"condition={spec['readyWhy']!r} ready={ready} waitedMs={waited} "
+               f"budgetMs={surface.get('readyBudgetMs')} "
+               f"measuredAt={'probe-before-the-press' if before else 'harvest'} "
                "(a surface harvested before the snapshot lands has no rows to hover and no values to "
                "hold at UNKNOWN, so every claim below it would be about a shape the product does not ship)")
 
@@ -1107,20 +1174,32 @@ def verdict(measured: dict, resolved_surfaces: list[dict] | None = None,
         slug = _slug(name)
         surface = harvests.get(name)
         if not surface:
+            _check(checks, f"{slug}_gear_is_reachable_by_a_real_pointer", False, "not measured")
             _check(checks, f"{slug}_gear_opens_the_settings_block", False, "not measured")
             _check(checks, f"{slug}_settings_block_is_readable_and_dismissible", False, "not measured")
             continue
         settings = surface.get("settings")
+        press = surface.get("settingsPress") or {}
         client_h = (surface.get("viewport") or {}).get("clientH") or 0
         painted = isinstance(settings, dict) and (settings.get("height") or 0) > 0
+        # Reachability first, and by name: a gear that no cursor can land on is unusable whether or not the
+        # block would have opened for a synthetic click, and this is the only place that distinction exists.
+        _check(checks, f"{slug}_gear_is_reachable_by_a_real_pointer",
+               press.get("found") is True and press.get("inViewport") is True
+               and press.get("hitIsGearOrInside") is True,
+               f"found={press.get('found')} inViewport={press.get('inViewport')} "
+               f"hitIsGearOrInside={press.get('hitIsGearOrInside')} "
+               f"at=({press.get('x')},{press.get('y')}) size={press.get('width')}x{press.get('height')} "
+               f"topElement={press.get('hitTag')!r}/{press.get('hitLabel')!r} "
+               "(elementFromPoint at the gear's own centre is the hit test a cursor performs)")
         _check(checks, f"{slug}_gear_opens_the_settings_block",
-               surface.get("settingsDispatch") == "clicked" and painted
+               surface.get("settingsDispatch") == "cdp-mousePressed" and painted
                and settings.get("expanded") == "true" and settings.get("insideFrame") is True,
                f"dispatch={surface.get('settingsDispatch')!r} painted={painted} "
                f"ariaExpanded={settings and settings.get('expanded')!r} "
                f"insideFrame={settings and settings.get('insideFrame')} "
-               "(the block is React state and travels in no URL: if the gear does not open it here, "
-               "nothing in this project ever renders it in a browser)")
+               "(the block is React state and travels in no URL: if a real press on the gear does not open "
+               "it here, nothing in this project ever renders it in a browser)")
         sizes = [v for v in ((settings or {}).get("fontSizes") or []) if v]
         close_rect = (settings or {}).get("closeRect") or {}
         _check(checks, f"{slug}_settings_block_is_readable_and_dismissible",
@@ -1277,11 +1356,16 @@ def measure_all(geometry, u19, browser: str, fixture: SnapshotFixture,
         width, height = spec["size"]
         # The pointer has to be placed inside the same session as the harvest: a second launch would be a
         # second document, and `:hover` lives on the element the live pointer is over.
-        if spec.get("hover"):
-            arm_js = arm_expression_for(spec)
-
-            def after_mount(cdp, arm_js=arm_js, spec=spec):
-                place_real_pointer(cdp, arm_js, spec)
+        hover_arm = arm_expression_for(spec) if spec.get("hover") else None
+        gear_ready = arm_expression_for(spec) if spec.get("openSettings") else None
+        gear_arm = gear_arm_expression_for(spec) if spec.get("openSettings") else None
+        if hover_arm or gear_arm:
+            def after_mount(cdp, hover_arm=hover_arm, gear_ready=gear_ready, gear_arm=gear_arm,
+                            spec=spec):
+                if hover_arm:
+                    place_real_pointer(cdp, hover_arm, spec)
+                if gear_arm:
+                    press_settings_gear(cdp, gear_ready, gear_arm)
         else:
             after_mount = None
         last: Exception | None = None

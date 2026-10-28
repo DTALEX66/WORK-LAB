@@ -1372,3 +1372,36 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   清单在 `git add` 之后重发（本批无 `scripts/audit/` 变更，摘要不变）。
 - **写进规则的教训**：状态位（`PARTIAL_<date> / …`）是本表被下游读取的接口——本轮的队列就是从它生成的，
   而它和同一行正文的更新不同步。以后每次在行内追加"某项已交付"的更新，同一批必须把状态位里被否定的那半句改掉。
+
+
+**2026-10-29 · PR #227 合并回执 + 窄条设置齿轮改真指针按下（并先量它能不能被光标落到）**
+
+- **PR #227 闭环**：head `37633d29` 上 12 项检查全部 pass（含 `aggregate`），merge commit `36eab584ea12f4633ba091dc01f5b9b490a32290`；
+  本地 main、`origin/main`、`git ls-remote origin refs/heads/main` 三方一致于该 SHA。
+- **这一项是上一轮按名留下的**：`scripts/audit/hud_strip_geometry_via_cdp.py` 里悬停已改真指针，
+  但设置齿轮仍走 `gear.click()`（页面内合成点击）。合成点击对 React 的 `onClick` 有效，所以它一直在测
+  "处理器会不会开块"，从没测"用户点得到点不到这个按钮"——被覆盖层挡住、被挤出 150×480 窗口、
+  命中区属于别的元素，三种情形它都照样"打开成功"；而这块设置面板恰恰有过开在视口外的一次（新门抓到）。
+- **改法**：`press_settings_gear` 先跑就绪等待（打开面板会替换行列表，按下必须发生在就绪之后、
+  否则该面自己的就绪判据会等在被自己删掉的行上），再用 `elementFromPoint` 在齿轮自身中心做命中测试，
+  命中才派发 `Input.dispatchMouseEvent` 的 mousePressed+mouseReleased；命中事实随收据带出。
+  采集表达式不再 `click()`，只读探针留下的 `window.__HUD_SETTINGS_PRESS__`，读不到就写
+  `no-real-press`／`gear-unreachable`／`no-gear-button`，绝不退回合成点击去凑一个绿。
+- **本轮实测（真实快照、已发布 bundle）**：齿轮 `found=True inViewport=True hitIsGearOrInside=True`，
+  中心 `(135,464)`、尺寸 `14x14`、命中元素 `svg`（在按钮内）；按下后
+  `dispatch='cdp-mousePressed' painted=True ariaExpanded='true' insideFrame=True`；
+  就绪证据改由探针在按下之前提供，明细里 `measuredAt=probe-before-the-press`。
+  整门 `HUD_STRIP_GATE_PASS checks=81/81 data=captured-snapshot(sha256=9b8916b56be3,adapters=10,projects=1,executions=0)`
+  （80→81，新增的就是可达性判据）。
+- **能红实证**：`tests/ci/test_hud_strip_geometry_gate.py` 77 → **80 例**，三种植入各判红一条——
+  收据仍写 `dispatch='clicked'`（证明换成真指针不是装饰）、命中元素是别的 `DIV`（被覆盖）、
+  齿轮中心不在视口内（被挤出窗口）。判据名单 `expected_check_names()` 由 `SURFACES` 派生，
+  所以新判据的名字与它所属的面是同一份声明，不会一边改名一边漏。
+- **本地门**：`tests/ci/test_hud_strip_geometry_gate.py` 80 例 OK；门本体 81/81 PASS；
+  清单在 `git add` 之后重发（本批改了 `scripts/audit/` 下的门文件，摘要必须来自 index blob）；
+  台账四门绿（路径门 36 例、`normalise_doc_citations --check` rewritten=0、表形状 rows=42、
+  live 路径 missing=0）。
+- **按名留档**：CL-16 第 2 步的四件门（悬停真指针、按下真指针、键盘 `:focus-visible`、覆盖层进出场两侧采样）
+  至此全部落地；第 3 步（`motion@` 的 `LazyMotion`＋`m` 只用于进出场与状态过渡）开始前，
+  需要先把覆盖层真正做成"从关闭态过渡到开启态"，并把卸载延迟与
+  `apps/observer/frontend/src/components/ui/overlays.test.tsx` 钉住的"关闭即不渲染"合同同一批改。
