@@ -1018,7 +1018,7 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   两个脏 worktree、`.project-local/quarantine`。重建路径按本表已记的 MSVC 命令，未删任何 tracked 内容。
 - **仍未做（需要授权或属于 owner 判断，逐条点名）**：
   (1) `docs/current/` 里自我声明 SUPERSEDED/退役的文件（`docs/current/workflow-assistance/runtime-adapters/deepseek-harness.md`、
-  `docs/current/workflow-assistance/skill-references/observer.md`、`docs/current/workflow-assistance/skill-references/external-clients.md`、`docs/current/workflow/examples/governance.yml.example`）
+  `docs/current/workflow-assistance/skill-references/observer.md`、`docs/current/workflow-assistance/skill-references/external-clients.md`、`docs/current/workflow-assistance/workflow/examples/governance.yml.example`）
   归档到 `docs/history/archive/` 要同批重发 `docs/history/archive/FROZEN-MANIFEST.json`（`tests/ci/test_frozen_surfaces_are_intact.py` 按字节钉住
   `knowledge-staging`、`docs/history/archive`、`reports/audit-archive` 三个面，各自的清单是 `knowledge-staging/FROZEN-MANIFEST.json` 与 `reports/audit-archive/FROZEN-MANIFEST.json`）并做消费面扫描，未动。
   (2) 仓内 7 个 tracked `*.bak-*` 全部落在 `reports/audit-archive/` 冻结清单内，删除会破冻结门；`.gitignore` 确实没有 `*.bak*` 图形（根级游离副本
