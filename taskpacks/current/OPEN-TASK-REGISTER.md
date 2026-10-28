@@ -1111,3 +1111,50 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   （同一模块 `tests/workflow-assistance/test_action_plan_sync.py` 在主检出 **10 passed, 1 skipped**），与本次改动无关。
 - **CL-16 第 2 步剩余两项（仍未做，按名登记）**：键盘路径另断言 `:focus-visible` 等效反馈；drawer/toast 进出场两侧采样并遵守"采样必须已稳定"。
   真按下（`Input.dispatchMouseEvent` mousePressed→驻留→采样→mouseReleased→回到原矩形）本轮已具备测量方法与实测数，尚未接进门里。
+
+
+**2026-10-28 · PR #221 合并回执 + 真实数据全量渲染 + 可读性地板从"夹具总数"改回"种群无关的常驻 chrome"**
+
+- **PR #221 闭环**：head `00bb915a` 上 12 项检查全部 pass（含 `aggregate`，`observer` 用时 15m13s），merge commit
+  `207689f411ecc7c9d5aea74fb966f51377ff278e`；本地 main、`origin/main`、`git ls-remote origin refs/heads/main`
+  三方读数一致于该 SHA。该 PR 的 `observer` 作业这次一次过，没有再出现 #220 首跑的过渡起始帧假红。
+- **两条分支按证据退役**：`fix/pressed-gate-settled-sampling` 与 `feat/cl16-real-press-20261028`（PR #220 的 head）
+  合并后逐条比过再删——`git diff --stat main...<tip>` 为空、`git cherry main <tip>` 无输出、被改两个文件的
+  index blob 与 main 完全相同（`e818a7b0…`、`61670061…`）；先 `git tag wl-retire-20261028/<分支名>` 并推到远端，
+  再移除检出、删本地与远端分支。远端现存 `refs/heads/main` 与保留的 `refs/heads/feat/ledger-truth-20261027`。
+  一处新踩的坑：本地标签名不能再以 ref 路径开头（GitHub 对以 `refs/tags` 起头的标签名报 GH014 并拒绝推送），
+  标签名只写 `wl-retire-20261028/…` 这一段即可。
+- **真实数据只读闭环（本轮不再只用夹具）**：把活账本 `canonical.sqlite`（1,269,760 B，07:43:53）与
+  `-wal`（4,120,032 B，08:15:31）复制成本轮专用副本，侧车以只读方式在动态回环端口服务该副本与已发布 `dist`，
+  同源读到的真实快照 `sha256=9b8916b56be34dfe…`、252,978 B：`revision=4433`、adapters=10、
+  角色分布 `{agent_runtime:3, provider_router:1, vcs_host:1, design_client:1, UNKNOWN:4}`、projects=1、
+  executions=0、collectors=7、taskRecords=42、issues=0、`transport=OFFLINE / freshness=UNKNOWN`。
+  `executions=0` 与 OFFLINE 是这份账本的当前真实态（08:15 之后没有新的执行写入），不是夹具填空，也没有补 0。
+  用同一份真实快照渲染 8 个面 × 明暗主题，得到 **16 张截图、0 错误**，界面上 UNKNOWN 字段一律保持 UNKNOWN。
+- **真指针落在行上的对照证据**：`strip-h02` 深色，指针 `[75,83]` 时 `hoveredRowIndexes=[0]`、`litRows=[0]`、
+  摘要胶囊已绘制、PNG 18,133 B；指针移到 `[2,2]` 行外时三项皆空、13,158 B；浅色主题同结论（17,903 B 对 12,958 B）。
+  上一轮我漏了放指针，导致 h02 与 h01 的截图字节完全相同——那次是我的采集缺陷，不是产品的悬停缺失。
+- **看渲染图抓到两处，一处产品文案、一处仪器判据**：
+  ① `apps/observer/frontend/src/daily/HudDaily.tsx:123` 只统计 `activityState === 'ACTIVE'` 的项目，
+  `:183` 却把它渲染成不带限定词的"项目 N"，而宽屏首页写"1 个已注册项目"；真实账本里唯一项目是 `REGISTERED`，
+  于是同一个字形在两屏含义相反（条带 0、宽屏 1）。属主人可见文案，另起 PR 修，本轮只登记。
+  ② `scripts/audit/text_legibility_via_cdp.py` 的壳面地板 `MIN_SHELL_NODES = 12` 是**夹具的节点总数**，
+  真实账本下面条带只画 9 个文本节点，于是门把一次健康渲染判成 `THIN_HARVEST(strip-h01/dark)` 并 exit 3。
+- **地板的两侧实测（同一份已发布 `dist`）**：`strip-h01` 夹具 12 / 真实 9，`panel-h01` 19 / 16，
+  `daily-home` 44 / 33，`daily-governance` 33 / 33。差值只来自 agent 行数（夹具条带 5 行、面板 6 行，
+  真实账本 3 行），与可读性无关。所以判据改成"种群无关的常驻 chrome"：新增 `MIN_STRIP_NODES = 6`
+  （条带在任何账本下都会画的那 6 个节点），面板地板保持 12（其 chrome 实测 13），
+  两个 daily 面保持 30（两侧都 ≥33，暂时不受威胁，余量 3 已写进注释作为下一次重量的线索）。
+  地板仍然拒空：本轮无后端可读时同一面测得 0 个节点。
+- **本地单项门（只跑被改面）**：`tests/ci/test_text_legibility_gate.py` **70 例 OK**（69→70，
+  新增一例把地板钉在 chrome 计数而不是任何一侧的种群总数，并保留"低于地板必须红"的反证）。
+  改后的门在真实数据上整轮 `--api` 全量跑通 **exit=0 LEGIBILITY_GATE_PASS**：`strip-h01 9/6`、`panel-h01 16/12`、
+  `daily-home 33/30`、`daily-governance 33/30`，明暗两主题、AA 失败 0、低于 12px 0、不可解析颜色 0；
+  夹具侧同样 **exit=0**（`strip-h01 12/6`、`panel-h01 19/12`、`daily-home 44/30`、`daily-governance 33/30`）。
+  这是可读性门第一次在真实账本上跑绿，此前它只在夹具上被证明过。
+- **隔离检出的两个已知坑本轮又复现一次**：新 worktree 既没有 `.project-local/runs/geometry-gate`
+  （`serve_and_eval` 要往里写浏览器日志），也没有 `apps/observer/frontend/dist`（`BUNDLE_PROVENANCE_NOT_RUN`），
+  两处补齐后本地读数才与 CI 等效；这不是改动内容，但必须在登记里写明，否则下一个读者会把 exit=3 当成产品红。
+- **仍未做，按名留档**：条带设置齿轮的采样仍走 `gear.click()` 的 JS 路径，没有换成真指针；
+  `apps/observer/frontend/src/daily/HudDaily.tsx` 的项目计数缺限定词（另 PR）；CL-16 第 2 步剩余两项——键盘路径另断言 `:focus-visible` 等效反馈、
+  drawer/toast 进出场两侧采样，以及把真按下（mousePressed→驻留→采样→mouseReleased→回到原矩形）接进门里。

@@ -17,8 +17,10 @@ text as solid black, 21:1 instead of the 3.98:1 a user actually sees.
 What it refuses to fake:
   * a sample that has not settled. The skins animate colour, so a read taken mid-transition returns
     interpolated values no user ever sees; two disagreeing samples exit 3, they do not average.
-  * a thin harvest. Fewer than MIN_NODES text nodes means the page rendered nothing readable, which is
-    reported as NOT_RUN — `scannedFileCount: 0` was a false green in this project once already.
+  * a thin harvest. Fewer text nodes than that surface's own chrome count means the page rendered
+    nothing readable, which is reported as NOT_RUN — `scannedFileCount: 0` was a false green in this
+    project once already. The count is per surface and never a population's node total, so a sparse real
+    ledger is not convicted for holding fewer agents than the declared fixture.
   * an unparsable colour. A value this instrument cannot interpret is UNKNOWN and fails; it is never
     skipped into a pass.
 
@@ -71,12 +73,20 @@ LARGE_PX = 24.0          # 18pt
 LARGE_BOLD_PX = 18.66    # 14pt bold
 MIN_NODES = 30           # a harvest thinner than this measured nothing
 # The shell surfaces are smaller by design, and a floor written for a 1280px shell would convict a
-# 150px strip for being a strip. Measured 2026-10-25 on the built bundle with the declared fixture
-# snapshot: the 150x480 strip paints 16 readable text nodes, the 440x680 panel 24, the 1280x820 daily
-# shell 38. 12 is therefore the strip/panel floor — the same value `MIN_VIEW_NODES` already uses for one
-# rail lane's own surface — and it still refuses an empty render: 12 is 25% of the thinnest real surface,
-# not zero. The daily shell keeps the shell floor of 30 because it clears it.
-MIN_SHELL_NODES = 12
+# 150px strip for being a strip. But the floor may not be the FIXTURE's node count either. Measured
+# 2026-10-28 against the shipped bundle from both sides: the declared fixture snapshot paints 12 text
+# nodes on `strip-h01` and 19 on `panel-h01`, the live ledger paints 9 and 16. The whole difference is
+# how many agent rows each population declares (5 and 6 rows on the fixture, 3 on the ledger), so the
+# 12 the fixture happened to produce convicted a healthy strip that simply holds fewer agents than the
+# fixture does — the same fixture coupling the hover marker had. What does not move with the population
+# is the chrome around the rows: 6 nodes on the strip, 13 on the panel, and an empty page is 0.
+# Each floor therefore sits at or below its own chrome count: it can still refuse a render that painted
+# nothing, and it stops convicting a sparse real ledger. The two daily screens clear their floor on both
+# populations (`daily-home` 44 on the fixture against 33 on the ledger, `daily-governance` 33 on both,
+# floor 30), so they keep the shell floor — three nodes of headroom is the number to re-measure if a
+# sparser ledger ever convicts them.
+MIN_SHELL_NODES = 12     # panel-h01: below its 13 chrome nodes
+MIN_STRIP_NODES = 6      # strip-h01: its chrome count, 3 rows short of what the fixture declares
 MIN_DAILY_NODES = MIN_NODES
 
 # Roles permitted below the floor. An entry must name a glyph that repeats information available
@@ -113,7 +123,7 @@ def load_strip_gate():
 # Which declared surfaces the legibility sweep reads, and the density floor each one owes. Keyed by the
 # strip gate's own surface names, so a rename there lands here as a test failure, not a silent skip.
 SHELL_SURFACE_KINDS = {
-    "strip-h01": MIN_SHELL_NODES,
+    "strip-h01": MIN_STRIP_NODES,
     "panel-h01": MIN_SHELL_NODES,
     "daily-home": MIN_DAILY_NODES,
     # D2's screen. This dict is an allow-list, so declaring the surface in the strip gate is not enough to
