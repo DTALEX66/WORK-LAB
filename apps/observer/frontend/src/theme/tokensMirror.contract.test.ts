@@ -61,8 +61,8 @@ function canonical(value: string): string {
     .replace(/-?\d*\.?\d+/g, (n) => `${Number(n)}`);
 }
 
-// vitest runs with the frontend directory as its working directory, which is how the other contract tests
-// reach the sheets (src/reducedMotion.contract.test.ts). `new URL(template, import.meta.url)` does not work
+// vitest runs with the frontend directory as its working directory, which is how this file and
+// `src/themeSwitch.contract.test.tsx` reach the sheets. `new URL(template, import.meta.url)` does not work
 // here: Vite rewrites that form as an asset reference and hands back undefined for a dynamic path.
 const sheets = ["src/index.css", "src/skins/b10.css", "src/skins/l10b-shell.css"].map((rel) =>
   readSheet(readFileSync(rel, "utf8")));

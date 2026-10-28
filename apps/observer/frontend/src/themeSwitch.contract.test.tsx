@@ -23,7 +23,7 @@ vi.mock('@/lib/api', async (importOriginal) => {
 import App from '@/App'
 
 function preRenderScript(): string {
-  // Relative to the frontend root, the same way `reducedMotion.contract.test.ts` reads the sheets:
+  // Relative to the frontend root, the same way `src/theme/tokensMirror.contract.test.ts` reads the sheets:
   // vitest runs with that directory as its working path, and `import.meta.url` is an http: URL under
   // jsdom, so it cannot name a file here.
   const html = readFileSync('index.html', 'utf8')

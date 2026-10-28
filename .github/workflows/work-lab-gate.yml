@@ -544,6 +544,30 @@ jobs:
       - name: Pressed-state motion gate (CDP, computed transform and duration under a forced :active)
         working-directory: .
         run: python scripts/audit/pressed_state_motion_via_cdp.py --json-out .project-local/runs/ci/pressed_motion_gate.json
+      # CL-16 step 2, overlay side. `scripts/audit/overlay_motion_via_cdp.py` has been in the tree since PR #226
+      # and executed by nothing: a judgement that no job runs is the gate's instruction manual, not a gate --
+      # the same hole CL-14 found from the other direction (27 stages neither called nor declared). Wiring it
+      # here is what makes the enter/exit assertions real: it opens the drawer with a dispatched mouse click,
+      # samples every frame of the enter, closes it through its own input path, and samples the exit, under both
+      # pinned motion preferences. Required, not report-only: both overlays measured already at their end state
+      # before `apps/observer/frontend/src/lib/useEnterTransition.ts` existed, which is the shape
+      # `tests/ci/test_overlay_motion_gate.py::test_an_overlay_that_appears_at_its_end_state_fails_the_enter_clause`
+      # keeps failing on purpose, alongside the exit and reduced-branch plants in the same file.
+      - name: Overlay enter/exit motion gate (CDP, real click, frame series on both sides of drawer and toast)
+        working-directory: .
+        run: python scripts/audit/overlay_motion_via_cdp.py --json-out .project-local/runs/ci/overlay_motion_gate.json
+      # CL-16 step 2, third clause: the reduced-motion promise read off the painted page instead of out of the
+      # stylesheet text. The guard this replaces was one vitest file that asserted the characters
+      # `transition: none !important` appear in `apps/observer/frontend/src/skins/l10b-shell.css` -- true while
+      # the browser could still be answering a different question. This step censuses every node and both
+      # pseudo-elements of five surfaces under a pinned preference and convicts any transition or animation that
+      # survives `reduce`. Required, not report-only: with that media block's selector renamed to a preference no
+      # page can match, and the bundle rebuilt, the step exits 1 naming
+      # `reduced_motion_floor_holds[professional]` with the 9 nodes that kept moving (evidence
+      # `.project-local/runs/reduced-motion-gate/planted.json` and `plant-out.txt` on the development machine).
+      - name: Reduced-motion floor gate (CDP, computed style censused per surface in both branches)
+        working-directory: .
+        run: python scripts/audit/reduced_motion_floor_via_cdp.py --json-out .project-local/runs/ci/reduced_motion_floor.json
       # Defect 3 (2026-10-26): an archived verdict that cannot name its commit can be read as current at
       # any head. This step is the refusal: every file under
       # `.project-local/artifacts/native-evidence/` must follow `kind.g<commit12>.x<exe16>.inputs.json`,
