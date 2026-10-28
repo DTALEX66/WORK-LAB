@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-28T13:43:03Z",
+  "generatedAt": "2026-10-28T14:33:37Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -656,16 +656,17 @@
     },
     {
       "path": "scripts/audit/pressed_state_motion_via_cdp.py",
-      "sha256": "8e6bf43ac30630843a04731091204ca23a9cba3320121bf2cd35b623c809d0fe",
-      "bytes": 19008,
-      "lines": 367,
+      "sha256": "92d933294e0373a0a26b020169e52262be535b022da7fb51adbb5af993d0d196",
+      "bytes": 23370,
+      "lines": 440,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 3,
+      "citedByRecords": 4,
       "citedBy": [
         ".github/workflows/work-lab-gate.yml",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
-        "tests/ci/test_archived_native_evidence_names_its_commit.py"
+        "tests/ci/test_archived_native_evidence_names_its_commit.py",
+        "tests/ci/test_pressed_state_motion_gate.py"
       ]
     },
     {

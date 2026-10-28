@@ -1077,3 +1077,37 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
 - **本轮证据**：`HUD_STRIP_GATE_PASS checks=80/80`（夹具与真 snapshot 各一次）；`77 passed`（HUD 单测）；
   正对照 `CONTROL_outlineChanged=true`、`CONTROL_elementMatchesHover=true`；
   反例 `exit=1 hoveredIndexes=[]`；`.project-local/runs/cl16-probe/real-versus-synthetic.json` 记录两路径同读数。
+
+
+**2026-10-28 · PR #220 合并回执 + 按下态门的过渡帧抖动修复**
+
+- **PR #220 闭环**：head `1249525e` 上 12 项检查全部 completed/success（含 `aggregate`），merge commit
+  `6cdda17f6dddd07fd542cf83885ce4e6a98d87f4`；本地 main、`origin/main`、`git ls-remote origin refs/heads/main`
+  三方读数一致于该 SHA。`refs/heads/feat/cl16-real-pointer-20261028` 远端与本地均已删除（它是 main 祖先，无需标签），
+  远端现存 `refs/heads/main` 与保留的 `refs/heads/feat/ledger-truth-20261027`。
+  一处执行细节值得记住：`git fetch origin main:main` 在 main 已被本检出占用时被 git 拒绝（`refusing to fetch into branch`），
+  此时用 `git pull --ff-only origin main` 才等效，且快进只动本 PR 的文件面，并行写入者的 12 改 5 未跟踪文件不受触碰。
+- **`observer` 作业的一次红不是产品红（根因已定位并修复）**：#220 首跑时 `scripts/audit/pressed_state_motion_via_cdp.py`
+  在 CI（Windows runner）报 `active-transform-matches-token[console:.nav button] FAIL pressed transform='matrix(1, 0, 0, 1, 0, 0)'`，
+  而同一条命令在本机读到 `matrix(0.99, 0, 0, 0.99, 3, 0)` 并 PASS，#219 时该步骤也是绿的。
+  归因：该门用 `CSS.forcePseudoState` 强制 `:active` 后**只读一次**计算样式，而 80ms 的 `--motion-pressed` 是一段过渡；
+  读到 `scale=1.0` 是过渡**起始帧**而不是终态。旁证是同一批里 `pressed-state-changes-the-paint` 反而 PASS
+  （`idle='none' → pressed scale=1.0`）——规则在动，采样点没等到位。
+  与 #220 的因果也已排除：该门只用到我改过模块的一个符号 `hud.SnapshotFixture`，且无 payload 调用时服务端字节与改前相同。
+- **修法（两条一起做，缺一不可）**：
+  ① 强制之后、采集之前**轮询直到画停**（`settled_transform`：连续两次读数相同即返回，预算 1.5s 上限，收据里带 `settleWaits`
+  逐面记录稳定值与等待秒数）；② 若稳定值既不是未触碰的 paint 也不是 token 的终态，判为**不可测**而非产品失败——
+  `pressed-paint-read-was-settled[面:选择器]` 记录该事实，门自拒 `PRESSED_MOTION_GATE_NOT_RUN SAMPLED_A_TRANSITION_FRAME` 并 **exit 3**，
+  因为仪器读到运动中的东西就没有测量任何状态，把它写成产品 FAIL 会骗到下一个读者。
+  过渡时长仍由既有的 `active-duration-matches-token` 单独断言，所以"证明动画跑过"不再是 paint 判据的隐含职责。
+- **这个门此前没有任何测试文件**（`tests/ci/` 下无 pressed 套件），所以它的判据不可在浏览器外被证伪。新增
+  `tests/ci/test_pressed_state_motion_gate.py` 8 例：过渡会打帧时采样器必须返回终态、动画冻结时返回稳定值且不无限自旋、
+  首帧读数被分类为 unmeasurable 且 paint 判据带 `settledRead=False`、终态读数两条判据都过、
+  **paint 真的没变时仍判产品失败**（控制项：`unmeasurable=[]`，由 `pressed-state-changes-the-paint` 定罪）、
+  以及期望值只能由 token 派生、缺失/不可解析时点名而不得默认为 0。按 CI 的脚本直跑方式执行 `Ran 8 tests → OK`。
+- **当轮实测**：修复后的门本机 `PRESSED_MOTION_GATE_PASS surfaces=["console","daily"]`，
+  三个面 `pressed-paint-read-was-settled` 全 PASS 且读数为 `matrix(0.99,…)`；新套件 8 例 OK。
+  本地一次性跑完整 `services/orchestration/run_quality_gate.py verify` 时 `governance` 批报 ERROR，已定责为隔离检出的世界差异
+  （同一模块 `tests/workflow-assistance/test_action_plan_sync.py` 在主检出 **10 passed, 1 skipped**），与本次改动无关。
+- **CL-16 第 2 步剩余两项（仍未做，按名登记）**：键盘路径另断言 `:focus-visible` 等效反馈；drawer/toast 进出场两侧采样并遵守"采样必须已稳定"。
+  真按下（`Input.dispatchMouseEvent` mousePressed→驻留→采样→mouseReleased→回到原矩形）本轮已具备测量方法与实测数，尚未接进门里。
