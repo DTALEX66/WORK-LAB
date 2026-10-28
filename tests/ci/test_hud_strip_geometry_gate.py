@@ -52,7 +52,8 @@ def control(name="详情", left=21.0, top=395.0, width=24.0, height=16.0,
             **box(left, top, width, height)}
 
 
-def ring(role="idle", stroke="rgb(48, 58, 70)", width="3", has_summary=False):
+def ring(role="idle", stroke="rgb(48, 58, 70)", width="3", has_summary=False,
+         hovered=False, transform="none"):
     """One H01 row as the browser reports it.
 
     `stroke` is the RESOLVED paint (the strip takes it from a --daily-* token now, so an attribute-level
@@ -60,7 +61,9 @@ def ring(role="idle", stroke="rgb(48, 58, 70)", width="3", has_summary=False):
     it plays, which is how the hover check finds the lit row.
     """
     return {"hasRing": True, "ringRole": role, "stroke": stroke, "strokeWidth": width,
-            "hasSummary": has_summary}
+            "hasSummary": has_summary, "isHovered": hovered,
+            "style": {"transform": transform, "borderTopColor": "rgb(23, 67, 93)",
+                      "backgroundColor": "rgba(0, 0, 0, 0)"}}
 
 
 H01_TEXT = ("CO\n额度 UNKNOWN\nHE\n额度 UNKNOWN\nDE\n额度 UNKNOWN\nQO\n额度 UNKNOWN\n"
@@ -122,10 +125,19 @@ def strip_h02() -> dict:
                       "text": H01_TEXT.replace("HE\n额度 UNKNOWN",
                                                "Codex：窗口 待确认 · 数值 UNKNOWN · 重置时间 待确认\nHE\n额度 UNKNOWN")}
     surface["bodyText"] = BODY_H02
-    surface["rows"] = [ring("active", "rgb(251, 191, 36)", "3.5", True)] + [ring() for _ in range(4)] + surface["rows"][5:]
+    surface["rows"] = ([ring("active", "rgb(251, 191, 36)", "3.5", True, hovered=True)]
+                       + [ring() for _ in range(4)] + surface["rows"][5:])
     surface["summary"] = {**box(21, 75, 93, 90), "insideLi": True, "insideH01Row": True,
                           "scrollerOverflow": 94}
-    surface["hoverDispatch"] = "dispatched"
+    surface["hoverDispatch"] = "cdp-mouseMoved"
+    # The driver's own report: a real pointer placed at the first row's centre, plus the styles it read
+    # before placing it. Measured 2026-10-28 these rows carry no CSS `:hover` rule, so `idle` equals the
+    # post-hover styles; the gate asserts the pointer is over exactly one row, not that a style moved.
+    surface["pointer"] = {"mode": "mouseMoved", "x": 68, "y": 83,
+                          "armed": {"ready": True, "waitedMs": 0, "mode": "row-found",
+                                    "target": {"x": 68, "y": 83, "width": 93, "height": 36}},
+                          "idle": [row.get("style") or {"transform": "none"}
+                                   for row in surface["rows"]]}
     surface["controls"] = [control(left=21, top=489), control("HUD 设置", 128, 457, 14, 14)]
     return surface
 
@@ -240,6 +252,8 @@ def expected_check_names() -> set:
         "hud_monitors_only_declared_agent_runtimes",
         "hover_reveals_the_summary_inside_the_row", "hover_summary_is_readable_without_scrolling",
         "hover_row_is_the_one_highlighted_amberly", "hover_keeps_h01_mounted",
+        "hover_uses_a_real_pointer_not_a_synthetic_event",
+        "real_pointer_is_over_exactly_one_row",
         "h03_quota_rows_are_three_slots_and_honest", "strip_never_fabricates_a_percentage",
         "strip_keeps_quota_unknown_instead_of_zero", "panel_keeps_the_four_state_switcher",
         "daily_renders_the_declared_entries", "daily_settings_sits_below_the_declared_entries",
@@ -706,13 +720,14 @@ class InstrumentTests(unittest.TestCase):
         self.assertIn("surface=hud", hud)
         self.assertTrue(any(s["query"].startswith("surface=hud") for s in gate.SURFACES))
 
-    def test_the_hover_event_is_dispatched_on_the_row_not_the_section(self) -> None:
+    def test_the_pointer_is_aimed_at_the_row_not_the_section(self) -> None:
         # React 18 derives onMouseEnter from a bubbling mouseover whose TARGET is the element under the
         # pointer; the first version of the evidence probe dispatched on the section and every row
-        # handler stayed un-triggered, which read as "the summary never appears".
-        js = gate.MEASURE_JS
-        self.assertIn("document.querySelector(H01 + ' li')", js)
-        self.assertNotIn("document.querySelector(H01)).dispatchEvent", js)
+        # handler stayed un-triggered, which read as "the summary never appears". The same rule now
+        # governs the real pointer: it goes to the first row's own centre, or the hover is a fiction.
+        self.assertIn("document.querySelectorAll(H01 + ' li')", gate.POINTER_ARM_JS)
+        self.assertIn("rows[0].getBoundingClientRect()", gate.POINTER_ARM_JS)
+        self.assertNotIn("document.querySelector(H01)).dispatchEvent", gate.MEASURE_JS)
 
     def test_line_boxes_come_from_the_platform_not_from_glyph_tops(self) -> None:
         # Instrument defect found while writing this gate: grouping characters by their own rect.top
@@ -971,6 +986,123 @@ class LivePayloadTests(unittest.TestCase):
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertNotIn('f"data=fixture(', text)
         self.assertIn("f\"data={served['source']}(", text)
+
+
+class RealPointerTests(unittest.TestCase):
+    """CL-16 step 2: the hover judgement has to come from a pointer the browser believes.
+
+    A synthetic `dispatchEvent(new MouseEvent('mouseover'))` reaches React and stops there, so the
+    pseudo-class half of the stylesheet was never in the measurement — and the instrument could not tell
+    the difference. These cases make the synthetic path a conviction, not a pass, and prove the pointer
+    placement is checked rather than assumed.
+    """
+
+    def test_the_source_no_longer_dispatches_a_synthetic_mouseover(self) -> None:
+        # The executable harvest must not synthesize the hover any more. The phrase survives in prose
+        # explaining why it was removed, so the assertion is on the JS template, not the whole file.
+        self.assertNotIn("dispatchEvent(new MouseEvent(", gate.MEASURE_JS)
+        self.assertNotIn("hoverDispatch = 'dispatched'", gate.MEASURE_JS)
+        self.assertIn("cdp-mouseMoved", gate.MEASURE_JS)
+
+    def test_a_synthetic_report_fails_both_real_pointer_checks(self) -> None:
+        measured = good_measurement()
+        hover = measured["strip-h02"]
+        hover["hoverDispatch"] = "dispatched"     # what the old instrument reported
+        hover.pop("pointer")
+        # Measured 2026-10-28: under a synthetic `mouseover` no element reports `matches(':hover')`, so a
+        # page driven that way reports zero hovered rows. That is the state this test plants — the old
+        # instrument could not see it, which is exactly why it kept passing.
+        for row in hover["rows"]:
+            row["isHovered"] = False
+        verdict = gate.verdict(measured)
+        names = {c["check"]: c for c in verdict["checks"]}
+        self.assertFalse(names["hover_uses_a_real_pointer_not_a_synthetic_event"]["pass"])
+        self.assertFalse(names["real_pointer_is_over_exactly_one_row"]["pass"])
+        self.assertFalse(verdict["passed"], "a synthetic hover must not let the gate pass")
+
+    def test_pointer_over_no_row_is_convicted(self) -> None:
+        measured = good_measurement()
+        for row in measured["strip-h02"]["rows"]:
+            row["isHovered"] = False
+        names = {c["check"]: c for c in gate.verdict(measured)["checks"]}
+        self.assertFalse(names["real_pointer_is_over_exactly_one_row"]["pass"],
+                         "zero hovered rows means the pointer never landed; that is not a pass")
+
+    def test_pointer_over_two_rows_is_convicted(self) -> None:
+        measured = good_measurement()
+        measured["strip-h02"]["rows"][1]["isHovered"] = True
+        names = {c["check"]: c for c in gate.verdict(measured)["checks"]}
+        self.assertFalse(names["real_pointer_is_over_exactly_one_row"]["pass"],
+                         "two hovered rows means the strip is not keyed per row")
+
+    def test_good_measurement_passes_both_new_checks(self) -> None:
+        names = {c["check"]: c for c in gate.verdict(good_measurement())["checks"]}
+        self.assertTrue(names["hover_uses_a_real_pointer_not_a_synthetic_event"]["pass"])
+        self.assertTrue(names["real_pointer_is_over_exactly_one_row"]["pass"])
+
+
+class _RecordingCdp:
+    """A stand-in for the live session: records commands and replays a scripted evaluate answer."""
+
+    def __init__(self, arm_payload: dict) -> None:
+        self.sent: list[tuple[str, dict]] = []
+        self.evaluated: list[str] = []
+        self._arm_payload = arm_payload
+
+    def send(self, method: str, params: dict | None = None) -> dict:
+        self.sent.append((method, params or {}))
+        return {}
+
+    def evaluate(self, expr: str):
+        self.evaluated.append(expr)
+        if expr.strip().startswith("window.__HUD_POINTER_FACTS__"):
+            return "stashed"
+        return json.dumps(self._arm_payload)
+
+
+class PlaceRealPointerTests(unittest.TestCase):
+    """The driver side: emulate only when asked, place the pointer at the row's own centre, and report."""
+
+    def test_a_row_found_injects_one_mousemove_at_the_row_centre(self) -> None:
+        cdp = _RecordingCdp({"ready": True, "waitedMs": 0, "mode": "row-found",
+                             "target": {"x": 68, "y": 83, "width": 93, "height": 36},
+                             "idle": [{"transform": "none"}]})
+        facts = gate.place_real_pointer(cdp, "ARM_JS", {"name": "strip-h02"})
+        methods = [m for m, _ in cdp.sent]
+        self.assertEqual(methods, ["Input.dispatchMouseEvent"],
+                         f"no CSS emulation is wanted here, got {methods}")
+        sent = cdp.sent[0][1]
+        self.assertEqual((sent["type"], sent["x"], sent["y"], sent["buttons"]),
+                         ("mouseMoved", 68, 83, 0),
+                         "a clickCount would press the row instead of hovering it")
+        self.assertEqual(facts["mode"], "mouseMoved")
+        self.assertEqual(facts["idle"], [{"transform": "none"}],
+                         "the pre-pointer styles are the baseline the hover change is measured against")
+        self.assertTrue(any(e.startswith("window.__HUD_POINTER_FACTS__") for e in cdp.evaluated),
+                        "the harvest reads the facts off the page; without the stash it reports no-pointer")
+
+    def test_reduced_motion_surface_emulates_the_preference_before_placing_the_pointer(self) -> None:
+        cdp = _RecordingCdp({"ready": True, "waitedMs": 0, "mode": "row-found",
+                             "target": {"x": 68, "y": 83}, "idle": []})
+        facts = gate.place_real_pointer(cdp, "ARM_JS", {"emulateReducedMotion": True})
+        self.assertEqual([m for m, _ in cdp.sent][0], "Emulation.setEmulatedMedia")
+        features = cdp.sent[0][1]["features"]
+        self.assertEqual(features[0]["name"], "prefers-reduced-motion")
+        self.assertEqual(features[0]["value"], "reduce")
+        self.assertTrue(facts["reducedMotionEmulated"])
+
+    def test_no_row_means_no_pointer_and_the_reason_travels(self) -> None:
+        cdp = _RecordingCdp({"ready": True, "mode": "no-row", "idle": [], "target": None})
+        facts = gate.place_real_pointer(cdp, "ARM_JS", {"name": "strip-h02"})
+        self.assertEqual(facts["mode"], "no-row")
+        self.assertEqual([m for m, _ in cdp.sent], [],
+                         "with no row to hover there is nothing to point at; the check fails for the reason")
+
+    def test_the_arm_expression_carries_no_leftover_placeholder(self) -> None:
+        js = gate.arm_expression_for({"name": "strip-h02", "readyProbe": gate.RING_ROW_PROBE})
+        for token in ("__READY_PROBE__", "__BUDGET_MS__", "__POLL_MS__", "__H01__"):
+            self.assertNotIn(token, js)
+        self.assertIn("工具额度窄面板", js, "the aria label the row list is found under must survive substitution")
 
 
 if __name__ == "__main__":

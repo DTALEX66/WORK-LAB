@@ -1034,3 +1034,46 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   `pytest tests/ci/test_hud_strip_geometry_gate.py tests/ci/test_text_legibility_gate.py → 137 passed`；
   真数据 daily 两面暗/亮 4 次测量全 `passed=True, nodes=33, minNodes=30`。
   夹具壳面扫描与上一轮同判据（本轮未改判据，只加入口）。
+
+
+**2026-10-28 · PR #219 合并回执 + CL-16 第 2 步（HUD 悬停改真指针）**
+
+- **PR #219 闭环**：head `53196795` 的 12 项检查全部 completed/success
+  （aggregate capsule-cli config-compiler gate-plan integration observer observer-readonly schema-fixtures supply-chain-security token-monitor wlr060-aggregate workflow-assistance），
+  merge commit `a5aee2c17959065da9a4b19b71a5bf54535f0d8f`；合并后本地 main、`origin/main`、`git ls-remote origin refs/heads/main` 三方读数一致于该 SHA。
+  远端与本地的 `chore/live-data-and-reclaim-20261028` 已删（它是 main 祖先，无需退役标签）；远端现存 `refs/heads/main` 与保留的 `refs/heads/feat/ledger-truth-20261027`。
+  本表合并 SHA 按 owner 的"一次提交带上"规矩随本批交付，未单开一条 docs PR 去重跑 15 分钟 CI。
+- **PR #219 期间两次红的归因（都是我的顺序/核实问题，不是产品）**：
+  ① `Fast projection and contract-shape preflight` 红在 `tests/workflow-assistance/test_tool_inventory_coverage.py`——它比的是 **git index 里 blob 的 sha**，
+  而清单是在 `git add` 之前发的，于是 `scripts/audit/hud_strip_geometry_via_cdp.py` 记成 `c349eedb…/70,642 B/1195 行`，index 实际 `d97d58f6…/75,414 B/1278 行`；
+  修法是按序 stage→重发→复测，另起提交 `67ecb836`（不 amend）。② `workflow-assistance` 大批次红在 `tests/ci/test_authority_index_paths_resolve.py`，
+  明细只有一条：那条 .example 样本路径被我漏写了一段目录名（缺 workflow-assistance 一段），真路径
+  `docs/current/workflow-assistance/workflow/examples/governance.yml.example`——这是我照子代理盘点原文写入、没先过 `git ls-files` 的核实缺失；
+  同源另三条路径这次逐条核实为 tracked。两点都记进了记忆：清单要在 `git add` 之后发；子代理给的数字与路径都是断言，写进本表前必须自量。
+  另排除一个错判：一度怀疑行尾，实测我提交的 9 个文件 blob 里 CR 计数全为 0。
+- **CL-16 第 2 步（本轮交付的那一条）实测**：`scripts/audit/hud_strip_geometry_via_cdp.py` 的悬停不再用
+  `dispatchEvent(new MouseEvent('mouseover'))`，改由驱动在采集之前发 `Input.dispatchMouseEvent`（落在第一行自己的中心），
+  复用 `scripts/audit/topbar_geometry_via_cdp.py` 已有的 `after_mount(cdp)` 钩子，因此没有第二套浏览器启动与就绪等待可分歧。
+  两条新判据：`hover_uses_a_real_pointer_not_a_synthetic_event`、`real_pointer_is_over_exactly_one_row`（读 `li.matches(':hover')`，0 行或 2 行都判红）。
+  当轮读数：夹具 `HUD_STRIP_GATE_PASS checks=80/80 data=fixture(adapters=9,projects=2,executions=2)`；
+  真 snapshot `checks=80/80 data=captured-snapshot(sha256=1ff0c609b944,adapters=10,projects=1,executions=0)`，rows=5、指针 (75,83)、`hoveredIndexes=[0]`；
+  `pytest tests/ci/test_hud_strip_geometry_gate.py → 77 passed`（68 → 77）。
+- **能红实证（不是口头）**：运行时把指针故意放到 (2,2) → `real_pointer_is_over_exactly_one_row` FAIL，
+  `hoveredIndexes=[] of rows=8`，门 exit=1。反证同一套：正对照里注入 `li:hover{outline:7px solid rgb(9,18,27)}` 后，
+  outline 由 `3px rgb(233,239,246)` 变 `7px rgb(9,18,27)` 且 `matches(':hover')=true`——先证明指针通道能点亮伪类，再谈产品有没有这条规则。
+- **登记一个产品事实（真指针测出来的，夹具测不出来）**：strip / panel / daily 三个壳面共 29 个候选元素在真指针下计算样式**零变化**。
+  窄条的行是无 class 的 `<li>`（只有 `data-hud-agent` 标记），`apps/observer/frontend/src/skins/hud-phenotype.css` 里
+  `.hud-agent:hover{transform:translateY(-2px)}` 与 reduced-motion 下 `transform:none` 那一对规则**到不了这个面**。
+  所以这些壳面目前没有任何 CSS 悬停语言：本轮不写"今天产品根本满足不了"的死判据，改为把逐行样式差随收据报出
+  （`rowStyleChangedUnderPointer={}`），第 3 步引入动效时必须先有承载它的规则，届时这条断言才谈得上成立。
+- **顺带修掉一个采样时刻缺陷（旧读数偏小且不是产品差别）**：合成派发写在采集表达式内部，摘要在 React 重排未完成时就被采走，
+  得到 74px 高、`scrollerOverflow=0`；先落指针再采集得到已稳定的 93×90 与 scroller `scrollH=542/clientH=372`（溢出 170）。
+  同页面对比两种路径在同一时刻读数一致，证明差的是**时机**不是产品。摘要仍在视口内（top 105 bottom 195 < 480），可见性判据照过。
+- **第 2 步剩余三项（按名登记，未做，不在本轮悄悄缩掉）**：①按下态探针 mousePressed→采样→mouseReleased 并断言回到原矩形
+  （现有 `scripts/audit/pressed_state_motion_via_cdp.py` 用的是 `CSS.forcePseudoState`，只证样式表可达，不等于真按下）；
+  ②drawer/toast 进出场两侧采样并遵守"采样必须已稳定"；③键盘路径另断言 `:focus-visible` 等效反馈。
+  reduced-motion 的逐面计算样式断言本轮只做到"为窄条悬停面准备好了注入点"（`emulateReducedMotion` 分支已实现并被单测覆盖），
+  尚未接进 SURFACES 的真面清单，因为它要断言的那条 CSS 规则在上面已被证实不存在。
+- **本轮证据**：`HUD_STRIP_GATE_PASS checks=80/80`（夹具与真 snapshot 各一次）；`77 passed`（HUD 单测）；
+  正对照 `CONTROL_outlineChanged=true`、`CONTROL_elementMatchesHover=true`；
+  反例 `exit=1 hoveredIndexes=[]`；`.project-local/runs/cl16-probe/real-versus-synthetic.json` 记录两路径同读数。

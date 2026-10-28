@@ -195,6 +195,11 @@ MEASURE_JS = r"""
   const OPEN_SETTINGS = __OPEN_SETTINGS__;
   const SETTINGS_BUTTON = __SETTINGS_BUTTON__;
   const SETTINGS_PANEL = __SETTINGS_PANEL__;
+  // What the driver actually did before this expression ran: null when nothing was placed, else the facts
+  // `place_real_pointer` stashed on the page (mode, coordinates, the idle styles it measured). Read from
+  // the page rather than substituted, because the harvest expression is built BEFORE the pointer lands —
+  // substituting it would freeze a null in place of what the session really did.
+  const POINTER = window.__HUD_POINTER_FACTS__ || null;
   const r1 = (n) => Math.round(n * 10) / 10;
   const painted = () => (document.body && document.body.innerText) || '';
   // Wait for the snapshot to reach the surface BEFORE anything is measured, and before the hover is
@@ -218,15 +223,14 @@ MEASURE_JS = r"""
   const de = document.documentElement;
   let hoverDispatch = 'not-requested';
   if (HOVER) {
-    const li = document.querySelector(H01 + ' li');
-    if (!document.querySelector(H01)) hoverDispatch = 'no-h01-section';
-    else if (!li) hoverDispatch = 'no-row';
-    else {
-      // React 18 derives onMouseEnter from a bubbling mouseover whose TARGET is the element under the
-      // pointer, so the event goes on the row itself; dispatching on the section leaves every row's own
-      // handler un-triggered and the summary never appears.
-      li.dispatchEvent(new MouseEvent('mouseover', {bubbles: true}));
-      hoverDispatch = 'dispatched';
+    // The pointer is placed by the DRIVER, from here: a synthetic `li.dispatchEvent(new
+    // MouseEvent('mouseover'))` reaches React's onMouseEnter but cannot light a CSS pseudo-class, so the
+    // whole hover language of the stylesheet stayed unmeasured while a JS-only affordance looked green.
+    // `place_real_pointer` sends CDP `Input.dispatchMouseEvent` before this expression runs, and the row
+    // styles read below are whatever the real pointer produced. If the driver placed nothing, this
+    // surface reports 'no-pointer' and the hover checks fail instead of describing an untested page.
+    hoverDispatch = (POINTER && POINTER.mode === 'mouseMoved') ? 'cdp-mouseMoved' : 'no-pointer';
+    if (hoverDispatch === 'cdp-mouseMoved') {
       await new Promise((res) => setTimeout(
         () => requestAnimationFrame(() => setTimeout(res, 150)), 60));
     }
@@ -247,6 +251,7 @@ MEASURE_JS = r"""
 
   const out = {
     hoverDispatch,
+    pointer: POINTER,
     settingsDispatch,
     settings: (() => {
       const el = document.querySelector(SETTINGS_PANEL);
@@ -360,11 +365,22 @@ MEASURE_JS = r"""
     // `ringRole` is the element's own statement of which role that ring plays.
     rows: [...document.querySelectorAll(H01 + ' li')].map((li) => {
       const c = li.querySelector('circle');
+      const cs = getComputedStyle(li);
       return {hasRing: !!c,
               stroke: c ? (getComputedStyle(c).stroke || c.getAttribute('stroke')) : null,
               ringRole: c ? c.getAttribute('data-ring-role') : null,
               strokeWidth: c ? c.getAttribute('stroke-width') : null,
-              hasSummary: !!li.querySelector(SUMMARY)};
+              hasSummary: !!li.querySelector(SUMMARY),
+              // The pseudo-class state the real pointer produced, read from the element itself. This is
+              // the gate proving its own input path: a synthetic dispatch leaves it false forever, and a
+              // pointer that missed the row leaves it false too, so neither can pass silently.
+              isHovered: li.matches(':hover'),
+              // The stylesheet's own hover language, reported whether or not this surface has one. The
+              // 2026-10-28 measurement is that the narrow strip ships NO CSS `:hover` rule on these rows
+              // (idle transform `none` stays `none` under a pointer that demonstrably lights an injected
+              // rule), so the numbers are evidence of that gap rather than a passing claim.
+              style: {transform: cs.transform, borderTopColor: cs.borderTopColor,
+                      backgroundColor: cs.backgroundColor}};
     }),
     summary: (() => {
       const el = document.querySelector(SUMMARY);
@@ -459,6 +475,95 @@ def expression_for(surface: dict) -> str:
             .replace("__OPEN_SETTINGS__", "true" if surface.get("openSettings") else "false")
             .replace("__SETTINGS_BUTTON__", json.dumps(SETTINGS_BUTTON, ensure_ascii=False))
             .replace("__SETTINGS_PANEL__", json.dumps(SETTINGS_PANEL, ensure_ascii=False)))
+
+
+# --------------------------------------------------------------------------- the real pointer (CL-16 step 2)
+#
+# Why this exists at all: `li.dispatchEvent(new MouseEvent('mouseover'))` is what the hover surfaces used
+# to do, and React's onMouseEnter answers it — so the JS half of the affordance was measured while the CSS
+# half (`:hover` rules in the shipped skins) was never reachable by the instrument at all. A stylesheet
+# regression that removed every hover rule would have kept this gate green. A CDP `Input.dispatchMouseEvent`
+# is a real pointer to the browser: it lights the pseudo-class, and it also drives the React handler, so
+# one path now covers both.
+
+POINTER_ARM_JS = """
+(async () => {
+  const READY = () => (__READY_PROBE__);
+  const BUDGET_MS = __BUDGET_MS__;
+  const POLL_MS = __POLL_MS__;
+  const H01 = __H01__;
+  let waitedMs = 0;
+  if (!READY()) {
+    const t0 = performance.now();
+    while (!READY()) {
+      if (performance.now() - t0 > BUDGET_MS) break;
+      await new Promise((res) => setTimeout(res, POLL_MS));
+    }
+    waitedMs = Math.round(performance.now() - t0);
+  }
+  const rows = [...document.querySelectorAll(H01 + ' li')];
+  const styleOf = (el) => {
+    const cs = getComputedStyle(el);
+    return {transform: cs.transform, borderTopColor: cs.borderTopColor,
+            backgroundColor: cs.backgroundColor};
+  };
+  if (rows.length === 0) {
+    return JSON.stringify({ready: READY(), waitedMs, mode: 'no-row', idle: [], target: null});
+  }
+  const r = rows[0].getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) {
+    return JSON.stringify({ready: READY(), waitedMs, mode: 'row-unpainted',
+                           idle: rows.map(styleOf), target: null});
+  }
+  return JSON.stringify({ready: READY(), waitedMs, mode: 'row-found',
+    target: {x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2),
+             width: Math.round(r.width), height: Math.round(r.height)},
+    idle: rows.map(styleOf)});
+})()
+"""
+
+
+def arm_expression_for(surface: dict) -> str:
+    """The same substitutions as the harvest, minus anything the pointer itself has to decide."""
+    probe = surface.get("readyProbe")
+    return (POINTER_ARM_JS
+            .replace("__READY_PROBE__", probe if probe else "true")
+            .replace("__BUDGET_MS__", str(READY_BUDGET_MS))
+            .replace("__POLL_MS__", str(READY_POLL_MS))
+            .replace("__H01__", json.dumps(H01_SECTION, ensure_ascii=False)))
+
+
+def place_real_pointer(cdp, arm_js: str, surface: dict,
+                       facts: dict | None = None) -> dict:
+    """Emulate the motion preference if the surface asks, wait for the snapshot, then move a real pointer
+    onto the first declared row. Returns the facts and stashes them on the page for the harvest to read.
+
+    The pointer is placed at the row's own centre, which is the position a user's cursor occupies when the
+    summary they are shown belongs to that row; a pointer placed on a sibling would light a different row
+    and the gate would convict the wrong element.
+    """
+    facts = {} if facts is None else facts
+    if surface.get("emulateReducedMotion"):
+        cdp.send("Emulation.setEmulatedMedia",
+                 {"features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})
+        facts["reducedMotionEmulated"] = True
+    armed = json.loads(cdp.evaluate(arm_js))
+    facts["armed"] = {"ready": armed.get("ready"), "waitedMs": armed.get("waitedMs"),
+                      "mode": armed.get("mode"), "target": armed.get("target")}
+    if armed.get("mode") != "row-found":
+        facts["mode"] = armed.get("mode") or 'arm-failed'
+        # The client refuses an evaluate that produces no value, so the stash returns a token rather than
+        # the assignment's own null.
+        cdp.evaluate(f"window.__HUD_POINTER_FACTS__ = {json.dumps(facts)}; 'stashed';")
+        return facts
+    target = armed["target"]
+    cdp.send("Input.dispatchMouseEvent", {
+        "type": "mouseMoved", "x": target["x"], "y": target["y"],
+        "button": "none", "clickCount": 0, "buttons": 0})
+    facts.update({"mode": "mouseMoved", "x": target["x"], "y": target["y"],
+                  "idle": armed.get("idle") or []})
+    cdp.evaluate(f"window.__HUD_POINTER_FACTS__ = {json.dumps(facts, ensure_ascii=False)}; 'stashed';")
+    return facts
 
 
 # --------------------------------------------------------------------------- the declared data shape
@@ -928,7 +1033,35 @@ def verdict(measured: dict, resolved_surfaces: list[dict] | None = None,
         _check(checks, "hover_summary_is_readable_without_scrolling", False, "no hover surface measured")
         _check(checks, "hover_row_is_the_one_highlighted_amberly", False, "no hover surface measured")
         _check(checks, "hover_keeps_h01_mounted", False, "no hover surface measured")
+        _check(checks, "hover_uses_a_real_pointer_not_a_synthetic_event", False,
+               "no hover surface measured")
+        _check(checks, "real_pointer_is_over_exactly_one_row", False, "no hover surface measured")
     else:
+        pointer = hover.get("pointer") or {}
+        _check(checks, "hover_uses_a_real_pointer_not_a_synthetic_event",
+               hover.get("hoverDispatch") == "cdp-mouseMoved" and pointer.get("mode") == "mouseMoved",
+               f"hoverDispatch={hover.get('hoverDispatch')!r} pointerMode={pointer.get('mode')!r} "
+               f"pointer={json.dumps(pointer.get('armed'), ensure_ascii=False, default=str)} "
+               "(CL-16 step 2: `dispatchEvent(new MouseEvent(...))` reaches React but never lights a CSS "
+               "pseudo-class, so the hover language of the stylesheet was unmeasured while a JS-only "
+               "affordance looked green. A real CDP pointer drives both.)")
+        rows_read = hover.get("rows") or []
+        hovered_indexes = [i for i, r in enumerate(rows_read) if r.get("isHovered")]
+        idle_styles = pointer.get("idle") or []
+        moved = {}
+        if idle_styles and rows_read:
+            before, after = idle_styles[0], (rows_read[0].get("style") or {})
+            moved = {k: [before.get(k), after.get(k)] for k in after if before.get(k) != after.get(k)}
+        _check(checks, "real_pointer_is_over_exactly_one_row",
+               len(hovered_indexes) == 1,
+               f"hoveredIndexes={hovered_indexes} of rows={len(rows_read)} "
+               f"pointerAt={json.dumps({k: pointer.get(k) for k in ('x', 'y')}, ensure_ascii=False)} "
+               f"rowStyleChangedUnderPointer={json.dumps(moved, ensure_ascii=False)} "
+               "(one hovered row is what a pointer at a declared position produces; zero means the pointer "
+               "never landed — including when the driver placed it but the page was rebuilt under it — and "
+               "more than one means the strip is not keyed per row. Measured 2026-10-28: these rows carry "
+               "no CSS `:hover` rule at all, so the style diff above is reported as the gap, not asserted "
+               "as a pass.)")
         summary = hover.get("summary")
         _check(checks, "hover_reveals_the_summary_inside_the_row",
                isinstance(summary, dict) and summary.get("insideLi") is True
@@ -1142,13 +1275,22 @@ def measure_all(geometry, u19, browser: str, fixture: SnapshotFixture,
             continue
         url = fixture.url_for(spec["query"])
         width, height = spec["size"]
+        # The pointer has to be placed inside the same session as the harvest: a second launch would be a
+        # second document, and `:hover` lives on the element the live pointer is over.
+        if spec.get("hover"):
+            arm_js = arm_expression_for(spec)
+
+            def after_mount(cdp, arm_js=arm_js, spec=spec):
+                place_real_pointer(cdp, arm_js, spec)
+        else:
+            after_mount = None
         last: Exception | None = None
         for attempt in range(2):
             try:
                 harvest = geometry.serve_and_eval(
                     ROOT, "/index.html", "1280,820", expression_for(spec), browser, u19, None,
                     viewport=(width, height), serve_url=url,
-                    mount_selector=MOUNT_SELECTOR[spec["kind"]])
+                    mount_selector=MOUNT_SELECTOR[spec["kind"]], after_mount=after_mount)
                 harvest["_url"] = url
                 harvests[spec["name"]] = harvest
                 last = None
