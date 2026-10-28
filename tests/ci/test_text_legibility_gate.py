@@ -15,6 +15,8 @@ from __future__ import annotations
 import importlib.util
 import json
 import re
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -728,6 +730,78 @@ class ShellSurfaceTests(unittest.TestCase):
         self.assertNotIn("text_meets_the_12px_floor", strip_source)
         self.assertIn("--shell-surfaces", (ROOT / ".github" / "workflows" / "work-lab-gate.yml"
                                            ).read_text(encoding="utf-8"))
+
+class _FakeResponse:
+    """`urlopen` used as a context manager, returning fixed bytes."""
+
+    def __init__(self, payload: bytes) -> None:
+        self.payload = payload
+
+    def __enter__(self) -> "_FakeResponse":
+        return self
+
+    def __exit__(self, *exc) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return self.payload
+
+
+def _fake_response(payload: bytes) -> _FakeResponse:
+    return _FakeResponse(payload)
+
+
+class LiveApiTests(unittest.TestCase):
+    """`--api` measures the shipped bundle over a real v3 backend, and must refuse a fake one.
+
+    The hole this closes is the quiet green: a page pointed at a backend that does not answer falls back
+    to the offline card, and an offline card is perfectly legible — every floor would pass while nothing
+    product-shaped had been measured. So the backend is probed before any browser starts, and the
+    population it serves is reported.
+    """
+
+    def test_a_non_loopback_backend_is_refused_without_reaching_the_network(self) -> None:
+        with mock.patch.object(legibility.urllib.request, "urlopen",
+                               side_effect=AssertionError("the probe must not open a socket")) as opened:
+            with self.assertRaises(ValueError) as caught:
+                legibility.probe_live_api("https://example.invalid")
+            self.assertIn("LIVE_API_NOT_LOOPBACK", str(caught.exception))
+            opened.assert_not_called()
+
+    def test_a_backend_that_is_not_the_v3_contract_is_refused(self) -> None:
+        payload = json.dumps({"schemaVersion": "workflow/snapshot/v2"}).encode("utf-8")
+        with mock.patch.object(legibility.urllib.request, "urlopen",
+                               return_value=_fake_response(payload)):
+            with self.assertRaises(ValueError) as caught:
+                legibility.probe_live_api("http://127.0.0.1:55999")
+            self.assertIn("LIVE_API_NOT_V3", str(caught.exception))
+
+    def test_the_probe_reports_the_population_it_found(self) -> None:
+        served = {"schemaVersion": "workflow/snapshot/v3", "revision": 4433,
+                  "adapterCapabilities": [{"clientId": f"c{i}"} for i in range(10)],
+                  "projects": [1], "executions": []}
+        with mock.patch.object(legibility.urllib.request, "urlopen",
+                               return_value=_fake_response(json.dumps(served).encode("utf-8"))):
+            found = legibility.probe_live_api("http://127.0.0.1:55999")
+        self.assertEqual(found, {"api": "http://127.0.0.1:55999",
+                                 "schemaVersion": "workflow/snapshot/v3", "revision": 4433,
+                                 "adapters": 10, "projects": 1, "executions": 0},
+                         "a live run that cannot say what data it measured is indistinguishable from "
+                         "the fixture run in the log")
+
+    def test_the_live_url_is_built_the_way_the_fixture_origin_builds_it(self) -> None:
+        url = legibility.live_api_url("http://127.0.0.1:55999/", "surface=daily&shell=tauri", "light")
+        encoded = legibility.urllib.parse.quote("http://127.0.0.1:55999/api/v1/snapshot", safe="")
+        self.assertTrue(url.startswith("http://127.0.0.1:55999/index.html?surface=daily&shell=tauri"), url)
+        self.assertIn(f"&mode=UNKNOWN&theme=light&api={encoded}", url)
+
+    def test_main_refuses_a_live_backend_it_cannot_trust_before_touching_the_disk(self) -> None:
+        proc = subprocess.run([sys.executable, str(SCRIPT), "--shell-surfaces",
+                               "--api", "https://example.invalid"],
+                              capture_output=True, text=True, encoding="utf-8", errors="replace")
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        self.assertIn("LEGIBILITY_GATE_NOT_RUN LIVE_API", proc.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

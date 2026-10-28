@@ -27,11 +27,18 @@ ledger reds when the data changes and greens when the layout breaks. The live-da
 stays where it belongs (real sidecar, real window); this gate answers one question — does the strip hold
 its declared shape at a declared data shape — and says in every receipt which data shape that was.
 
+`--snapshot-file` replaces the fixture payload with a captured real snapshot, so the same judgements can
+be run over the bytes the machine actually produces without rewriting any threshold. The readiness marker
+then comes from the served payload rather than from the fixture's first card, and the receipt reports
+`data=captured-snapshot(sha256=…)` with the payload's real counts. The fixture stays the default and stays
+what CI runs, because a deterministic shape is what makes a geometry gate re-runnable.
+
 Exit: 0 HUD_STRIP_GATE_PASS, 1 HUD_STRIP_GATE_FAIL, 2 bad input, 3 HUD_STRIP_GATE_NOT_RUN.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import http.server
 import importlib.util
 import json
@@ -90,6 +97,24 @@ IDLE_RING = "idle"
 FIXTURE_MARKER = "Codex"
 RING_ROW_PROBE = "document.querySelectorAll(H01 + ' li circle').length > 0"
 MARKER_PROBE = "painted().indexOf(%s) !== -1" % json.dumps(FIXTURE_MARKER, ensure_ascii=False)
+
+
+def marker_for(payload: dict) -> str:
+    """The tool name the h03/h04 headers paint: the displayName of the first adapter card served.
+
+    `FIXTURE_MARKER` above is only ever right for the fixture, because `Codex` is the fixture's first
+    card. Run the same judgements over a real snapshot and the first card is whatever the live registry
+    puts first — on the 2026-10-28 ledger that is Hermes — so a literal marker waits out the whole
+    readiness budget for a name the header never paints, and convicts a healthy render. The literal stays
+    as the fixture's declared shape (and is pinned against the fixture by a test); a served payload gets
+    its own marker from here.
+    """
+    cards = payload.get("adapterCapabilities") or []
+    return str(cards[0]["displayName"]) if cards else ""
+
+
+def marker_probe_for(payload: dict) -> str:
+    return "painted().indexOf(%s) !== -1" % json.dumps(marker_for(payload), ensure_ascii=False)
 READY_BUDGET_MS = 24000
 READY_POLL_MS = 400
 
@@ -122,6 +147,23 @@ SURFACES: list[dict] = [
 ]
 
 _SURFACE_KINDS = {str(s["name"]): str(s["kind"]) for s in SURFACES}
+
+
+def resolve_surfaces(payload: dict) -> list[dict]:
+    """The declared surfaces, with the marker probes re-derived for the payload that will be served.
+
+    Only the surfaces whose readiness condition is a tool name change; the ring-row and no-probe surfaces
+    come back as they were. A new surface that needs a name has to join this rule, not grow a literal.
+    """
+    probe = marker_probe_for(payload)
+    name = marker_for(payload)
+    resolved: list[dict] = []
+    for spec in SURFACES:
+        if spec.get("readyProbe") == MARKER_PROBE:
+            spec = {**spec, "readyProbe": probe,
+                    "readyWhy": f"the served tool {name!r} is named in the header"}
+        resolved.append(spec)
+    return resolved
 
 MOUNT_SELECTOR = {
     "strip": "[data-hud-frame]",
@@ -587,8 +629,9 @@ class SnapshotFixture:
     reconnect-storm the gate; nothing is replayed, because the fixture has no revision history.
     """
 
-    def __init__(self, dist: Path) -> None:
+    def __init__(self, dist: Path, payload: dict | None = None) -> None:
         self.dist = dist
+        self.payload = FIXTURE_SNAPSHOT if payload is None else payload
         self.stop = threading.Event()
         holder = self
 
@@ -601,7 +644,7 @@ class SnapshotFixture:
 
             def do_GET(self):  # noqa: N802 — http.server naming
                 if self.path.split("?")[0] == "/api/v1/snapshot":
-                    body = json.dumps(FIXTURE_SNAPSHOT, ensure_ascii=False).encode("utf-8")
+                    body = json.dumps(holder.payload, ensure_ascii=False).encode("utf-8")
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json; charset=utf-8")
                     self.send_header("Content-Length", str(len(body)))
@@ -782,16 +825,22 @@ def _surface_checks(checks: list[dict], name: str, spec: dict, surface: dict | N
     return surface
 
 
-def verdict(measured: dict) -> dict:
+def verdict(measured: dict, resolved_surfaces: list[dict] | None = None,
+            payload: dict | None = None, data: dict | None = None) -> dict:
     """Pure: no browser, no filesystem. `measured` maps a declared surface name to its harvest.
 
     Every threshold lives here, so a planted fault is a line of data, not a rebuilt bundle.
+
+    `payload`/`data` only shape the receipt's data block, never a judgement: the counts the reader sees
+    must be the counts of the bytes that were actually served, and the source must say whether those bytes
+    were the declared fixture or a live snapshot. A receipt that labelled real ledger bytes "fixture" would
+    tell the reader the run tested something it did not test.
     """
     measured = measured if isinstance(measured, dict) else {}
     checks: list[dict] = []
     harvests: dict[str, dict] = {}
 
-    for spec in SURFACES:
+    for spec in (SURFACES if resolved_surfaces is None else resolved_surfaces):
         surface = _surface_checks(checks, spec["name"], spec, measured.get(spec["name"]))
         if surface is not None:
             harvests[spec["name"]] = surface
@@ -1064,17 +1113,22 @@ def verdict(measured: dict) -> dict:
                + ("; ".join(problems) if problems else
                   "each card's declared label is its own loudest title, and none reaches the screen title"))
 
+    served = FIXTURE_SNAPSHOT if payload is None else payload
+    data_block = dict(data or {"source": "fixture"})
+    data_block.update({
+        "revision": served.get("revision"),
+        "adapters": len(served.get("adapterCapabilities") or []),
+        "projects": len(served.get("projects") or []),
+        "executions": len(served.get("executions") or []),
+    })
     return {"passed": all(c["pass"] for c in checks), "checks": checks,
-            "surfaces": sorted(measured), "fixture": {"revision": FIXTURE_SNAPSHOT["revision"],
-                                                       "adapters": len(FIXTURE_SNAPSHOT["adapterCapabilities"]),
-                                                       "projects": len(FIXTURE_SNAPSHOT["projects"]),
-                                                       "executions": len(FIXTURE_SNAPSHOT["executions"])}}
+            "surfaces": sorted(measured), "data": data_block}
 
 
 # --------------------------------------------------------------------------- the run (impure)
 
 def measure_all(geometry, u19, browser: str, fixture: SnapshotFixture,
-                names: list[str]) -> dict[str, dict]:
+                names: list[str], resolved_surfaces: list[dict] | None = None) -> dict[str, dict]:
     """One browser per surface, deliberately.
 
     A fresh document is what makes the measurement reproducible: this project's own evidence logs show a
@@ -1083,7 +1137,7 @@ def measure_all(geometry, u19, browser: str, fixture: SnapshotFixture,
     through CDP device metrics, exactly as the floor view of the topbar gate is.
     """
     harvests: dict[str, dict] = {}
-    for spec in SURFACES:
+    for spec in (SURFACES if resolved_surfaces is None else resolved_surfaces):
         if spec["name"] not in names:
             continue
         url = fixture.url_for(spec["query"])
@@ -1129,6 +1183,9 @@ def main() -> int:
     ap.add_argument("--surface", action="append", default=None,
                     help="restrict to these surface names (default: every declared one)")
     ap.add_argument("--json-out", default=None)
+    ap.add_argument("--snapshot-file", default=None,
+                    help="serve this captured snapshot JSON instead of the declared fixture; the receipt "
+                         "then names the real source and hashes the real bytes")
     args = ap.parse_args()
     names = args.surface or [s["name"] for s in SURFACES]
     unknown = sorted(set(names) - {s["name"] for s in SURFACES})
@@ -1138,6 +1195,28 @@ def main() -> int:
         # no `dist` at all and this check used to be reached only after the DIST_ABSENT refusal.
         print(f"HUD_STRIP_GATE_NOT_RUN UNKNOWN_SURFACE {json.dumps(unknown)}")
         return 2
+
+    # Resolved before the browser is looked for: a snapshot that cannot be read is bad input whether or
+    # not this machine has Chrome, and refusing here keeps the refusal from being mistaken for a missing
+    # tool. The bytes are hashed so the receipt can bind its claims to the payload it actually served.
+    payload = FIXTURE_SNAPSHOT
+    data_block = {"source": "fixture"}
+    if args.snapshot_file:
+        snapshot_path = Path(args.snapshot_file)
+        try:
+            raw = snapshot_path.read_bytes()
+            payload = json.loads(raw.decode("utf-8"))
+        except (OSError, ValueError, UnicodeDecodeError) as exc:
+            print(f"HUD_STRIP_GATE_NOT_RUN SNAPSHOT_UNREADABLE {type(exc).__name__} {exc}")
+            return 2
+        if not isinstance(payload, dict) or not (payload.get("adapterCapabilities") or []):
+            print(f"HUD_STRIP_GATE_NOT_RUN SNAPSHOT_NO_ADAPTERS "
+                  f"schemaVersion={payload.get('schemaVersion') if isinstance(payload, dict) else None!r} "
+                  "(a payload with no adapter cards measures an empty strip, which no surface of this "
+                  "product ships)")
+            return 2
+        data_block = {"source": "captured-snapshot", "path": str(snapshot_path.resolve()),
+                      "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
 
     root = Path(args.root).resolve()
     if not (root / "apps" / "observer" / "frontend" / "dist" / "index.html").is_file():
@@ -1156,15 +1235,16 @@ def main() -> int:
     # like a product defect and is only this script having run on its own.
     geometry.OUT_DIR.mkdir(parents=True, exist_ok=True)
     u19 = load_u19(geometry)
-    fixture = SnapshotFixture(root / "apps" / "observer" / "frontend" / "dist")
+    surfaces = resolve_surfaces(payload)
+    fixture = SnapshotFixture(root / "apps" / "observer" / "frontend" / "dist", payload)
     fixture.start()
     try:
         try:
-            harvests = measure_all(geometry, u19, browser, fixture, names)
+            harvests = measure_all(geometry, u19, browser, fixture, names, surfaces)
         except Exception as exc:  # noqa: BLE001
             print(f"HUD_STRIP_GATE_NOT_RUN MEASURE_FAILED {exc!r}")
             return 3
-        result = verdict(harvests)
+        result = verdict(harvests, surfaces, payload, data_block)
         result["startedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
         result["browser"] = browser
         result["servedBundle"] = bundle_provenance.describe(root)
@@ -1177,10 +1257,13 @@ def main() -> int:
         out.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
         for c in result["checks"]:
             print(f"{c['check']:<52} {'PASS' if c['pass'] else 'FAIL'} {c['detail']}")
+        served = result["data"]
+        identity = f"sha256={served['sha256'][:12]}," if served.get("sha256") else ""
         print(f"HUD_STRIP_GATE_{'PASS' if result['passed'] else 'FAIL'} "
               f"checks={sum(1 for c in result['checks'] if c['pass'])}/{len(result['checks'])} "
-              f"data=fixture(adapters={result['fixture']['adapters']},"
-              f"projects={result['fixture']['projects']},executions={result['fixture']['executions']}) "
+              f"data={served['source']}({identity}"
+              f"adapters={served['adapters']},"
+              f"projects={served['projects']},executions={served['executions']}) "
               + str(out))
         for label, items in (("RESIDUE", result["residue"]),
                              ("PORT_MISMATCH", result["portAnnouncedMismatch"])):

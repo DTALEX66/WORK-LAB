@@ -959,3 +959,78 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
 - **token-monitor HUD**：HUD 成为默认视图，`?view=dashboard` 保留旧仪表盘，视图/模式只进 URL（不写 web storage）；演示夹具只在普通浏览器或 `?demo=1` 时启用，真实 WebView2 读回为 `PAUSED`/空值而非 demo（`hud-live-window-1180.png`）。模型规则在 `apps/token-monitor/src/hudModel.js`（0/0 总量为 null、份额只从已知总量派生、缓存读是输入子集、推理是输出子集、显式未分类余量、14 天序列、活动速率需两个已知总量）。`node --test` 12/12；Playwright 39/39 与 live 路径 15/15 均在**重建后的 bundle**上复跑（收据 `checkedAt` 与 dist 重建同轮；日志 `.project-local/runs/token-hud/verify-20261019.log` / `.project-local/runs/token-hud/verify-live-20261019.log`）。**未决限制**：HUD 微标签 8–10.5px，低于 Observer 的 12px 地板；该应用原基线是 10–11px，是否统一需设计裁定，本轮未改。
 - **Rust/制品与封印**：token-monitor release 重建 `hermes-token-monitor.exe` 8,939,008 B / `bcb86b48…`；WUI-19 的旧 exe 哈希 `1ee8e0fd…` 已按实测字节机械重绑（`.project-local/runs/tmp/fix_wui19_exe_hash.py`，写后回读）。前端改动按交接重封：`scripts/audit/reseal_wui_evidence.py` 十步全部 PASS（含 falsification 预期 exit 1），`seal` → `EVIDENCE_SEAL_PASS bundle=16773551f07bdc41 files=28 BOUND=21 UNBOUND=4 STALE=3 cited=9/9`；STALE 三件仍是 native `keyboard-focus`（无 release `app.exe`，`KEYBOARD_FOCUS_GATE_NOT_RUN`）。
 - **文档口径**：440×780→440×680 在 `apps/observer/frontend/DESIGN.md`、`apps/observer/frontend/SCREEN_SPEC.md`、`docs/history/archive/HANDOFFS-AND-PROMPTS-20261019.zip`（成员 NEXT-AGENT-PROMPT）、`docs/history/archive/ui-priority-20261009/TASK-BREAKDOWN.json`、`taskpacks/history/pre-convergence-20261019/WORK-LAB-UI-PRIORITY-TASKPACK-20261009.md` 与 `docs/history/archive/ui-priority-20261009/WUI-19-FINAL-ACCEPTANCE-20261012.md` 同步；200% 行保留 2026-10-12 的 FAIL 原文并附本轮派生 PASS 的更正。**未做**：Observer 原生 release 未重制；未跑全量 `apps/observer/scripts/frontend_toolchain.py contracts`，按本轮既定口径（避免全量测试）只跑定向用例。工作区未提交，提交/推送属 owner 决定。
+
+
+**2026-10-28 · 分支退役 + 真数据读回（不再只用夹具）+ `.project-local` 体积释放**
+
+- **分支拓扑收敛**：本轮开始时除 `refs/heads/main`（`e94d89b6fd78d6753247016064a82a8644bc4f5b`，与本地 main 及 `git ls-remote origin refs/heads/main` 三方一致）外有 9 个远端分支，开放 PR=0。
+  8 个是 main 的祖先且三点差集为空（`refs/heads/docs/cl15-closure-note-20261028`、`refs/heads/feat/daily-governance-diagnostics-20261028`、`refs/heads/feat/daily-theme-tokens-20261028`、
+  `refs/heads/feat/hud-settings-in-view-20261028`、`refs/heads/fix/audit-p2-20261026`、`refs/heads/fix/governance-member-routing-20261028`、
+  `refs/heads/fix/inventory-self-cite-20261028`、`refs/heads/feat/ledger-truth-20261027`）。第 9 个 `refs/heads/feat/w06-stream-cost-and-audit` 非祖先只因 squash：
+  PR #177 状态 MERGED、merge commit `f6077d18`、分支尖 `8f6540df`，逐 blob 比对证明内容已在 main——
+  `scripts/audit/observer_stream_cost_probe.py`、`tests/ci/test_observer_stream_cost_probe.py`、`docs/audits/FULL-AUDIT-20261018.md` 三处 blob 与 main 完全相同；
+  main 里"没有"的 `docs/history/archive/ui-priority-20261009/STREAM-COST-BASELINE-20261018.md` 与 `docs/history/archive/ui-priority-20261009/UIV2-INTERFACE-BINDING-MATRIX.csv` 是逐字节相同的 blob（被 2026-10-19 归档规范挪走，非丢失）。
+  **该分支相对 main 唯一独有的行是修复前的形状**：把 `wholeDigest` 当调用方供值回传，即 `docs/audits/FULL-AUDIT-20261018.md` 的 F-01 BLOCKER；
+  main 已按 `taskpacks/current/error-ledger.json` 的 ERR-284 改为读取器自测（`packages/client-neutral-core/scripts/evidence_range_reader.py` 的 `_measure_whole_digest`），
+  `tests/ci/test_sidecar_documented_launch.py` 也已有同一"真启动＋snapshot 200"用例并多 3 例。**所以合并它会把已修的缺陷装回去**——本轮无东西可合，只退役。
+- **退役做法（可恢复优先）**：按 `refs/tags/wl-retire-20260917/*` 的既有惯例先打标签再删分支；8 个 `refs/tags/wl-retire-20261028/*` 已推送 origin，
+  解引用 SHA 逐一等于被删分支尖（标签 SHA 取自 `git ls-remote`，未手打）。远端与本地分支已删；`refs/heads/feat/ledger-truth-20261027` **未动**，
+  因为它的 worktree `.project-local/worktrees/brand-20261027` 有 4 个未提交改动（并行写入者的活工作）。上一轮登记的 owner 决策项 (d) 就此关闭。
+- **另一个游离提交**：detached worktree `.project-local/worktrees/ci-repro` 的 `e841fcba` 不是 main 祖先、不属任何分支，但与 main 的三点差集为空（无独有内容）。
+  先打成 `refs/tags/wl-orphan-20261028/ci-repro-e841fcba` 推送 origin，再 `git worktree remove`。**当前 worktree 只剩 3 个**，其中两个是脏的（不可动）。
+- **真数据读回（本轮的主诉求）**：夹具把形状写死，而真台账的形状从来没被量过。实测量（副本台账，只读；`GET /api/v1/snapshot`，`schemaVersion=workflow/snapshot/v3`）：
+  revision 4433；`adapterCapabilities` **10 张**（夹具声明 9）；角色直方图 `agent_runtime=3, provider_router=1, vcs_host=1, design_client=1, UNKNOWN=4`
+  （夹具是 `agent_runtime=6` 且 1 张无角色）；`projects` **1**（夹具 2）、`executions` **0**（夹具 2）、collectors 7、taskRecords 42、artifactHandles 160/200；
+  `transport.transportState=OFFLINE`、`freshnessState=UNKNOWN`；`git.localSha=e94d89b6…` 而 `remoteSha=null`、`matchState=UNVERIFIED`。
+  真实角色缺口比上一轮登记的大：未声明角色的是 **4 个**客户端（openhuman、cursor、claude-code、workbuddy），不是 1 个。
+- **仪表缺陷被真数据抓出来（已修）**：`scripts/audit/hud_strip_geometry_via_cdp.py` 的 h03/h04 就绪条件等的是字面量 `Codex`，那是**夹具**的第一张卡；
+  真台账第一张卡是 Hermes，于是两条面等满 24 秒预算判 `ready=False`，整门 76/78——而同批几何与额度判定在真数据上全过（含"只监控声明为 agent 的运行时"：
+  行集实测 `hermes, codex, deepseek-harness`，被排除的 7 个名字一个都没画出来）。修法是把 marker 从**被服务的那份 payload** 派生，
+  新增 `--snapshot-file`（喂真 snapshot 跑同一套判定），并让收据如实写 `data=captured-snapshot(sha256=1ff0c609b944,adapters=10,projects=1,executions=0)`——
+  改前它会给真实字节贴上 `data=fixture(...)` 的标签，那是收据在说谎。修后**真数据 78/78、夹具仍 78/78**；单元测试 62 → 68 全过（新 6 例含正对照：夹具默认路径逐字节不变）。
+- **可读性门在真数据上的诚实结果**：`scripts/audit/text_legibility_via_cdp.py` 新增 `--api`，走侧车同源入口（`--frontend-root` 同时服务 `dist` 与真 snapshot，即发布线自己的只读浏览器入口），
+  起门时先探后端（非回环、非 v3、连不上一律 `NOT_RUN`，因为落到离线卡片照样"字很清楚"）。第一条判据实测写成 `startswith("workflow/snapshot")` 时，
+  新加的 v2 反例测试直接把它抓红——收紧为等于 `workflow/snapshot/v3` 后才成立。实跑结果**不是通过而是拒跑**：
+  `THIN_HARVEST(strip-h01/dark) only 9 text nodes (need 12)` —— 真台账下 150×480 窄条只画 9 个可读文本节点，够不到为"已填充面"设的 12 节点地板；
+  夹具（2 项目 2 执行）把它撑到地板之上，所以这条标准从未在真数据形状上被量过。两块宽面在真数据**暗/亮两态全部通过**：`daily-home` 与 `daily-governance` 各 nodes=33 ≥ 30，零失败项。
+  `tests/ci/test_text_legibility_gate.py` 64 → 69 全过。
+- **探针自己的假零**：第一次读回报 `adapters=0`，是探针读了合同里根本不存在的 `adapters` 键（真键 `adapterCapabilities`）。已纠正，教训按既有规则记在这里而不是代码注释。
+- **一处已发布验收与字节不符（未擅改，待 owner）**：本表 WUI-14 行给
+  `.project-local/runs/observer-release/cargo-target-msvc/release/app.exe` 绑 `sha256 f52e21c5e87cdfe2435da1078de3b8da4cc3f1088be361ce82c099187545d7a2`；
+  该路径实测 9,797,120 B、`sha256 b5db973335b5ce3d70ec7c5117300983b396999f3465cb944b905f8b66cff401`（mtime 2026-10-19 01:37）。
+  本机当时现存的同名产物按路径实测：`.project-local/runs/observer-release/cargo-target-msvc/release/app.exe` = `b5db9733…`（正文点名，本轮原位保留）、
+  `.project-local/runs/tauri-target-msvc/release/app.exe` = `1e000702…`、
+  `.project-local/runs/observer-native-20261027/artifact/app.exe` 与 `.project-local/runs/observer-native-20261027/explicit/app.exe` = `5fbcbca1…`
+  （后三条未被任何正文点名，已随本轮清理删除），**没有一个等于 `f52e21c5…`**。
+  对照项：`.project-local/runs/token-hud/cargo-target/release/hermes-token-monitor.exe` 实测 8,939,008 B、`bcb86b48…`，与所记**一致**。
+  处理：只登记实测，不改写已发布的 DONE 判定，也不据此把 WUI-14 降级——重绑还是回退状态归 owner 决定。被点名的这个 exe 本轮**原位保留**（见下）。
+- **`.project-local` 体积释放（owner 本轮指令）**：保留集不手写，从仓内正文自动抽取（扫 2459 个 tracked 文本文件里的 `.project-local/...` 路径，只认**被点名的文件**必须留在原位；
+  机器生成的路径普查 `docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json` 被排除在保留集外——它按**仓库可核验**回答存在性（自述
+  `scope.distinctProjectLocalTokens=715`、`tokensResolvedOnDisk=0`、`tokensAbsent=715`：`.project-local` 是 git 忽略根，715 条全记 absent 是构造使然而非磁盘事实，
+  `counts.presentOnThisMachine=417`），判的是**引用措辞**是否合规，不是把某条字节绑成验收证据；把它当保留集会让 GB 级可重建中间产物变成不可删。
+  若当证据用会让 GB 级可重建成中间产物变成不可删）。删除根逐项列明，只碰 Rust 构建输出、浏览器 profile、缓存：
+  实测 `du -sb` **11,572,708,794 B → 1,799,560,952 B，释放 9,773,147,842 B＝基线的 84.4%**（脚本投影的 11,184,063,907 B 含硬链接重复计数，故以 du 前后差为准）。
+  **保留在原位**：上面那两处被正文点名的 exe，加 `.project-local/runs/token-hud/verify-20261019.log` 与 `.project-local/runs/token-hud/verify-live-20261019.log`；
+  `cl11` 保 448,951 B、`cl10` 保 66,765 B 的被点名制品。
+  **完全未动**：活台账根 `.project-local/runs/workflow`（WAL 比 db 新、归属 UNKNOWN，且 owner 说 AGENT 正在跑）、
+  `.project-local/imported-from-workbuddy-20261006`（其 MANIFEST 记的源目录实测 ABSENT，是唯一副本）、`.project-local/artifacts/dsh-backup-pre-deploy` 的回滚 exe（`taskpacks/current/error-ledger.json` 记为唯一回滚点）、
+  `.project-local/atlas-2026-09-29`（被 `scripts/audit/ag19_record_root_pin_test.py` 等活代码读）、`.project-local/toolchains/wl-py311`（声明的门解释器）、
+  两个脏 worktree、`.project-local/quarantine`。重建路径按本表已记的 MSVC 命令，未删任何 tracked 内容。
+- **仍未做（需要授权或属于 owner 判断，逐条点名）**：
+  (1) `docs/current/` 里自我声明 SUPERSEDED/退役的文件（`docs/current/workflow-assistance/runtime-adapters/deepseek-harness.md`、
+  `docs/current/workflow-assistance/skill-references/observer.md`、`docs/current/workflow-assistance/skill-references/external-clients.md`、`docs/current/workflow/examples/governance.yml.example`）
+  归档到 `docs/history/archive/` 要同批重发 `docs/history/archive/FROZEN-MANIFEST.json`（`tests/ci/test_frozen_surfaces_are_intact.py` 按字节钉住
+  `knowledge-staging`、`docs/history/archive`、`reports/audit-archive` 三个面，各自的清单是 `knowledge-staging/FROZEN-MANIFEST.json` 与 `reports/audit-archive/FROZEN-MANIFEST.json`）并做消费面扫描，未动。
+  (2) 仓内 7 个 tracked `*.bak-*` 全部落在 `reports/audit-archive/` 冻结清单内，删除会破冻结门；`.gitignore` 确实没有 `*.bak*` 图形（根级游离副本
+  `AGENTS.md.bak-20261024` 未被忽略），改忽略规则或删冻结件都归 owner。
+  (3) tracked 体量 66% 是 `.gitattributes` 声明"不可变 2026-10-09 输入原件字节"的 owner-input 原件块，
+  改成 LFS 是重挂历史，**不是清理动作**，归 owner。
+  (4) `docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json` 生成于 2026-10-25（`counts.presentOnThisMachine=417`），对现状已失真：本轮实测
+  `.project-local` 清理前 11,572,708,794 B、清理后 1,799,560,952 B，`.project-local/runs` 顶层项 1380。重发它要跑
+  `scripts/audit/project_local_citation_audit.py`，与本轮改动分属两批；另有一个**不可核实的数**被我拒登：子代理报的"总量 4,191,041,828 B 记于
+  `docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json`"在全部 tracked 内容里 `git grep` 无此数字，故不写入本表。
+- **本轮证据（逐条为当轮实测，不沿用旧绿）**：`HUD_STRIP_GATE_PASS checks=78/78 data=captured-snapshot(sha256=1ff0c609b944,adapters=10,projects=1,executions=0)`；
+  `HUD_STRIP_GATE_PASS checks=78/78 data=fixture(adapters=9,projects=2,executions=2)`；
+  `pytest tests/ci/test_hud_strip_geometry_gate.py tests/ci/test_text_legibility_gate.py → 137 passed`；
+  真数据 daily 两面暗/亮 4 次测量全 `passed=True, nodes=33, minNodes=30`。
+  夹具壳面扫描与上一轮同判据（本轮未改判据，只加入口）。
