@@ -127,6 +127,12 @@ function currentTargets(): string | null {
 function cardsShown(): number {
   return document.querySelectorAll(CARDS).length
 }
+/** 页脚计数按"用户读到的一行一行"断言，而不是把两行拼成一个字符串：拼起来读不出
+ *  「数字被挤到下一行单独悬着」这类排版问题，而那正是分成两行的原因。 */
+function countLines(testId: string): string[] {
+  const el = screen.getByTestId(testId)
+  return Array.from(el.querySelectorAll('span')).map((line) => line.textContent ?? '')
+}
 /** 把被动效果与 Promise 回调这一轮全部落地后再断言：地址写回走的是 App.tsx 的 useEffect，
  *  按真实时序读地址，而不是按理想时序。 */
 async function settle() {
@@ -352,7 +358,8 @@ describe('E2 · 日常壳里的显示筛选（URL 往返与如实空态）', () 
     setUrl('?surface=hud&targets=proj-a')
     const { unmount } = render(<App />)
     await settle()
-    expect(screen.getByTestId('hud-project-counts').textContent).toContain('全机 项目 1 · 待审 1')
+    // 两个计数是两行，每行一个完整的「名词＋数」：断言按行读，才不会被"数字被挤到下一行"这种排版骗过。
+    expect(countLines('hud-project-counts')).toEqual(['全机 运行中项目 1', '待审 1'])
     expect(screen.getByTestId('hud-count-scope').textContent).toContain('不随主窗口 ?targets 显示筛选变化')
     expect(currentTargets()).toBe('proj-a')
     unmount()
@@ -363,7 +370,7 @@ describe('E2 · 日常壳里的显示筛选（URL 往返与如实空态）', () 
     await settle()
     expect(currentTargets()).toBeNull()
     expect(screen.queryByTestId('hud-count-scope')).toBeNull()
-    expect(screen.getByTestId('hud-project-counts').textContent).toBe('项目 1 · 待审 1')
+    expect(countLines('hud-project-counts')).toEqual(['运行中项目 1', '待审 1'])
   })
 
   it('窄窗不自己发明第二套显示状态：筛选控件只在日常壳里', async () => {
