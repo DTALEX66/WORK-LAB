@@ -172,3 +172,11 @@ export const OVERVIEW_ID = 'overview'
 // 项目监控 and forbids a second home, so the id stays and the word changes. Nothing outside this
 // constant may spell it: the desktop component contract fails on a second source.
 export const OVERVIEW_LABEL = '项目监控'
+
+// Same reasoning as N-1 above, one axis over: the rail needs a glyph for this lane and the lane has no
+// registry row to declare it, so the icon lives beside the label rather than being minted inside the
+// component (a glyph chosen in a component is a second source that can drift from the registry's set).
+// It borrows 监控's `Activity` instead of taking a 31st glyph, which is the convention the registry already
+// uses for paired surfaces (`executions` and `execution-detail` share `PlayCircle`; `privacy` and `trust`
+// share `ShieldCheck`).
+export const OVERVIEW_ICON = Activity

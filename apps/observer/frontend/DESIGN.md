@@ -525,9 +525,22 @@ each one declared at the sentence rather than excused repo-wide:
     `.project-local/artifacts/NARROW_BAND_ATTEMPT_20261008.diff`. **The standard row was the defect**, so
     SCREEN_SPEC now states window surfaces instead of a phone band, the target rule reads 24×24 (WCAG
     2.5.8) rather than the 44px figure that came with the deleted row, and the gate measures the real
-    floor. ERR-219 records it. What remains genuinely open is a design question the deleted row was
-    papering over: the rail has no per-lane icon set, so it cannot be made narrow on purpose — only by
+    floor. ERR-219 records it. What remained genuinely open was a design question the deleted row was
+    papering over: the rail had no per-lane icon set, so it could not be made narrow on purpose — only by
     removing information.
+    **Closed on the picture half 2026-10-29, and the diagnosis changed.** `src/lib/viewRegistry.ts` had
+    declared one Lucide glyph per lane all along (32 rows, 30 distinct glyphs, the two repeats being the
+    registry's own pairing convention: `executions`/`execution-detail` share `PlayCircle`, `privacy`/`trust`
+    share `ShieldCheck`); the field simply had **no consumer**, so the rail painted 31 identical `.nav-dot`
+    circles and every source-level grep read as delivered. `src/components/layout/Sidebar.tsx` now renders
+    each lane's declared glyph in place of the dot. Measured on the built bundle at 1280×820: 31/31 rows
+    paint a glyph, label truncation 0 before and 0 after (`truncated=0` in
+    `.project-local/runs/live-probe-20261029/rail-before-main.json` and `rail-after-icons.json`), and the
+    geometry, legibility and pressed-state gates are unchanged — the glyph replaces a 10px decoration with a
+    15px one instead of adding to it, which is the difference between this attempt and the discarded one.
+    `src/laneIcons.contract.test.tsx` binds the painted row to the registry row and fails if a lane loses
+    its name. **What is still open is the width decision, not the icon set**: the rail may now be narrowed
+    on purpose, and whether to do that is an owner call about the professional shell.
 11. **One role, two literals, kept equal by a guard rather than by one definition.**
     `--color-bg / -sidebar / -panel / -panel2 / -border / -ink / -muted` in `src/index.css` repeat, character
     for character, what `src/skins/b10.css` (`:root`) and `src/skins/l10b-shell.css` (`html.light`) declare for
