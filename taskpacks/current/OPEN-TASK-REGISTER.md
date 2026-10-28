@@ -1122,8 +1122,8 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   合并后逐条比过再删——`git diff --stat main...<tip>` 为空、`git cherry main <tip>` 无输出、被改两个文件的
   index blob 与 main 完全相同（`e818a7b0…`、`61670061…`）；先 `git tag wl-retire-20261028/<分支名>` 并推到远端，
   再移除检出、删本地与远端分支。远端现存 `refs/heads/main` 与保留的 `refs/heads/feat/ledger-truth-20261027`。
-  一处新踩的坑：本地标签名不能带 `refs/tags/` 前缀，带上前缀 `git push` 被 GitHub 以 GH014 拒绝，
-  标签名写 `wl-retire-20261028/…` 即可。
+  一处新踩的坑：本地标签名不能再以 ref 路径开头（GitHub 对以 `refs/tags` 起头的标签名报 GH014 并拒绝推送），
+  标签名只写 `wl-retire-20261028/…` 这一段即可。
 - **真实数据只读闭环（本轮不再只用夹具）**：把活账本 `canonical.sqlite`（1,269,760 B，07:43:53）与
   `-wal`（4,120,032 B，08:15:31）复制成本轮专用副本，侧车以只读方式在动态回环端口服务该副本与已发布 `dist`，
   同源读到的真实快照 `sha256=9b8916b56be34dfe…`、252,978 B：`revision=4433`、adapters=10、
