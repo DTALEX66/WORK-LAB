@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-28T16:20:21Z",
+  "generatedAt": "2026-10-28T17:15:51Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 81,
+    "trackedTools": 82,
     "withLedgerPromise": 21,
-    "referencedSomewhere": 81,
+    "referencedSomewhere": 82,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -625,6 +625,19 @@
         "docs/audits/PROJECT_LOCAL_CITATION_AUDIT_2026-10-07.json",
         "docs/history/archive/ui-priority-20261009/LEGACY-TASK-DISPOSITION.json",
         "taskpacks/current/error-ledger.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/overlay_motion_via_cdp.py",
+      "sha256": "a3effb8ab1de89cef30e8d29413d16c86511b3c3ead57ea9c1ddb349de930c81",
+      "bytes": 13807,
+      "lines": 277,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 2,
+      "citedBy": [
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/ci/test_overlay_motion_gate.py"
       ]
     },
     {
