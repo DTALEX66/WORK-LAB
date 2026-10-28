@@ -1627,3 +1627,41 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   这是本仓既有的叠 PR 机制，不是本轮新问题。
 
 - **叠合后的复跑**：#231 合并进 main 后本分支 rebase，重新构建并按同一形状重量四道浏览器门——`GEOMETRY_GATE_PASS`、`PRESSED_MOTION_GATE_PASS surfaces=["console","daily"]`（`console/.nav button` 覆盖仍 40）、`HUD_STRIP_GATE_PASS checks=81/81`、`LEGIBILITY_GATE_PASS`，并顺带在新树上跑了 #231 那道 `REDUCED_MOTION_FLOOR_GATE_PASS surfaces=5 checks=17/17`——两条节合起来才是将要合并的字节。
+
+
+**2026-10-29 · PR #232 合并回执 + 本轮（2026-10-28/29 队列）收口：可自主项已尽，其余按名归位**
+
+- **PR #232 闭环**：head `d4aeb493e03ad5f712efbed179d85872ade56597` 上 12 项检查全部 pass，
+  merge commit `0d6d8b302942c01ba7df24220af73fc4d17cd966`；本地 main、`origin/main`、
+  `git ls-remote origin refs/heads/main` 三方一致于该 SHA。分支先打
+  `wl-retire-20261029/feat_lane-icon-set-in-rail-20261029` 并推送，再删 worktree
+  （先摘 node_modules junction，摘后复核主工作树 `node_modules/.bin` 仍在）与本地、远端分支。
+- **本轮交付按 PR 逐件对号（分支名即事由，合并 SHA 见各节）**：
+  #220 窄条悬停改真指针；#221 按下态门改「轮询到稳定再读」并允许 NOT_MEASURABLE；
+  #222 可读性门的密度地板从「夹具人口总数」换成「该面自己的 chrome 计数」，此后壳面门第一次跑通真台账；
+  #223 窄条行补可及名（`role=img`＋`aria-label`，AX 名 0→3）；#224 按下态改 CDP 真指针＋键盘等效反馈；
+  #225 窄条页脚的「运行中项目」计数按宽屏口径改措辞；#226 覆盖层进出场采样仪表；
+  #227 台账状态位按实测改判（WUI-21 的「三页与快照携带面仍未做」、WUI-19 的「原生键盘缺」措辞）；
+  CL-13 的「CI 从未执行 27 个规范门」同一类改判记在该行 2026-10-29 的更正里（现读数 50 门／48 被调用／2 带理由声明／0 未声明）；#228 设置齿轮改真指针（并先量它能不能被光标落到）；
+  #229/#230 覆盖层接上真的进/退场过渡（`apps/observer/frontend/src/lib/useEnterTransition.ts`）
+  并把门的进入与退出拆成两条互不抵偿的判据；#231 reduced-motion 断言从 grep 样式表文本改成逐面读计算样式
+  （`scripts/audit/reduced_motion_floor_via_cdp.py`，五面两偏好 17 项判据），并把此前**没有任何作业执行**的
+  覆盖层门接进 `observer` 作业（runner 日志逐字读回 `OVERLAY_MOTION_GATE_PASS` 与
+  `REDUCED_MOTION_FLOOR_GATE_PASS surfaces=5 checks=17/17`）；#232 泳道花符从「注册表声明、零消费者」
+  变成屏幕上的事实（31/31 行有图形、标签截断 0→0）。
+- **本轮没有做的，按名归位（不写成已完成）**：
+  *owner 定夺*——窄条 H01 是否画软件全名；`openhuman` 等未声明 role 的客户端如何定性（受管配置写入）；
+  WUI-03 ④药丸字面渐变与 `--success/--warning/--danger` 不同值、⑤母版 222px 侧栏、专业壳导轨是否有意变窄；
+  CL-14 的 handle 延迟预算数字；WUI-19 的 release 重制（属发布动作）与远端 LFS 目标；
+  WUI-21 ③写入面的授权目标（`services/control/control_service.py` 对真实目标继续 `TARGET_NOT_AUTHORISED`，
+  我不自开可写面）。*需外部授权*——WUI-20 的真实对端接收/教学/专业接受/真人学习/反馈五项，未发送、未伪造。
+  *环境两侧缺*——WUI-19 原生键盘与 DPI 门：本机无 MSVC＋Windows SDK（PATH 上唯一的 `link.exe` 是 Git 的
+  coreutils 工具），CI 每次建真 exe 但 runner 无可见桌面（owner 2026-10-26 定该步 REPORTED, NOT REQUIRED）。
+  *合同具名缺口*——WUI-21 ④`PROGRESS_SEQUENCE` 无生产者，不补不造。
+- **下一轮的接入点（按依赖顺序，不新开战线）**：CL-16 第 3 步（`motion@14.6.0` 的 `LazyMotion`＋`m`，
+  约 6–15 kB gzip，MIT，peer 与本栈兼容）现在才有可依赖的机制与被执行的门——接入点是
+  `useEnterTransition` 与两个 `*_EXIT_MS` 常量；同一步要一并决定窄条的 CSS 动效语言缺席
+  （本轮 reduced-motion 门报出的 `NO_MOTION_DECLARED_IN_EITHER_BRANCH [strip-h01]`），
+  因为把该门的逐面判据升严的前提就是窄条先有动效。第 4 步（粒子/环境层）仍受两条既有约束：
+  合成层原则（逐帧 `filter: drop-shadow` 禁止）与「canvas 能在可读性门全绿时把文字压得读不出」，
+  验收必须用真实像素采样。
