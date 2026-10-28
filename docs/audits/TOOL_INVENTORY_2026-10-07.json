@@ -1,6 +1,6 @@
 {
   "schemaVersion": "work-lab/tool-inventory/v1",
-  "generatedAt": "2026-10-28T19:28:34Z",
+  "generatedAt": "2026-10-28T19:56:51Z",
   "generatedBy": "scripts/audit/tool_inventory_readback.py",
   "scope": [
     "scripts/audit/",
@@ -8,9 +8,9 @@
   ],
   "basis": "git ls-files at HEAD; each digest is the sha256 of the committed blob bytes (`.gitattributes` sets `* text=auto`, so working-tree bytes differ per platform — ERR-125), except files not yet in HEAD, which say so in their own digestBasis",
   "counts": {
-    "trackedTools": 82,
+    "trackedTools": 83,
     "withLedgerPromise": 21,
-    "referencedSomewhere": 82,
+    "referencedSomewhere": 83,
     "unclaimed": 0
   },
   "unclaimed": [],
@@ -634,8 +634,9 @@
       "lines": 347,
       "digestBasis": "git-index",
       "citedByLedgerPromises": 0,
-      "citedByRecords": 2,
+      "citedByRecords": 3,
       "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
         "taskpacks/current/OPEN-TASK-REGISTER.md",
         "tests/ci/test_overlay_motion_gate.py"
       ]
@@ -764,6 +765,20 @@
       "citedByRecords": 1,
       "citedBy": [
         "docs/audits/PROBE_TOOL_PROMOTION_2026-10-07.json"
+      ]
+    },
+    {
+      "path": "scripts/audit/reduced_motion_floor_via_cdp.py",
+      "sha256": "937e0aa0e6a99bff0815344d8a1dec679fb88af6e99dd514943e51affa9553a7",
+      "bytes": 15105,
+      "lines": 299,
+      "digestBasis": "git-index",
+      "citedByLedgerPromises": 0,
+      "citedByRecords": 3,
+      "citedBy": [
+        ".github/workflows/work-lab-gate.yml",
+        "taskpacks/current/OPEN-TASK-REGISTER.md",
+        "tests/ci/test_reduced_motion_floor_gate.py"
       ]
     },
     {
