@@ -216,15 +216,17 @@ def verdict(measurements: dict[str, dict]) -> dict:
             f"closePath={m.get('closePath')!r} exitSamples={m.get('exitSamples')} "
             f"framesStillPainted={m.get('exitFramesPresent')} "
             f"unmountedAtSample={m.get('unmountedAtSample')}")
-        moved = {p: len(v) for p, v in (m.get("enterValues") or {}).items() if len(v) > 1}
-        moved.update({f"exit:{p}": len(v) for p, v in (m.get("exitValues") or {}).items() if len(v) > 1})
+        enter_moved = {p: len(v) for p, v in (m.get("enterValues") or {}).items() if len(v) > 1}
+        exit_moved = {f"exit:{p}": len(v) for p, v in (m.get("exitValues") or {}).items() if len(v) > 1}
+        moved = {**enter_moved, **exit_moved}
         motion[name] = ("animated:" + json.dumps(moved)) if moved else \
             "NOT_ANIMATED: every sampled property held one value across the whole enter and exit window"
         # The assertion the report was waiting for: the skin declares `.drawer{transition:right .28s}` and
         # `.toast{transition:.22s}`, so an entrance that samples one value from the first painted frame
-        # onwards is a broken promise, not a style preference. Measured 2026-10-29 before the fix, both
-        # overlays appeared already at their end state; the components now paint closed, then flip.
-        add(f"overlay_enter_transitions[{name}]", bool(m.get("opened")) and bool(moved),
+        # onwards is a broken promise, not a style preference. Enter and exit are counted separately on
+        # purpose: an overlay that appears instantly but fades out has a real defect on the enter side, and
+        # folding the two together would let the fade excuse the jump cut.
+        add(f"overlay_enter_transitions[{name}]", bool(m.get("opened")) and bool(enter_moved),
             f"enterValues={json.dumps(m.get('enterValues'), ensure_ascii=False)[:180]} "
             f"mountedClass={m.get('mountedClass')!r} → {motion[name]}")
         # The other half of the same rule: the accessibility floor answers `reduce` with the transition
@@ -248,6 +250,15 @@ def verdict(measurements: dict[str, dict]) -> dict:
             and reduce_end == normal_end,
             f"reduce enterValues={json.dumps(reduce.get('enterValues'), ensure_ascii=False)[:170]} "
             f"normal end={json.dumps(normal_end, ensure_ascii=False)[:170]} opened={reduce.get('opened')}")
+        # The other side CL-16 step 2 asked for: leaving must be painted too, not just deleted. An overlay
+        # that vanishes between two frames is the same defect as one that appears already open, seen from
+        # the other end — and the exit is the side that regresses silently when a list removes its item in
+        # the same tick the class is dropped.
+        exit_moved = {p: len(v) for p, v in (m.get("exitValues") or {}).items() if len(v) > 1}
+        add(f"overlay_exit_transitions[{name}]",
+            bool(m.get("unmountedDuringExit")) and bool(exit_moved),
+            f"exitValues={json.dumps(m.get('exitValues'), ensure_ascii=False)[:180]} "
+            f"framesStillPainted={m.get('exitFramesPresent')} unmountedAtSample={m.get('unmountedAtSample')}")
     return {"passed": all(c["pass"] for c in checks), "checks": checks, "motion": motion,
             "surfaces": sorted(measurements)}
 

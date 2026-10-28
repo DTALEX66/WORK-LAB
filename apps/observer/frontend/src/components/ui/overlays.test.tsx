@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { Modal } from './modal'
 import { Drawer } from './drawer'
-import { Toaster, useToaster } from './toast'
+import { Toaster, useToaster, TOAST_EXIT_MS } from './toast'
 
 // M-3 (UI-CHECK-20261006): these overlays declared aria-modal without trapping
 // Tab. A declared-but-unenforced modal contract is a defect, not a nicety: the
@@ -124,6 +124,17 @@ describe("toast severity semantics", () => {
     expect(screen.getAllByRole('alert')).toHaveLength(1)
 
     act(() => { vi.advanceTimersByTime(1801) })
+    // Expiring now means "fade out, then leave": at the lifetime the row is still in the document without
+    // `.show`, and only after the skin's own transition budget is it gone. Asserting the disappearance at
+    // 1801 ms would have hidden the fade — and asserting nothing at all would hide a row that never leaves.
+    expect(screen.getByText('状态消息'), 'the status toast must still be painting its fade-out')
+      .toBeInTheDocument()
+    const statusRow = screen.getByText('状态消息').closest('div.toast')
+    expect(statusRow, 'the fading row is the same element, not a re-created one').not.toBeNull()
+    expect(statusRow!.classList.contains('show'), 'the lifetime expires the `.show` class, not the node')
+      .toBe(false)
+    expect(screen.getByText('失败消息')).toBeInTheDocument()
+    act(() => { vi.advanceTimersByTime(TOAST_EXIT_MS + 1) })
     expect(screen.queryByText('状态消息')).toBeNull()
     expect(screen.getByText('失败消息')).toBeInTheDocument()
   })
