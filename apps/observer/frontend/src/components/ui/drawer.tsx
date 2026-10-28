@@ -1,6 +1,11 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { useEnterTransition } from '@/lib/useEnterTransition'
 import { useFocusTrap } from '@/lib/useFocusTrap'
+
+/** The skin's own closing duration (`b10.css` `.drawer{transition:right .28s …}`) plus a frame of margin.
+ *  `overlays.test.tsx` reads the stylesheet and fails if these two numbers stop agreeing. */
+export const DRAWER_EXIT_MS = 300
 
 /**
  * UI_COMPONENTS (20260921) · L10b (2026-09-27): Drawer — L6 authority: 280ms
@@ -37,10 +42,12 @@ export function Drawer({ open, onClose, title, children, side = 'right', classNa
   // straight out of the drawer into the surface behind it.
   useFocusTrap(open, panelRef)
 
-  // L10b: B10 slides the `.drawer` in/out with `.open`. The repo contract is
-  // "closed drawer renders nothing" (so its content never duplicates page
-  // text), so the element is mounted only while open.
-  if (!open) return null
+  // L10b: B10 slides the `.drawer` in/out with `.open`. The repo contract is that a closed drawer renders
+  // nothing, so its content never duplicates page text — but the element now mounts WITHOUT `.open`, gets
+  // painted at the skin's `right:-540px`, and only then flips: mounting with the open class already applied
+  // gave the browser two names for one painted state, so the declared 280ms slide never happened.
+  const { mounted, shown } = useEnterTransition(open, DRAWER_EXIT_MS)
+  if (!mounted) return null
 
   return (
     <>
@@ -55,7 +62,7 @@ export function Drawer({ open, onClose, title, children, side = 'right', classNa
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={cn('drawer', 'open', className)}
+        className={cn('drawer', shown && 'open', className)}
         style={side === 'left' ? { right: 'auto', left: 0 } : undefined}
       >
         <h3 className="m-0 mb-2">{title}</h3>

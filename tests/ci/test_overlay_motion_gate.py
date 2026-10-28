@@ -32,8 +32,10 @@ def reading(**overrides) -> dict:
     base = {
         "name": "drawer", "selector": "aside.drawer", "mode": "real-pointer",
         "trigger": {"found": True, "label": "工作区", "tag": "BUTTON", "x": 353, "y": 119},
-        "opened": True, "enterSamples": 35, "presentFrames": 35, "mountedClass": "drawer open",
-        "enterValues": {"right": ["0px"], "transform": ["none"], "opacity": ["1"]},
+        "opened": True, "enterSamples": 35, "presentFrames": 35, "mountedClass": "drawer",
+        # The first painted frame carries no `.open` any more, and `right` runs through intermediate values:
+        # that is what the skin's declared transition looks like when it actually runs.
+        "enterValues": {"right": ["-540px", "-268.4px", "0px"], "transform": ["none"], "opacity": ["1"]},
         "settledWhileOpen": True,
         "exitSamples": 154, "exitFramesPresent": 0, "unmountedAtSample": 0,
         "unmountedDuringExit": True, "closePath": "escape",
@@ -48,11 +50,27 @@ def checks_of(result: dict) -> dict:
 
 
 class VerdictTests(unittest.TestCase):
-    def test_a_measured_overlay_passes_and_is_reported_as_not_animated(self) -> None:
+    def test_a_measured_overlay_passes_and_is_reported_as_animated(self) -> None:
         result = gate.verdict({"drawer": reading()})
         self.assertTrue(result["passed"], json.dumps(result["checks"], ensure_ascii=False))
-        self.assertIn("NOT_ANIMATED", result["motion"]["drawer"],
-                      "measured 2026-10-29: the drawer mounts with .open already applied")
+        self.assertIn("animated:", result["motion"]["drawer"])
+        self.assertTrue(self.checks(result)["overlay_enter_transitions[drawer]"]["pass"])
+        self.assertEqual("drawer", reading()["mountedClass"],
+                         "the closed first frame is what gives the browser something to transition from")
+
+    def checks(self, result: dict) -> dict:
+        return {c["check"]: c for c in result["checks"]}
+
+    def test_an_overlay_that_appears_at_its_end_state_fails_the_enter_clause(self) -> None:
+        # The shape measured on 2026-10-29 before the components were fixed: mounted with the open class
+        # already applied, so every sampled property held one value and the declared slide never ran.
+        planted = reading(mountedClass="drawer open",
+                          enterValues={"right": ["0px"], "transform": ["none"], "opacity": ["1"]})
+        result = gate.verdict({"drawer": planted})
+        clause = self.checks(result)["overlay_enter_transitions[drawer]"]
+        self.assertFalse(clause["pass"])
+        self.assertIn("NOT_ANIMATED", clause["detail"])
+        self.assertFalse(result["passed"])
 
     def test_a_real_click_that_opens_nothing_fails_instead_of_reporting_a_pass(self) -> None:
         planted = reading(opened=False, presentFrames=0, mode="click-did-not-open",

@@ -1405,3 +1405,43 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   至此全部落地；第 3 步（`motion@` 的 `LazyMotion`＋`m` 只用于进出场与状态过渡）开始前，
   需要先把覆盖层真正做成"从关闭态过渡到开启态"，并把卸载延迟与
   `apps/observer/frontend/src/components/ui/overlays.test.tsx` 钉住的"关闭即不渲染"合同同一批改。
+
+
+**2026-10-29 · PR #228 合并回执 + 覆盖层真的滑进滑出（把皮肤早就声明的过渡接上真实消费者）**
+
+- **PR #228 闭环**：head `d8dde1fe` 上 12 项检查全部 pass（含 `aggregate`），merge commit
+  `22ca0bb87a92c4794e8454e514b8ed39d2c196c8`；本地 main、`origin/main`、`git ls-remote origin refs/heads/main`
+  三方一致于该 SHA，分支已打标签退役。CL-16 第 2 步"补门先于内容"的五件至此全部落地。
+- **这一条是缺陷修复，不是新特性**：钉住的 `apps/observer/frontend/src/skins/b10.css` 早就声明了
+  `.drawer{… transition:right .28s cubic-bezier(.2,0,0,1)}` 与 `.drawer.open{right:0}`、
+  `.toast{opacity:0;transform:translateY(12px) scale(.98);transition:.22s ease}` 与 `.toast.show{…}`，
+  而 `apps/observer/frontend/src/components/ui/drawer.tsx` 与 `apps/observer/frontend/src/components/ui/toast.tsx` 挂载时就把 `open`/`show` 一起画上——
+  浏览器只被告知一个状态，没有"两次绘制之间的差"可动，所以那 280ms 滑入**从来没有发生过**。
+  `apps/observer/frontend/src/components/ui/drawer.tsx` 顶部的 L6 权威注释写的就是"280ms cubic-bezier(0.2,0,0,1) slide from the right"。
+- **改法**：新增 `apps/observer/frontend/src/lib/useEnterTransition.ts`——先按关闭态挂载并画一帧，
+  第二帧才切到开启态（两帧不是冗余：单帧可能把首绘与变更合进同一帧，那就是跳切而不是过渡）；
+  关闭时先摘掉开启类、等 `exitMs` 再卸载，且这个等待是**定时兜底而不是 `transitionend`**，
+  因为 `apps/observer/frontend/src/skins/l10b-shell.css` 在 `prefers-reduced-motion` 下把过渡整体关掉，
+  等一个永不到来的事件会把面板永远留在文档里。吐司按行持有自己的状态，避免新到的一条跟着列表里第一条一起跳。
+- **门从"报告"升格为"断言"并当场量到**：`scripts/audit/overlay_motion_via_cdp.py` 新增
+  `overlay_enter_transitions[面]`（进场窗口内至少一个被采属性出现多个不同值）。
+  修复前实测 `NOT_ANIMATED`（每个属性从出现那一帧起只有一个值），修复后
+  `OVERLAY_MOTION_REPORTED drawer: animated:{"right": 17, "exit:right": 14}`、
+  `toast: animated:{"transform": 13, "opacity": 13}`；抽屉首帧类名从 `drawer open` 变成 `drawer`，
+  `right` 依次经过 `-540px → -516.658px → -414.969px → … → 0px`，
+  Escape 后还有 18 帧在画退场才卸载（修复前是 0 帧）。整门 `OVERLAY_MOTION_GATE_PASS`。
+- **合同两侧一起改**：`apps/observer/frontend/src/components/ui/overlayEnter.contract.test.tsx` 新增 7 例，
+  钉住"第一帧是关闭态"、"关闭后先留在文档里把退场画完、超过声明时长才卸载"、
+  "退场预算读的是皮肤真正声明的数"（用正则从 `b10.css` 里读 `.28s`/`.22s` 与常量比对，
+  皮肤改了而组件没跟上就判红），以及"先画关闭态不等于把内容藏起来"（文本仍在 `screen` 上读得到）。
+  门的 `tests/ci/test_overlay_motion_gate.py` 11 → 12 例，反证是"挂载即在终态"这一旧形状。
+- **本地门**：`npx vitest run` 78 文件 **963 例全绿**（77/956 → 78/963）、`npx tsc --noEmit` 0 错、
+  `npm run build` 成功；`scripts/audit/overlay_motion_via_cdp.py` 在本分支构建的 bundle 上 PASS，
+  收据 `.project-local/runs/overlay-gate/overlays-after.json`；清单在 `git add` 之后重发；
+  台账四门绿（路径门 36 例、`normalise_doc_citations --check` rewritten=0、表形状 rows=42、live 路径 missing=0）。
+- **一处如实写明的边界**：`overlay_enter_transitions` 断言的是**默认（无 reduce）媒体偏好**下的行为——
+  本门自己启动的 Chrome 不 emulate `prefers-reduced-motion`。若将来给门加 reduce 分支，
+  该判据在 reduce 下必须换成"直接到达终态且无中间帧"，不能沿用"必须有中间帧"。
+- **按名留档**：CL-16 第 3 步（`motion@` 的 `LazyMotion`＋`m`）现在有了可断言的地面；
+  吐司的**退场**仍走"从列表移除"，`TOAST_EXIT_MS` 已声明但尚未被使用它的路径消费——
+  把它接成真正的退场需要 `useToaster` 保留 leaving 项，属下一批。

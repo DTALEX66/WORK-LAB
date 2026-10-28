@@ -9,12 +9,13 @@ what it can and cannot assert today:
       - the overlay opens from a dispatched mouse click on the control the user reads, not only from React
         state set by a test;
       - the overlay closes from Escape / the click-catcher / its own timer, again through the input path;
+      - the entrance actually transitions: at least one sampled property changes value across the enter
+        window. The skins declare `.drawer{transition:right .28s cubic-bezier(.2,0,0,1)}` and
+        `.toast{transition:.22s ease}`, and until 2026-10-29 both components mounted with the open class
+        already applied, so the browser was told one state and had nothing to animate.
       - every read happened after the paint stopped moving (the settled rule), or the run refuses.
-  * what it REPORTS (a gap, not a pass and not a failure): whether anything animated at all. Measured
-    2026-10-29: `apps/observer/frontend/src/components/ui/drawer.tsx` returns null while closed and mounts
-    with `class="drawer open"` already applied, and `toast.tsx` mounts with `class="toast show"` — an
-    element that appears at its end state has no transition to sample. Step 3 (motion@ LazyMotion) is what
-    gives this instrument something to judge, so the absence is printed by name instead of being scored.
+  * what it REPORTS alongside: which properties moved and how many distinct values each held, so a reader
+    can see what the assertion saw rather than trusting a bare PASS.
 
 Exit: 0 OVERLAY_MOTION_GATE_PASS, 1 OVERLAY_MOTION_GATE_FAIL, 3 OVERLAY_MOTION_GATE_NOT_RUN.
 """
@@ -196,6 +197,13 @@ def verdict(measurements: dict[str, dict]) -> dict:
         moved.update({f"exit:{p}": len(v) for p, v in (m.get("exitValues") or {}).items() if len(v) > 1})
         motion[name] = ("animated:" + json.dumps(moved)) if moved else \
             "NOT_ANIMATED: every sampled property held one value across the whole enter and exit window"
+        # The assertion the report was waiting for: the skin declares `.drawer{transition:right .28s}` and
+        # `.toast{transition:.22s}`, so an entrance that samples one value from the first painted frame
+        # onwards is a broken promise, not a style preference. Measured 2026-10-29 before the fix, both
+        # overlays appeared already at their end state; the components now paint closed, then flip.
+        add(f"overlay_enter_transitions[{name}]", bool(m.get("opened")) and bool(moved),
+            f"enterValues={json.dumps(m.get('enterValues'), ensure_ascii=False)[:180]} "
+            f"mountedClass={m.get('mountedClass')!r} → {motion[name]}")
     return {"passed": all(c["pass"] for c in checks), "checks": checks, "motion": motion,
             "surfaces": sorted(measurements)}
 
