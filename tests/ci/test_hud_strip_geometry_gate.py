@@ -191,9 +191,19 @@ def daily_home() -> dict:
 
 
 def strip_settings() -> dict:
-    """H01 with the footer gear pressed: the same strip, plus the block the click opens."""
+    """H01 with the footer gear pressed by a real pointer: the same strip, plus the block that press opens.
+
+    The press facts are the values measured live on 2026-10-29 (`at=(135,464)`, a 14x14 button whose own
+    centre hit-tests to its `svg`), so a fixture that pretends the press happened cannot pass.
+    """
     surface = strip_h01()
-    surface["settingsDispatch"] = "clicked"
+    surface["settingsDispatch"] = "cdp-mousePressed"
+    surface["settingsPress"] = {
+        "found": True, "sel": 'button[aria-label="HUD 设置"]', "x": 135, "y": 464,
+        "width": 14, "height": 14, "inViewport": True, "hitIsGearOrInside": True,
+        "hitTag": "svg", "hitLabel": "", "mode": "mousePressed",
+        "readyBeforePress": {"ready": True, "waitedMs": 0, "mode": "row-found"},
+    }
     surface["settings"] = {
         **box(8, 380, 134, 62),
         "text": "数据源：LIVE；修订 1。主题与更多设置在主窗口设置页。\n收起",
@@ -244,7 +254,8 @@ def expected_check_names() -> set:
             names |= {f"{slug}_footer_pinned_in_viewport", f"{slug}_state_renders_as_declared",
                       f"{slug}_state_switcher_is_not_painted"}
         if spec_row.get("openSettings"):
-            names |= {f"{slug}_gear_opens_the_settings_block",
+            names |= {f"{slug}_gear_is_reachable_by_a_real_pointer",
+                      f"{slug}_gear_opens_the_settings_block",
                       f"{slug}_settings_block_is_readable_and_dismissible"}
     return names | {
         "strip_frame_is_the_native_strip_not_the_panel", "strip_has_a_drag_surface",
@@ -548,6 +559,34 @@ class VerdictTests(unittest.TestCase):
         measured = good_measurement()
         measured["strip-settings"]["settings"]["expanded"] = "false"
         self.assertFalse(self.check("strip_settings_gear_opens_the_settings_block", measured)["pass"])
+
+    def test_a_gear_the_page_clicks_for_itself_no_longer_counts(self) -> None:
+        # The clause this replaces reported `dispatch='clicked'` from `gear.click()` inside the harvest,
+        # which fires the React handler whether or not a cursor could ever land on the button. A receipt that
+        # claims the old shape must now fail, or the switch to a real press is only cosmetic.
+        measured = good_measurement()
+        measured["strip-settings"]["settingsDispatch"] = "clicked"
+        self.assertFalse(self.check("strip_settings_gear_opens_the_settings_block", measured)["pass"])
+
+    def test_a_gear_covered_by_another_element_is_convicted_by_name(self) -> None:
+        measured = good_measurement()
+        surface = measured["strip-settings"]
+        surface["settingsDispatch"] = "gear-unreachable"
+        surface["settingsPress"] = dict(surface["settingsPress"], mode="gear-unreachable",
+                                        hitIsGearOrInside=False, hitTag="DIV")
+        clause = self.check("strip_settings_gear_is_reachable_by_a_real_pointer", measured)
+        self.assertFalse(clause["pass"])
+        self.assertIn("hitIsGearOrInside=False", clause["detail"])
+        self.assertIn("topElement='DIV'", clause["detail"])
+        self.assertFalse(self.check("strip_settings_gear_opens_the_settings_block", measured)["pass"])
+
+    def test_a_gear_pushed_outside_the_window_is_convicted_before_any_press(self) -> None:
+        measured = good_measurement()
+        surface = measured["strip-settings"]
+        surface["settingsDispatch"] = "gear-unreachable"
+        surface["settingsPress"] = dict(surface["settingsPress"], mode="gear-unreachable",
+                                        inViewport=False)
+        self.assertFalse(self.check("strip_settings_gear_is_reachable_by_a_real_pointer", measured)["pass"])
 
     def test_a_settings_block_pushed_below_the_window_fails(self) -> None:
         measured = good_measurement()
