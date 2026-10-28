@@ -1594,7 +1594,7 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   「导轨的可区分度 == 数据的可区分度」。**反证跑过**：删掉行内那枚 `<l.icon/>` 后 2 例指名 FAIL
   （逐行绑定与可区分度那条），其余 3 例仍绿（它们本就不该管图形在不在），还原后 `sha256` 与植入前
   逐字节相同（`b4bd0bf3…`）。
-- **回归读数**：`npx vitest run` 79 文件 / 970 例；`npx tsc --noEmit` 无输出；
+- **回归读数**：`npx vitest run` 79 文件 / 970 例（#231 合并前的基线）；叠上 #231 之后在同一分支复跑 78 文件 / 969 例，差值恰为 #231 删掉的那 1 文件 1 例——先量差再报数，不拿旧读数冒充新树；`npx tsc --noEmit` 无输出；
   `node apps/observer/tests/run_all_tests.js` 39 passed / 0 failed；
   真 Chromium 三门 `GEOMETRY_GATE_PASS`（含 900×600 下限面）、`LEGIBILITY_GATE_PASS`
   （`--all-views --live-backend --sizes 1280 --shell-surfaces` CI 形状，AA 失败 0）、
@@ -1606,3 +1606,24 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   `root-governance-suite` 在 `.github/workflows/work-lab-gate.yml` 的 contract-gates 步按名调用；
   ③④⑤仍是 owner 设计决定与 WUI-18 依赖。**没有顺手做的一条**：导轨现在可以有意变窄而不必删信息，
   但要不要窄是 owner 对专业壳的决定，本轮不动宽度。
+
+
+**2026-10-29 · PR #231 合并回执（两条新接的 CI 步骤在 runner 上真的执行了）**
+
+- **PR #231 闭环**：head `7d5d82db839c19ea34c82fba3619c01081889f32` 上 12 项检查全部 pass（含 `aggregate`），
+  merge commit `f8fb429061985c3058393727b0ff2f1804eeb016`；本地 main、`origin/main`、`git ls-remote origin refs/heads/main`
+  三方一致。分支先打 `wl-retire-20261029/feat_reduced-motion-computed-style-20261029` 并推送，再删 worktree
+  （先摘 node_modules junction，摘后复核主工作树 `node_modules/.bin` 仍在）与本地、远端分支。
+- **「接进 CI」这件事的判据是 runner 打了什么，不是本地打了什么**：`observer` 作业日志逐字读回
+  `OVERLAY_MOTION_GATE_PASS overlays=["drawer", "toast"] .project-local/runs/ci/overlay_motion_gate.json`
+  与 `REDUCED_MOTION_FLOOR_GATE_PASS surfaces=5 checks=17/17 out=.project-local/runs/ci/reduced_motion_floor.json`
+  （run 40762028015，两步各自作为独立步骤执行，均不带 `continue-on-error`）。覆盖层门自此不再是「门的说明书」。
+- **本轮那条 CI 红的归因**（详见上一节 v12）：`tests/workflow-assistance/test_temp_fixture_stays_inside_the_boundary.py`
+  点名新测试文件里两处裸 `tempfile.mkdtemp()`，把夹具造到了项目边界之外；修法是按该判据自己给的口径
+  把根放进 `.project-local/runs/tmp` 并在 `tearDown` 删除。这不是平台差异，是我在本地没有复跑那一道边界判据。
+- **本 PR（#232）与 #231 叠在同一个文件尾部**：两条节都是往 `taskpacks/current/OPEN-TASK-REGISTER.md` 末尾追加，
+  所以 #231 合并后本分支 rebase 时该文件必然冲突。解法是把两节都留下（v12 在前、v13 在后），
+  派生件（`CURRENT_STATE.*` 与 `docs/audits/TOOL_INVENTORY_2026-10-07.json`）取 main 的版本后按新树重发——
+  这是本仓既有的叠 PR 机制，不是本轮新问题。
+
+- **叠合后的复跑**：#231 合并进 main 后本分支 rebase，重新构建并按同一形状重量四道浏览器门——`GEOMETRY_GATE_PASS`、`PRESSED_MOTION_GATE_PASS surfaces=["console","daily"]`（`console/.nav button` 覆盖仍 40）、`HUD_STRIP_GATE_PASS checks=81/81`、`LEGIBILITY_GATE_PASS`，并顺带在新树上跑了 #231 那道 `REDUCED_MOTION_FLOOR_GATE_PASS surfaces=5 checks=17/17`——两条节合起来才是将要合并的字节。
