@@ -214,6 +214,124 @@ def force_active(cdp, selectors: list[str], required: str) -> dict:
     return forced
 
 
+CONTROL_STATE_JS = """(function(sel){
+  var el = document.querySelector(sel);
+  if (!el) return JSON.stringify({found: false, sel: sel});
+  var r = el.getBoundingClientRect();
+  return JSON.stringify({found: true, sel: sel,
+                         x: Math.round(r.left + r.width / 2),
+                         y: Math.round(r.top + r.height / 2),
+                         active: el.matches(':active'),
+                         transform: getComputedStyle(el).transform});
+})('%s')"""
+
+
+def real_press_probe(cdp, selector: str, expression: str, *, dwell_s: float = 0.4) -> dict:
+    """Press the control with a dispatched mouse event and read the paint at three moments.
+
+    `CSS.forcePseudoState` proves the *rule* exists; it does not prove a pointer reaching the control gets
+    that feedback, because it never goes through hit-testing or the input path. Measured here first
+    (2026-10-28): before the press `:active` is false and the transform is `none`; 400ms after
+    `Input.dispatchMouseEvent mousePressed` at the element's own centre it is `:active` true with
+    `matrix(0.99, 0, 0, 0.99, 3, 0)`; the release leaves `:active` false again. That is the whole reason
+    this branch can exist, so it is asserted rather than assumed.
+
+    The dwell is not decoration: `--motion-pressed` is 80ms of transition, and the release sample moves the
+    pointer off the control first, because a control still under the cursor paints its hover lift — comparing
+    that against the untouched idle read would convict the product for a state the operator is in.
+    """
+    out: dict = {"mode": "cdp-mousePressed", "selector": selector}
+    before = json.loads(cdp.evaluate(CONTROL_STATE_JS % selector))
+    out["before"] = before
+    if not before.get("found"):
+        out["mode"] = "control-not-found"
+        return out
+    _press_and_release(cdp, before, out, dwell_s)
+    # The harvest expression is the same one the verdict scores, so the settled pair is the same element.
+    pressed_value, pressed_waited = settled_transform(cdp, expression)
+    out["pressedFirstSelector"] = pressed_value
+    out["pressedWaitedS"] = pressed_waited
+    return out
+
+
+def _press_and_release(cdp, before: dict, out: dict, dwell_s: float) -> None:
+    send_mouse(cdp, "mousePressed", before["x"], before["y"])
+    time.sleep(dwell_s)
+    out["during"] = json.loads(cdp.evaluate(CONTROL_STATE_JS % before["sel"]))
+    send_mouse(cdp, "mouseReleased", before["x"], before["y"])
+    # Take the cursor off the control before reading idle, or the read lands on the hover lift instead.
+    send_mouse(cdp, "mouseMoved", 2, 2)
+    time.sleep(dwell_s)
+    out["after"] = json.loads(cdp.evaluate(CONTROL_STATE_JS % before["sel"]))
+
+
+def send_mouse(cdp, kind: str, x: int, y: int) -> None:
+    cdp.send("Input.dispatchMouseEvent",
+             {"type": kind, "x": x, "y": y, "button": "left", "clickCount": 1,
+              "pointerType": "mouse", "timestamp": time.time()})
+
+
+KEY_STATE_JS = """(function(sel){
+  var el = document.querySelector(sel);
+  var active = document.activeElement;
+  var cs = el ? getComputedStyle(el) : null;
+  return JSON.stringify({
+    found: !!el,
+    isActive: !!el && el === active,
+    activeTag: active ? String(active.tagName) : null,
+    focusVisible: !!el && el.matches(':focus-visible'),
+    outline: cs ? (cs.outlineWidth + ' ' + cs.outlineColor) : null,
+    transform: cs ? cs.transform : null});
+})('%s')"""
+
+
+def real_key_probe(cdp, selector: str, *, max_tabs: int = 12) -> dict:
+    """Walk the page with dispatched Tab keys until the required control itself has focus, then read it.
+
+    The keyboard path needs its own clause because a pointer press and a focus arrive through different
+    mechanisms: `:active` comes from hit-testing, `:focus-visible` from the input focus plus Chromium's
+    heuristic about *how* focus was gained. Measured here on 2026-10-28 before writing the assertion:
+    dispatched Tab lights `:focus-visible` on the stops it reaches, and the required control's outline
+    moves from `3px rgb(238, 246, 252)` (console) / `3px rgb(69, 191, 207)` (daily rail) to the ring
+    `2px rgb(42, 145, 255)` — so the assertion is satisfiable rather than hopeful.
+    """
+    out: dict = {"selector": selector, "tabs": 0}
+    start = json.loads(cdp.evaluate(KEY_STATE_JS % selector))
+    out["before"] = start
+    if not start.get("found"):
+        out["reached"] = False
+        out["note"] = "control-not-found"
+        return out
+    if start.get("isActive"):
+        # The instrument arrived with the control already focused, so any Tab from here walks AWAY from it
+        # and no number of presses will "reach" it. Measured once and lost to exactly this: the press
+        # branch runs `mousePressed` on the same control, and a press focuses what it presses. Refuse by
+        # naming the cause instead of reporting a keyboard that cannot reach the control.
+        out["reached"] = False
+        out["note"] = "already-focused-before-the-first-tab"
+        return out
+    for _ in range(max_tabs):
+        _press_tab(cdp)
+        out["tabs"] += 1
+        time.sleep(0.2)
+        now = json.loads(cdp.evaluate(KEY_STATE_JS % selector))
+        if now.get("isActive"):
+            out["reached"] = True
+            out["focused"] = now
+            return out
+    out["reached"] = False
+    out["focused"] = json.loads(cdp.evaluate(KEY_STATE_JS % selector))
+    return out
+
+
+def _press_tab(cdp) -> None:
+    for kind in ("keyDown", "char", "keyUp"):
+        cdp.send("Input.dispatchKeyEvent", {
+            "type": kind, "windowsVirtualKeyCode": 9, "nativeVirtualKeyCode": 9,
+            "code": "Tab", "key": "Tab", "text": "\t" if kind == "char" else "",
+            "timestamp": time.time()})
+
+
 def verdict(readings: dict[str, dict]) -> dict:
     """Judge every surface on its own numbers, then require that each one actually moved something.
 
@@ -287,6 +405,58 @@ def verdict(readings: dict[str, dict]) -> dict:
 
         add(f"surface-measured-a-control[{surface_name}]", measured > 0,
             f"measured={measured} of {len(pressed_by)} declared selectors")
+
+        # The forced branch above says the CSS rule exists. These lines say a pointer reaching the control
+        # actually gets that feedback, which no amount of `CSS.forcePseudoState` can show: a rule that the
+        # input path never hits is invisible to the operator and green here.
+        pointer = surface.get("pointer") or {}
+        pointer_mode = pointer.get("mode") or ""
+        add(f"real-press-probe-ran[{surface_name}]", pointer_mode != "",
+            f"mode={pointer_mode!r} "
+            + (json.dumps(pointer, ensure_ascii=False)[:200] if pointer else "{}")
+            + ("" if pointer_mode else " — nothing pressed the control: this run has no pointer branch"))
+        p_before = pointer.get("before") or {}
+        p_during = pointer.get("during") or {}
+        p_after = pointer.get("after") or {}
+        pressed_scale = matrix_scale(p_during.get("transform"))
+        idle_scale = matrix_scale(p_before.get("transform"))
+        press_settled = (pressed_scale is None or scale is None or pressed_scale == idle_scale
+                         or math.isclose(pressed_scale, scale, abs_tol=0.005))
+        if pointer.get("mode") == "cdp-mousePressed" and not press_settled:
+            unmeasurable.append(f"{surface_name}/pointer")
+        add(f"real-press-read-was-settled[{surface_name}]", press_settled,
+            f"during transform={p_during.get('transform')!r} scale={pressed_scale} "
+            f"idle transform={p_before.get('transform')!r} token={scale} waited={pointer.get('pressedWaitedS')}s "
+            "(a value that is neither the untouched paint nor the token's end state is a transition frame)")
+        add(f"real-press-lights-the-active-pseudo-class[{surface_name}]",
+            p_during.get("active") is True and p_before.get("active") is False,
+            f"before :active={p_before.get('active')} during :active={p_during.get('active')} "
+            f"at={pointer.get('mode')!r} x={p_before.get('x')} y={p_before.get('y')}")
+        add(f"real-press-transform-matches-token[{surface_name}]",
+            scale is not None and pressed_scale is not None
+            and math.isclose(pressed_scale, scale, abs_tol=0.005) and press_settled,
+            f"scale={pressed_scale} token={scale} transform={p_during.get('transform')!r} "
+            f"settledRead={press_settled}")
+        add(f"real-release-returns-the-paint-to-idle[{surface_name}]",
+            p_after.get("active") is False and "transform" in p_after
+            and p_after.get("transform") == p_before.get("transform"),
+            f"idle={p_before.get('transform')!r} -> pressed={p_during.get('transform')!r} "
+            f"-> released={p_after.get('transform')!r} after :active={p_after.get('active')} "
+            "(the cursor is moved off the control before this read, so a leftover hover lift is a real gap)")
+        key = surface.get("key") or {}
+        k_before = key.get("before") or {}
+        k_focused = key.get("focused") or {}
+        add(f"keyboard-tab-reached-the-control[{surface_name}]", bool(key.get("reached")),
+            (f"tabs={key.get('tabs')} activeTag={k_focused.get('activeTag')!r} "
+             f"before.isActive={k_before.get('isActive')!r} focused.isActive={k_focused.get('isActive')!r}"
+             + (f" note={key.get('note')!r}" if key.get("note") else ""))
+            if key else "no keyboard reading at all: this run never pressed Tab")
+        add(f"keyboard-focus-lights-the-visible-ring[{surface_name}]",
+            bool(key.get("reached")) and k_focused.get("focusVisible") is True
+            and k_focused.get("outline") != k_before.get("outline"),
+            f"outline {k_before.get('outline')!r} -> {k_focused.get('outline')!r} "
+            f":focus-visible={k_focused.get('focusVisible')} transform={k_focused.get('transform')!r} "
+            "(键盘也要有看得见的反馈，否则这个状态只有鼠标能看见)")
 
         if reduced is not None:
             # The L10b floor is a promise the shell makes to operators who asked for less motion: under
@@ -400,6 +570,32 @@ def main() -> int:
                                   f"{spec['name'].upper()}_{state.upper()}_MEASURE_FAILED {exc!r}")
                             return 3
                         time.sleep(1.0)
+            # One more launch per surface, and this one presses the control instead of forcing the
+            # pseudo-class: the pointer branch is what says an operator's click reaches the paint. It gets
+            # the same bounded retry, so a flaking browser start cannot be read as a product finding.
+            pointer_sink: dict = {}
+            key_sink: dict = {}
+
+            def pointer_hook(cdp, _required=spec["required"], _expr=expression) -> None:
+                emulate_motion(cdp, "no-preference")
+                # Keyboard first: a press focuses the control it presses, and the key branch refuses to run
+                # on a page that already has the target focused (it would Tab away from it and report an
+                # unreachable control). The order is the instrument's hygiene, not a product claim.
+                key_sink.update(real_key_probe(cdp, _required))
+                pointer_sink.update(real_press_probe(cdp, _required, _expr))
+
+            for attempt in range(2):
+                try:
+                    geometry.serve_and_eval(root, "/index.html", WINDOW, expression, browser, u19, None,
+                                            viewport=(1280, 820), serve_url=url,
+                                            after_mount=pointer_hook, mount_selector=spec["mount"])
+                    break
+                except Exception as exc:  # noqa: BLE001 — retried once, then reported by name
+                    if attempt == 1:
+                        pointer_sink = {"mode": "", "error": repr(exc)[:220]}
+                        key_sink = {"reached": False, "error": repr(exc)[:220]}
+            per_surface["pointer"] = pointer_sink
+            per_surface["key"] = key_sink
             readings[spec["name"]] = per_surface
     finally:
         fixture.stop_server()

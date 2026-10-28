@@ -1201,3 +1201,62 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   ②`apps/observer/frontend/src/daily/HudDaily.tsx:123` 的项目计数仍无限定词（"项目 0" 对宽屏"1 个已注册项目"）；
   ③条带设置齿轮仍走 `gear.click()` 的 JS 路径，未换真指针；
   ④CL-16 第 2 步剩余两项（键盘 `:focus-visible` 等效反馈、drawer/toast 进出场两侧采样与真按下接入）。
+
+
+**2026-10-29 · PR #223 合并回执 + CL-16 第 2 步的真输入分支（真鼠标按下＋真按 Tab，先各自量通再接成判据）**
+
+- **PR #223 闭环**：head `4ddf0c6d` 上 12 项检查全部 pass（含 `aggregate`），merge commit
+  `1becb71dadc9f9c46d3d73713ed3906b56ac70df`；本地 main、`origin/main`、`git ls-remote origin refs/heads/main`
+  三方读数一致于该 SHA。分支按逐 blob 证据退役（`git diff --stat main...<tip>` 为空、`git cherry` 无输出），
+  标签 `wl-retire-20261028/fix_hud-strip-row-accessible-name-20261028` 先推远端，再删检出与本地、远端分支。
+  一处操作性提醒：那个检出里挂了一个指向主检出 `apps/observer/frontend/node_modules` 的目录 junction，
+  移除检出前必须先用 `rmdir`（只摘链接）而不是让删除工具递归进去——否则被删的是主检出的 145 MB 真依赖。
+  摘完链接后立刻复核主检出的 `node_modules` 仍在，再 `git worktree remove`。
+
+- **先把前提量出来，再改门**：`scripts/audit/pressed_state_motion_via_cdp.py` 之前只用
+  `CSS.forcePseudoState` 强制 `:active`——那证明"这条 CSS 规则存在"，不证明"一次真实按下能落到这条规则上"。
+  命中测试被外层吞掉、覆盖层写了 `pointer-events:none`、反馈只挂在 `:focus-visible` 上，三种情形 force 都绕过，门照样绿。
+  所以先用一次性探针量了三时刻读数（同一条 CDP 会话、夹具同源、`.nav button`）：
+  按下前 `:active=False`、`transform=none`；`Input.dispatchMouseEvent mousePressed` 后驻留 400ms
+  （`--motion-pressed` 是 80ms 过渡，必须走过去）`:active=True`、`transform=matrix(0.99, 0, 0, 0.99, 3, 0)`；
+  `mouseReleased` 后 `:active=False`，但指针仍停在控件上时 `transform=matrix(1, 0, 0, 1, 3, 0)`——
+  这是 **hover 位移**，不是没回到原画法。因此松开后的那次采样**先把指针移到 (2,2) 离开控件**，
+  再与未触碰的 idle 比；否则判据会冤枉产品，把"用户还停在上面"当成"按下没还原"。
+  顺带一条边界更正：上一节登记的"壳面没有 CSS 悬停语言"逐字限 `strip / panel / daily` 三个面的 29 个候选元素，
+  专业壳的 `.nav button` 是有 hover 位移的，两者不冲突，别把它读成全站结论。
+- **接进门里的判据（五条款，全部具名）**：`real-press-probe-ran[面]`（没有指针分支就跑红，绝不静默少一条）、
+  `real-press-read-was-settled[面]`（按下读数既不是 idle 也不是 token 终态 → 记 `面/pointer` 为不可测并自拒 exit 3，
+  沿用 #221 定的"读到运动中的东西就没测量任何状态"原则）、
+  `real-press-lights-the-active-pseudo-class[面]`（前 `:active=False` 且后 `=True`）、
+  `real-press-transform-matches-token[面]`（终态等于 `--pressed-scale`，且带 `settledRead=` 说明读到位没有）、
+  `real-release-returns-the-paint-to-idle[面]`（松开并移出指针后画法与 idle 逐字相同）。
+  强制伪类那套判据一并保留：两条路径测的是两件事，删掉任何一条都会留出一个盲区。
+- **键盘等效反馈同批接上（CL-16 第 2 步的第二项）**：`real_key_probe` 用派发的 Tab 键走到目标控件再读计算样式。
+  本机实测两面各自一次跑通：console 1 次 Tab 落在 `.nav button`（`before.isActive=False → focused.isActive=True`、
+  `:focus-visible=True`、outline 由 `3px rgb(238, 246, 252)` 变 `2px rgb(45, 147, 255)`），
+  daily 3 次 Tab 落在 `nav[data-landmark="rail"] button`（`3px rgb(69, 191, 207)` → `2px rgb(42, 145, 255)`）。
+  判据两条：`keyboard-tab-reached-the-control[面]` 与 `keyboard-focus-lights-the-visible-ring[面]`
+  ——后者要求**该控件自己的** outline 在未聚焦与聚焦两次读数不同，所以"有条 :focus-visible 规则但没画出来"骗不过去。
+- **一条仪器顺序缺陷，先红后修（不是产品红）**：键盘分支第一次接上时两面都 FAIL，读数是
+  `tabs=12 before.isActive=True focused.isActive=False`——按下分支的 `mousePressed` 会把被按的控件聚焦，
+  键盘分支随后从"已聚焦"出发，每按一次 Tab 都是**离开**目标控件，12 次也回不来。
+  修法两条：同一会话里**先跑键盘再跑按下**（顺序写进注释，说明这是仪器的卫生不是产品论断），
+  并且探针一进来看见目标已聚焦就拒跑并记 `note='already-focused-before-the-first-tab'`，
+  把原因写进判据明细，免得下一个读者去找一个不存在的焦点环。
+- **能红实证（植入反证，不是口头）**：`tests/ci/test_pressed_state_motion_gate.py` 8 → **16 例**，
+  六种反证各自判红一条具名条款——按下却不亮 `:active`（合成路径的样子）、整份指针读数缺席、
+  按下读数落在过渡中间帧（`matrix(0.997,…)` → `unmeasurable=["console/pointer"]` 且 paint 条款带 `settledRead=False`）、
+  松开没回到原画法（细节里逐字打出 `-> released='matrix(0.99`）、Tab 走不到控件、
+  以及"聚焦了但画法一点没变"（`:focus-visible=True` 而 outline 与未聚焦逐字相同）。正对照是本轮实测的值本身。
+- **本机门读数**：`checks=38 全 PASS`、`startedAt=2026-10-29T00:01:39+0800`，
+  `PRESSED_MOTION_GATE_PASS surfaces=["console", "daily"]`
+  `coverage={"console/.nav button": 40, "console/.primary-btn": 0, "console/.ghost-btn": 9, "console/.soft-btn": 0, "daily/nav[data-landmark=\"rail\"] button": 5}`，
+  两面各七条真输入判据全 PASS；按下侧 console `before :active=False during :active=True at='cdp-mousePressed' x=99 y=160`，
+  `idle='none' → pressed='matrix(0.99, 0, 0, 0.99, 3, 0)' → released='none'`；
+  收据 `.project-local/runs/pressed-pointer-readback.json`，一次性探针
+  `.project-local/runs/live-probe-20261028/real_press_probe.py` 与 `…/real-press-probe.json`，
+  键盘前置测量 `.project-local/runs/live-probe-20261028/keyboard_focus_probe.py` 与
+  `…/keyboard-focus-readback.json`（先量通再写判据）。
+- **CL-16 第 2 步只剩覆盖层进出场**：drawer／toast 挂载即 `open`，所以 `.drawer`/`.toast` 的过渡永不发生，
+  两侧采样要先把挂载改成"从关闭态过渡到开启态"才有东西可测；reduced-motion 的逐面计算样式断言已在门里
+  （`no-pressed-transform-under-reduce`），窄条悬停的 reduced 分支注入点也已备好。
