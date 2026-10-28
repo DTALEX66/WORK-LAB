@@ -33,6 +33,9 @@ export interface ToastItem {
   title: string
   description?: string
   variant?: ToastVariant
+  /** Set by `dismiss` for the length of the skin's own fade-out; the row drops `.show` while this is true
+   *  so the declared `transition:.22s ease` runs before the element leaves the document. */
+  leaving?: boolean
 }
 
 export interface ToasterProps {
@@ -63,7 +66,8 @@ export function Toaster({ toasts, onDismiss }: ToasterProps) {
  * component-level flag would show every toast the moment the first one arrived.
  */
 function ToastRow({ toast: t, onDismiss }: { toast: ToastItem; onDismiss: (id: number) => void }) {
-  const { shown } = useEnterTransition(true, TOAST_EXIT_MS)
+  const { mounted, shown } = useEnterTransition(!t.leaving, TOAST_EXIT_MS)
+  if (!mounted) return null
   return (
     <div
       className={cn('toast', shown && 'show')}
@@ -95,7 +99,13 @@ export function useToaster(defaultMs = 1800) {
   const [toasts, setToasts] = React.useState<ToastItem[]>([])
 
   const dismiss = React.useCallback((id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id))
+    // Mark it leaving first: removing the item from the list in the same tick would unmount the element
+    // before the browser ever painted a frame without `.show`, and a transition needs two painted states.
+    // The removal timer is the component's own budget, so it also runs when the skin turns transitions off.
+    setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, leaving: true } : t)))
+    window.setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, TOAST_EXIT_MS)
   }, [])
 
   const toast = React.useCallback(

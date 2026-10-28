@@ -101,6 +101,27 @@ describe('吐司真的淡进来', () => {
     expect(TOAST_EXIT_MS).toBeLessThan(ms + 40)
   })
 
+  it('dismiss 先摘掉 .show 让淡出画完，超过声明时长才从文档里消失', async () => {
+    const { rerender } = render(<Toaster toasts={[toast({ id: 7, title: '第三条' })]} onDismiss={() => {}} />)
+    await frames()
+    expect(document.querySelector('div.toast')!.classList.contains('show')).toBe(true)
+    rerender(<Toaster toasts={[toast({ id: 7, title: '第三条', leaving: true })]} onDismiss={() => {}} />)
+    await act(async () => { await Promise.resolve() })
+    const leaving = document.querySelector('div.toast')
+    expect(leaving, 'removing the item in the same tick would skip the fade-out entirely').not.toBeNull()
+    expect(leaving!.classList.contains('show')).toBe(false)
+    await settle(TOAST_EXIT_MS + 80)
+    expect(document.querySelector('div.toast')).toBeNull()
+  })
+
+  it('列表里没有任何一项时不留下空的 toast-stack', async () => {
+    const { rerender } = render(<Toaster toasts={[toast()]} onDismiss={() => {}} />)
+    await frames()
+    rerender(<Toaster toasts={[]} onDismiss={() => {}} />)
+    await settle(TOAST_EXIT_MS + 80)
+    expect(document.querySelector('.toast-stack')).toBeNull()
+  })
+
   it('screen 上仍读得到内容：先画关闭态不等于把内容藏起来', async () => {
     render(<Toaster toasts={[toast({ variant: 'error', title: '提交失败' })]} onDismiss={() => {}} />)
     expect(screen.getByText('提交失败')).toBeTruthy()

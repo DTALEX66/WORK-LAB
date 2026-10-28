@@ -39,7 +39,9 @@ def reading(**overrides) -> dict:
         "settledWhileOpen": True,
         "exitSamples": 154, "exitFramesPresent": 0, "unmountedAtSample": 0,
         "unmountedDuringExit": True, "closePath": "escape",
-        "exitValues": {"right": [], "transform": [], "opacity": []},
+        # The exit is sampled across a window too: the drawer slides back out through intermediate values
+        # before it leaves the document (measured 2026-10-29: 14 distinct `right` values after Escape).
+        "exitValues": {"right": ["0px", "-268.4px", "-540px"], "transform": ["none"], "opacity": ["1"]},
         "reducedMotion": False,
         # The same overlay under `prefers-reduced-motion: reduce`: pinned, opened, and arriving at the same
         # destination with no intermediate frames. Without this half the gate would only ever prove that
@@ -78,7 +80,10 @@ class VerdictTests(unittest.TestCase):
         result = gate.verdict({"drawer": planted})
         clause = self.checks(result)["overlay_enter_transitions[drawer]"]
         self.assertFalse(clause["pass"])
-        self.assertIn("NOT_ANIMATED", clause["detail"])
+        self.assertIn('"right": ["0px"]', clause["detail"],
+                      "the detail must show the flat enter sequence it is refusing")
+        self.assertTrue(checks_of(result)["overlay_exit_transitions[drawer]"]["pass"],
+                        "a fade-out must not excuse a jump-cut entrance — the two sides are counted apart")
         self.assertFalse(result["passed"])
 
     def test_a_real_click_that_opens_nothing_fails_instead_of_reporting_a_pass(self) -> None:
@@ -106,6 +111,22 @@ class VerdictTests(unittest.TestCase):
         clause = checks_of(result)["overlay_closes_through_its_input_path[drawer]"]
         self.assertFalse(clause["pass"])
         self.assertIn("unmountedAtSample=None", clause["detail"])
+
+    def test_an_overlay_that_is_deleted_without_fading_fails_the_exit_clause(self) -> None:
+        # The regression this guards: a list that removes its item in the same tick it drops the open class
+        # paints no exit at all — one frame shown, then gone.
+        planted = reading(exitValues={"right": ["0px"], "transform": ["none"], "opacity": ["1"]})
+        result = gate.verdict({"drawer": planted})
+        clause = checks_of(result)["overlay_exit_transitions[drawer]"]
+        self.assertFalse(clause["pass"])
+        self.assertIn("exitValues", clause["detail"])
+        self.assertFalse(result["passed"])
+
+    def test_an_overlay_that_never_leaves_fails_the_exit_clause_too(self) -> None:
+        planted = reading(unmountedDuringExit=False, unmountedAtSample=None)
+        result = gate.verdict({"drawer": planted})
+        self.assertFalse(checks_of(result)["overlay_exit_transitions[drawer]"]["pass"])
+        self.assertFalse(checks_of(result)["overlay_closes_through_its_input_path[drawer]"]["pass"])
 
     def test_an_unpinned_preference_refuses_both_readings(self) -> None:
         # Headless Chrome answers `prefers-reduced-motion` by itself; a gate that does not pin and read it
