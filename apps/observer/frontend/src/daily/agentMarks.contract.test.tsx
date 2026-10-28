@@ -130,6 +130,20 @@ describe('HUD 窄面板只监控 agent 运行时', () => {
     expect(container.querySelectorAll('[data-hud-agent] svg').length).toBe(2)
   })
 
+  it('names every row for assistive tech, because the strip paints no name beside the figure', () => {
+    // `AgentMark` is decorative by contract (the figure is not text, so no gate can read its contrast),
+    // and the h01 row is the one surface where nothing else on the line says who the agent is: the name
+    // appears only inside the h02 capsule, which exists while a pointer is on the row. Without this the
+    // row's only identity is an aria-hidden shape.
+    const { container } = render(<HudDaily snap={stripSnap(MIXED)} nativeStrip />)
+    const rows = Array.from(container.querySelectorAll('[data-hud-agent]'))
+    expect(rows.map((node) => [node.getAttribute('role'), node.getAttribute('aria-label')]))
+      .toEqual([['img', 'HERMES'], ['img', 'CODEX']])
+    // The name is not smuggled in as painted text either — 150px has no room for a second line per row.
+    expect(container.textContent).not.toContain('HERMES')
+    expect(rows[0].querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
+  })
+
   it('says what it left out, and keeps "role not declared" a separate statement', () => {
     const { container } = render(<HudDaily snap={stripSnap(MIXED)} nativeStrip />)
     const scope = container.querySelector('[data-testid="hud-agent-scope"]')

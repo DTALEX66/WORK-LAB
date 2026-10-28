@@ -1158,3 +1158,46 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
 - **仍未做，按名留档**：条带设置齿轮的采样仍走 `gear.click()` 的 JS 路径，没有换成真指针；
   `apps/observer/frontend/src/daily/HudDaily.tsx` 的项目计数缺限定词（另 PR）；CL-16 第 2 步剩余两项——键盘路径另断言 `:focus-visible` 等效反馈、
   drawer/toast 进出场两侧采样，以及把真按下（mousePressed→驻留→采样→mouseReleased→回到原矩形）接进门里。
+
+
+**2026-10-28 · PR #222 合并回执 + 窄条 agent 行补上可及名称（图形是唯一身份线索，却没有名字）**
+
+- **PR #222 闭环**：head `06462fdb` 上 12 项检查全部 pass（含 `aggregate`），merge commit
+  `f1848c450b26dc5730a43b52dd94e5d6174cbc52`；本地 main、`origin/main`、`git ls-remote origin refs/heads/main`
+  三方读数一致于该 SHA，分支已按逐 blob 证据退役并打标签 `wl-retire-20261028/fix_shell-density-floor-real-data-20261028`。
+- **首跑的一条红是台账自己的措辞（值得记进规则）**：head `b4ed70bf` 在 `workflow-assistance` 作业红于
+  `root-governance-suite` 的 `tests/ci/test_authority_index_paths_resolve.py`，明细只有一条
+  `line 1125: refs/tags/ is not a tracked directory`。原因是该检查的 `DIR_REF` 把**反引号里以斜杠结尾**的
+  token 当目录路径要求它在 git 索引里存在，而那句话说的是 git 的 ref 前缀，不是目录（同一节里的
+  `refs/heads/main` 因为有别的声明与无尾斜杠而没被定罪）。改写成不带尾斜杠的 `refs/tags` 后路径门
+  36 例全绿；这是"散文本身就是闸门输入面"这一类缺陷的又一种形状：**写台账时用反引号包住的每个带斜杠的词，
+  都会被当作一个必须存在的路径来检查**。
+- **这条缺陷是真实数据渲染读出来的，不是看代码猜的**：把已发布 `dist` 与活账本同源渲染后，
+  `strip-h01` 每行只有两样东西——一个 `RingSlot` 里的装饰图形和一行"额度 UNKNOWN"。
+  `apps/observer/frontend/src/daily/agentMarks.tsx` 里写明图形是 `aria-hidden`，理由是"名字就在旁边的文字里"；
+  这话对宽屏成立（`AgentTile` 旁边确实有名字），对 150px 的条带**不成立**：h01 行内没有任何名字文字，
+  名字只在指针悬停时由 h02 胶囊画出来。结果是无障碍技术读到的行是**匿名的**。
+  同一件事也解释了上一段的可读性节点数变化：2026-10-25 的夹具回执里条带画 16 个文本节点，其中有
+  `CO/HE/DE/QO/OP` 五个首字母节点；把首字母换成图形之后它们不再是文本节点，夹具侧降到 12——
+  文字信息是被图形替换掉的，不是被排版裁掉的，而可读性门原本没有能力看见这一层。
+- **改法（一行属性，不改像素）**：`apps/observer/frontend/src/daily/HudDaily.tsx` 的 `RingSlot` 把带
+  `data-hud-agent` 的包裹层声明为 `role="img" aria-label={tool.name}`，图形自身继续 `aria-hidden`，
+  名字作为图形的可及名称随行携带；条带仍然不画名字，宽度与几何一字未动。
+- **浏览器里的两侧证据（同一份真实快照、同一台 Chrome，CDP `Accessibility.getFullAXTree`）**：
+  改前的 `dist`——`rows=3 namedImages=0`，三行的 `aria-label` 皆为 None，即辅助技术拿到 0 个行名；
+  改后的 `dist`——`rows=3`、`namedImages=3`，三个 image 节点名称分别是
+  `Hermes / Codex / DeepSeek Harness`，`ignored=False`；两次的 `axNodes` 同为 69，且改后
+  `namePainted` 三个名字全为 `false`（`paintedInside=''`，`document.body.innerText` 里没有名字），
+  证明"有名字"没有变成"多画了字"。收据 `.project-local/runs/live-probe-20261028/ax-name-readback-hud-name.json`
+  与对照 `.project-local/runs/live-probe-20261028/ax-name-readback-WORK-LAB.json`。
+  证据脚本 `.project-local/runs/live-probe-20261028/ax_name_readback.py`（第二条命令把 `dist` 路径作为参数传入即为对照）。
+- **本地门（只跑被改面）**：`npx vitest run src/daily` 6 文件 106 例绿（`apps/observer/frontend/src/daily/agentMarks.contract.test.tsx`
+  21→22 例，新增一例同时钉住"每行有计算出的名称"与"名字没有被画出来"）；
+  全量前端 `npx vitest run` 77 文件 956 例绿、`npx tsc --noEmit` 0 错、`npm run build` 成功；
+  `scripts/audit/hud_strip_geometry_via_cdp.py --snapshot-file …` 在改后的 `dist` 上
+  `HUD_STRIP_GATE_PASS checks=80/80 data=captured-snapshot(sha256=9b8916b56be3,adapters=10,projects=1,executions=0)`。
+- **仍未决，按名留档**：①条带行是否要**画出**名字（现在只有图形＋可及名称，认标识靠记忆；属主人可见文案与 150px 排版预算的取舍，
+  `scripts/audit/hud_strip_geometry_via_cdp.py:1086` 的 `unlabelled` 只查"名字文本"，查不到这一层，改动时要一起看）；
+  ②`apps/observer/frontend/src/daily/HudDaily.tsx:123` 的项目计数仍无限定词（"项目 0" 对宽屏"1 个已注册项目"）；
+  ③条带设置齿轮仍走 `gear.click()` 的 JS 路径，未换真指针；
+  ④CL-16 第 2 步剩余两项（键盘 `:focus-visible` 等效反馈、drawer/toast 进出场两侧采样与真按下接入）。

@@ -76,7 +76,11 @@ function RingSlot({ tool, active = false }: { tool: HudAgent; active?: boolean }
         {/* The reference put a per-tool figure here. It used to be the first two letters of the display
             name, which made every row in the strip look like the same grey pill; the figure is now the
             agent's own mark, keyed by the software id the registry knows. */}
-        <span className="absolute inset-[9px]" data-hud-agent={tool.id}
+        {/* The figure is the only identity cue this row paints — 150px has no room for the name, and the
+            h02 capsule that spells it out only exists while a pointer is on the row. So the name travels
+            as the accessible name of the figure instead: a decorative glyph with nothing beside it would
+            leave the row unlabelled for anyone not reading the pixels. */}
+        <span className="absolute inset-[9px]" data-hud-agent={tool.id} role="img" aria-label={tool.name}
           style={{ color: active ? T.warnText : ACCENT }}>
           <AgentMark softwareId={tool.id} />
         </span>
