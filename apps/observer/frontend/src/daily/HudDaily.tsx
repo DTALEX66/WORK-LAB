@@ -183,8 +183,12 @@ export function HudDaily(props: { snap: SnapshotV3 | null; nativeStrip?: boolean
         </li>
       </ul>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 border-t pt-2 text-xs" style={{ borderColor: LINE }}>
-        <span className="min-w-0" style={{ color: DIM }} data-testid="hud-project-counts">
-          {targetFilterActive ? '全机 ' : ''}项目 {activeProjects} · 待审 {waitingApprovals}
+        {/* 两个计数各占一行并且不许断字：150px 里把"运行中项目 0 · 待审 0"排成一行会让"待审"的数字
+            被挤到下一行单独悬着（实测 108px 宽、第二行只剩一个 0）。分成两行后每行都是一个完整的
+            「名词＋数」，读的人不必把两行拼回一句话。 */}
+        <span className="flex min-w-0 flex-col gap-y-0.5" style={{ color: DIM }} data-testid="hud-project-counts">
+          <span className="whitespace-nowrap">{targetFilterActive ? '全机 ' : ''}运行中项目 {activeProjects}</span>
+          <span className="whitespace-nowrap">待审 {waitingApprovals}</span>
         </span>
         <button type="button" onClick={() => onState('h03')} className="shrink-0" style={{ color: ACCENT }}>详情</button>
         {targetFilterActive && (

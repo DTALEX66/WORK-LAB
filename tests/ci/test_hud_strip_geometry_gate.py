@@ -68,13 +68,13 @@ def ring(role="idle", stroke="rgb(48, 58, 70)", width="3", has_summary=False,
 
 H01_TEXT = ("CO\n额度 UNKNOWN\nHE\n额度 UNKNOWN\nDE\n额度 UNKNOWN\nQO\n额度 UNKNOWN\n"
             "OP\n额度 UNKNOWN\n另有 1 个工具未在此列出（完整列表在主窗口）\n余额\nUNKNOWN\n"
-            "项目 1 · 待审 1\n详情")
+            "运行中项目 1\n待审 1\n详情")
 # The painted page text, verbatim from the receipt: the percentage rule and the UNKNOWN rule read what
 # the user can see, not what the source says, so the fixture carries what the browser reported.
 BODY_H01 = H01_TEXT + "\nLIVE\n已加载实时投影数据"
 BODY_H02 = ("CO\n额度 UNKNOWN\nCodex：窗口 待确认 · 数值 UNKNOWN · 重置时间 待确认\nHE\n额度 UNKNOWN\n"
             "DE\n额度 UNKNOWN\nQO\n额度 UNKNOWN\nOP\n额度 UNKNOWN\n"
-            "另有 1 个工具未在此列出（完整列表在主窗口）\n余额\nUNKNOWN\n项目 1 · 待审 1\n详情\n"
+            "另有 1 个工具未在此列出（完整列表在主窗口）\n余额\nUNKNOWN\n运行中项目 1\n待审 1\n详情\n"
             "LIVE\n已加载实时投影数据")
 BODY_H03 = ("CO\nCodex\n\n账户 UNKNOWN · 额度窗口 待确认\n\n当前会话\nUNKNOWN\n重置 待确认\n周额度\n"
             "UNKNOWN\n重置 待确认\n周上限 · Codex\nUNKNOWN\n重置 待确认\n\n"
