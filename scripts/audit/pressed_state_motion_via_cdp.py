@@ -150,6 +150,44 @@ def emulate_motion(cdp, value: str) -> None:
     time.sleep(0.2)  # the media change has to recalc before anything is read
 
 
+def settled_transform(cdp, expression: str, *, budget_s: float = 1.5, poll_s: float = 0.06) -> tuple:
+    """Read the page until the computed transform stops changing, and report how long that took.
+
+    Why this exists: `CSS.forcePseudoState` starts a transition, and a single read taken right after the
+    force can land on the FIRST frame of it. Measured twice on 2026-10-28 for the same control:
+    the CI runner (Windows, job `observer`) reported `matrix(1, 0, 0, 1, 0, 0)` — the identity at t=0 of a
+    80ms scale transition — while the same command on the development host reported
+    `matrix(0.99, 0, 0, 0.99, 0, 0)`. The token says 0.99, so the CI read convicted a correct render: the
+    instrument sampled a moving thing. A state's end value is what the operator sees, so the read is
+    repeated until two consecutive samples agree, inside a bounded budget.
+    """
+    last = None
+    waited = 0.0
+    while waited < budget_s:
+        current = _transform_of(cdp, expression)
+        if last is not None and current == last:
+            return current, round(waited, 3)
+        last = current
+        time.sleep(poll_s)
+        waited += poll_s
+    return last, round(waited, 3)
+
+
+def _transform_of(cdp, expression: str):
+    """The first selector's computed transform, read out of the same expression the harvest uses.
+
+    Reusing the harvest expression matters: a second, hand-written probe would settle a different element
+    than the one the verdict scores, which is how instruments and products start disagreeing.
+    """
+    raw = cdp.evaluate(expression)
+    try:
+        state = json.loads(raw) if isinstance(raw, str) else raw
+    except ValueError:
+        return None
+    rows = state.get("selectors") or []
+    return (rows[0].get("transform") if rows else None)
+
+
 def force_active(cdp, selectors: list[str], required: str) -> dict:
     """Hold `:active` on the first node of EVERY probed selector, and report the node id chosen per selector.
 
@@ -185,6 +223,7 @@ def verdict(readings: dict[str, dict]) -> dict:
     an unmeasured surface fail by name.
     """
     checks: list[dict] = []
+    unmeasurable: list[str] = []
 
     def add(name: str, ok: bool, detail: str) -> None:
         checks.append({"check": name, "pass": bool(ok), "detail": detail})
@@ -218,9 +257,24 @@ def verdict(readings: dict[str, dict]) -> dict:
             idle_row = idle_by.get(selector) or {}
             got_scale = matrix_scale(pressed_row.get("transform"))
             idle_scale = matrix_scale(idle_row.get("transform"))
+            # A scale that is neither the untouched paint nor the token's end state is a FRAME of the
+            # transition, not a state. Convicting the product for it is how PR #220's `observer` job went
+            # red on a correct render: the same command settles at 0.99 on the development host, while the
+            # runner sampled the identity at t=0 of the 80ms transition. The duration is asserted on its
+            # own line below, so the paint check does not also have to prove an animation ticked.
+            settled = (got_scale is None or scale is None or idle_scale == got_scale
+                       or math.isclose(got_scale, scale, abs_tol=0.005))
+            if not settled:
+                unmeasurable.append(f"{surface_name}/{selector}")
+            add(f"pressed-paint-read-was-settled[{surface_name}:{selector}]", settled,
+                f"pressed transform={pressed_row.get('transform')!r} scale={got_scale} "
+                f"idle transform={idle_row.get('transform')!r} scale={idle_scale} token={scale} "
+                "(neither the untouched paint nor the token's end state — a transition frame; reported as "
+                "unmeasurable rather than as a product failure)")
             add(f"active-transform-matches-token[{surface_name}:{selector}]",
                 scale is not None and got_scale is not None and math.isclose(got_scale, scale, abs_tol=0.005),
-                f"pressed transform={pressed_row.get('transform')!r} scale={got_scale} token={scale}")
+                f"pressed transform={pressed_row.get('transform')!r} scale={got_scale} token={scale} "
+                f"settledRead={settled}")
             # A control already drawn at the pressed scale when nothing is forced would make the check above
             # pass for the wrong reason: the rule has to move the box, not sit under it.
             add(f"pressed-state-changes-the-paint[{surface_name}:{selector}]",
@@ -257,6 +311,7 @@ def verdict(readings: dict[str, dict]) -> dict:
         "coverage": coverage,
         "surfaces": sorted(readings),
         "expectation": expectation,
+        "unmeasurable": unmeasurable,
     }
 
 
@@ -296,9 +351,11 @@ def main() -> int:
     fixture.start()
     readings: dict[str, dict] = {}
     forced_nodes: dict[str, int] = {}
+    settle_waits: list[dict] = []
     urls: dict[str, str] = {}
 
-    def make_hook(motion: str, force: bool, selectors: list[str], required: str):
+    def make_hook(motion: str, force: bool, selectors: list[str], required: str,
+              surface_name: str = ""):
         """One hook per launch: pin the media preference, then optionally hold `:active` on every control.
 
         Built as a function rather than a loop-scoped lambda, because the closure has to freeze the state it
@@ -308,6 +365,10 @@ def main() -> int:
             emulate_motion(cdp, motion)
             if force:
                 forced_nodes.update(force_active(cdp, selectors, required))
+                # The force starts the transition; sampling it immediately reads a frame, not a state.
+                settled, waited = settled_transform(cdp, read_expression(selectors))
+                settle_waits.append({"surface": surface_name, "force": True,
+                                     "settledTransform": settled, "waitedS": waited})
         return hook
 
     try:
@@ -324,7 +385,8 @@ def main() -> int:
             for state, motion, force in states:
                 # The forced node ids travel with the receipt: a reader who wants to know whether a control
                 # was actually held down, rather than merely absent, has to be able to tell the two apart.
-                hook = make_hook(motion, force, list(spec["selectors"]), spec["required"])
+                hook = make_hook(motion, force, list(spec["selectors"]), spec["required"],
+                             spec["name"])
                 for attempt in range(2):
                     try:
                         per_surface[state] = geometry.serve_and_eval(
@@ -343,11 +405,22 @@ def main() -> int:
         fixture.stop_server()
 
     result = verdict(readings)
+    if result.get("unmeasurable"):
+        # Say it as NOT_RUN: an instrument that read a moving thing has measured nothing, and a FAIL would
+        # tell the next reader the product lost its pressed feedback. The numbers stay in the receipt.
+        print("PRESSED_MOTION_GATE_NOT_RUN SAMPLED_A_TRANSITION_FRAME "
+              + json.dumps(result["unmeasurable"], ensure_ascii=False)
+              + f" out={args.json_out or 'default'}")
+        out_path = Path(args.json_out) if args.json_out else (OUT_DIR / f"pressed_{int(time.time())}.json")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+        return 3
     result["startedAt"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
     result["browser"] = browser
     result["urls"] = urls
     result["servedBundle"] = bundle_provenance.describe(root)
     result["forcedActiveNodes"] = forced_nodes
+    result["settleWaits"] = settle_waits
     result["measured"] = readings
     result["residue"] = list(geometry.RESIDUE)
     result["portAnnouncedMismatch"] = list(geometry.ANNOUNCED_MISMATCH)
