@@ -1493,3 +1493,67 @@ W02 的 token-monitor 缓存与 `cargo check` 冗余判定（W04 的 runner 读�
   这属主机级改动，不在本轮授权范围内，故如实登记而**不伪造一次原生 PASS**，也不动工作流里那条 owner 决定。
 - **按名留档**：抽屉的退场预算 `DRAWER_EXIT_MS` 与吐司的 `TOAST_EXIT_MS` 现在都被合同从 `b10.css` 正则读值比对；
   CL-16 第 3 步引入 `motion@` 时，这两个常量与 `useEnterTransition` 是唯一的接入点。
+
+
+**2026-10-29 · PR #230 合并回执 + reduced-motion 断言按第 2 步第三句改成逐面读计算样式（并把覆盖层门接进 CI）**
+
+- **PR #230 闭环**：head `7e3ce463cf171a1f604d09ded3e1a769d9be5a8e` 上 12 项检查全部 pass（含 `aggregate`），
+  merge commit `7f7dd578b3e94549df6fb76694234b4658b6e034`；本地 main、`origin/main`、
+  `git ls-remote origin refs/heads/main` 三方一致于该 SHA。分支先打 `wl-retire-20261029/fix_toast-exit-transition-20261029`
+  并推送，再删 worktree（先摘掉其中的 node_modules junction，摘完复核主工作树的 `node_modules/.bin` 仍在）与本地、远端分支。
+- **这一项是 CL-16 第 2 步按名留下的最后一句**：「reduced-motion 断言改为对每个面读计算样式而不是 grep 字符串」。
+  此前这条标准的**唯一**守护者是一个 vitest 文件：它 `readFileSync('src/skins/l10b-shell.css')`，然后断言
+  `/* Reduced-motion floor` 之后出现字符串 `transition: none !important`。文字在，不等于浏览器给每个节点的答复是
+  0 秒——后到的 `!important`、漏掉伪元素的选择器、组件的行内覆盖，都能让那条 grep 长绿而动效照跑。
+  本轮换成 `scripts/audit/reduced_motion_floor_via_cdp.py`：它把出货包起在同源夹具服务器上，逐面钉住
+  `prefers-reduced-motion`（`Emulation.setEmulatedMedia` 后由页面自己回读 `matchMedia` 证明钉住了），
+  再遍历根节点与全部元素及 `::before`/`::after`，读计算样式里的 `transitionProperty`/`transitionDuration`
+  与 `animationName`/`animationDuration`，加上根上的 `scrollBehavior`。**两个分支都走**：先 `no-preference`
+  再 `reduce`，因为环境本来就默认 reduce，只量 reduce 侧的 `0` 无法区分「地板压平了」与「压根没东西可压」。
+  判定全部在纯函数 `verdict()` 里，门单测 `tests/ci/test_reduced_motion_floor_gate.py` 17 例（含四个植入反例：
+  reduce 侧仍有一条过渡、仍有一个动画、滚动仍是 smooth、页面没挂载就被普查；以及空普查、全员无动效、
+  偏好没钉上、面名被改、坏面名必须先于磁盘查找以 rc=2 拒绝）。
+  那条 grep 测试随本轮删除（vitest 里唯一靠读样式表文本来判 reduced-motion 的那个文件；被删的字节可以用
+  `git show 7f7dd578:apps/observer/frontend/src/reducedMotion.contract.test.ts` 打出来核对，1 文件 1 例），
+  两个把它当作「怎么读样式表」先例的注释改指向仍存在的读者，不留指向已删文件的说明。
+- **当轮读数**（`scripts/audit/reduced_motion_floor_via_cdp.py`，回执
+  `.project-local/runs/reduced-motion-gate/final.json`，绑定 bundleDigest `39fa7d6e816dccf1…`）：
+  `REDUCED_MOTION_FLOOR_GATE_PASS surfaces=5 checks=17/17`，五面的动效数量在两种偏好下分别是
+  professional 69→0、panel-h01 13→0、daily-home 5→0、daily-governance 35→0、strip-h01 0→0（节点数
+  368/170/95/169/377，地板取自 `scripts/audit/text_legibility_via_cdp.py` 自己的每个面的计数，不在这里抄第二份）。
+- **新门抓到的第一条只有它能看见的事实**：窄条 `strip-h01` 在**两种偏好下都是 0 条动效**。它的悬停展开是 JavaScript
+  状态而不是 CSS 过渡（第 ⑨ 节记过「壳面无 CSS 悬停语言」是同一件事的另一面），所以无障碍地板在那张面上没有东西可压平。
+  本轮**不判红**——这条判据问的是「地板在不在工作」，把「这张面本来就没动效」判成地板失效会逼下一个人去给窄条加动效来喂门。
+  但它写进回执（`NO_MOTION_DECLARED_IN_EITHER_BRANCH` 与 `coverage.motionlessBothBranches`）、打印在 stdout、
+  并按名留档：若把它升成逐面断言，窄条当场红；升它的前提是先把 CL-16 第 1 步的按下/悬停语言接进窄条，
+  而那是第 3 步的接入点、按界面标准要先出承接表。反过来说，门的种群判据 `some_surface_moves_when_the_preference_is_off`
+  现在承担的就是「别让这套门变成只会看见 0 的仪器」。
+- **反证是真构建，不是合成数据**：把 `apps/observer/frontend/src/skins/l10b-shell.css` 里那段地板的
+  `@media (prefers-reduced-motion: reduce)` 选择器改成页面永远匹配不到的值并 `npm run build`，
+  后门转出恰好 1 条具名 FAIL `reduced_motion_floor_holds[professional]`，点名 9 个仍在过渡的节点
+  （`span.nav-group-caret` 等，`dur=0.18s`），其余四面仍 PASS（回执
+  `.project-local/runs/reduced-motion-gate/planted.json`、stdout 存 `plant-out.txt`，
+  那一次构建的 bundleDigest `4f273a267d5c2dcc…`）。**这条读数的形状值得记下来**：整体地板今天的独特贡献
+  正是专业壳那 9 个节点——其余四面的动效另有 `apps/observer/frontend/src/skins/b10.css` 里逐选择器的 reduce 规则兜着，
+  所以将来若把整体压平改成逐属性白名单（第 4 步的旧提案），要同时补上这 9 个节点，否则门会立刻红在这里。
+  还原后源文件 `sha256 4557697fe04226494c9304a9c2151c173bafc110f211107c7cc8ab1306512183` 与植入前逐字节相同，
+  重建复跑 `17/17`。
+- **同批把覆盖层门接进 CI**：`scripts/audit/overlay_motion_via_cdp.py` 自 PR #226 起在树里而**没有任何作业执行它**
+  （本轮开工前 `grep -c overlay .github/workflows/work-lab-gate.yml` 数为 0）。判据进了仓库却没有作业执行它，
+  仍然只是门的说明书——CL-14 从反方向抓过同一个洞（27 个 stage 既不被调用也不被登记）。
+  现在 `.github/workflows/work-lab-gate.yml` 的 `observer` 作业里紧跟按下态门之后新增两个必需步骤：覆盖层进出场、
+  reduced-motion 逐面普查；两者都不带 `continue-on-error`。本地按 CI 的形状各跑一遍（同一份重建后的包）：
+  `OVERLAY_MOTION_GATE_PASS overlays=["drawer","toast"]`，帧序列 drawer `right` 进 17 帧／退 14 帧、
+  toast `transform`/`opacity` 进 13／退 9；`REDUCED_MOTION_FLOOR_GATE_PASS`。
+  接线读数：`GATE_CI_JOB_MAPPING stages=50 invoked=48 declared=2 undeclared=0`（新增的是作业步骤，不是
+  `VERIFY_ORDER` 的 stage，所以三个数不动——这正是它存在的意义：少一个 stage 被调用它会红，多一个未被登记的
+  stage 它也红）；`CI_CHECK_REACHABILITY_PASS operands=82 declared=0 ci_only=0 UNREACHABLE=0`
+  （新门的按名拒绝路径有本地路由，故不是 CI-ONLY）。
+- **其余当轮实测**：`npx vitest run` 77 文件 / 964 例全绿（同树把删掉的那个文件放回去再跑是 78 / 965，
+  差值恰为删掉的 1 文件 1 例——先量了差再删）；`npx tsc --noEmit` 无输出；`python tests/ci/test_reduced_motion_floor_gate.py`
+  脚本模式 `Ran 17 tests OK`；`scripts/audit/tool_inventory_readback.py` 在 `git add` 之后重发一遍，
+  新工具进清单且 `tests/workflow-assistance/test_tool_inventory_coverage.py` 全绿。
+- **按名留档**：①CL-16 第 2 步的三句（按下态真指针＋键盘等效、覆盖层进出场两侧采样、reduced-motion 逐面计算样式）
+  至此全部落地且都被 CI 执行，第 3 步（`motion@14.6.0` 的 `LazyMotion`＋`m`，只用于进出场与状态过渡）
+  现在才有可依赖的机制与门；②窄条的 CSS 动效语言缺席是第 3 步接入点，也是上面那条逐面判据能否升严的前提；
+  ③「整体地板 vs `b10.css` 逐选择器地板」的分工是本轮量出来的（9 个节点），若要改白名单降级，这 9 个节点是清单。
